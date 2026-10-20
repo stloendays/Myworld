@@ -1,0 +1,45 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/interactions/InteractableDoor.gd" id="1_door"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_leaf"]
+size = Vector3(0.06, 2.18, 1.18)
+
+[sub_resource type="StandardMaterial3D" id="Mat_wood"]
+albedo_color = Color(0.36, 0.22, 0.13, 1)
+roughness = 0.8
+
+[sub_resource type="BoxMesh" id="BoxMesh_leaf"]
+material = SubResource("Mat_wood")
+size = Vector3(0.06, 2.18, 1.18)
+
+[sub_resource type="StandardMaterial3D" id="Mat_metal"]
+albedo_color = Color(0.08, 0.08, 0.08, 1)
+metallic = 0.6
+roughness = 0.4
+
+[sub_resource type="BoxMesh" id="BoxMesh_handle"]
+material = SubResource("Mat_metal")
+size = Vector3(0.16, 0.04, 0.04)
+
+[node name="InteractableDoor" type="Node3D"]
+script = ExtResource("1_door")
+uid = &"door"
+display_name = "木门"
+
+[node name="Leaf" type="AnimatableBody3D" parent="."]
+collision_layer = 4
+collision_mask = 0
+sync_to_physics = true
+
+[node name="Shape" type="CollisionShape3D" parent="Leaf"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0.6)
+shape = SubResource("BoxShape3D_leaf")
+
+[node name="Mesh" type="MeshInstance3D" parent="Leaf"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0.6)
+mesh = SubResource("BoxMesh_leaf")
+
+[node name="Handle" type="MeshInstance3D" parent="Leaf"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05, 1.02)
+mesh = SubResource("BoxMesh_handle")

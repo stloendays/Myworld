@@ -1,0 +1,12 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/buildings/Cabin.gd" id="1_cabin"]
+[ext_resource type="PackedScene" path="res://scenes/props/InteractableDoor.tscn" id="2_door"]
+
+[node name="Cabin" type="Node3D"]
+script = ExtResource("1_cabin")
+
+[node name="FrontDoor" parent="." instance=ExtResource("2_door")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, -0.6)
+uid = &"cabin_front_door"
+display_name = "木屋正门"

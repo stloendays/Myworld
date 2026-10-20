@@ -1,0 +1,6 @@
+asset_id,filename,creator,source_url,license,download_date,modifications,redistribution_notes,status
+ENG-01,(not in repo) Godot_v4.7.2-stable_win64.exe,Godot Engine contributors,https://godotengine.org/download/windows/,MIT,2026-10-20,none,Engine binary is not committed,tool
+MOD-01,(not in repo) blender-5.2.2-windows-x64.zip,Blender Foundation,https://download.blender.org/release/Blender5.2/,GPL-3.0 (tool only; output files are ours),2026-10-20,none,Binary is not committed; SHA256 3849d17a682cba006075aaa3f3597ecb5c9c30ec31035b2e092c53e40679b535 verified,tool
+3D-01,(not in repo) kenney_nature-kit.zip,Kenney,https://kenney.nl/assets/nature-kit,CC0 1.0,2026-10-20,none,Downloaded to the local workspace only; not imported yet,downloaded_not_imported
+3D-02,(not in repo) kenney_furniture-kit.zip,Kenney,https://kenney.nl/assets/furniture-kit,CC0 1.0,2026-10-20,none,Downloaded to the local workspace only; not imported yet,downloaded_not_imported
+MAP-01,docs/images/03_world_map.png,Dusk Lake project,internal,Project original diagram,2026-10-20,none,Concept diagram from the developer package,in_repo

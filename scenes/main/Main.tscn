@@ -1,0 +1,24 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/main/Main.gd" id="1_main"]
+[ext_resource type="PackedScene" path="res://scenes/world/World.tscn" id="2_world"]
+[ext_resource type="PackedScene" path="res://scenes/buildings/Cabin.tscn" id="3_cabin"]
+[ext_resource type="PackedScene" path="res://scenes/player/Player.tscn" id="4_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/HUD.tscn" id="5_hud"]
+[ext_resource type="PackedScene" path="res://scenes/ui/PauseMenu.tscn" id="6_pause"]
+[ext_resource type="PackedScene" path="res://scenes/ui/DebugOverlay.tscn" id="7_debug"]
+
+[node name="Main" type="Node3D"]
+script = ExtResource("1_main")
+
+[node name="World" parent="." instance=ExtResource("2_world")]
+
+[node name="Cabin" parent="." instance=ExtResource("3_cabin")]
+
+[node name="Player" parent="." instance=ExtResource("4_player")]
+
+[node name="HUD" parent="." instance=ExtResource("5_hud")]
+
+[node name="PauseMenu" parent="." instance=ExtResource("6_pause")]
+
+[node name="DebugOverlay" parent="." instance=ExtResource("7_debug")]

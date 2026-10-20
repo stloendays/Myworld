@@ -1,0 +1,11 @@
+# Godot 4 缓存与导出
+.godot/
+/android/
+export/
+builds/
+*.tmp
+
+# 私有参考图与未核验许可的素材：绝不进入公开仓库
+assets/references/
+assets/raw/
+*.blend1

@@ -1,0 +1,42 @@
+; Engine configuration file.
+; Dusk Lake — Godot 4.7.2 Standard (GDScript), Windows 单机优先。
+
+config_version=5
+
+[application]
+
+config/name="Dusk Lake"
+config/description="3D 私人湖畔世界：250×250 m 连续地图、无缝 A 字形木屋。"
+config/version="0.1.0-m1"
+run/main_scene="res://scenes/main/Main.tscn"
+config/features=PackedStringArray("4.7", "Forward Plus")
+config/icon="res://icon.svg"
+
+[autoload]
+
+GameSettings="*res://scripts/core/GameSettings.gd"
+EventBus="*res://scripts/core/EventBus.gd"
+WorldState="*res://scripts/core/WorldState.gd"
+
+[display]
+
+window/size/viewport_width=1600
+window/size/viewport_height=900
+
+[layer_names]
+
+3d_physics/layer_1="world"
+3d_physics/layer_2="actors"
+3d_physics/layer_3="interactable"
+3d_physics/layer_4="water_limit"
+3d_physics/layer_5="terrain"
+
+[physics]
+
+3d/physics_engine="Jolt Physics"
+
+[rendering]
+
+renderer/rendering_method="forward_plus"
+anti_aliasing/quality/msaa_3d=2
+lights_and_shadows/directional_shadow/size=4096

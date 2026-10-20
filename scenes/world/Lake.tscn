@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/world/LakeBuilder.gd" id="1_lake"]
+
+[node name="Lake" type="Node3D"]
+script = ExtResource("1_lake")

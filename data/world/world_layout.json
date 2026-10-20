@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "units": "meters",
+  "north": "-Z",
+  "bounds": {"min": -125.0, "max": 125.0},
+  "water_level": 0.0,
+
+  "terrain": {
+    "seed": 18427,
+    "extent": 128.0,
+    "base_height": 1.8,
+    "noise_amplitude": 1.3,
+    "noise_frequency": 0.012,
+    "detail_amplitude": 0.25,
+    "detail_frequency": 0.09,
+    "boundary_start": 108.0,
+    "boundary_end": 125.0,
+    "boundary_height": 24.0,
+    "hills": [
+      {"zone_id": "nw_viewpoint", "center": [-93, -101], "height": 15.0, "sigma": 16.0},
+      {"center": [-112, 10], "height": 5.0, "sigma": 18.0},
+      {"center": [92, 92], "height": 6.0, "sigma": 20.0},
+      {"center": [80, -98], "height": 7.0, "sigma": 22.0}
+    ],
+    "pads": [
+      {"id": "cabin_pad", "center": [-66, 37], "radius": 11.5, "blend": 9.0, "height": 2.0},
+      {"id": "dock_landing", "center": [-45, 26], "radius": 3.5, "blend": 10.0, "height": 1.0}
+    ]
+  },
+
+  "lake": {
+    "zone_id": "lake",
+    "center": [35, -2],
+    "radii": [78, 63],
+    "inner": 0.82,
+    "outer": 1.10,
+    "bed_height": -3.5,
+    "wade_limit_depth": 0.7
+  },
+
+  "cabin": {
+    "zone_id": "cabin",
+    "center": [-69, 37],
+    "floor_height": 2.4,
+    "yaw_deg": 0.0
+  },
+
+  "dock": {
+    "zone_id": "dock",
+    "from": [-46, 26],
+    "to": [-1, 26],
+    "width": 2.6,
+    "deck_height": 1.0,
+    "rail_start_x": -40.0
+  },
+
+  "zones": [
+    {"zone_id": "lake", "name": "湖泊", "center": [35, -2], "size": [156, 126]},
+    {"zone_id": "dock", "name": "木质码头", "center": [-23.5, 26], "size": [46, 4]},
+    {"zone_id": "cabin_grounds", "name": "木屋前院", "center": [-66, 37], "size": [28, 28]},
+    {"zone_id": "north_forest", "name": "北部针叶林", "center": [-85, -70], "size": [80, 70]},
+    {"zone_id": "nw_viewpoint", "name": "西北观景点", "center": [-93, -101], "size": [24, 24]},
+    {"zone_id": "south_meadow", "name": "南部林间草甸", "center": [-84, 93], "size": [60, 40]}
+  ],
+
+  "paths": [
+    {"id": "trail_north", "points": [[-93, -101], [-89, -86], [-85, -70], [-80, -50], [-78, -28], [-83, -6], [-87, 12], [-84, 24], [-74, 28], [-62, 31], [-57, 36]]},
+    {"id": "trail_west", "points": [[-103, 72], [-100, 52], [-94, 36], [-84, 24]]},
+    {"id": "trail_meadow", "points": [[-57, 38], [-64, 52], [-74, 68], [-84, 90], [-98, 104]]},
+    {"id": "dock_walk", "points": [[-57, 37], [-51, 31], [-46, 26]]}
+  ],
+
+  "forest": {
+    "seed": 9137,
+    "attempts": 20000,
+    "min_spacing": 2.6,
+    "path_clearance": 3.0,
+    "base_density": 0.22,
+    "edge_band": 24.0,
+    "edge_density": 0.85,
+    "shore_thinning": 0.3,
+    "max_slope": 0.9,
+    "regions": [
+      {"zone_id": "north_forest", "center": [-90, -85], "radius": 75, "density": 0.85},
+      {"zone_id": "cabin_woods", "center": [-108, 40], "radius": 55, "density": 0.7},
+      {"zone_id": "east_woods", "center": [100, -95], "radius": 50, "density": 0.6}
+    ],
+    "sparse_regions": [
+      {"zone_id": "south_meadow", "center": [-84, 93], "radius": 26, "factor": 0.12},
+      {"zone_id": "nw_viewpoint_slope", "center": [-90, -96], "radius": 38, "factor": 0.3}
+    ],
+    "clearings": [
+      {"id": "cabin_clearing", "center": [-66, 37], "radius": 14},
+      {"id": "lakeside_lawn", "center": [-47, 24], "radius": 11},
+      {"id": "viewpoint_top", "center": [-93, -101], "radius": 13}
+    ],
+    "rock_count": 160,
+    "rock_seed": 4411
+  },
+
+  "lighting_m1": {
+    "preset": "Autumn_Dusk_Clear (static)",
+    "sun_elevation_deg": 10.0,
+    "sun_azimuth_deg": 64.0,
+    "note": "M1 固定暮色。太阳放在湖对岸（方位角从北顺时针 64°），以还原参考图 01 的构图；M2 由 EnvironmentDirector 按时间计算。"
+  },
+
+  "spawn": {
+    "position": [-50, 29],
+    "look_at": [35, -2]
+  }
+}

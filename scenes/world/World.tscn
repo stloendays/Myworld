@@ -1,0 +1,29 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/world/StaticDuskLighting.gd" id="1_light"]
+[ext_resource type="PackedScene" path="res://scenes/world/Terrain.tscn" id="2_terrain"]
+[ext_resource type="PackedScene" path="res://scenes/world/Lake.tscn" id="3_lake"]
+[ext_resource type="PackedScene" path="res://scenes/world/Forest.tscn" id="4_forest"]
+[ext_resource type="Script" path="res://scripts/world/DockBuilder.gd" id="5_dock"]
+[ext_resource type="Script" path="res://scripts/world/DistantBackdrop.gd" id="6_backdrop"]
+[ext_resource type="Script" path="res://scripts/world/ZonesBuilder.gd" id="7_zones"]
+
+[node name="World" type="Node3D"]
+
+[node name="Lighting" type="Node3D" parent="."]
+script = ExtResource("1_light")
+
+[node name="Terrain" parent="." instance=ExtResource("2_terrain")]
+
+[node name="Lake" parent="." instance=ExtResource("3_lake")]
+
+[node name="Forest" parent="." instance=ExtResource("4_forest")]
+
+[node name="Dock" type="Node3D" parent="."]
+script = ExtResource("5_dock")
+
+[node name="Backdrop" type="Node3D" parent="."]
+script = ExtResource("6_backdrop")
+
+[node name="Zones" type="Node3D" parent="."]
+script = ExtResource("7_zones")
