@@ -31,8 +31,8 @@ func rebuild() -> void:
 	var rail_x := float(cfg.get("rail_start_x", a.x))
 	var length := b.x - a.x
 	var z := a.y
-	var wood := MeshUtil.material(Color(0.42, 0.29, 0.19), 0.85)
-	var wood_dark := MeshUtil.material(Color(0.27, 0.19, 0.13), 0.9)
+	var wood := ArtMaterials.pbr("weathered_planks", Color(1.0, 0.9, 0.8), "world")
+	var wood_dark := ArtMaterials.pbr("stained_pine", Color(0.45, 0.33, 0.27), "world")
 
 	# 甲板木板（MultiMesh）
 	var plank := BoxMesh.new()
@@ -81,6 +81,8 @@ func rebuild() -> void:
 			_box(root, Vector3(rail_len, 0.07, 0.07), Vector3(rail_x + rail_len * 0.5, top + h, z + side * (width * 0.5 + 0.02)), wood)
 	_box(root, Vector3(0.07, 0.07, width), Vector3(b.x, top + RAIL_HEIGHT - 0.05, z), wood)
 
+	_add_canoe(root)
+
 	if Engine.is_editor_hint():
 		return
 	var body := StaticBody3D.new()
@@ -112,3 +114,17 @@ func _shape(body: StaticBody3D, size: Vector3, pos: Vector3) -> void:
 	cs.shape = shape
 	cs.position = pos
 	body.add_child(cs)
+
+
+## 岸边草坪上翻放的独木舟与船桨（Kenney Nature Kit）。
+func _add_canoe(root: Node3D) -> void:
+	for item in [["canoe", Vector3(-44.5, 0.0, 20.5), 32.0, 3.9], ["canoe_paddle", Vector3(-43.2, 0.0, 19.4), 70.0, 3.2]]:
+		var asset: String = item[0]
+		var path := "res://assets/imported/kenney/nature/%s.glb" % asset
+		var node := (load(path) as PackedScene).instantiate() as Node3D
+		var p: Vector3 = item[1]
+		var s: float = item[3]
+		node.transform = Transform3D(Basis(Vector3.UP, deg_to_rad(item[2])).scaled(Vector3(s, s, s)),
+			Vector3(p.x, WorldTerrain.height_at(p.x, p.z) + 0.05 * s, p.z))
+		ArtMaterials.restyle_kenney(node, asset)
+		root.add_child(node)

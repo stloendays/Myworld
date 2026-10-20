@@ -14,6 +14,7 @@ var _tween: Tween = null
 
 
 func _ready() -> void:
+	ArtMaterials.restyle_named(leaf)
 	_open = start_open
 	leaf.rotation.y = deg_to_rad(open_angle_deg) if _open else 0.0
 	super()

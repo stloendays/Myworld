@@ -10,6 +10,8 @@ const WATER_SHADER := preload("res://shaders/water.gdshader")
 const RING_SEGMENTS := 256
 const WALL_BOTTOM := -6.0
 const WALL_TOP := 1.6
+## 水面所在的可见层（第 2 层），反射探针不拍它。
+const WATER_VISUAL_LAYER := 2
 
 var wall_points := PackedVector3Array()
 
@@ -26,27 +28,83 @@ func rebuild() -> void:
 	root.name = GENERATED
 	add_child(root)
 	root.add_child(_make_water())
+	root.add_child(_make_reflection_probe())
 	if not Engine.is_editor_hint():
 		root.add_child(_make_wade_limit())
 
 
+## 1.5 m 网格的水面；顶点色 R = 归一化水深（3 m 以上为 1），只覆盖湖盆范围。
 func _make_water() -> MeshInstance3D:
 	var lake := WorldLayout.section("lake")
 	var c := WorldLayout.v2(lake["center"])
 	var r := WorldLayout.v2(lake["radii"])
-	var plane := PlaneMesh.new()
-	plane.size = Vector2(r.x * 2.0 + 20.0, r.y * 2.0 + 20.0)
+	var water := WorldLayout.water_level()
+	var step := 1.5
+	var nx := int((r.x * 2.0 + 20.0) / step)
+	var nz := int((r.y * 2.0 + 20.0) / step)
+	var x0 := c.x - nx * step * 0.5
+	var z0 := c.y - nz * step * 0.5
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for iz in nz + 1:
+		for ix in nx + 1:
+			var x := x0 + ix * step
+			var z := z0 + iz * step
+			var depth := clampf((water - WorldTerrain.height_at(x, z)) / 3.0, 0.0, 1.0)
+			st.set_color(Color(depth, 0.0, 0.0))
+			st.set_uv(Vector2(x, z))
+			st.set_normal(Vector3.UP)
+			st.add_vertex(Vector3(x, water, z))
+	for iz in nz:
+		for ix in nx:
+			var a := iz * (nx + 1) + ix
+			var b := a + 1
+			var cc := a + nx + 1
+			var d := cc + 1
+			for idx in [a, b, cc, b, d, cc]:
+				st.add_index(idx)
+	st.generate_tangents()
+	var mesh := st.commit()
 	var mat := ShaderMaterial.new()
 	mat.shader = WATER_SHADER
 	mat.set_shader_parameter("ripple_a", _ripple_texture(101, 0.02))
 	mat.set_shader_parameter("ripple_b", _ripple_texture(202, 0.035))
-	plane.material = mat
+	mesh.surface_set_material(0, mat)
 	var mi := MeshInstance3D.new()
 	mi.name = "WaterSurface"
-	mi.mesh = plane
+	mi.mesh = mesh
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	mi.position = Vector3(c.x, WorldLayout.water_level(), c.y)
+	mi.layers = WATER_VISUAL_LAYER
 	return mi
+
+
+## 湖面倒影：在湖心水面上方 2 m 处拍一次环境立方体贴图（盒投影覆盖整个湖盆），
+## 让远岸的树林、山脊和天空稳定地倒映在水里；近处物体（码头）由 SSR 补充。
+## 水面本身在单独的可见层上，不进入反射捕获。M2 天气或时间变化后需要调用 refresh_reflection()。
+func _make_reflection_probe() -> ReflectionProbe:
+	var lake := WorldLayout.section("lake")
+	var c := WorldLayout.v2(lake["center"])
+	var r := WorldLayout.v2(lake["radii"])
+	var water := WorldLayout.water_level()
+	var probe := ReflectionProbe.new()
+	probe.name = "LakeReflection"
+	probe.size = Vector3(r.x * 2.0 + 30.0, 60.0, r.y * 2.0 + 30.0)
+	probe.position = Vector3(c.x, water + 25.0, c.y)
+	probe.origin_offset = Vector3(0.0, -23.0, 0.0)
+	probe.box_projection = true
+	probe.max_distance = 600.0
+	probe.enable_shadows = true
+	probe.update_mode = ReflectionProbe.UPDATE_ONCE
+	probe.cull_mask = 0xFFFFF & ~WATER_VISUAL_LAYER
+	return probe
+
+
+func refresh_reflection() -> void:
+	var probe := get_node_or_null("%s/LakeReflection" % GENERATED) as ReflectionProbe
+	if probe != null:
+		probe.update_mode = ReflectionProbe.UPDATE_ALWAYS
+		await get_tree().process_frame
+		probe.update_mode = ReflectionProbe.UPDATE_ONCE
 
 
 func _ripple_texture(seed_value: int, frequency: float) -> NoiseTexture2D:
