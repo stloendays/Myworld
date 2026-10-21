@@ -3,17 +3,17 @@ class_name TerrainBuilder
 extends Node3D
 ## 生成地形网格与高度场碰撞：257×257 采样、1 m 间距，覆盖 ±128 m（可活动区 ±125 m）。
 ## 高度来自 WorldTerrain.height_at()，网格与碰撞逐点一致。
-## 顶点色按高度/坡度/步道距离区分草地、湖岸、湖底、岩石和土路（季节变色在 M2 接入）。
+## 外观：terrain.gdshader 五层 PBR 混合（草地 / 林下落叶 / 土路 / 岩石 / 湖岸），
+## 顶点色写入混合权重：R 落叶、G 土路、B 岩石、A 湖岸。
 
 const GENERATED := "Generated"
-const PATH_WIDTH := 1.7
+const TERRAIN_SHADER := preload("res://shaders/terrain.gdshader")
+const PATH_WIDTH := 1.6
+## 层顺序必须与 terrain.gdshader 一致。
+const LAYERS := ["leafy_grass", "forest_leaves_04", "rocky_trail", "rock_face_03", "brown_mud_rocks_01"]
+const LAYER_TINTS := [Color(0.92, 0.88, 0.72), Color(0.88, 0.80, 0.72), Color(0.92, 0.86, 0.80), Color(0.80, 0.78, 0.76), Color(0.85, 0.82, 0.78)]
 
-const COLOR_GRASS := Color(0.33, 0.37, 0.18)
-const COLOR_DRY_GRASS := Color(0.47, 0.42, 0.22)
-const COLOR_SHORE := Color(0.50, 0.42, 0.32)
-const COLOR_LAKEBED := Color(0.20, 0.18, 0.15)
-const COLOR_ROCK := Color(0.40, 0.38, 0.38)
-const COLOR_PATH := Color(0.45, 0.34, 0.23)
+var material: ShaderMaterial = null
 
 
 func _ready() -> void:
@@ -47,10 +47,10 @@ func _make_mesh(h: PackedFloat32Array, n: int, ext: float) -> MeshInstance3D:
 	var water := WorldLayout.water_level()
 	var verts := PackedVector3Array()
 	var normals := PackedVector3Array()
-	var colors := PackedColorArray()
+	var weights := PackedColorArray()
 	verts.resize(n * n)
 	normals.resize(n * n)
-	colors.resize(n * n)
+	weights.resize(n * n)
 	for iz in n:
 		for ix in n:
 			var i := iz * n + ix
@@ -62,7 +62,7 @@ func _make_mesh(h: PackedFloat32Array, n: int, ext: float) -> MeshInstance3D:
 			var nrm := Vector3(hl - hr, 2.0, hd - hu).normalized()
 			verts[i] = p
 			normals[i] = nrm
-			colors[i] = _ground_color(p, nrm, path_d[i], water)
+			weights[i] = _blend_weights(p, nrm, path_d[i], water)
 
 	var indices := PackedInt32Array()
 	indices.resize((n - 1) * (n - 1) * 6)
@@ -85,20 +85,52 @@ func _make_mesh(h: PackedFloat32Array, n: int, ext: float) -> MeshInstance3D:
 	arrays.resize(Mesh.ARRAY_MAX)
 	arrays[Mesh.ARRAY_VERTEX] = verts
 	arrays[Mesh.ARRAY_NORMAL] = normals
-	arrays[Mesh.ARRAY_COLOR] = colors
+	arrays[Mesh.ARRAY_COLOR] = weights
 	arrays[Mesh.ARRAY_INDEX] = indices
 	var mesh := ArrayMesh.new()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-	var mat := StandardMaterial3D.new()
-	mat.vertex_color_use_as_albedo = true
-	mat.vertex_color_is_srgb = true
-	mat.roughness = 0.95
-	mesh.surface_set_material(0, mat)
+	material = _make_material()
+	mesh.surface_set_material(0, material)
 
 	var mi := MeshInstance3D.new()
 	mi.name = "TerrainMesh"
 	mi.mesh = mesh
 	return mi
+
+
+func _make_material() -> ShaderMaterial:
+	var mat := ShaderMaterial.new()
+	mat.shader = TERRAIN_SHADER
+	mat.set_shader_parameter("albedo_layers", _layer_array("diff"))
+	mat.set_shader_parameter("normal_layers", _layer_array("nor_gl"))
+	mat.set_shader_parameter("rough_layers", _layer_array("rough"))
+	var sizes := PackedFloat32Array()
+	for id in LAYERS:
+		sizes.append(float(ArtMaterials.SIZE_M[id]))
+	mat.set_shader_parameter("layer_size", sizes)
+	var tints := PackedVector3Array()
+	for c in LAYER_TINTS:
+		tints.append(Vector3(c.r, c.g, c.b))
+	mat.set_shader_parameter("layer_tint", tints)
+	return mat
+
+
+## 把五层同类贴图（统一为 1024² RGBA8 + mipmap）合成一个 Texture2DArray。
+func _layer_array(map: String) -> Texture2DArray:
+	var images: Array[Image] = []
+	for id in LAYERS:
+		var img := ArtMaterials.texture(id, map).get_image()
+		if img.is_compressed():
+			img.decompress()
+		img.convert(Image.FORMAT_RGBA8)
+		if img.get_width() != 1024 or img.get_height() != 1024:
+			img.resize(1024, 1024, Image.INTERPOLATE_LANCZOS)
+		if not img.has_mipmaps():
+			img.generate_mipmaps()
+		images.append(img)
+	var arr := Texture2DArray.new()
+	arr.create_from_images(images)
+	return arr
 
 
 func _make_collision(h: PackedFloat32Array, n: int) -> StaticBody3D:
@@ -116,19 +148,22 @@ func _make_collision(h: PackedFloat32Array, n: int) -> StaticBody3D:
 	return body
 
 
-func _ground_color(p: Vector3, nrm: Vector3, path_dist: float, water: float) -> Color:
-	var v := WorldTerrain.color_variation(p.x, p.z)
-	var c := COLOR_GRASS.lerp(COLOR_DRY_GRASS, clampf(0.5 + 0.6 * v, 0.0, 1.0))
-	if p.y < water + 0.35:
-		c = COLOR_SHORE.lerp(COLOR_LAKEBED, clampf((water + 0.35 - p.y) / 1.5, 0.0, 1.0))
-	elif p.y < water + 0.9:
-		c = COLOR_SHORE.lerp(c, (p.y - water - 0.35) / 0.55)
-	var slope := 1.0 - nrm.y
-	if slope > 0.2:
-		c = c.lerp(COLOR_ROCK, clampf((slope - 0.2) / 0.15, 0.0, 1.0))
-	if path_dist < PATH_WIDTH:
-		c = c.lerp(COLOR_PATH, clampf((PATH_WIDTH - path_dist) / 0.6, 0.0, 1.0))
-	return c
+## 顶点混合权重：R 林下落叶、G 土路、B 岩石、A 湖岸；草地为剩余部分。优先级：岩石 > 湖岸 > 土路 > 落叶。
+func _blend_weights(p: Vector3, nrm: Vector3, path_dist: float, water: float) -> Color:
+	var rock := clampf((1.0 - nrm.y - 0.17) / 0.12, 0.0, 1.0)
+	var shore := clampf((water + 0.9 - p.y) / 0.7, 0.0, 1.0)
+	var path := clampf((PATH_WIDTH - path_dist) / 0.7, 0.0, 1.0)
+	var patch := 0.5 + 0.5 * WorldTerrain.color_variation(p.x, p.z)
+	var forest := clampf((Vegetation.base_density(p.x, p.z) - 0.3) / 0.35 + (patch - 0.5) * 0.5, 0.0, 1.0)
+	if Vegetation.in_clearing(Vector2(p.x, p.z)):
+		forest *= 0.3
+	var free := 1.0 - rock
+	shore *= free
+	free -= shore
+	path *= free
+	free -= path
+	forest *= free
+	return Color(forest, path, rock, shore)
 
 
 ## 每个网格顶点到最近步道的距离；只在每段步道的包围盒内计算。

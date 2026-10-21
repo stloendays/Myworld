@@ -7,6 +7,7 @@
 [ext_resource type="Script" path="res://scripts/world/DockBuilder.gd" id="5_dock"]
 [ext_resource type="Script" path="res://scripts/world/DistantBackdrop.gd" id="6_backdrop"]
 [ext_resource type="Script" path="res://scripts/world/ZonesBuilder.gd" id="7_zones"]
+[ext_resource type="Script" path="res://scripts/world/GroundCoverBuilder.gd" id="8_cover"]
 
 [node name="World" type="Node3D"]
 
@@ -18,6 +19,9 @@ script = ExtResource("1_light")
 [node name="Lake" parent="." instance=ExtResource("3_lake")]
 
 [node name="Forest" parent="." instance=ExtResource("4_forest")]
+
+[node name="GroundCover" type="Node3D" parent="."]
+script = ExtResource("8_cover")
 
 [node name="Dock" type="Node3D" parent="."]
 script = ExtResource("5_dock")

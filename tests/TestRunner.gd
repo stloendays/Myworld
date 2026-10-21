@@ -29,6 +29,7 @@ func _run() -> void:
 	_test_scripts_load()
 	_test_no_scene_switching()
 	_test_layout_bounds()
+	_test_licenses_cover_imports()
 	_main = (load(MAIN_SCENE) as PackedScene).instantiate()
 	add_child(_main)
 	await _frames(10)
@@ -86,6 +87,33 @@ func _test_layout_bounds() -> void:
 	_check("木屋中心坐标 = (-69, 37)", c == Vector2(-69, 37), str(c))
 
 
+## QA-10（提前）：assets/imported 下每个外部文件都必须被 assets/licenses.csv 的某一行覆盖（按路径前缀）。
+func _test_licenses_cover_imports() -> void:
+	var prefixes := PackedStringArray()
+	var f := FileAccess.open("res://assets/licenses.csv", FileAccess.READ)
+	f.get_csv_line()
+	while not f.eof_reached():
+		var row := f.get_csv_line()
+		if row.size() > 1 and row[1] != "":
+			prefixes.append(row[1])
+	var missing := PackedStringArray()
+	var files := _list_files("res://assets/imported", "")
+	var counted := 0
+	for path in files:
+		if path.get_extension() in ["import", "uid", "gitkeep"]:
+			continue
+		counted += 1
+		var rel := path.trim_prefix("res://")
+		var covered := false
+		for p in prefixes:
+			if rel.begins_with(p):
+				covered = true
+				break
+		if not covered:
+			missing.append(rel)
+	_check("QA-10 素材许可登记覆盖全部导入文件（%d 个）" % counted, missing.is_empty() and counted > 0, ", ".join(missing))
+
+
 func _test_structure() -> void:
 	var names := PackedStringArray()
 	for child in _main.get_children():
@@ -93,7 +121,9 @@ func _test_structure() -> void:
 	var ok := _main.has_node("World") and _main.has_node("Cabin") and _main.has_node("Player")
 	_check("Main 同时常驻 World / Cabin / Player", ok, ", ".join(names))
 	var forest := _main.get_node("World/Forest") as ForestBuilder
-	_check("森林已生成", forest.tree_count > 500, "树 %d 棵，岩石 %d 块" % [forest.tree_count, forest.rock_count])
+	var cover := _main.get_node("World/GroundCover") as GroundCoverBuilder
+	_check("森林与地被已生成", forest.tree_count > 500 and cover.instance_count > 1000,
+		"树 %d 棵，岩石 %d 块，地被 %d 个" % [forest.tree_count, forest.rock_count, cover.instance_count])
 	var door := _cabin.get_node("FrontDoor") as InteractableDoor
 	_check("正门 uid = cabin_front_door 且已登记", door != null and WorldState.get_interactable_state(&"cabin_front_door") == "closed",
 		WorldState.get_interactable_state(&"cabin_front_door"))

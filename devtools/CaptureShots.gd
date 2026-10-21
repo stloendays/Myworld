@@ -15,6 +15,7 @@ const SHOTS := [
 	{"name": "m1_06_north_trail", "eye": [-80, 1.65, -50], "ground": true, "look": [-78, 2, -28]},
 	{"name": "m1_07_viewpoint", "eye": [-93, 1.8, -101], "ground": true, "look": [20, -5, 10]},
 	{"name": "m1_08_aerial", "eye": [-40, 190, 175], "look": [-10, 0, 0]},
+	{"name": "m1_09_lake_reflection", "eye": [-3, 1.0 + 1.65, 25], "look": [70, 2, -30]},
 ]
 
 var _camera: Camera3D

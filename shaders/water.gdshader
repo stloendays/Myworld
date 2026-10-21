@@ -1,44 +1,35 @@
 shader_type spatial;
-// 湖面：两层滚动法线噪声做微风波纹；按场景深度渐变颜色与透明度，岸边柔和过渡。
-// 天空倒影来自环境辐照（Sky radiance）。不做物理水体模拟。
+// 湖面（不透明 + 屏幕空间反射）：两层滚动法线噪声做微风波纹，树林、木屋与天空的倒影由
+// 环境的 SSR 提供（只有不透明表面能接收 SSR）。水深由网格顶点色 R 给出（0 = 岸边，1 ≥ 3 m），
+// 岸边偏浅、偏浑，湖心偏深。不做物理水体模拟。
 
-render_mode blend_mix, depth_draw_opaque, cull_back, diffuse_burley, specular_schlick_ggx;
+render_mode cull_back, diffuse_burley, specular_schlick_ggx;
 
-uniform vec3 shallow_color : source_color = vec3(0.46, 0.38, 0.60);
-uniform vec3 deep_color : source_color = vec3(0.10, 0.11, 0.27);
-uniform float depth_fade = 2.5;
-uniform float edge_fade = 0.5;
-uniform float max_alpha = 0.93;
-uniform float ripple_scale = 0.045;
-uniform float ripple_speed = 0.018;
-uniform float ripple_strength = 0.3;
+uniform vec3 shallow_color : source_color = vec3(0.30, 0.27, 0.30);
+uniform vec3 deep_color : source_color = vec3(0.035, 0.045, 0.085);
+uniform float ripple_scale = 0.05;
+uniform float ripple_speed = 0.015;
+uniform float ripple_strength = 0.18;
+uniform float roughness_value = 0.02;
 uniform sampler2D ripple_a : hint_normal, filter_linear_mipmap, repeat_enable;
 uniform sampler2D ripple_b : hint_normal, filter_linear_mipmap, repeat_enable;
-uniform sampler2D depth_tex : hint_depth_texture;
 
 varying vec3 world_pos;
+varying float depth01;
 
 void vertex() {
 	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+	depth01 = COLOR.r;
 }
 
 void fragment() {
 	vec2 uv = world_pos.xz * ripple_scale;
 	vec3 na = texture(ripple_a, uv + vec2(TIME * ripple_speed, TIME * ripple_speed * 0.6)).rgb;
-	vec3 nb = texture(ripple_b, uv * 1.9 - vec2(TIME * ripple_speed * 0.7, -TIME * ripple_speed)).rgb;
+	vec3 nb = texture(ripple_b, uv * 2.3 - vec2(TIME * ripple_speed * 0.8, -TIME * ripple_speed * 1.1)).rgb;
 	NORMAL_MAP = mix(na, nb, 0.5);
 	NORMAL_MAP_DEPTH = ripple_strength;
-
-	float raw_depth = texture(depth_tex, SCREEN_UV).r;
-	vec4 view = INV_PROJECTION_MATRIX * vec4(SCREEN_UV * 2.0 - 1.0, raw_depth, 1.0);
-	view.xyz /= view.w;
-	float water_depth = max(0.0, VERTEX.z - view.z);
-	float t = clamp(water_depth / depth_fade, 0.0, 1.0);
-	float fresnel = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 5.0);
-
-	ALBEDO = mix(shallow_color, deep_color, t);
-	ALPHA = clamp(water_depth / edge_fade, 0.0, 1.0) * mix(mix(0.5, max_alpha, t), 1.0, fresnel);
-	ROUGHNESS = 0.05;
+	ALBEDO = mix(shallow_color, deep_color, smoothstep(0.0, 1.0, depth01));
+	ROUGHNESS = roughness_value;
 	METALLIC = 0.0;
-	SPECULAR = 0.55;
+	SPECULAR = 0.6;
 }

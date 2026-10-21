@@ -4,10 +4,13 @@ extends Node3D
 ## A 字形木屋：与室外处于同一世界坐标系的真实建筑。进屋不切场景、不传送、不黑屏。
 ## 局部坐标：+X 朝湖（正立面 = 三角玻璃窗 + 正门），屋脊沿 X 轴，地板顶面 y = 0。
 ## 世界位置取自 world_layout.json → cabin（地形在此处有一块压平的地基平台）。
-## 灰盒几何均为程序生成；正式美术阶段可以用 Blender 导出的 GLB 替换 Generated 下的可见网格，
-## 碰撞与 FrontDoor / 室内区域保持不变。
+## 外观：Blender 生成的 cabin_aframe.glb（devtools/blender/build_cabin.py）+ Kenney 家具（CC0），
+## 材质按名称替换为 Poly Haven PBR 材质（ArtMaterials）。碰撞在这里单独生成，与模型尺寸一致。
 
 const GENERATED := "Generated"
+const CABIN_MODEL := preload("res://assets/imported/cabin/cabin_aframe.glb")
+const FURNITURE := "res://assets/imported/kenney/furniture/"
+const NATURE := "res://assets/imported/kenney/nature/"
 const LENGTH := 10.0       ## x: -5 .. 5
 const HALF_SPAN := 4.4     ## z: -4.4 .. 4.4（屋檐落在地板边缘）
 const RIDGE := 7.0         ## 屋脊高度
@@ -16,7 +19,33 @@ const DOOR_H := 2.2
 const DECK_DEPTH := 3.0    ## 门廊 x: 5 .. 8
 const GROUND_DROP := 0.4   ## 地板比地基平台高 0.4 m（由坡道连接）
 
-var _m: Dictionary = {}
+## 摆件：asset、中心点（局部 x, y, z，y 为底面高度）、朝向（度，0 = 正面朝 +Z）、缩放。
+const PROPS := [
+	{"asset": "loungeSofaCorner", "center": [0.78, 0.0, 2.03], "yaw": 180.0, "scale": 2.3},
+	{"asset": "tableCoffee", "center": [1.35, 0.0, 1.3], "yaw": 0.0, "scale": 2.0},
+	{"asset": "rugRectangle", "center": [1.2, 0.005, 1.45], "yaw": 0.0, "scale": 2.0},
+	{"asset": "books", "center": [1.1, 0.47, 1.25], "yaw": 20.0, "scale": 2.0},
+	{"asset": "lampRoundTable", "center": [1.75, 0.47, 1.35], "yaw": 0.0, "scale": 1.6},
+	{"asset": "pillowLong", "center": [1.1, 0.48, 2.85], "yaw": 180.0, "scale": 2.3},
+	{"asset": "pillow", "center": [0.15, 0.48, 1.9], "yaw": 90.0, "scale": 2.3},
+	{"asset": "bookcaseOpen", "center": [-1.95, 0.0, -2.98], "yaw": 0.0, "scale": 1.8},
+	{"asset": "bookcaseOpen", "center": [-1.2, 0.0, -2.98], "yaw": 0.0, "scale": 1.8},
+	{"asset": "books", "center": [-2.05, 0.03, -2.95], "yaw": 0.0, "scale": 2.4},
+	{"asset": "books", "center": [-1.85, 0.42, -2.95], "yaw": 180.0, "scale": 2.4},
+	{"asset": "books", "center": [-2.0, 0.81, -2.95], "yaw": 0.0, "scale": 2.4},
+	{"asset": "books", "center": [-1.3, 0.03, -2.95], "yaw": 180.0, "scale": 2.4},
+	{"asset": "books", "center": [-1.1, 0.42, -2.95], "yaw": 0.0, "scale": 2.4},
+	{"asset": "books", "center": [-1.25, 1.2, -2.95], "yaw": 180.0, "scale": 2.4},
+	{"asset": "lampSquareFloor", "center": [2.35, 0.0, 2.6], "yaw": 0.0, "scale": 1.9},
+	{"asset": "loungeChairRelax", "center": [-2.4, 0.0, 0.6], "yaw": -110.0, "scale": 2.0},
+	{"asset": "sideTable", "center": [3.9, 0.0, -2.55], "yaw": 0.0, "scale": 2.0},
+	{"asset": "radio", "center": [3.9, 0.76, -2.55], "yaw": 0.0, "scale": 1.8},
+	{"asset": "pottedPlant", "center": [4.2, 0.0, 2.75], "yaw": 30.0, "scale": 2.2},
+	{"asset": "rugDoormat", "center": [6.1, 0.005, 0.0], "yaw": 90.0, "scale": 2.4},
+	{"asset": "bench", "center": [6.4, 0.0, -2.2], "yaw": 90.0, "scale": 2.2},
+	{"asset": "log_stack", "center": [-5.9, -0.4, 2.6], "yaw": 0.0, "scale": 3.0, "nature": true},
+	{"asset": "log_stack", "center": [-5.9, -0.4, 1.4], "yaw": 0.0, "scale": 3.0, "nature": true},
+]
 
 
 ## 必须在子节点进入场景树之前定位：门板 AnimatableBody3D 进树后不会跟随父节点的后续移动。
@@ -42,228 +71,97 @@ func rebuild() -> void:
 	var g := Node3D.new()
 	g.name = GENERATED
 	add_child(g)
-	_make_materials()
+	var model := CABIN_MODEL.instantiate()
+	model.name = "Model"
+	ArtMaterials.restyle_named(model)
+	g.add_child(model)
+	for prop in PROPS:
+		g.add_child(_prop(prop))
+	_build_lights(g)
+	if Engine.is_editor_hint():
+		return
 	var body := StaticBody3D.new()
 	body.name = "Structure"
 	body.collision_layer = PhysicsLayers.WORLD
 	body.collision_mask = 0
 	g.add_child(body)
-	_build_floor(g, body)
-	_build_roof(g, body)
-	_build_gables(g, body)
-	_build_deck(g, body)
-	_build_interior(g, body)
-	_build_lights(g)
-	if not Engine.is_editor_hint():
-		g.add_child(ZoneArea.create_box(&"cabin_interior", Vector3(9.7, 3.6, 7.8), Vector3(0.0, 1.8, 0.0), true))
+	_build_collision(body)
+	g.add_child(ZoneArea.create_box(&"cabin_interior", Vector3(9.7, 3.6, 7.8), Vector3(0.0, 1.8, 0.0), true))
 
 
-func _make_materials() -> void:
-	_m = {
-		"floor": MeshUtil.material(Color(0.55, 0.37, 0.22), 0.7),
-		"lining": MeshUtil.material(Color(0.66, 0.47, 0.29), 0.75),
-		"roof": MeshUtil.material(Color(0.17, 0.13, 0.11), 0.9),
-		"beam": MeshUtil.material(Color(0.40, 0.25, 0.14), 0.8),
-		"frame": MeshUtil.material(Color(0.14, 0.11, 0.09), 0.6),
-		"stone": MeshUtil.material(Color(0.36, 0.35, 0.35), 0.95),
-		"deck": MeshUtil.material(Color(0.45, 0.31, 0.20), 0.85),
-		"fabric": MeshUtil.material(Color(0.62, 0.55, 0.47), 0.95),
-		"cushion": MeshUtil.material(Color(0.55, 0.36, 0.25), 0.95),
-		"rug": MeshUtil.material(Color(0.84, 0.79, 0.70), 1.0),
-		"metal": MeshUtil.material(Color(0.07, 0.07, 0.07), 0.5),
-		"fire": MeshUtil.emissive(Color(1.0, 0.45, 0.12), 4.0),
-		"lamp": MeshUtil.emissive(Color(1.0, 0.78, 0.5), 1.6),
-		"candle": MeshUtil.emissive(Color(1.0, 0.85, 0.6), 1.2),
-	}
-	var glass := StandardMaterial3D.new()
-	glass.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	glass.albedo_color = Color(0.62, 0.72, 0.82, 0.14)
-	glass.roughness = 0.04
-	glass.metallic_specular = 0.8
-	_m["glass"] = glass
+func _prop(prop: Dictionary) -> Node3D:
+	var asset: String = prop["asset"]
+	var path := (NATURE if prop.get("nature", false) else FURNITURE) + asset + ".glb"
+	var info := ArtMaterials.kenney_mesh(path)
+	var aabb: AABB = info["aabb"]
+	var s := float(prop["scale"])
+	var basis := Basis(Vector3.UP, deg_to_rad(float(prop["yaw"]))).scaled(Vector3(s, s, s))
+	var c := Vector3(float(prop["center"][0]), float(prop["center"][1]), float(prop["center"][2]))
+	var bottom_center := Vector3(aabb.get_center().x, aabb.position.y, aabb.get_center().z)
+	var node := (load(path) as PackedScene).instantiate() as Node3D
+	node.name = asset
+	node.transform = Transform3D(basis, c - basis * bottom_center)
+	ArtMaterials.restyle_kenney(node, asset)
+	return node
 
 
-# ---------------------------------------------------------------- 结构
+func _build_lights(g: Node3D) -> void:
+	_omni(g, Vector3(2.35, 1.5, 2.6), Color(1.0, 0.72, 0.45), 1.6, 6.5, false)
+	_omni(g, Vector3(1.75, 0.85, 1.35), Color(1.0, 0.75, 0.48), 0.6, 3.0, false)
+	_omni(g, Vector3(-3.4, 0.65, -1.0), Color(1.0, 0.5, 0.2), 2.4, 6.5, true)
+	_omni(g, Vector3(0.0, 3.4, 0.0), Color(1.0, 0.78, 0.55), 0.45, 7.5, false)
+	_omni(g, Vector3(LENGTH * 0.5 + 0.55, 2.4, 1.25), Color(1.0, 0.7, 0.42), 1.3, 7.0, false)
 
-func _build_floor(g: Node3D, body: StaticBody3D) -> void:
-	_box(g, body, Vector3(LENGTH, 0.3, HALF_SPAN * 2.0), Vector3(0.0, -0.15, 0.0), _m.floor)
-	_box(g, body, Vector3(LENGTH + 0.2, 1.2, HALF_SPAN * 2.0 + 0.2), Vector3(0.0, -0.9, 0.0), _m.stone)
 
+# ---------------------------------------------------------------- 碰撞（与 GLB 几何一致）
 
-func _build_roof(g: Node3D, body: StaticBody3D) -> void:
+func _build_collision(body: StaticBody3D) -> void:
 	var slope_len := Vector2(HALF_SPAN, RIDGE).length()
-	for side in [-1.0, 1.0]:
+	# 地板与石基
+	_solid(body, Vector3(LENGTH, 0.3, HALF_SPAN * 2.0), Vector3(0.0, -0.15, 0.0))
+	_solid(body, Vector3(LENGTH + 0.2, 1.2, HALF_SPAN * 2.0 + 0.2), Vector3(0.0, -0.9, 0.0))
+	# 两侧屋面
+	for side: float in [-1.0, 1.0]:
 		var eave := Vector3(0.0, 0.0, side * HALF_SPAN)
 		var ridge := Vector3(0.0, RIDGE, 0.0)
 		var up_dir := (ridge - eave).normalized()
 		var out := Vector3(0.0, HALF_SPAN, side * RIDGE).normalized()
 		var basis := Basis(Vector3.RIGHT, up_dir, Vector3.RIGHT.cross(up_dir))
-		var mid := (eave + ridge) * 0.5
-		_box(g, null, Vector3(LENGTH + 0.1, slope_len, 0.06), mid + out * 0.03, _m.lining, basis)
-		_box(g, body, Vector3(LENGTH + 0.8, slope_len + 0.5, 0.22), mid + out * 0.17, _m.roof, basis)
-		for x in [-4.6, -2.3, 0.0, 2.3, 4.6]:
-			_box(g, null, Vector3(0.16, slope_len, 0.22), mid - out * 0.11 + Vector3(x, 0.0, 0.0), _m.beam, basis)
-	for x in [-2.3, 0.0, 2.3]:
-		var w := 2.0 * HALF_SPAN * (1.0 - 4.3 / RIDGE)
-		_box(g, null, Vector3(0.14, 0.2, w), Vector3(x, 4.3, 0.0), _m.beam)
-	_box(g, null, Vector3(LENGTH + 0.8, 0.25, 0.25), Vector3(0.0, RIDGE + 0.1, 0.0), _m.beam)
-
-
-func _roof_height_at(z: float) -> float:
-	return RIDGE * (1.0 - absf(z) / HALF_SPAN)
-
-
-func _build_gables(g: Node3D, body: StaticBody3D) -> void:
+		_solid(body, Vector3(LENGTH + 0.8, slope_len + 0.5, 0.22), (eave + ridge) * 0.5 + out * 0.17, basis)
+	# 正立面玻璃（门洞留空）与背墙
 	var front_x := LENGTH * 0.5
-	var y_door_edge := _roof_height_at(DOOR_HALF)
-	# 正立面：玻璃分三块，中间留门洞（门洞上方为一整块玻璃）。
-	var left := PackedVector2Array([Vector2(-HALF_SPAN, 0.0), Vector2(-DOOR_HALF, 0.0), Vector2(-DOOR_HALF, y_door_edge)])
-	var right := PackedVector2Array([Vector2(DOOR_HALF, 0.0), Vector2(HALF_SPAN, 0.0), Vector2(DOOR_HALF, y_door_edge)])
-	var top := PackedVector2Array([Vector2(-DOOR_HALF, DOOR_H), Vector2(DOOR_HALF, DOOR_H),
-		Vector2(DOOR_HALF, y_door_edge), Vector2(0.0, RIDGE), Vector2(-DOOR_HALF, y_door_edge)])
-	for poly in [left, right, top]:
-		_prism(g, body, poly, front_x, 0.06, _m.glass)
-	# 窗框
-	for z in [-(DOOR_HALF + 0.06), DOOR_HALF + 0.06]:
-		_box(g, null, Vector3(0.16, y_door_edge, 0.12), Vector3(front_x, y_door_edge * 0.5, z), _m.frame)
-	for z in [-2.4, 2.4]:
-		var h := _roof_height_at(z)
-		_box(g, null, Vector3(0.16, h, 0.12), Vector3(front_x, h * 0.5, z), _m.frame)
-	for y: float in [DOOR_H + 0.05, 4.5]:
-		var w := 2.0 * HALF_SPAN * (1.0 - y / RIDGE)
-		_box(g, null, Vector3(0.16, 0.12, w), Vector3(front_x, y, 0.0), _m.frame)
-	_box(g, null, Vector3(0.18, 0.1, HALF_SPAN * 2.0), Vector3(front_x, 0.05, 0.0), _m.frame)
-	# 背立面：整块木墙
-	var back := PackedVector2Array([Vector2(-HALF_SPAN, 0.0), Vector2(HALF_SPAN, 0.0), Vector2(0.0, RIDGE)])
-	_prism(g, body, back, -LENGTH * 0.5, 0.18, _m.lining)
-
-
-func _build_deck(g: Node3D, body: StaticBody3D) -> void:
-	var x0 := LENGTH * 0.5
-	_box(g, body, Vector3(DECK_DEPTH, 0.25, 6.0), Vector3(x0 + DECK_DEPTH * 0.5, -0.125, 0.0), _m.deck)
-	_box(g, null, Vector3(DECK_DEPTH, GROUND_DROP + 0.4, 6.0), Vector3(x0 + DECK_DEPTH * 0.5, -0.45 - GROUND_DROP * 0.5, 0.0), _m.stone)
-	# 坡道：门廊边缘 (x=8, y=0) 斜向下，末端埋入地面，保证与地面无台阶。
+	var y_edge := RIDGE * (1.0 - DOOR_HALF / HALF_SPAN)
+	_convex(body, PackedVector2Array([Vector2(-HALF_SPAN, 0.0), Vector2(-DOOR_HALF, 0.0), Vector2(-DOOR_HALF, y_edge)]), front_x, 0.06)
+	_convex(body, PackedVector2Array([Vector2(DOOR_HALF, 0.0), Vector2(HALF_SPAN, 0.0), Vector2(DOOR_HALF, y_edge)]), front_x, 0.06)
+	_convex(body, PackedVector2Array([Vector2(-DOOR_HALF, DOOR_H), Vector2(DOOR_HALF, DOOR_H),
+		Vector2(DOOR_HALF, y_edge), Vector2(0.0, RIDGE), Vector2(-DOOR_HALF, y_edge)]), front_x, 0.06)
+	_convex(body, PackedVector2Array([Vector2(-HALF_SPAN, 0.0), Vector2(HALF_SPAN, 0.0), Vector2(0.0, RIDGE)]), -LENGTH * 0.5, 0.18)
+	# 门廊与坡道
+	_solid(body, Vector3(DECK_DEPTH, 0.25, 6.0), Vector3(front_x + DECK_DEPTH * 0.5, -0.125, 0.0))
 	var run := 3.6
 	var drop := GROUND_DROP + 0.12
-	var angle := atan2(drop, run)
-	var basis := Basis(Vector3.BACK, -angle)
-	var top_mid := Vector3(x0 + DECK_DEPTH + run * 0.5, -drop * 0.5, 0.0)
-	var normal := basis * Vector3.UP
-	_box(g, body, Vector3(Vector2(run, drop).length(), 0.2, 2.2), top_mid - normal * 0.1, _m.deck, basis)
-	# 门廊灯柱
-	_box(g, null, Vector3(0.12, 2.6, 0.12), Vector3(x0 + 0.15, 1.3, 1.25), _m.beam)
-	_box(g, null, Vector3(0.18, 0.26, 0.18), Vector3(x0 + 0.3, 2.45, 1.25), _m.lamp)
+	var ramp_basis := Basis(Vector3.BACK, -atan2(drop, run))
+	var top_mid := Vector3(front_x + DECK_DEPTH + run * 0.5, -drop * 0.5, 0.0)
+	_solid(body, Vector3(Vector2(run, drop).length(), 0.2, 2.2), top_mid - (ramp_basis * Vector3.UP) * 0.1, ramp_basis)
+	# 家具：L 形沙发、茶几、书架、扶手椅、铸铁炉
+	_solid(body, Vector3(2.25, 0.9, 0.92), Vector3(0.78, 0.45, 2.69))
+	_solid(body, Vector3(0.92, 0.9, 1.33), Vector3(0.11, 0.45, 1.57))
+	_solid(body, Vector3(1.32, 0.5, 0.8), Vector3(1.35, 0.25, 1.3))
+	_solid(body, Vector3(1.5, 1.6, 0.45), Vector3(-1.58, 0.8, -2.98))
+	_solid(body, Vector3(1.0, 0.9, 1.0), Vector3(-2.4, 0.45, 0.6))
+	_solid(body, Vector3(0.75, 1.05, 0.6), Vector3(-3.9, 0.52, -1.0))
 
 
-# ---------------------------------------------------------------- 室内
-
-func _build_interior(g: Node3D, body: StaticBody3D) -> void:
-	_box(g, null, Vector3(3.2, 0.02, 2.4), Vector3(0.6, 0.011, 0.5), _m.rug)
-	# 茶几 + 蜡烛
-	_box(g, null, Vector3(1.1, 0.06, 0.6), Vector3(0.6, 0.42, 0.4), _m.beam)
-	for lx in [0.12, 1.08]:
-		for lz in [0.15, 0.65]:
-			_box(g, null, Vector3(0.06, 0.39, 0.06), Vector3(lx, 0.195, lz), _m.beam)
-	_collider(body, Vector3(1.1, 0.45, 0.6), Vector3(0.6, 0.225, 0.4))
-	for c in [Vector3(0.45, 0.5, 0.35), Vector3(0.62, 0.52, 0.45), Vector3(0.78, 0.49, 0.3)]:
-		_box(g, null, Vector3(0.07, (c.y - 0.45) * 2.0, 0.07), Vector3(c.x, c.y, c.z), _m.candle)
-	# 沙发（面向 -Z，背靠右侧斜墙）
-	_box(g, body, Vector3(2.4, 0.42, 0.9), Vector3(0.6, 0.21, 2.4), _m.fabric)
-	_box(g, null, Vector3(2.4, 0.55, 0.22), Vector3(0.6, 0.62, 2.88), _m.fabric)
-	for ax in [-0.6, 1.8]:
-		_box(g, null, Vector3(0.22, 0.62, 0.9), Vector3(ax, 0.31, 2.4), _m.fabric)
-	for cx in [0.1, 1.1]:
-		_box(g, null, Vector3(0.5, 0.4, 0.16), Vector3(cx, 0.62, 2.7), _m.cushion, Basis(Vector3.RIGHT, 0.25))
-	_collider(body, Vector3(2.65, 0.85, 1.0), Vector3(0.6, 0.425, 2.45))
-	# 书架（左侧斜墙下）
-	_box(g, body, Vector3(2.0, 1.5, 0.35), Vector3(-1.6, 0.75, -3.05), _m.beam)
-	var book_colors := [Color(0.45, 0.16, 0.12), Color(0.18, 0.28, 0.35), Color(0.62, 0.52, 0.32), Color(0.2, 0.3, 0.2)]
-	for shelf in 3:
-		var bx := -2.5
-		var i := 0
-		while bx < -0.75:
-			var w := 0.06 + 0.04 * float((i * 7) % 3)
-			var h := 0.26 + 0.04 * float((i * 5) % 3)
-			_box(g, null, Vector3(w, h, 0.24), Vector3(bx + w * 0.5, 0.15 + shelf * 0.45 + h * 0.5, -2.86), MeshUtil.material(book_colors[i % 4], 0.8))
-			bx += w + 0.015
-			i += 1
-	# 铸铁炉 + 烟囱 + 石质炉台
-	var stove := Vector3(-3.9, 0.0, -1.0)
-	_box(g, null, Vector3(1.5, 0.05, 1.3), stove + Vector3(0.1, 0.025, 0.0), _m.stone)
-	_box(g, null, Vector3(0.55, 0.18, 0.42), stove + Vector3(0.0, 0.14, 0.0), _m.metal)
-	_box(g, null, Vector3(0.7, 0.72, 0.56), stove + Vector3(0.0, 0.59, 0.0), _m.metal)
-	_box(g, null, Vector3(0.02, 0.34, 0.42), stove + Vector3(0.36, 0.6, 0.0), _m.fire)
-	_collider(body, Vector3(0.75, 0.95, 0.6), stove + Vector3(0.0, 0.475, 0.0))
-	var flue := CylinderMesh.new()
-	flue.top_radius = 0.09
-	flue.bottom_radius = 0.09
-	flue.height = 6.4
-	flue.radial_segments = 10
-	flue.material = _m.metal
-	var flue_mi := MeshInstance3D.new()
-	flue_mi.mesh = flue
-	flue_mi.position = stove + Vector3(0.0, 0.95 + 3.2, 0.0)
-	g.add_child(flue_mi)
-	# 落地灯
-	var lamp := Vector3(2.3, 0.0, 2.55)
-	_box(g, null, Vector3(0.3, 0.03, 0.3), lamp + Vector3(0.0, 0.015, 0.0), _m.metal)
-	_box(g, null, Vector3(0.04, 1.4, 0.04), lamp + Vector3(0.0, 0.72, 0.0), _m.metal)
-	var shade := CylinderMesh.new()
-	shade.top_radius = 0.15
-	shade.bottom_radius = 0.24
-	shade.height = 0.3
-	shade.radial_segments = 12
-	shade.material = _m.lamp
-	var shade_mi := MeshInstance3D.new()
-	shade_mi.mesh = shade
-	shade_mi.position = lamp + Vector3(0.0, 1.5, 0.0)
-	g.add_child(shade_mi)
-
-
-func _build_lights(g: Node3D) -> void:
-	_omni(g, Vector3(2.3, 1.45, 2.55), Color(1.0, 0.72, 0.45), 1.6, 6.5, false)
-	_omni(g, Vector3(-3.4, 0.65, -1.0), Color(1.0, 0.5, 0.2), 2.2, 6.0, true)
-	_omni(g, Vector3(0.0, 3.4, 0.0), Color(1.0, 0.78, 0.55), 0.5, 7.5, false)
-	_omni(g, Vector3(LENGTH * 0.5 + 0.5, 2.4, 1.25), Color(1.0, 0.7, 0.42), 1.3, 7.0, false)
-
-
-# ---------------------------------------------------------------- 工具
-
-func _box(parent: Node3D, body: StaticBody3D, size: Vector3, pos: Vector3, mat: Material, basis := Basis()) -> void:
-	var bm := BoxMesh.new()
-	bm.size = size
-	bm.material = mat
-	var mi := MeshInstance3D.new()
-	mi.mesh = bm
-	mi.transform = Transform3D(basis, pos)
-	parent.add_child(mi)
-	if body != null:
-		var shape := BoxShape3D.new()
-		shape.size = size
-		var cs := CollisionShape3D.new()
-		cs.shape = shape
-		cs.transform = mi.transform
-		body.add_child(cs)
-
-
-func _collider(body: StaticBody3D, size: Vector3, pos: Vector3) -> void:
+func _solid(body: StaticBody3D, size: Vector3, pos: Vector3, basis := Basis()) -> void:
 	var shape := BoxShape3D.new()
 	shape.size = size
 	var cs := CollisionShape3D.new()
 	cs.shape = shape
-	cs.position = pos
+	cs.transform = Transform3D(basis, pos)
 	body.add_child(cs)
 
 
-func _prism(parent: Node3D, body: StaticBody3D, poly: PackedVector2Array, x_center: float, thickness: float, mat: Material) -> void:
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	MeshUtil.add_prism_x(st, poly, x_center, thickness)
-	var mesh := st.commit()
-	mesh.surface_set_material(0, mat)
-	var mi := MeshInstance3D.new()
-	mi.mesh = mesh
-	parent.add_child(mi)
+func _convex(body: StaticBody3D, poly: PackedVector2Array, x_center: float, thickness: float) -> void:
 	var shape := ConvexPolygonShape3D.new()
 	shape.points = MeshUtil.prism_x_points(poly, x_center, thickness)
 	var cs := CollisionShape3D.new()
