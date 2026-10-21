@@ -18,6 +18,7 @@
 [ext_resource type="Script" path="res://scripts/systems/PerformanceDirector.gd" id="16_perf"]
 [ext_resource type="Script" path="res://scripts/ui/ActionBar.gd" id="17_actionbar"]
 [ext_resource type="Script" path="res://scripts/ui/WorldMap.gd" id="18_worldmap"]
+[ext_resource type="Script" path="res://scripts/world/FairyGlade.gd" id="19_fairy"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_main")
@@ -65,3 +66,6 @@ script = ExtResource("17_actionbar")
 
 [node name="WorldMap" type="CanvasLayer" parent="."]
 script = ExtResource("18_worldmap")
+
+[node name="FairyGlade" type="Node3D" parent="."]
+script = ExtResource("19_fairy")

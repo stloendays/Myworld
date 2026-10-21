@@ -60,6 +60,7 @@ const DEFAULTS := {
 	"dynamic_resolution": true,       ## 按 GPU 帧时自动调 3D 渲染比例
 	"fly_speed": 10.0,
 	"emote_third_person": true,       ## 挥手 / 跳舞 / 鼓掌时自动切到第三人称看自己，做完切回
+	"auto_update_check": true,        ## 启动时到 GitHub 检查新版本（只在导出的游戏里）
 	"language": "auto",               ## 界面语言：auto（默认，跟随系统）/ en / zh
 }
 
@@ -82,6 +83,7 @@ var graphics_quality := "high"
 var dynamic_resolution := true
 var fly_speed := 10.0
 var emote_third_person := true
+var auto_update_check := true
 var language := "auto"
 
 var developer_mode := false

@@ -27,6 +27,56 @@ static var _snow_pass: ShaderMaterial = null
 static var _snow_on := false
 
 
+## 立牌用的羊皮纸面：程序生成（暖米色 + 细噪点纤维 + 四边渐深），带一点自发光，夜里也读得清。
+static func parchment() -> StandardMaterial3D:
+	if _cache.has("parchment"):
+		return _cache["parchment"]
+	var n := 256
+	var img := Image.create(n, n, false, Image.FORMAT_RGB8)
+	var noise := FastNoiseLite.new()
+	noise.seed = 7
+	noise.frequency = 0.035
+	var fiber := FastNoiseLite.new()
+	fiber.seed = 11
+	fiber.frequency = 0.25
+	var base := Color(0.95, 0.89, 0.74)
+	var edge := Color(0.78, 0.64, 0.44)
+	for y in n:
+		for x in n:
+			var u := (x + 0.5) / n
+			var v := (y + 0.5) / n
+			var d := minf(minf(u, 1.0 - u), minf(v, 1.0 - v))
+			var c := base.lerp(edge, 1.0 - smoothstep(0.0, 0.16, d))
+			var k := noise.get_noise_2d(x, y) * 0.05 + fiber.get_noise_2d(x * 0.3, y * 3.0) * 0.025
+			img.set_pixel(x, y, Color(c.r + k, c.g + k, c.b + k * 0.8))
+	img.generate_mipmaps()
+	var m := StandardMaterial3D.new()
+	m.albedo_texture = ImageTexture.create_from_image(img)
+	m.roughness = 0.95
+	m.emission_enabled = true
+	m.emission = Color(0.95, 0.88, 0.72)
+	m.emission_energy_multiplier = 0.12
+	_cache["parchment"] = m
+	return m
+
+
+## 仙境水晶：半透明、自发光、表面光滑。
+static func crystal(color: Color) -> StandardMaterial3D:
+	var key := "crystal:" + color.to_html()
+	if _cache.has(key):
+		return _cache[key]
+	var m := StandardMaterial3D.new()
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.albedo_color = Color(color.r, color.g, color.b, 0.72)
+	m.roughness = 0.12
+	m.metallic_specular = 0.9
+	m.emission_enabled = true
+	m.emission = color
+	m.emission_energy_multiplier = 1.6
+	_cache[key] = m
+	return m
+
+
 static func texture(id: String, map: String) -> Texture2D:
 	return load("%s%s/%s_%s_1k.jpg" % [TEX_DIR, id, id, map]) as Texture2D
 

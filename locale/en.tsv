@@ -373,3 +373,27 @@ Tab / Esc 关闭	Tab / Esc to close
 湖、森林、木屋、玻璃泳池馆与地下水族馆。	A lake, forest, cabin, glass pool house and an underground aquarium.
 规划中：以后从暮色湖畔的传送门进入。	Planned: you will enter it through a portal from Dusk Lake.
 规划中。	Planned.
+正在检查更新…	Checking for updates…
+检查更新失败（网络不通或 GitHub 暂时不可用）	Update check failed (no network, or GitHub is unavailable)
+还没有可下载的版本	No downloadable release yet
+已是最新版本（v%s）	You have the latest version (v%s)
+发现新版本 v%s	New version v%s available
+发现新版本 v%s · 在大厅或 设置 → 关于 里一键更新	New version v%s · update with one click in the lobby or Settings → About
+只有导出的游戏能自动更新，请到 GitHub 下载	Only the released game can update itself; please download it from GitHub
+正在下载 v%s…	Downloading v%s…
+下载失败（%d）	Download failed (%d)
+v%s 已下载，正在重启…	v%s downloaded, restarting…
+下载的文件不见了	The downloaded file is missing
+下载不完整（%d / %d 字节）	Download incomplete (%d / %d bytes)
+文件校验不通过，已删除下载	Checksum mismatch; the download was deleted
+更新并重启	Update and restart
+关于	About
+启动时自动检查更新	Check for updates at startup
+检查更新	Check for updates
+打开发布页	Open releases page
+还没检查过更新	Not checked yet
+仙境林地	Fairy Glade
+传送门	Portal
+E  走进传送门	E  Step through the portal
+小仙子	Fairy
+东南方的林子里亮起了奇异的光……仙境林地出现了	A strange light glows in the woods to the southeast… the Fairy Glade has appeared

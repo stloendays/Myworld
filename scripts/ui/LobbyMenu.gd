@@ -18,6 +18,10 @@ var _open := false
 
 var _name_edit: LineEdit
 var _lang: OptionButton
+var _update_box: PanelContainer
+var _update_label: Label
+var _update_button: Button
+var _update_bar: ProgressBar
 var _code_edit: LineEdit
 var _join_status: Label
 var _join_button: Button
@@ -291,6 +295,7 @@ func _build_home() -> Control:
 	sub.text = "暮色湖畔 · 一片属于你的湖"
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(sub)
+	box.add_child(_build_update_banner())
 
 	var name_row := _row(box, "你的名字")
 	_name_edit = LineEdit.new()
@@ -314,6 +319,52 @@ func _build_home() -> Control:
 
 	box.add_child(_button("退出游戏", func() -> void: get_tree().quit()))
 	return box
+
+
+## 有新版本时出现在大厅首页的横幅：版本号、“更新并重启”按钮、下载进度条。
+func _build_update_banner() -> Control:
+	_update_box = PanelContainer.new()
+	var st := StyleBoxFlat.new()
+	st.bg_color = Color(0.32, 0.24, 0.08, 0.85)
+	st.border_color = Color(0.95, 0.78, 0.4)
+	st.set_border_width_all(1)
+	st.set_corner_radius_all(6)
+	st.set_content_margin_all(10)
+	_update_box.add_theme_stylebox_override("panel", st)
+	var v := VBoxContainer.new()
+	_update_box.add_child(v)
+	var row := HBoxContainer.new()
+	v.add_child(row)
+	_update_label = Label.new()
+	_update_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_update_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	row.add_child(_update_label)
+	_update_button = Button.new()
+	_update_button.text = "更新并重启"
+	_update_button.pressed.connect(Updater.download_and_install)
+	row.add_child(_update_button)
+	_update_bar = ProgressBar.new()
+	_update_bar.max_value = 1.0
+	_update_bar.show_percentage = false
+	_update_bar.custom_minimum_size = Vector2(0, 8)
+	v.add_child(_update_bar)
+	Updater.status_changed.connect(func(_s: int, _t: String) -> void: _sync_update())
+	_sync_update()
+	return _update_box
+
+
+func _sync_update() -> void:
+	var s := Updater.state
+	_update_box.visible = s in [Updater.State.AVAILABLE, Updater.State.DOWNLOADING, Updater.State.READY] \
+		or (s == Updater.State.FAILED and Updater.latest_version != "")
+	_update_label.text = Updater.status_text
+	_update_button.visible = s == Updater.State.AVAILABLE
+	_update_bar.visible = s == Updater.State.DOWNLOADING
+
+
+func _process(_delta: float) -> void:
+	if _update_bar != null and _update_bar.visible:
+		_update_bar.value = Updater.download_progress
 
 
 func _build_join() -> Control:

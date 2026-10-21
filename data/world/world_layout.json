@@ -25,7 +25,8 @@
     "pads": [
       {"id": "cabin_pad", "center": [-66, 37], "radius": 11.5, "blend": 9.0, "height": 2.0},
       {"id": "dock_landing", "center": [-45, 26], "radius": 3.5, "blend": 10.0, "height": 1.0},
-      {"id": "poolhouse_pad", "center": [4, 84], "radius": 18.0, "blend": 8.0, "height": 2.0}
+      {"id": "poolhouse_pad", "center": [4, 84], "radius": 18.0, "blend": 8.0, "height": 2.0},
+      {"id": "fairy_glade_pad", "center": [76, 88], "radius": 15.0, "blend": 10.0, "height": 6.6}
     ],
     "pits": [
       {"id": "poolhouse_basement", "rect": [-8.5, 75.5, 16.5, 92.5], "floor": -10.6}
@@ -70,6 +71,13 @@
 
   "canoe": {"pos": [-28.0, 24.0], "heading": 90.0},
 
+  "fairy_glade": {
+    "zone_id": "fairy_glade",
+    "center": [76, 88],
+    "radius": 15.0,
+    "portal": {"offset": [10.0, 0.0], "yaw_deg": -90.0, "world": "world_02"}
+  },
+
   "lake_pois": [
     {"id": "dock_end", "name": "码头尽头", "name_en": "Dock End", "center": [-2, 26], "radius": 5},
     {"id": "lake_islet", "name": "湖心小岛", "name_en": "Lake Islet", "center": [42, -6], "radius": 16,
@@ -88,7 +96,8 @@
   "signs": [
     {"id": "sign_trail_poolhouse", "text": "trail_poolhouse", "pos": [-47.0, 32.0], "yaw_deg": 180.0, "style": "stand", "width": 1.6, "scale": 1.5},
     {"id": "sign_canoe", "text": "canoe_dock", "pos": [-43.8, 22.6], "yaw_deg": -90.0, "style": "stand", "width": 1.5, "scale": 1.4},
-    {"id": "sign_islet", "text": "lake_islet", "pos": [37.6, -3.2], "yaw_deg": -70.0, "style": "stand", "width": 1.4, "scale": 1.4}
+    {"id": "sign_islet", "text": "lake_islet", "pos": [37.6, -3.2], "yaw_deg": -70.0, "style": "stand", "width": 1.4, "scale": 1.4},
+    {"id": "sign_fairy_glade", "text": "fairy_glade", "pos": [62.5, 90.6], "yaw_deg": -115.0, "style": "stand", "width": 1.5, "scale": 1.45}
   ],
 
   "dev_spots": [
@@ -101,6 +110,7 @@
     {"name": "泳池大厅", "pos": [-0.3, 2.0, 84.0], "heading": 90.0},
     {"name": "地下水族馆", "pos": [-0.5, -5.0, 87.5], "heading": 90.0},
     {"name": "海洋大缸（潜水）", "pos": [4.0, -5.6, 78.4], "heading": 90.0},
+    {"name": "仙境林地", "pos": [62.0, 88.0], "ground": true, "heading": 90.0},
     {"name": "南部草甸", "pos": [-84.0, 93.0], "ground": true, "heading": 0.0},
     {"name": "西北观景点", "pos": [-93.0, -101.0], "ground": true, "heading": 135.0},
     {"name": "湖心上空（飞行）", "pos": [35.0, 30.0, -2.0], "heading": 250.0, "fly": true}
@@ -118,7 +128,8 @@
     {"zone_id": "north_forest", "name": "北部针叶林", "center": [-85, -70], "size": [80, 70]},
     {"zone_id": "nw_viewpoint", "name": "西北观景点", "center": [-93, -101], "size": [24, 24]},
     {"zone_id": "south_meadow", "name": "南部林间草甸", "center": [-84, 93], "size": [60, 40]},
-    {"zone_id": "poolhouse_grounds", "name": "泳池馆前庭", "center": [4, 84], "size": [32, 28]}
+    {"zone_id": "poolhouse_grounds", "name": "泳池馆前庭", "center": [4, 84], "size": [32, 28]},
+    {"zone_id": "fairy_glade", "name": "仙境林地", "center": [76, 88], "size": [32, 32]}
   ],
 
   "paths": [
@@ -126,7 +137,8 @@
     {"id": "trail_west", "points": [[-103, 72], [-100, 52], [-94, 36], [-84, 24]]},
     {"id": "trail_meadow", "points": [[-57, 38], [-64, 52], [-74, 68], [-84, 90], [-98, 104]]},
     {"id": "dock_walk", "points": [[-57, 37], [-51, 31], [-46, 26]]},
-    {"id": "trail_poolhouse", "points": [[-51, 31], [-40, 44], [-25, 58], [-15, 70], [-12, 80], [-11, 84]]}
+    {"id": "trail_poolhouse", "points": [[-51, 31], [-40, 44], [-25, 58], [-15, 70], [-12, 80], [-11, 84]]},
+    {"id": "trail_fairy", "points": [[-15, 70], [2, 68], [20, 70], [36, 76], [50, 84], [62, 88], [68, 88]]}
   ],
 
   "forest": {
@@ -152,7 +164,8 @@
       {"id": "cabin_clearing", "center": [-66, 37], "radius": 14},
       {"id": "lakeside_lawn", "center": [-47, 24], "radius": 11},
       {"id": "viewpoint_top", "center": [-93, -101], "radius": 13},
-      {"id": "poolhouse_clearing", "center": [4, 84], "radius": 21}
+      {"id": "poolhouse_clearing", "center": [4, 84], "radius": 21},
+      {"id": "fairy_glade_clearing", "center": [76, 88], "radius": 17}
     ],
     "rock_count": 160,
     "rock_seed": 4411

@@ -175,7 +175,8 @@ func _flutter(delta: float) -> void:
 	_speed = float(def.get("speed", 1.2))
 	if to.length() < 0.3:
 		_target = _random_point()
-		_target.y += _rng.randf_range(0.4, 1.8)
+		var fh: Array = def.get("fly_height", [0.4, 1.8])
+		_target.y += _rng.randf_range(float(fh[0]), float(fh[1]))
 	var wobble := Vector3(sin(Time.get_ticks_msec() * 0.007 + _variant), cos(Time.get_ticks_msec() * 0.011 + _variant) * 0.6, 0.0) * 0.6
 	var v := to.normalized() * _speed + wobble
 	pos += v * delta

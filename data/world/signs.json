@@ -62,5 +62,11 @@
     "title_en": "Lake Islet",
     "body_zh": "只有划独木舟才能到这里。岛上有个小营地，晴朗的夜晚适合坐在营火边看星星。",
     "body_en": "You can only get here by canoe. There is a small camp on the islet; on a clear night, sit by the campfire and watch the stars."
+  },
+  "fairy_glade": {
+    "title_zh": "仙境林地",
+    "title_en": "Fairy Glade",
+    "body_zh": "白天这里只是一片安静的林间空地。到了晴朗的夜里（20:00 到凌晨 4:30），仙境会从地里长出来：发光的仙树、蘑菇圈、漂浮的小岛和小瀑布，还有成群的小仙子。林地尽头的月光石门通往别的世界——那些世界还在建造中。",
+    "body_en": "By day this is just a quiet clearing. On clear nights (20:00 to 4:30) a fairy glade grows out of the ground: a luminous tree, a ring of glowing mushrooms, floating islets with little waterfalls, and flocks of tiny fairies. The moonstone gate at the far end leads to other worlds, which are still being built."
   }
 }

@@ -1128,3 +1128,75 @@ msgstr "Planned: you will enter it through a portal from Dusk Lake."
 msgid "规划中。"
 msgstr "Planned."
 
+msgid "正在检查更新…"
+msgstr "Checking for updates…"
+
+msgid "检查更新失败（网络不通或 GitHub 暂时不可用）"
+msgstr "Update check failed (no network, or GitHub is unavailable)"
+
+msgid "还没有可下载的版本"
+msgstr "No downloadable release yet"
+
+msgid "已是最新版本（v%s）"
+msgstr "You have the latest version (v%s)"
+
+msgid "发现新版本 v%s"
+msgstr "New version v%s available"
+
+msgid "发现新版本 v%s · 在大厅或 设置 → 关于 里一键更新"
+msgstr "New version v%s · update with one click in the lobby or Settings → About"
+
+msgid "只有导出的游戏能自动更新，请到 GitHub 下载"
+msgstr "Only the released game can update itself; please download it from GitHub"
+
+msgid "正在下载 v%s…"
+msgstr "Downloading v%s…"
+
+msgid "下载失败（%d）"
+msgstr "Download failed (%d)"
+
+msgid "v%s 已下载，正在重启…"
+msgstr "v%s downloaded, restarting…"
+
+msgid "下载的文件不见了"
+msgstr "The downloaded file is missing"
+
+msgid "下载不完整（%d / %d 字节）"
+msgstr "Download incomplete (%d / %d bytes)"
+
+msgid "文件校验不通过，已删除下载"
+msgstr "Checksum mismatch; the download was deleted"
+
+msgid "更新并重启"
+msgstr "Update and restart"
+
+msgid "关于"
+msgstr "About"
+
+msgid "启动时自动检查更新"
+msgstr "Check for updates at startup"
+
+msgid "检查更新"
+msgstr "Check for updates"
+
+msgid "打开发布页"
+msgstr "Open releases page"
+
+msgid "还没检查过更新"
+msgstr "Not checked yet"
+
+msgid "仙境林地"
+msgstr "Fairy Glade"
+
+msgid "传送门"
+msgstr "Portal"
+
+msgid "E  走进传送门"
+msgstr "E  Step through the portal"
+
+msgid "小仙子"
+msgstr "Fairy"
+
+msgid "东南方的林子里亮起了奇异的光……仙境林地出现了"
+msgstr "A strange light glows in the woods to the southeast… the Fairy Glade has appeared"
+

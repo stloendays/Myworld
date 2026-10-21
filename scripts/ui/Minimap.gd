@@ -164,6 +164,10 @@ func _draw_map() -> void:
 		_canvas.draw_line(WorldLayout.v2(dock["from"]), WorldLayout.v2(dock["to"]), DOCK_COLOR, float(dock.get("width", 2.6)))
 	_draw_building(WorldLayout.section("cabin"), Vector2(Cabin.LENGTH + Cabin.DECK_DEPTH, Cabin.HALF_SPAN * 2.0), Vector2(Cabin.DECK_DEPTH * 0.5, 0.0), Color(0.62, 0.33, 0.22))
 	_draw_building(WorldLayout.section("poolhouse"), Vector2(PoolHouse.HX * 2.0, PoolHouse.HZ * 2.0), Vector2.ZERO, Color(0.55, 0.74, 0.84))
+	# 仙境只在出现的夜里画出来
+	var glade := get_tree().get_first_node_in_group("fairy_glade") as FairyGlade
+	if glade != null and glade.active:
+		_canvas.draw_circle(Vector2(glade.position.x, glade.position.z), glade.radius, Color(0.86, 0.66, 1.0, 0.55))
 	_canvas.draw_set_transform_matrix(Transform2D.IDENTITY)
 
 
