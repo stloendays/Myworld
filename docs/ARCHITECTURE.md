@@ -31,6 +31,7 @@ Main (Main.gd)
 │   ├── Body (CharacterModel)            方块人物：6 部位 × 7 外观插槽 + 4 挂点，渲染层 player_body
 │   └── Head ── InteractRay / CameraBoom(SpringArm3D) ── Camera3D   V 切换第一/第三人称
 ├── HUD / PauseMenu（含人物外观面板）/ DebugOverlay / WeatherDebugPanel（F4）
+└── ChatBox（Main 启动时创建）           左下角聊天框与 / 命令
 ```
 
 木屋是主场景里常驻的真实子场景；进屋只是角色走进一个 `Area3D`。工程中没有任何场景切换调用（自动检查会扫描 `scripts/`）。
@@ -63,6 +64,7 @@ Main (Main.gd)
 | `CharacterModel` / `CharacterAppearance` / `Wardrobe` | 已实现 | 方块人物、可序列化外观、衣橱目录（`data/characters/`） |
 | `PoolHouse` / `WaterVolume` / `UnderwaterOverlay` | 已实现 | 泳池馆与地下水族馆（地形 `pits` 挖坑、`keepouts` 避让植被与动物）；可游泳水体（`water_volume` 组，玩家按身体中部所在水体切换游泳）；相机在水面以下时的滤镜 |
 | `FaunaSpawner` / `Animal` / `FishSchool` / `FaunaData` | 已实现 | 小动物按 `data/animals/species.json` 生成；出没规则只读 WorldState；每只有稳定 `entity_id`；鱼群只在缸的 AABB 内游 |
+| `ChatBox` / `ChatCommands` | M2 扩展已实现 | 聊天框：订阅 `weather_changed`、`season_changed` 写系统消息；命令只调用 `ClimateSystem`、`WorldTerrain` 等已有入口，不存世界状态；聊天名字存 `user://chat.json` |
 | `AudioDirector` | M3 接口占位 | 订阅区域与天气事件做室内外混音 |
 | `SaveManager` | M4 接口占位 | `user://saves/` 版本化 JSON |
 

@@ -8,6 +8,7 @@ extends Node
 ## 天气过渡、时钟速率、积雪累积；人物：部位与插槽、换装、第一/第三人称、走路摆腿。
 ## 泳池馆：开门进馆 → 楼梯下到水族馆；泳池漂浮 → 池底洞口 → 玻璃水管 → 下潜池 → 坡道上岸；深水区爬上岸；
 ## 小动物：数量与 id、季节/昼夜/天气规则、兔子见人就跑、鱼不出缸；雷暴闪电、彩虹、大风、落叶。
+## 聊天框：按键开关、打字时人物不动、消息转义、命令（时刻 / 季节 / 天气 / 传送 / 清屏）、系统消息。
 
 const MAIN_SCENE := "res://scenes/main/Main.tscn"
 const MAX_STEP := 0.5          ## 单个物理帧允许的最大位移（米），超过视为瞬移
@@ -55,6 +56,7 @@ func _run() -> void:
 	await _test_character()
 	_house = _main.get_node("PoolHouse") as PoolHouse
 	_test_signs()
+	await _test_chat()
 	await _test_poolhouse_walk()
 	await _test_poolhouse_swim()
 	await _test_pool_climb_out()
@@ -696,6 +698,104 @@ func _slot_mesh(body: CharacterModel, part: String, slot: String) -> Mesh:
 	var holder := body.slot_node(part, slot)
 	var mi := holder.get_node_or_null("Mesh") as MeshInstance3D if holder != null else null
 	return mi.mesh if mi != null else null
+
+# ---------------------------------------------------------------- 聊天框
+
+func _test_chat() -> void:
+	var chat := get_tree().get_first_node_in_group("chat_box") as ChatBox
+	var climate := get_tree().get_first_node_in_group("climate_system") as ClimateSystem
+	_check("聊天框随 Main 创建，启动时有欢迎消息", chat != null and not chat.messages.is_empty() and chat.messages[0]["kind"] == "system",
+		"%d 条消息" % (chat.messages.size() if chat != null else 0))
+	if chat == null:
+		return
+	await _setup_at(Vector2(-50.0, 29.0), 0.0)
+
+	# 按键：T 打开、Esc 关闭（Esc 不打开暂停菜单）；/ 打开时输入行预填 "/"
+	var pause := _main.get_node("PauseMenu")
+	Input.parse_input_event(_key(KEY_T, true))
+	Input.parse_input_event(_key(KEY_T, false))
+	await _frames(2)
+	var opened_t := chat.is_open() and chat._field.text == ""
+	Input.parse_input_event(_key(KEY_ESCAPE, true))
+	Input.parse_input_event(_key(KEY_ESCAPE, false))
+	await _frames(2)
+	var closed_esc: bool = not chat.is_open() and not pause.is_open() and not get_tree().paused
+	Input.parse_input_event(_key(KEY_SLASH, true))
+	Input.parse_input_event(_key(KEY_SLASH, false))
+	await _frames(2)
+	var opened_slash := chat.is_open() and chat._field.text == "/"
+	_check("T 打开聊天、Esc 只关聊天不暂停、/ 打开时预填命令符", opened_t and closed_esc and opened_slash,
+		"T %s · Esc %s · / %s" % [opened_t, closed_esc, opened_slash])
+
+	# 打字时人物不走（W 键按住也不动），关闭后恢复移动
+	var start := _player.global_position
+	Input.action_press("move_forward")
+	await _seconds(0.8)
+	var moved_open := Vector2(_player.global_position.x - start.x, _player.global_position.z - start.z).length()
+	chat.close()
+	await _seconds(0.8)
+	Input.action_release("move_forward")
+	var moved_closed := Vector2(_player.global_position.x - start.x, _player.global_position.z - start.z).length() - moved_open
+	_check("聊天框打开时按 W 人物不动，关闭后恢复行走", moved_open < 0.05 and moved_closed > 1.0 and not _player.autopilot_enabled,
+		"打开时位移 %.2f m，关闭后 0.8 s 位移 %.2f m" % [moved_open, moved_closed])
+	await _seconds(0.5)
+
+	# 普通消息带名字，方括号不被当作富文本标记
+	chat.submit("  你好 [b]湖畔[/b]  ")
+	var last: Dictionary = chat.messages[-1]
+	var line := ChatBox.format_line(last)
+	_check("发送消息：去掉首尾空格、带玩家名字、方括号原样显示", last["kind"] == "player" and last["author"] == chat.player_name \
+		and last["text"] == "你好 [b]湖畔[/b]" and line.contains("[lb]b]") and not line.contains("[b]"), line)
+
+	# 命令
+	chat.submit("/time 18:30")
+	var time_ok := absf(WorldState.time_minutes - 1110.0) < 1.0
+	chat.submit("/season 冬")
+	var season_ok := WorldState.season_id == &"WINTER"
+	chat.submit("/weather 雷雨")
+	var refused: bool = chat.messages[-1]["kind"] == "error" and WorldState.weather_id != &"THUNDERSTORM"
+	chat.submit("/weather 下雪")
+	var snow_ok := WorldState.weather_id == &"SNOW"
+	chat.submit("/foo")
+	var unknown: bool = chat.messages[-1]["kind"] == "error"
+	_check("命令：/time 设时刻、/season 跳季、/weather 切天气且拒绝本季没有的天气、未知命令报错",
+		time_ok and season_ok and refused and snow_ok and unknown,
+		"time %s · season %s · 冬季拒绝雷雨 %s · 下雪 %s · 未知 %s" % [time_ok, season_ok, refused, snow_ok, unknown])
+	var count := chat.messages.size()
+	await _seconds(10.0)
+	var notice := false
+	for i in range(count, chat.messages.size()):
+		notice = notice or (chat.messages[i]["kind"] == "system" and str(chat.messages[i]["text"]).contains("下雪"))
+	_check("天气过渡完成后聊天框收到系统消息", notice, "新增 %d 条" % (chat.messages.size() - count))
+
+	# 传送只到室外地面
+	chat.submit("/tp -84 93")
+	await _frames(2)
+	var tp_ok := Vector2(_player.global_position.x, _player.global_position.z).distance_to(Vector2(-84, 93)) < 0.1
+	var before := _player.global_position
+	chat.submit("/tp -66 37")
+	var no_house: bool = chat.messages[-1]["kind"] == "error" and _player.global_position == before
+	chat.submit("/tp 35 -2")
+	var no_lake: bool = chat.messages[-1]["kind"] == "error" and _player.global_position == before
+	await _seconds(1.0)
+	var landed := _player.is_on_floor()
+	chat.submit("/tp 出生点")
+	_check("/tp 传送到室外地面并落地，拒绝传进木屋或湖面", tp_ok and landed and no_house and no_lake,
+		"草甸 %s · 落地 %s · 拒绝木屋 %s · 拒绝湖面 %s" % [tp_ok, landed, no_house, no_lake])
+
+	chat.submit("/clear")
+	_check("/clear 清空记录", chat.messages.is_empty())
+	climate.apply_preset("Autumn_Dusk_Clear")
+	await _seconds(0.6)
+
+
+func _key(keycode: Key, pressed: bool) -> InputEventKey:
+	var ev := InputEventKey.new()
+	ev.physical_keycode = keycode
+	ev.keycode = keycode
+	ev.pressed = pressed
+	return ev
+
 
 # ---------------------------------------------------------------- 工具
 
