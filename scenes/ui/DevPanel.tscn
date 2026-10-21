@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/DevPanel.gd" id="1_wpanel"]
+
+[node name="DevPanel" type="CanvasLayer"]
+script = ExtResource("1_wpanel")

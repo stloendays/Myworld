@@ -35,6 +35,7 @@ window/size/viewport_height=900
 3d_render/layer_2="water"
 3d_render/layer_3="player_body"
 3d_render/layer_4="falling_leaves"
+3d_render/layer_5="first_person_arms"
 
 [shader_globals]
 

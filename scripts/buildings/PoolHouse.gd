@@ -86,8 +86,10 @@ func rebuild() -> void:
 	_build_water_volumes(g)
 	g.add_child(ZoneArea.create_box(&"poolhouse", Vector3(23.6, 4.2, 15.6), Vector3(0.0, 2.1, 0.0), true))
 	g.add_child(ZoneArea.create_box(&"aquarium", Vector3(23.6, 3.3, 15.6), Vector3(0.0, -5.4, 0.0), true))
-	# 整栋楼（含屋顶）挡住落叶：玻璃墙外的叶子照常飘，馆内不会有
-	g.add_child(Precipitation.leaf_blocker(Vector3(HX * 2.0 + 1.2, WALL_H + 0.8, HZ * 2.0 + 1.2), Transform3D(Basis(), Vector3(0.0, (WALL_H + 0.8) * 0.5 - 0.2, 0.0))))
+	# 整栋楼（含屋顶和地下水族馆）挡住落叶：玻璃墙外的叶子照常飘，馆内和地下都不会有
+	var leaf_top := WALL_H + 0.6
+	var leaf_bottom := BASIN_FLOOR - 0.5
+	g.add_child(Precipitation.leaf_blocker(Vector3(HX * 2.0 + 1.2, leaf_top - leaf_bottom, HZ * 2.0 + 1.2), Transform3D(Basis(), Vector3(0.0, (leaf_top + leaf_bottom) * 0.5, 0.0))))
 	_populate_tanks(g)
 
 

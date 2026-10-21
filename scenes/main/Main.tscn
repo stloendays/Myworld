@@ -11,9 +11,10 @@
 [ext_resource type="Script" path="res://scripts/systems/WorldClock.gd" id="9_clock"]
 [ext_resource type="Script" path="res://scripts/systems/SeasonController.gd" id="10_season"]
 [ext_resource type="Script" path="res://scripts/systems/WeatherController.gd" id="11_weather"]
-[ext_resource type="PackedScene" path="res://scenes/ui/WeatherDebugPanel.tscn" id="12_wpanel"]
+[ext_resource type="PackedScene" path="res://scenes/ui/DevPanel.tscn" id="12_wpanel"]
 [ext_resource type="Script" path="res://scripts/buildings/PoolHouse.gd" id="13_poolhouse"]
 [ext_resource type="Script" path="res://scripts/ui/UnderwaterOverlay.gd" id="14_underwater"]
+[ext_resource type="Script" path="res://scripts/ui/Minimap.gd" id="15_minimap"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_main")
@@ -45,7 +46,10 @@ script = ExtResource("13_poolhouse")
 
 [node name="DebugOverlay" parent="." instance=ExtResource("7_debug")]
 
-[node name="WeatherDebugPanel" parent="." instance=ExtResource("12_wpanel")]
+[node name="DevPanel" parent="." instance=ExtResource("12_wpanel")]
 
 [node name="UnderwaterOverlay" type="CanvasLayer" parent="."]
 script = ExtResource("14_underwater")
+
+[node name="Minimap" type="CanvasLayer" parent="."]
+script = ExtResource("15_minimap")

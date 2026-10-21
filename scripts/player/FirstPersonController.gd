@@ -5,6 +5,8 @@ extends CharacterBody3D
 ## 身体是方块人物（CharacterModel，外观来自 PlayerProfile）；第一人称时身体只投影子、不进画面。
 ## 游泳：身体进入 WaterVolume（泳池、玻璃水管、下潜池）后切换为游泳——WASD 朝视线方向游、空格上浮、
 ## C / Ctrl 下潜；有水面的水体里自动浮起让头露出水面，在池边按空格爬上岸。湖不是 WaterVolume，只能涉水。
+## 第一人称能看到自己的双手（FirstPersonArms，挂在相机下）。
+## 开发者模式（F2）下按 F 飞行（空格上升、C / Ctrl 下降、Shift 加速），按 N 穿墙；关闭开发者模式自动落地。
 ## autopilot_* 供自动化测试与以后的 NPC / 回放使用：开启后忽略键盘输入，按给定世界方向移动。
 ## 只有 is_local_controlled 的实例读取输入、拥有当前相机（为将来多人预留）。
 
@@ -34,6 +36,9 @@ const BODY_LAYER := 4   ## 渲染层 3（player_body）
 var third_person := false
 var swimming := false
 var current_water: WaterVolume = null
+var flying := false
+var noclip := false
+var arms: FirstPersonArms = null
 
 var autopilot_enabled := false
 var autopilot_direction := Vector3.ZERO
@@ -41,24 +46,67 @@ var autopilot_run := false
 
 var _gravity: float = float(ProjectSettings.get_setting("physics/3d/default_gravity", 9.8))
 var _focused: Interactable = null
+var _collision_mask := 0
+var _bob_phase := 0.0
+var _bob_amount := 0.0
+var _head_base := Vector3.ZERO
 
 
 func _ready() -> void:
 	add_to_group("actors")
+	_collision_mask = collision_mask
+	_head_base = head.position
 	if is_local_controlled:
 		add_to_group("local_player")
 		camera.current = true
+		arms = FirstPersonArms.new()
+		arms.name = "Arms"
+		camera.add_child(arms)
 	interact_ray.target_position = Vector3(0.0, 0.0, -interact_distance)
 	interact_ray.collision_mask = PhysicsLayers.WORLD | PhysicsLayers.INTERACTABLE
 	interact_ray.add_exception(self)
 	camera_boom.add_excluded_object(get_rid())
-	set_third_person(false)
+	set_third_person(GameSettings.third_person_default)
 	GameSettings.changed.connect(_apply_settings)
+	GameSettings.developer_mode_changed.connect(_on_developer_mode)
 	_apply_settings()
 
 
 func _apply_settings() -> void:
 	camera.fov = GameSettings.fov
+	third_person_distance = GameSettings.third_person_distance
+	third_person_offset.x = absf(third_person_offset.x) * (-1.0 if GameSettings.shoulder_left else 1.0)
+	if arms != null:
+		arms.set_mode(GameSettings.first_person_arms)
+
+
+func _on_developer_mode(enabled: bool) -> void:
+	if not enabled:
+		set_flying(false)
+		set_noclip(false)
+
+
+## 飞行（开发者模式）：不受重力，空格上升、C / Ctrl 下降。
+func set_flying(enabled: bool) -> void:
+	flying = enabled
+	if not enabled:
+		set_noclip(false)
+	velocity = Vector3.ZERO
+
+
+## 穿墙（开发者模式，只在飞行时有效）：关掉与世界的碰撞。
+func set_noclip(enabled: bool) -> void:
+	noclip = enabled and flying
+	collision_mask = 0 if noclip else _collision_mask
+
+
+## 开发者传送：直接放到某点（读档、调试用；正常游玩进屋不走这里）。
+func teleport_to(pos: Vector3, yaw_deg := INF) -> void:
+	global_position = pos
+	velocity = Vector3.ZERO
+	if yaw_deg < INF:
+		rotation.y = deg_to_rad(-yaw_deg)
+		head.rotation.x = 0.0
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -74,21 +122,58 @@ func _unhandled_input(event: InputEvent) -> void:
 		try_interact()
 	elif event.is_action_pressed("toggle_view"):
 		set_third_person(not third_person)
+	elif event.is_action_pressed("toggle_fly") and GameSettings.developer_mode:
+		set_flying(not flying)
+	elif event.is_action_pressed("toggle_noclip") and GameSettings.developer_mode and flying:
+		set_noclip(not noclip)
 
 
 func _physics_process(delta: float) -> void:
-	current_water = WaterVolume.find(get_tree(), global_position + Vector3(0.0, 0.9, 0.0))
+	current_water = null if flying else WaterVolume.find(get_tree(), global_position + Vector3(0.0, 0.9, 0.0))
 	swimming = current_water != null
-	if swimming:
+	if flying:
+		_fly(delta)
+	elif swimming:
 		_swim(delta)
 	else:
 		_walk(delta)
 	move_and_slide()
 	_update_focus()
-	body.animate(delta, Vector2(velocity.x, velocity.z).length() + (absf(velocity.y) if swimming else 0.0), is_on_floor() or swimming, head.rotation.x, run_speed)
+	var flat_speed := Vector2(velocity.x, velocity.z).length()
+	var grounded := is_on_floor() and not flying
+	body.animate(delta, flat_speed + (absf(velocity.y) if swimming else 0.0), grounded or swimming, head.rotation.x, run_speed)
+	if arms != null:
+		arms.visible = not third_person
+		arms.animate(delta, flat_speed, grounded, swimming, run_speed)
 	var boom_target := third_person_distance if third_person else 0.0
 	camera_boom.spring_length = lerpf(camera_boom.spring_length, boom_target, 1.0 - exp(-12.0 * delta))
 	camera_boom.position = camera_boom.position.lerp(third_person_offset if third_person else Vector3.ZERO, 1.0 - exp(-12.0 * delta))
+	_update_bob(delta, flat_speed if grounded else 0.0)
+
+
+## 走路时镜头轻微上下左右晃动（设置里可关）；只在第一人称。
+func _update_bob(delta: float, speed: float) -> void:
+	var target := clampf(speed / run_speed, 0.0, 1.0) if GameSettings.view_bob and not third_person else 0.0
+	_bob_amount = lerpf(_bob_amount, target, 1.0 - exp(-8.0 * delta))
+	_bob_phase += delta * speed * 2.4
+	# 晃头节点而不是相机：相机挂在 SpringArm3D 下，位置每帧被弹簧臂改写
+	head.position = _head_base + Vector3(cos(_bob_phase) * 0.025, -absf(sin(_bob_phase)) * 0.045, 0.0) * _bob_amount
+
+
+func _fly(delta: float) -> void:
+	var dir: Vector3
+	if autopilot_enabled:
+		dir = autopilot_direction.normalized() if autopilot_direction.length_squared() > 1e-6 else Vector3.ZERO
+	elif is_local_controlled:
+		dir = _wish_direction()
+		if Input.is_action_pressed("jump"):
+			dir.y += 1.0
+		if Input.is_action_pressed("swim_down"):
+			dir.y -= 1.0
+		dir = dir.normalized() if dir.length_squared() > 1.0 else dir
+	var running := autopilot_run if autopilot_enabled else Input.is_action_pressed("sprint")
+	var target := dir * GameSettings.fly_speed * (3.0 if running else 1.0)
+	velocity = velocity.lerp(target, 1.0 - exp(-6.0 * delta))
 
 
 func _swim(delta: float) -> void:
@@ -150,10 +235,12 @@ func _walk(delta: float) -> void:
 func set_third_person(enabled: bool) -> void:
 	third_person = enabled
 	if enabled:
-		camera.cull_mask = 0xFFFFF
+		camera.cull_mask = 0xFFFFF & ~FirstPersonArms.FP_ARMS_LAYER
 	else:
 		camera.cull_mask = 0xFFFFF & ~BODY_LAYER
 	body.render_layers = BODY_LAYER
+	if arms != null:
+		arms.visible = not enabled
 
 
 func _wish_direction() -> Vector3:
@@ -192,6 +279,8 @@ func try_interact() -> bool:
 	var target := _current_target()
 	if not InteractionSystem.interact(self, target):
 		return false
+	if arms != null:
+		arms.reach()
 	_focused = target
 	if is_local_controlled:
 		EventBus.interaction_prompt_changed.emit(target.get_prompt(self))

@@ -27,8 +27,12 @@ func _run() -> void:
 	var player := get_tree().get_first_node_in_group("local_player") as FirstPersonController
 	player.set_physics_process(false)
 	WorldState.time_paused = true
+	# 测的是渲染能力，不受显示器刷新率封顶（否则 165 Hz 屏幕上帧率会卡在 165）
+	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
+	if OS.get_environment("DUSK_BENCH_NO_MINIMAP") != "":
+		GameSettings.set_value("minimap_enabled", false, false)
 	var cam := Camera3D.new()
-	cam.cull_mask = 0xFFFFF & ~FirstPersonController.BODY_LAYER
+	cam.cull_mask = 0xFFFFF & ~FirstPersonController.BODY_LAYER & ~FirstPersonArms.FP_ARMS_LAYER
 	cam.fov = 75.0
 	cam.far = 1500.0
 	add_child(cam)
