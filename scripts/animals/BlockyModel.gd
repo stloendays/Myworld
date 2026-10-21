@@ -73,6 +73,17 @@ func animate(delta: float, speed: float) -> void:
 			_phase += delta * (5.0 + speed * 6.0)
 			_rot("tail", Vector3(0, sin(_phase) * 0.6, 0))
 			_rot("body", Vector3(0, sin(_phase) * 0.08, 0))
+		"manta":
+			# 蝠鲼：两翼慢慢上下扇，像在水里飞
+			_phase += delta * 1.4
+			var w := sin(_phase) * 0.45
+			_rot("wing_l", Vector3(0, 0, -w))
+			_rot("wing_r", Vector3(0, 0, w))
+			_rot("tail", Vector3(sin(_phase * 0.7) * 0.08, sin(_phase * 0.5) * 0.15, 0))
+		"shark":
+			_phase += delta * (2.2 + speed * 2.5)
+			_rot("tail", Vector3(0, sin(_phase) * 0.35, 0))
+			_rot("body", Vector3(0, sin(_phase) * 0.04, 0))
 		"turtle":
 			_phase += delta * 1.6
 			var s := sin(_phase) * 0.6

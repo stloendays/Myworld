@@ -981,6 +981,13 @@ func _test_poolhouse_swim() -> void:
 		[Vector3(-1.6, -1.45, 0.0), false, "游到洞口上方"],
 		[Vector3(-1.6, -9.5, 0.0), false, "穿过洞口与水管下潜"],
 		[Vector3(0.6, -10.5, 0.0), true, "从管口下方游出"],
+		[Vector3(-1.8, -10.4, -1.2), true, "到通道口"],
+		[Vector3(-1.8, -10.4, -2.4), true, "进入水下通道"],
+		[Vector3(-1.8, -9.0, -5.6), false, "游进海洋大缸"],
+		[Vector3(4.0, -7.5, -5.6), false, "在大缸里游"],
+		[Vector3(-1.8, -10.4, -2.4), true, "游回通道"],
+		[Vector3(-1.8, -10.4, -0.9), true, "回到下潜池"],
+		[Vector3(0.6, -10.4, 0.5), true, "游到坡道脚下"],
 		[Vector3(5.0, -7.0, 0.0), true, "坡道上岸"],
 	]
 	var ok := floating
@@ -992,11 +999,11 @@ func _test_poolhouse_swim() -> void:
 		ok = ok and arrived
 	await _frames(20)
 	_track = false
-	var tube_seen := _waters_seen.has(&"tube") and _waters_seen.has(&"dive_pool")
+	var tube_seen := _waters_seen.has(&"tube") and _waters_seen.has(&"dive_pool") and _waters_seen.has(&"reef_channel") and _waters_seen.has(&"reef")
 	var local := _house.to_local(_player.global_position)
 	var in_aquarium := WorldState.zones_of(_player.entity_id).has(&"aquarium")
 	notes.append("终点 (%.1f, %.2f, %.1f)，游泳 %s，区域含 aquarium %s" % [local.x, local.y, local.z, _player.swimming, in_aquarium])
-	_check("泳池 → 池底洞口 → 玻璃水管 → 下潜池 → 坡道上岸进水族馆", ok and tube_seen and not _player.swimming and in_aquarium \
+	_check("泳池 → 池底洞口 → 玻璃水管 → 下潜池 → 水下通道 → 海洋大缸 → 游回下潜池 → 坡道上岸进水族馆", ok and tube_seen and not _player.swimming and in_aquarium \
 		and absf(local.y - PoolHouse.FLOOR_B) < 0.15 and _max_step < MAX_STEP, "%s；经过水管 %s；单帧最大位移 %.3f m" % ["；".join(notes), tube_seen, _max_step])
 
 
@@ -1097,7 +1104,7 @@ func _test_fauna() -> void:
 	for s: FishSchool in schools:
 		members += s.members.size()
 		inside = inside and s.all_inside()
-	_check("水族箱：鱼、海龟、水母都在缸内游动", schools.size() == PoolHouse.TANKS.size() and members > 20 and inside,
+	_check("水族箱：海洋大缸（含蝠鲼、礁鲨）、珊瑚缸、水母缸里的生物都在缸内游动", schools.size() == PoolHouse.TANKS.size() + 1 and members > 20 and inside,
 		"%d 个缸，%d 只，全部在缸内 %s" % [schools.size(), members, inside])
 
 

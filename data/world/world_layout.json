@@ -28,7 +28,7 @@
       {"id": "poolhouse_pad", "center": [4, 84], "radius": 18.0, "blend": 8.0, "height": 2.0}
     ],
     "pits": [
-      {"id": "poolhouse_basement", "rect": [-8.5, 75.5, 16.5, 92.5], "floor": -9.0}
+      {"id": "poolhouse_basement", "rect": [-8.5, 75.5, 16.5, 92.5], "floor": -10.6}
     ]
   },
 
@@ -100,6 +100,7 @@
     {"name": "泳池馆门口", "pos": [-9.4, 2.0, 84.0], "heading": 90.0},
     {"name": "泳池大厅", "pos": [-0.3, 2.0, 84.0], "heading": 90.0},
     {"name": "地下水族馆", "pos": [-0.5, -5.0, 87.5], "heading": 90.0},
+    {"name": "海洋大缸（潜水）", "pos": [4.0, -5.6, 78.4], "heading": 90.0},
     {"name": "南部草甸", "pos": [-84.0, 93.0], "ground": true, "heading": 0.0},
     {"name": "西北观景点", "pos": [-93.0, -101.0], "ground": true, "heading": 135.0},
     {"name": "湖心上空（飞行）", "pos": [35.0, 30.0, -2.0], "heading": 250.0, "fly": true}

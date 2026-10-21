@@ -4,8 +4,10 @@ extends Node3D
 ## 泳池馆 + 地下水族馆：与室外在同一世界坐标系（world_layout.json → poolhouse）。
 ## 局部坐标：首层地坪 y = 0（与周围平台齐平），+X 东，-Z 北（朝湖，整面玻璃）；平面 24 × 16 m。
 ##   首层：西侧门厅（正门、下行楼梯），东侧泳池厅（13 × 6 m 泳池，浅端 1.1 m、深端 3.2 m，北面玻璃墙外是观湖平台）。
-##   地下（地坪 y = -7）：水族馆——南北两个大鱼缸、东侧水母缸，头顶是泳池深端的玻璃池底（能看见泳池里的人），
-##   泳池深端池底有一个洞口连着一根玻璃水管，可以从泳池一路潜下去，从水族馆的下潜池浮出、走坡道上岸。
+##   地下（地坪 y = -7）：水族馆——北侧整面落地玻璃后是能潜进去的海洋大缸（ReefTank.gd），南侧珊瑚缸、东侧水母缸，
+##   头顶是泳池深端的玻璃池底（能看见泳池里的人），
+##   泳池深端池底有一个洞口连着一根玻璃水管，可以从泳池一路潜下去，从水族馆的下潜池浮出、走坡道上岸；
+##   下潜池北壁底部还有一条水下通道（CHANNEL）通进海洋大缸，可以在缸里和鱼一起游。
 ##   不会游泳也能走：门厅的折返楼梯直通水族馆。
 ## 地形在建筑下方有基坑（terrain.pits），被首层地坪与地下室墙体完全遮住。
 
@@ -29,10 +31,17 @@ const BASIN := Rect2(-3.4, -1.8, 7.0, 3.6)
 const BASIN_FLOOR := -9.8   ## 比水管下沿低 2.2 m，人从管口下方游出
 const BASIN_RAMP_X := -0.6  ## 上岸坡道起点（在水管东侧）
 const BASIN_WATER := -7.15
+## 海洋大缸（北侧整段）：缸底比水族馆地面低 2.8 m，水一直满到顶板；z = REEF.end.y 处是落地玻璃
+const REEF := Rect2(-12.0, -8.0, 24.0, 4.9)   ## x, z, 宽, 深：z -8 .. -3.1
+const REEF_SAND := -9.8
+const REEF_TOP := -4.1
+## 下潜池 → 海洋大缸的水下通道（从玻璃墙下方通到下潜池北壁、对着池底平坦的西半边），顶是大厅地板底面
+const CHANNEL := Rect2(-2.8, -3.1, 2.0, 1.3)  ## x -2.8 .. -0.8（避开东侧上岸坡道），z -3.1 .. -1.8
+const CHANNEL_TOP := -7.3
+const REEF_LIFE := ["clownfish", "blue_tang", "yellow_tang", "silver_fish", "silver_fish", "turtle", "manta_ray", "reef_shark"]
 const TANKS := [
-	{"id": "north", "rect": Rect2(-4.0, -7.7, 15.6, 2.3), "glass": "z-", "life": ["clownfish", "blue_tang", "yellow_tang", "silver_fish", "turtle"]},
 	{"id": "south", "rect": Rect2(-4.0, 5.4, 15.6, 2.3), "glass": "z+", "life": ["clownfish", "blue_tang", "yellow_tang", "silver_fish"]},
-	{"id": "jelly", "rect": Rect2(9.6, -3.2, 2.1, 6.4), "glass": "x-", "life": ["jellyfish"]},
+	{"id": "jelly", "rect": Rect2(9.6, -2.6, 2.1, 5.8), "glass": "x-", "life": ["jellyfish"]},
 ]
 const TANK_SAND := -6.7
 const TANK_TOP := -4.1
@@ -128,13 +137,25 @@ func _materials() -> void:
 		"timber": ArtMaterials.pbr("stained_pine", Color(0.55, 0.38, 0.28), "world"),
 		"roof": ArtMaterials.snowable(ArtMaterials.pbr("roof_slates_02", Color(0.42, 0.42, 0.46), "world")),
 		"concrete": ArtMaterials.pbr("concrete_floor_01", Color(0.42, 0.47, 0.52), "world"),
-		"aq_floor": ArtMaterials.pbr("concrete_floor_01", Color(0.85, 0.87, 0.9), "world", -0.25),
+		"aq_floor": _aquarium_floor(),
+		"aq_wall": ArtMaterials.pbr("concrete_floor_01", Color(0.22, 0.30, 0.40), "world", -0.1),
+		"aq_ceiling": ArtMaterials.pbr("concrete_floor_01", Color(0.20, 0.26, 0.34), "world"),
+		"strip": ArtMaterials.glow(Color(0.55, 0.85, 1.0), 2.4),
 		"frame": ArtMaterials.flat(Color(0.07, 0.07, 0.08), 0.4, false, 0.6),
 		"glass": ArtMaterials.glass(),
 		"clear": ArtMaterials.clear_glass(),
 		"lamp": ArtMaterials.glow(Color(1.0, 0.82, 0.6), 2.0),
 		"blue_lamp": ArtMaterials.glow(Color(0.4, 0.85, 1.0), 3.0),
 	}
+
+
+## 水族馆大厅地面：深色水磨石，靠近大缸玻璃的地方映出水纹光。
+func _aquarium_floor() -> ShaderMaterial:
+	var m := ShaderMaterial.new()
+	m.shader = preload("res://shaders/aquarium_floor.gdshader")
+	m.set_shader_parameter("glass_z", position.z + REEF.end.y)
+	m.set_shader_parameter("glass_side", -1.0)
+	return m
 
 
 # ---------------------------------------------------------------- 首层
@@ -300,22 +321,29 @@ func _steps(g: Node3D, from: Vector2, to: Vector2, lane: Rect2) -> void:
 
 func _build_aquarium(g: Node3D) -> void:
 	# 地坪（留出下潜池）、顶板（留出水管洞口、玻璃观景窗、楼梯井）
-	for r in _subtract(Rect2(-HX, -HZ, HX * 2.0, HZ * 2.0), [BASIN]):
+	for r in _subtract(Rect2(-HX, -HZ, HX * 2.0, HZ * 2.0), [BASIN, REEF]):
 		_slab(g, r, FLOOR_B - 0.3, FLOOR_B, _m.aq_floor, true, 0.0)
 	for r in _subtract(Rect2(-HX, -HZ, HX * 2.0, HZ * 2.0), [HOLE, PANEL, WELL]):
-		_slab(g, r, CEIL_B, CEIL_B + 0.3, _m.concrete)
+		_slab(g, r, CEIL_B, CEIL_B + 0.3, _m.aq_ceiling)
 	_shaft_walls(g, PANEL, CEIL_B, DEEP - 0.05)
 	# 外墙（地下）
 	var t := 0.3
 	var h := -FLOOR_B + 0.3
-	_box(g, Vector3(t, h, HZ * 2.0 + 2.0 * t), Vector3(-HX - t * 0.5, -h * 0.5, 0.0), _m.concrete)
-	_box(g, Vector3(t, h, HZ * 2.0 + 2.0 * t), Vector3(HX + t * 0.5, -h * 0.5, 0.0), _m.concrete)
-	_box(g, Vector3(HX * 2.0, h, t), Vector3(0.0, -h * 0.5, -HZ - t * 0.5), _m.concrete)
-	_box(g, Vector3(HX * 2.0, h, t), Vector3(0.0, -h * 0.5, HZ + t * 0.5), _m.concrete)
+	_box(g, Vector3(t, h, HZ * 2.0 + 2.0 * t), Vector3(-HX - t * 0.5, -h * 0.5, 0.0), _m.aq_wall)
+	_box(g, Vector3(t, h, HZ * 2.0 + 2.0 * t), Vector3(HX + t * 0.5, -h * 0.5, 0.0), _m.aq_wall)
+	_box(g, Vector3(HX * 2.0, h, t), Vector3(0.0, -h * 0.5, -HZ - t * 0.5), _m.aq_wall)
+	_box(g, Vector3(HX * 2.0, h, t), Vector3(0.0, -h * 0.5, HZ + t * 0.5), _m.aq_wall)
 	# 下潜池：四壁、池底、上岸坡道
 	var bt := 0.3
 	var bh := FLOOR_B - BASIN_FLOOR
-	_box(g, Vector3(BASIN.size.x + 2.0 * bt, bh, bt), Vector3(BASIN.get_center().x, (FLOOR_B + BASIN_FLOOR) * 0.5, BASIN.position.y - bt * 0.5), _m.basin_tiles)
+	# 北壁在通道处开口（通道两侧各一段，通道上方一段过梁）
+	var nz := BASIN.position.y - bt * 0.5
+	var ny := (FLOOR_B + BASIN_FLOOR) * 0.5
+	var left := CHANNEL.position.x - (BASIN.position.x - bt)
+	var right := (BASIN.end.x + bt) - CHANNEL.end.x
+	_box(g, Vector3(left, bh, bt), Vector3(BASIN.position.x - bt + left * 0.5, ny, nz), _m.basin_tiles)
+	_box(g, Vector3(right, bh, bt), Vector3(CHANNEL.end.x + right * 0.5, ny, nz), _m.basin_tiles)
+	_box(g, Vector3(CHANNEL.size.x, FLOOR_B - CHANNEL_TOP, bt), Vector3(CHANNEL.get_center().x, (FLOOR_B + CHANNEL_TOP) * 0.5, nz), _m.basin_tiles)
 	_box(g, Vector3(BASIN.size.x + 2.0 * bt, bh, bt), Vector3(BASIN.get_center().x, (FLOOR_B + BASIN_FLOOR) * 0.5, BASIN.end.y + bt * 0.5), _m.basin_tiles)
 	_box(g, Vector3(bt, bh, BASIN.size.y), Vector3(BASIN.position.x - bt * 0.5, (FLOOR_B + BASIN_FLOOR) * 0.5, BASIN.get_center().y), _m.basin_tiles)
 	_box(g, Vector3(bt, bh, BASIN.size.y), Vector3(BASIN.end.x + bt * 0.5, (FLOOR_B + BASIN_FLOOR) * 0.5, BASIN.get_center().y), _m.basin_tiles)
@@ -331,8 +359,9 @@ func _build_aquarium(g: Node3D) -> void:
 	mi.position = Vector3(BASIN.get_center().x, BASIN_WATER, BASIN.get_center().y)
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	g.add_child(mi)
-	# 鱼缸
+	# 鱼缸：先建海洋大缸（tank_bounds[0]），再建南侧珊瑚缸与水母缸
 	tank_bounds.clear()
+	ReefTank.build(self, g)
 	for tank in TANKS:
 		_build_tank(g, tank)
 
@@ -405,6 +434,11 @@ func _build_lights(g: Node3D) -> void:
 			var col := Color(0.75, 0.45, 1.0) if tank["id"] == "jelly" else Color(0.35, 0.8, 1.0)
 			_omni(g, p, col, 1.8, 4.5)
 	_omni(g, Vector3(2.0, -4.3, 0.0), Color(1.0, 0.85, 0.7), 0.5, 13.0)
+	# 水族馆大厅顶上的两条暖白灯带（南侧鱼缸前；避开头顶的玻璃池底和水管洞口）
+	for z: float in [4.3, 3.2]:
+		_box(g, Vector3(14.0, 0.05, 0.14), Vector3(2.5, CEIL_B - 0.03, z), _m.lamp, false)
+		for x: float in [-2.5, 4.5]:
+			_omni(g, Vector3(x, CEIL_B - 0.25, z), Color(1.0, 0.86, 0.72), 0.6, 6.0)
 	_omni(g, Vector3(-8.0, -1.5, 5.0), Color(1.0, 0.85, 0.7), 0.7, 7.0)
 	_omni(g, Vector3(-1.6, -6.2, 0.0), Color(0.4, 0.85, 1.0), 1.0, 4.0)
 
@@ -416,7 +450,7 @@ func _build_props(g: Node3D) -> void:
 		g.add_child(ArtMaterials.kenney_prop(FURNITURE + "pottedPlant.glb", p, 30.0, 2.3))
 	g.add_child(ArtMaterials.kenney_prop(FURNITURE + "rugRectangle.glb", Vector3(-8.6, 0.006, -3.2), 90.0, 2.0))
 	g.add_child(ArtMaterials.kenney_prop(FURNITURE + "bench.glb", Vector3(-8.6, 0.0, -6.8), 0.0, 2.2))
-	for p in [Vector3(1.5, FLOOR_B, -3.7), Vector3(6.0, FLOOR_B, -3.7)]:
+	for p in [Vector3(-6.5, FLOOR_B, -2.4), Vector3(6.5, FLOOR_B, -2.4)]:
 		g.add_child(ArtMaterials.kenney_prop(FURNITURE + "bench.glb", p, 180.0, 2.2))
 	for p in [Vector3(1.5, FLOOR_B, 3.7), Vector3(6.0, FLOOR_B, 3.7)]:
 		g.add_child(ArtMaterials.kenney_prop(FURNITURE + "bench.glb", p, 0.0, 2.2))
@@ -427,7 +461,8 @@ func _build_props(g: Node3D) -> void:
 	_sign(g, "poolhouse_entrance", "stand", 1.4, Vector3(-15.0, 0.0, 2.6), -90.0, 1.4)
 	_sign(g, "pool_dive", "lectern", 1.0, Vector3(-1.6, 0.0, -3.8), 180.0)
 	_sign(g, "stairs_aquarium", "stand", 1.0, Vector3(-3.6, 0.0, 7.45), 180.0)
-	_sign(g, "tank_north", "lectern", 0.9, Vector3(-2.6, FLOOR_B, -4.55), 0.0)
+	_sign(g, "tank_north", "lectern", 1.0, Vector3(-9.0, FLOOR_B, -2.6), 0.0)
+	_sign(g, "reef_dive", "lectern", 0.9, Vector3(-4.3, FLOOR_B, -1.0), -90.0)
 	_sign(g, "tank_south", "lectern", 0.9, Vector3(-2.6, FLOOR_B, 4.55), 180.0)
 	_sign(g, "tank_jelly", "lectern", 0.9, Vector3(8.85, FLOOR_B, 2.2), -90.0)
 	# 能坐的地方：泳池躺椅、大厅长椅、水族馆长椅（面朝鱼缸）
@@ -436,8 +471,8 @@ func _build_props(g: Node3D) -> void:
 		[&"pool_lounger_2", "躺椅", Vector3(2.2, 0.42, -6.2), 0.0],
 		[&"pool_lounger_3", "躺椅", Vector3(5.4, 0.42, -6.2), 0.0],
 		[&"hall_bench", "长椅", Vector3(-8.6, 0.48, -6.8), 180.0],
-		[&"aquarium_bench_1", "长椅", Vector3(1.5, FLOOR_B + 0.48, -3.7), 0.0],
-		[&"aquarium_bench_2", "长椅", Vector3(6.0, FLOOR_B + 0.48, -3.7), 0.0],
+		[&"aquarium_bench_1", "长椅", Vector3(-6.5, FLOOR_B + 0.48, -2.4), 0.0],
+		[&"aquarium_bench_2", "长椅", Vector3(6.5, FLOOR_B + 0.48, -2.4), 0.0],
 		[&"aquarium_bench_3", "长椅", Vector3(1.5, FLOOR_B + 0.48, 3.7), 180.0],
 		[&"aquarium_bench_4", "长椅", Vector3(6.0, FLOOR_B + 0.48, 3.7), 180.0],
 	]
@@ -461,14 +496,22 @@ func _build_water_volumes(g: Node3D) -> void:
 	var bottom := BASIN_WATER - 0.45
 	g.add_child(WaterVolume.create_cylinder(&"tube", Vector3(TUBE_CENTER.x, (top + bottom) * 0.5, TUBE_CENTER.y), TUBE_R - 0.02, top - bottom))
 	g.add_child(WaterVolume.create_box(&"dive_pool", Vector3(BASIN.get_center().x, (BASIN_WATER + BASIN_FLOOR) * 0.5, BASIN.get_center().y), Vector3(BASIN.size.x, BASIN_WATER - BASIN_FLOOR, BASIN.size.y)))
+	# 海洋大缸（水满到顶，没有水面）与通道
+	g.add_child(WaterVolume.create_box(&"reef", Vector3(REEF.get_center().x, (REEF_SAND + REEF_TOP) * 0.5, REEF.get_center().y), Vector3(REEF.size.x, REEF_TOP - REEF_SAND, REEF.size.y), false))
+	g.add_child(WaterVolume.create_box(&"reef_channel", Vector3(CHANNEL.get_center().x, (REEF_SAND + CHANNEL_TOP) * 0.5, CHANNEL.get_center().y), Vector3(CHANNEL.size.x, CHANNEL_TOP - REEF_SAND, CHANNEL.size.y + 0.4), false))
 
 
 func _populate_tanks(g: Node3D) -> void:
-	for i in TANKS.size():
+	var lists := [REEF_LIFE]
+	var names := ["reef"]
+	for tank in TANKS:
+		lists.append(tank["life"])
+		names.append(tank["id"])
+	for i in lists.size():
 		var school := FishSchool.new()
-		school.name = "Life_%s" % TANKS[i]["id"]
+		school.name = "Life_%s" % names[i]
 		school.bounds = tank_bounds[i]
-		school.species_list = TANKS[i]["life"]
+		school.species_list = lists[i]
 		school.seed_value = 4000 + i
 		g.add_child(school)
 

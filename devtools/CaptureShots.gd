@@ -62,6 +62,11 @@ const SHOTS := [
 	{"name": "m2e_04_islet_camp", "climate": DUSK, "eye": [33, 2.2, 3], "look": [42, 1.6, -6]},
 	{"name": "m2e_05_minimap_lake", "climate": DUSK, "player": [-28.0, 24.0], "canoe": [-2.0, 18.0, 70.0], "heading": 70.0, "pitch": -4.0},
 	{"name": "m2e_06_cabin_bed", "climate": {"season": "AUTUMN", "hour": 21.0, "weather": "CLEAR"}, "eye": [-69.0, 4.3, 36.4], "look": [-73.0, 2.7, 39.4]},
+	{"name": "m2f_01_aquarium_hall", "climate": DUSK, "house": true, "eye": [8.8, -5.0, 4.4], "look": [-3.0, -6.3, -4.0]},
+	{"name": "m2f_02_ocean_tank", "climate": DUSK, "house": true, "eye": [1.0, -5.4, -1.2], "look": [0.5, -6.8, -6.5]},
+	{"name": "m2f_03_diving_reef", "climate": DUSK, "player": [1.0, 79.2], "y": -6.4, "heading": 90.0, "pitch": -6.0},
+	{"name": "m2f_04_channel", "climate": DUSK, "player": [2.2, 84.8], "y": -7.7, "heading": 0.0, "pitch": -14.0},
+	{"name": "m2f_05_tank_depth", "climate": DUSK, "house": true, "eye": [6.0, -5.0, -2.4], "look": [4.0, -9.4, -6.2]},
 ]
 
 const OUTFITS := [
