@@ -14,6 +14,8 @@ signal weather_transition_started(from_id: StringName, to_id: StringName, durati
 signal weather_changed(weather_id: StringName)
 @warning_ignore("unused_signal")
 signal save_loaded(schema_version: int)
+@warning_ignore("unused_signal")
+signal lightning_strike(distance_m: float)   ## 雷声延迟由 M3 的 AudioDirector 按距离计算
 
 @warning_ignore("unused_signal")
 signal zone_entered(zone_id: StringName, actor_id: StringName)

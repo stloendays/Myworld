@@ -28,6 +28,15 @@ var sky_material: ShaderMaterial = null
 var sun_elevation := 0.0
 var sun_azimuth := 0.0
 var night := 0.0
+var wind_strength := 0.0
+var rainbow := 0.0
+var lightning_count := 0
+var flash := 0.0
+
+var flash_light: DirectionalLight3D = null
+var _flash_timer := 0.0
+var _flash_t := -1.0
+var _flash_rng := RandomNumberGenerator.new()
 
 var _last_season: StringName = &""
 var _snow_overlay_on := false
@@ -106,21 +115,33 @@ func _build() -> void:
 	moon.light_color = Color(0.55, 0.62, 0.85)
 	moon.directional_shadow_max_distance = 120.0
 	root.add_child(moon)
+	flash_light = DirectionalLight3D.new()
+	flash_light.name = "LightningFlash"
+	flash_light.light_color = Color(0.78, 0.84, 1.0)
+	flash_light.light_energy = 0.0
+	flash_light.sky_mode = DirectionalLight3D.SKY_MODE_LIGHT_ONLY
+	root.add_child(flash_light)
+	_flash_rng.seed = 90210
 
 
 func _update(delta: float) -> void:
 	var w := WeatherController.blended()
 	_integrate_ground(delta, w)
+	_update_wind(w)
+	_update_lightning(delta, w)
 	_apply(WorldState.season_id, WorldState.time_minutes, w)
 	RenderingServer.global_shader_parameter_set("rain_amount", float(w["rain"]))
 	RenderingServer.global_shader_parameter_set("snow_fall", float(w["snow"]))
 	RenderingServer.global_shader_parameter_set("wetness", WorldState.ground_wetness)
 	RenderingServer.global_shader_parameter_set("snow_cover", WorldState.ground_snow)
+	RenderingServer.global_shader_parameter_set("wind_strength", wind_strength)
+	RenderingServer.global_shader_parameter_set("lightning_flash", flash)
 	var overlay := WorldState.ground_snow > 0.01
 	if overlay != _snow_overlay_on:
 		_snow_overlay_on = overlay
 		ArtMaterials.set_snow_overlay(overlay)
-	get_tree().call_group("precipitation", "set_amounts", float(w["rain"]), float(w["snow"]), float(w["wind"]))
+	get_tree().call_group("precipitation", "set_amounts", float(w["rain"]), float(w["snow"]), wind_strength)
+	get_tree().call_group("precipitation", "set_seasonal", WorldState.season_id, night, float(w["rain"]) + float(w["snow"]), wind_strength)
 	_maybe_refresh_reflection(delta)
 
 
@@ -134,6 +155,10 @@ func _integrate_ground(delta: float, w: Dictionary) -> void:
 		WorldState.ground_wetness = minf(target_wet, WorldState.ground_wetness + dm / 30.0)
 	else:
 		WorldState.ground_wetness = maxf(target_wet, WorldState.ground_wetness - dm / 240.0)
+	if float(w["rain"]) > 0.2:
+		WorldState.rain_recent = 1.0
+	else:
+		WorldState.rain_recent = maxf(0.0, WorldState.rain_recent - dm / 40.0)
 	var snowing := float(w["snow"])
 	if snowing > 0.05:
 		WorldState.ground_snow = minf(1.0, WorldState.ground_snow + snowing * dm / 120.0)
@@ -171,6 +196,9 @@ func _apply(season: StringName, minutes: float, w: Dictionary) -> void:
 	sky_material.set_shader_parameter("night", night)
 	sky_material.set_shader_parameter("sun_visibility", (1.0 - overcast * 0.9) * smoothstep(-6.0, 0.0, sun_elevation))
 	sky_material.set_shader_parameter("sun_tint", _key(SUN_COLOR, sun_elevation))
+	# 彩虹：刚下过雨、已经放晴、太阳不高（低于 40°）时出现
+	rainbow = 0.0 if Engine.is_editor_hint() else WorldState.rain_recent * (1.0 - overcast) * smoothstep(2.0, 8.0, sun_elevation) * (1.0 - smoothstep(32.0, 40.0, sun_elevation))
+	sky_material.set_shader_parameter("rainbow", rainbow)
 
 	var to_sun := _direction(sun_elevation, sun_azimuth)
 	sun.basis = Basis.looking_at(-to_sun, Vector3.UP)
@@ -183,12 +211,46 @@ func _apply(season: StringName, minutes: float, w: Dictionary) -> void:
 	moon.light_energy = 0.22 * night * (1.0 - overcast * 0.7)
 	moon.shadow_enabled = night > 0.6
 
-	environment.ambient_light_energy = _keyf(AMBIENT, sun_elevation) * lerpf(1.0, 0.85, overcast)
+	environment.ambient_light_energy = _keyf(AMBIENT, sun_elevation) * lerpf(1.0, 0.85, overcast) + flash * 0.8
 	environment.tonemap_exposure = lerpf(1.05, 1.35, night)
 	environment.fog_light_color = horizon.lerp(top, 0.35) * 0.8
 	environment.fog_density = 0.0024 + float(w["fog"])
 	environment.fog_sun_scatter = 0.25 * (1.0 - overcast)
 	RenderingServer.global_shader_parameter_set("season_tint", ClimateData.color(profile.get("terrain_tint")))
+
+
+## 风：天气给出基础风力，叠加缓慢的阵风；风向缓慢转动。供植被摆动、雨雪漂移使用。
+func _update_wind(w: Dictionary) -> void:
+	var t := Time.get_ticks_msec() * 0.001
+	var gust := 0.8 + 0.2 * sin(t * 0.37) * sin(t * 0.91 + 1.3)
+	wind_strength = float(w["wind"]) * gust
+	var a := 0.65 + 0.25 * sin(t * 0.021)
+	RenderingServer.global_shader_parameter_set("wind_direction", Vector2(cos(a), sin(a)))
+
+
+## 闪电：雷雨时每 3–12 秒一次，双闪；发出 EventBus.lightning_strike（M3 据距离延迟播放雷声）。
+func _update_lightning(delta: float, w: Dictionary) -> void:
+	var strength := float(w["lightning"])
+	if _flash_t >= 0.0:
+		_flash_t += delta
+		var a := exp(-_flash_t * 9.0)
+		var b := exp(-maxf(0.0, _flash_t - 0.14) * 7.0) * (0.75 if _flash_t > 0.14 else 0.0)
+		flash = maxf(a, b) * strength
+		if _flash_t > 0.9:
+			_flash_t = -1.0
+			flash = 0.0
+	flash_light.light_energy = flash * 2.6
+	if strength < 0.5:
+		_flash_timer = _flash_rng.randf_range(2.0, 6.0)
+		return
+	_flash_timer -= delta
+	if _flash_timer <= 0.0:
+		_flash_timer = _flash_rng.randf_range(3.0, 12.0)
+		_flash_t = 0.0
+		lightning_count += 1
+		var az := _flash_rng.randf() * TAU
+		flash_light.basis = Basis.looking_at(-Vector3(cos(az) * 0.5, 0.85, sin(az) * 0.5), Vector3.UP)
+		EventBus.lightning_strike.emit(_flash_rng.randf_range(300.0, 3000.0))
 
 
 ## 太阳高度角与方位角（度）。白天从日出到日落按正弦弧线，夜间在地平线下；

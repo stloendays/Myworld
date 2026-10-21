@@ -1,10 +1,10 @@
 # Dusk Lake · 暮色湖畔
 
-一个可以自由行走的 3D 私人湖畔世界：250 × 250 m 连续地图、针叶林、湖泊、码头，以及一座与室外处在同一坐标系里的 A 字形木屋（进屋不切场景、不传送、不黑屏）。
+一个可以自由行走的 3D 私人湖畔世界：250 × 250 m 连续地图、针叶林、湖泊、码头、一座 A 字形木屋，以及一座带泳池的玻璃泳池馆——从池底潜下去能游进地下水族馆。所有室内都和室外处在同一坐标系里（进屋不切场景、不传送、不黑屏）。
 
 - 引擎：**Godot 4.7.2 Standard**（GDScript，Forward+，Jolt Physics），Windows 单机优先
 - 需求规格：[docs/DEVELOPMENT_SPEC.md](docs/DEVELOPMENT_SPEC.md)（唯一需求来源）；阶段指令：[docs/AGENT_HANDOFF.md](docs/AGENT_HANDOFF.md)
-- 当前进度：**M0、M1、第一轮正式美术、M2 天气系统、方块人物已完成**，自动检查 29/29 通过。见 [docs/QA_M0_M1.md](docs/QA_M0_M1.md)、[docs/ART_PASS.md](docs/ART_PASS.md)、[docs/M2_WEATHER_CHARACTER.md](docs/M2_WEATHER_CHARACTER.md)
+- 当前进度：**M0、M1、第一轮正式美术、M2 天气系统、方块人物、泳池馆与地下水族馆、小动物、雷暴/彩虹/风已完成**，自动检查 40/40 通过。见 [docs/QA_M0_M1.md](docs/QA_M0_M1.md)、[docs/ART_PASS.md](docs/ART_PASS.md)、[docs/M2_WEATHER_CHARACTER.md](docs/M2_WEATHER_CHARACTER.md)、[docs/POOLHOUSE_FAUNA.md](docs/POOLHOUSE_FAUNA.md)
 
 ![湖岸出生点](docs/screenshots/m1_01_spawn_dusk.png)
 
@@ -17,6 +17,10 @@
 | ![](docs/screenshots/m2_01_night_rain_cabin.png) | ![](docs/screenshots/m2_03_winter_snow.png) |
 | 方块人物 | 换装 |
 | ![](docs/screenshots/m2_08_character_front.png) | ![](docs/screenshots/m2_10_outfits.png) |
+| 泳池馆 | 地下水族馆 |
+| ![](docs/screenshots/m2b_02_pool_hall.png) | ![](docs/screenshots/m2b_04_aquarium.png) |
+| 雨后彩虹 | 林间的兔子 |
+| ![](docs/screenshots/m2b_09_rainbow.png) | ![](docs/screenshots/m2b_11_rabbit.png) |
 
 ## 运行
 
@@ -60,7 +64,8 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | 移动 | W / A / S / D（或方向键） |
 | 环视 | 鼠标 |
 | 奔跑 | Shift（步行 3.2 m/s，奔跑 5.2 m/s） |
-| 跳跃 | 空格 |
+| 跳跃 | 空格（水中：上浮；靠池壁按空格爬上岸） |
+| 下潜 | C 或 Ctrl（水中） |
 | 交互 | E（准星中心射线 2.5 m，例如开关木门） |
 | 第一 / 第三人称 | V |
 | 暂停 / 释放鼠标 | Esc（菜单内可调 FOV 65°–95°、鼠标灵敏度；“人物外观”换发型和衣服） |
@@ -72,7 +77,8 @@ pwsh -File devtools/fetch_polyhaven.ps1
 - **坐标**：按 F3。左上角显示 `X / Y / Z`（米）与朝向（0° = 北 = −Z）。出生点在湖岸 (−50, 29)，木屋中心 (−69, 37)，码头从 (−46, 26) 延伸到 (−1, 26)，湖心 (35, −2)。所有坐标都来自 `data/world/world_layout.json`。
 - **连续性**：从出生点沿土路走到木屋门廊，按 E 开门走进去，F3 中“区域”会出现 `cabin_interior`、状态变为“室内”；整个过程中画面不黑屏、不跳帧、不加载。透过三角窗能看到码头和湖面——那是实时渲染的室外场景，不是贴图。
 - **地图边界**：四周是逐渐变陡的山坡和密林，走到约 |114| m 处会因坡度超过 45° 而上不去，不存在空气墙。
-- **湖水**：可以走进浅水，水深约 0.7 m 处停下（MVP 不做深水游泳）；码头入水段有栏杆。
+- **湖水**：可以走进浅水，水深约 0.7 m 处停下（湖里不做深水游泳）；码头入水段有栏杆。
+- **泳池馆与水族馆**：从出生点旁的岔路沿步道往南走到 (4, 84)，推开西墙的门进大厅，F3 区域显示 `poolhouse`。下楼梯或从泳池深水区池底的洞口潜下去（C 下潜），穿过玻璃水管就到了地下水族馆（区域 `aquarium`，地面 Y ≈ −5）。水下画面会变成蓝绿色。
 
 ## 目录与文件用途
 
@@ -116,7 +122,13 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | `scripts/core/PlayerProfile.gd`、`scripts/ui/WardrobePanel.gd` | 本地玩家外观（存 user://appearance.json）、外观编辑面板 |
 | `scripts/ui/WeatherDebugPanel.gd` | F4 天气调试面板 |
 | `scripts/systems/AudioDirector.gd`、`SaveManager.gd` | M3/M4 的**接口占位**（未运行） |
-| `tests/TestRunner.tscn` | 自动检查（QA-01、QA-02、QA-10 等 16 项） |
+| `scripts/buildings/PoolHouse.gd` | 泳池馆与地下水族馆：大厅、泳池、池底洞口与玻璃水管、楼梯、鱼缸、灯光、碰撞、水体与区域（全部程序生成，坐标来自布局） |
+| `scripts/world/WaterVolume.gd`、`scripts/ui/UnderwaterOverlay.gd`、`shaders/underwater.gdshader` | 可游泳水体（盒形 / 圆柱）、水下滤镜 |
+| `shaders/pool_tiles.gdshader`、`pool_water.gdshader`、`caustic_sand.gdshader`、`foliage.gdshader`、`include/` | 泳池马赛克与焦散、池水、缸底沙、随风摆动的植被、雨点涟漪与焦散函数 |
+| `scripts/animals/`（FaunaData、FaunaSpawner、Animal、BlockyModel、BlockyMesh、FishSchool） | 小动物：出没规则、生成、行为、方块模型、鱼群 |
+| `data/animals/species.json` | 所有动物的部件、配色、速度、出没规则与生成点、萤火虫 |
+| `scripts/world/SignBoard.gd`、`SignsBuilder.gd`、`data/world/signs.json` | 中英双语解说立牌（立式 / 讲台 / 挂墙，牌面按文字自动定尺寸）；室外立牌位置在布局文件 `signs` 里 |
+| `tests/TestRunner.tscn` | 自动检查（40 项：QA-01、QA-02、QA-10、天气、人物、泳池馆、游泳、动物等） |
 | `devtools/CaptureShots.tscn` | 按预设机位截图到 `docs/screenshots/` |
 | `devtools/Benchmark.tscn` | 固定机位测帧率、帧时、绘制调用与显存 |
 | `devtools/fetch_polyhaven.ps1` | 下载 Poly Haven 贴图并核对 md5，写清单 |
@@ -136,7 +148,11 @@ pwsh -File devtools/fetch_polyhaven.ps1
 - 区域 zone_id、室内外判定（为 M3 的音区准备）
 - **M2 天气系统**：世界时钟（一天 = 现实 48 分钟）与昼夜、四季（每季 12 天，植被与地表随季变色）、六类天气（晴/阴/小雨/大雨/雾/雪）及平滑过渡；雨雪粒子不进室内，窗上有雨痕，地面会变湿、积雪；F4 调试面板与四个测试预设
 - **方块人物**：脸、发型、帽子、上衣、下装、鞋、背饰七个外观插槽和四个挂点，款式全部写在 JSON 里；Esc 菜单“人物外观”实时预览与保存；V 切换第一/第三人称；走跑摆臂摆腿
-- 自动检查（29 项）、截图与性能测试工具
+- **泳池馆与地下水族馆**：玻璃大厅与泳池（深水区 3.1 m），池底洞口接玻璃水管通到地下水族馆的下潜池，也可以走楼梯下去；三个鱼缸里有 59 只鱼、海龟和水母；可以游泳（浮力、下潜、爬上岸）和看到水下画面
+- **小动物**：兔子、狐狸、松鼠、绿头鸭、知更鸟、蝴蝶、萤火虫，按季节、昼夜、天气出没，兔子和松鼠见人就跑
+- **天气细化**：雷暴（闪电照亮天地）、风（植被摆动，带阵风）、雨后彩虹、地面水坑与雨点涟漪、雨滴溅水花、秋季落叶与春季花瓣
+- **解说立牌**：步道、泳池馆、鱼缸前的中英双语立牌，场景里没有悬空文字
+- 自动检查（40 项）、截图与性能测试工具
 
 ## 未实现（按里程碑）
 

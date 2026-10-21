@@ -11,6 +11,9 @@ const SPOTS := [
 	{"name": "北部林道", "eye": [-80, 1.65, -50], "look": [-78, 2, -28]},
 	{"name": "秋夜大雨·木屋外", "eye": [-53, 1.65, 40], "look": [-66, 4.0, 37], "preset": "Autumn_Night_HeavyRain"},
 	{"name": "冬日下雪·湖岸", "eye": [-50, 1.65, 29], "look": [35, 2, -2], "preset": "Winter_Morning_Snow"},
+	{"name": "泳池馆大厅·秋日暮色", "eye": [-0.5, 3.7, 77.8], "look": [14, 1.5, 85.5], "abs": true, "preset": "Autumn_Dusk_Clear"},
+	{"name": "地下水族馆", "eye": [13, -3.3, 85], "look": [1, -3.6, 83.5], "abs": true},
+	{"name": "夏夜雷雨·湖岸", "eye": [-50, 1.65, 29], "look": [35, 8, -2], "preset": "Summer_Night_Thunderstorm"},
 ]
 
 

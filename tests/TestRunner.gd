@@ -6,6 +6,8 @@ extends Node
 ## 湖中涉水上限、码头栏杆、地图四边由地形自然封闭（暂时关闭树木碰撞单独验证地形）；
 ## M2：天气规则与确定性、QA-03 秋季暮色、QA-04 秋夜大雨（室内无降水）、QA-06 四季区分与“只有冬天下雪”、
 ## 天气过渡、时钟速率、积雪累积；人物：部位与插槽、换装、第一/第三人称、走路摆腿。
+## 泳池馆：开门进馆 → 楼梯下到水族馆；泳池漂浮 → 池底洞口 → 玻璃水管 → 下潜池 → 坡道上岸；深水区爬上岸；
+## 小动物：数量与 id、季节/昼夜/天气规则、兔子见人就跑、鱼不出缸；雷暴闪电、彩虹、大风、落叶。
 
 const MAIN_SCENE := "res://scenes/main/Main.tscn"
 const MAX_STEP := 0.5          ## 单个物理帧允许的最大位移（米），超过视为瞬移
@@ -15,12 +17,14 @@ var _results: Array[Dictionary] = []
 var _main: Node3D
 var _player: FirstPersonController
 var _cabin: Node3D
+var _house: PoolHouse
 var _track := false
 var _last_pos := Vector3.ZERO
 var _max_step := 0.0
 var _min_clearance := INF
 var _path_length := 0.0
 var _max_leg_swing := 0.0
+var _waters_seen := {}
 
 
 func _ready() -> void:
@@ -49,6 +53,13 @@ func _run() -> void:
 	_test_climate_rules()
 	await _test_climate_runtime()
 	await _test_character()
+	_house = _main.get_node("PoolHouse") as PoolHouse
+	_test_signs()
+	await _test_poolhouse_walk()
+	await _test_poolhouse_swim()
+	await _test_pool_climb_out()
+	await _test_fauna()
+	await _test_storm_rainbow_leaves()
 	_report()
 
 
@@ -146,6 +157,8 @@ func _test_heightmap_alignment() -> void:
 	for i in 400:
 		var x := rng.randf_range(-124.0, 124.0)
 		var z := rng.randf_range(-124.0, 124.0)
+		if _near_pit_edge(x, z):
+			continue   # 基坑边缘 1 m 网格内是陡坎（在建筑台基下面），解析高度与三角面插值本来就不同
 		var q := PhysicsRayQueryParameters3D.create(Vector3(x, 200.0, z), Vector3(x, -50.0, z), PhysicsLayers.TERRAIN)
 		var hit := space.intersect_ray(q)
 		if hit.is_empty():
@@ -455,6 +468,230 @@ func _test_character() -> void:
 		"第三人称相机距离 %.2f m" % tp_len)
 
 
+# ---------------------------------------------------------------- 立牌
+
+func _test_signs() -> void:
+	var floating := PackedStringArray()
+	for l in _main.find_children("*", "Label3D", true, false):
+		var n: Node = l
+		while n != null and not n is SignBoard:
+			n = n.get_parent()
+		if n == null:
+			floating.append(str(_main.get_path_to(l)))
+	var signs := get_tree().get_nodes_in_group("sign_boards")
+	var missing := PackedStringArray()
+	for s: SignBoard in signs:
+		var t: Dictionary = SignBoard.texts().get(s.text_id, {})
+		if str(t.get("title_zh", "")) == "" or str(t.get("title_en", "")) == "" or t.has("body_zh") != t.has("body_en"):
+			missing.append(s.text_id)
+	_check("3D 文字都写在立牌上（无悬空文字），每块中英双语", floating.is_empty() and missing.is_empty() and signs.size() >= 8,
+		"立牌 %d 块；悬空文字 %s；缺译文 %s" % [signs.size(), ", ".join(floating) if not floating.is_empty() else "无", ", ".join(missing) if not missing.is_empty() else "无"])
+
+
+# ---------------------------------------------------------------- 泳池馆与水族馆
+
+func _test_poolhouse_walk() -> void:
+	var notes := PackedStringArray()
+	var outside := _ph(-13.4, 0.0, 0.0)
+	await _setup_at(Vector2(outside.x, outside.z), -PI * 0.5)
+	_player.look_at_point(_ph(-12.0, 1.3, 0.0))
+	await _frames(2)
+	var opened := _player.try_interact()
+	await _seconds(1.0)
+	var door_state := WorldState.get_interactable_state(&"poolhouse_front_door")
+	notes.append("开门 %s → %s" % [opened, door_state])
+	_begin_track()
+	var ok := opened and door_state == "open"
+	for p in [Vector2(-10.0, 0.0), Vector2(-4.3, 0.0), Vector2(-4.3, 6.4)]:
+		ok = await _walk_to(_ph_xz(p), 20.0) and ok
+	var in_hall := WorldState.zones_of(_player.entity_id).has(&"poolhouse")
+	notes.append("大厅区域 %s" % in_hall)
+	for p in [Vector2(-5.3, 6.4), Vector2(-10.9, 6.4), Vector2(-11.2, 5.0), Vector2(-11.2, 3.5), Vector2(-10.3, 3.5), Vector2(-5.0, 3.5), Vector2(-4.5, 3.5)]:
+		ok = await _walk_to(_ph_xz(p), 20.0) and ok
+	await _frames(10)
+	_track = false
+	var local := _house.to_local(_player.global_position)
+	var in_aquarium := WorldState.zones_of(_player.entity_id).has(&"aquarium")
+	notes.append("到达 (%.1f, %.2f, %.1f)，区域 %s" % [local.x, local.y, local.z, ", ".join(PackedStringArray(WorldState.zones_of(_player.entity_id)))])
+	_check("泳池馆：门外开门 → 大厅 → 楼梯两跑下到水族馆，连续步行", ok and in_hall and in_aquarium and absf(local.y - PoolHouse.FLOOR_B) < 0.15 and _max_step < MAX_STEP,
+		"%s；单帧最大位移 %.3f m" % ["；".join(notes), _max_step])
+
+
+func _test_poolhouse_swim() -> void:
+	var notes := PackedStringArray()
+	var start := _ph(1.0, -1.6, 0.0)
+	_player.autopilot_enabled = false
+	_player.global_position = start
+	_player.velocity = Vector3.ZERO
+	await _seconds(3.0)
+	var float_err := _house.to_local(_player.global_position).y - (PoolHouse.WATER_Y - 1.3)
+	var floating := _player.swimming and absf(float_err) < 0.25
+	notes.append("漂浮：游泳 %s，离漂浮高度 %.2f m" % [_player.swimming, float_err])
+	_begin_track()
+	var legs := [
+		[Vector3(-1.6, -1.45, 0.0), false, "游到洞口上方"],
+		[Vector3(-1.6, -9.5, 0.0), false, "穿过洞口与水管下潜"],
+		[Vector3(0.6, -10.5, 0.0), true, "从管口下方游出"],
+		[Vector3(5.0, -7.0, 0.0), true, "坡道上岸"],
+	]
+	var ok := floating
+	_waters_seen.clear()
+	for leg in legs:
+		var target: Vector3 = leg[0]
+		var arrived := await _move_to(_ph(target.x, target.y, target.z), 25.0, leg[1])
+		notes.append("%s %s" % [leg[2], arrived])
+		ok = ok and arrived
+	await _frames(20)
+	_track = false
+	var tube_seen := _waters_seen.has(&"tube") and _waters_seen.has(&"dive_pool")
+	var local := _house.to_local(_player.global_position)
+	var in_aquarium := WorldState.zones_of(_player.entity_id).has(&"aquarium")
+	notes.append("终点 (%.1f, %.2f, %.1f)，游泳 %s，区域含 aquarium %s" % [local.x, local.y, local.z, _player.swimming, in_aquarium])
+	_check("泳池 → 池底洞口 → 玻璃水管 → 下潜池 → 坡道上岸进水族馆", ok and tube_seen and not _player.swimming and in_aquarium \
+		and absf(local.y - PoolHouse.FLOOR_B) < 0.15 and _max_step < MAX_STEP, "%s；经过水管 %s；单帧最大位移 %.3f m" % ["；".join(notes), tube_seen, _max_step])
+
+
+func _test_pool_climb_out() -> void:
+	_player.autopilot_enabled = false
+	_player.global_position = _ph(-2.4, -1.45, 0.0)
+	_player.velocity = Vector3.ZERO
+	_player.rotation.y = PI * 0.5
+	await _seconds(1.5)
+	var was_swimming := _player.swimming
+	_player.autopilot_enabled = true
+	_player.autopilot_direction = Vector3(-1.0, 1.0, 0.0)
+	await _seconds(2.0)
+	_player.autopilot_direction = Vector3.ZERO
+	await _seconds(1.0)
+	_player.autopilot_enabled = false
+	var local := _house.to_local(_player.global_position)
+	_check("深水区按跳跃靠池壁爬上岸", was_swimming and not _player.swimming and local.x < PoolHouse.POOL.position.x - 0.1 and absf(local.y) < 0.15,
+		"起点游泳 %s → 停在 (%.2f, %.2f, %.2f)" % [was_swimming, local.x, local.y, local.z])
+
+
+func _test_fauna() -> void:
+	var spawner := _main.get_node("World/Fauna") as FaunaSpawner
+	var climate := _main.get_node("Systems") as ClimateSystem
+	var ids := {}
+	var dup := PackedStringArray()
+	for a in spawner.animals:
+		if ids.has(a.entity_id):
+			dup.append(str(a.entity_id))
+		ids[a.entity_id] = true
+	var kinds := ["rabbit", "fox", "squirrel", "duck", "bird", "butterfly"]
+	var counts := PackedStringArray()
+	var all_present := true
+	for k in kinds:
+		counts.append("%s %d" % [k, spawner.count(k)])
+		all_present = all_present and spawner.count(k) > 0
+	_check("小动物：6 种都已生成，entity_id 不重复", all_present and dup.is_empty(), ", ".join(counts) + ("；重复 " + ", ".join(dup) if not dup.is_empty() else ""))
+
+	var rules := {}
+	for k in kinds:
+		rules[k] = FaunaData.species(k).get("active", {})
+	climate.jump_to_season(&"SUMMER")
+	climate.set_hour(10.0)
+	climate.set_weather(&"CLEAR", 0.0)
+	await _frames(3)
+	var day_ok: bool = FaunaData.is_active(rules["butterfly"]) and FaunaData.is_active(rules["rabbit"]) and FaunaData.is_active(rules["duck"])
+	climate.set_weather(&"LIGHT_RAIN", 0.0)
+	await _frames(3)
+	var rain_ok: bool = not FaunaData.is_active(rules["butterfly"]) and FaunaData.is_active(rules["fox"])
+	climate.set_weather(&"CLEAR", 0.0)
+	climate.set_hour(23.5)
+	await _frames(3)
+	var night_ok: bool = not FaunaData.is_active(rules["butterfly"]) and not FaunaData.is_active(rules["rabbit"]) and FaunaData.is_active(rules["fox"])
+	await _seconds(2.5)
+	var hidden_ok := true
+	for a in spawner.animals:
+		if a.species_id == "butterfly" and a.active:
+			hidden_ok = false
+		if a.species_id == "fox" and not a.active:
+			hidden_ok = false
+	var summer_rabbit := FaunaData.palette(FaunaData.species("rabbit"), 0)
+	climate.jump_to_season(&"WINTER")
+	climate.set_hour(10.0)
+	climate.set_weather(&"CLEAR", 0.0)
+	await _frames(3)
+	var winter_ok: bool = not FaunaData.is_active(rules["duck"]) and not FaunaData.is_active(rules["butterfly"]) and FaunaData.is_active(rules["rabbit"])
+	var winter_rabbit := FaunaData.palette(FaunaData.species("rabbit"), 0)
+	var coat_ok := summer_rabbit != winter_rabbit
+	_check("动物作息：蝴蝶只在春夏晴天白天、狐狸夜里也出来、鸭子冬天不在、兔子冬天换毛色",
+		day_ok and rain_ok and night_ok and hidden_ok and winter_ok and coat_ok,
+		"白天 %s，下雨 %s，夜里 %s（运行时隐藏 %s），冬天 %s，换毛色 %s" % [day_ok, rain_ok, night_ok, hidden_ok, winter_ok, coat_ok])
+
+	climate.jump_to_season(&"SUMMER")
+	climate.set_hour(10.0)
+	climate.set_weather(&"CLEAR", 0.0)
+	await _seconds(2.0)
+	var rabbit: Animal = null
+	for a in spawner.animals:
+		if a.species_id == "rabbit" and a.active and (rabbit == null or a.global_position.distance_to(Vector3(-47, 0, 16)) < rabbit.global_position.distance_to(Vector3(-47, 0, 16))):
+			rabbit = a
+	var flee_ok := false
+	var detail := "没有找到活动的兔子"
+	if rabbit != null:
+		var rp := rabbit.global_position
+		await _setup_at(Vector2(rp.x + 1.4, rp.z), 0.0)
+		var saw_flee := rabbit.fleeing
+		for i in 60:
+			await get_tree().physics_frame
+			saw_flee = saw_flee or rabbit.fleeing
+		var d := Vector2(rabbit.global_position.x - _player.global_position.x, rabbit.global_position.z - _player.global_position.z).length()
+		flee_ok = saw_flee and d > 3.0
+		detail = "%s：玩家走到 1.4 m 内，1.6 s 后相距 %.1f m（逃跑 %s）" % [rabbit.entity_id, d, saw_flee]
+	_check("兔子见人就跑", flee_ok, detail)
+
+	var schools := get_tree().get_nodes_in_group("aquatic_life")
+	var members := 0
+	var inside := true
+	for s: FishSchool in schools:
+		members += s.members.size()
+		inside = inside and s.all_inside()
+	_check("水族箱：鱼、海龟、水母都在缸内游动", schools.size() == PoolHouse.TANKS.size() and members > 20 and inside,
+		"%d 个缸，%d 只，全部在缸内 %s" % [schools.size(), members, inside])
+
+
+func _test_storm_rainbow_leaves() -> void:
+	var climate := _main.get_node("Systems") as ClimateSystem
+	var env := _main.get_node("World/Environment") as EnvironmentDirector
+	var winter_storm := ClimateData.is_allowed(&"WINTER", &"THUNDERSTORM")
+	var summer_storm := ClimateData.is_allowed(&"SUMMER", &"THUNDERSTORM")
+	climate.apply_preset("Summer_Rainbow")
+	await _seconds(1.0)
+	var calm_wind := env.wind_strength
+	var rainbow := env.rainbow
+	var rainbow_sun := env.sun_elevation
+	climate.apply_preset("Summer_Night_Thunderstorm")
+	var strikes := [0]
+	var on_strike := func(_d: float) -> void: strikes[0] += 1
+	EventBus.lightning_strike.connect(on_strike)
+	var before := env.lightning_count
+	await _seconds(15.0)
+	EventBus.lightning_strike.disconnect(on_strike)
+	var flashes := env.lightning_count - before
+	var storm_wind := env.wind_strength
+	_check("雷暴：冬天不会出现、夏夜雷雨 15 s 内有闪电、风明显变大", not winter_storm and summer_storm and flashes >= 1 and strikes[0] >= 1 and storm_wind > calm_wind + 0.3,
+		"冬季允许 %s，闪电 %d 次（信号 %d），风 %.2f → %.2f" % [winter_storm, flashes, strikes[0], calm_wind, storm_wind])
+	_check("雨后放晴、太阳较低时出现彩虹", rainbow > 0.3, "Summer_Rainbow 预设 rainbow = %.2f，太阳高度 %.1f°" % [rainbow, rainbow_sun])
+
+	var precip := get_tree().get_first_node_in_group("precipitation") as Precipitation
+	climate.jump_to_season(&"AUTUMN")
+	climate.set_hour(14.0)
+	climate.set_weather(&"OVERCAST", 0.0)
+	await _seconds(1.0)
+	var autumn_on := precip.leaves.emitting and precip.leaves_kind == "leaves"
+	climate.jump_to_season(&"WINTER")
+	climate.set_weather(&"CLEAR", 0.0)
+	await _seconds(1.0)
+	var winter_off := not precip.leaves.emitting
+	var blockers := 0
+	for n in [_house, _cabin]:
+		blockers += n.find_children("*", "GPUParticlesCollisionBox3D", true, false).size()
+	_check("秋天飘落叶、冬天不飘，建筑有落叶挡板", autumn_on and winter_off and blockers >= 4,
+		"秋 %s，冬停 %s，挡板 %d 个" % [autumn_on, winter_off, blockers])
+
+
 func _slot_mesh(body: CharacterModel, part: String, slot: String) -> Mesh:
 	var holder := body.slot_node(part, slot)
 	var mi := holder.get_node_or_null("Mesh") as MeshInstance3D if holder != null else null
@@ -472,6 +709,8 @@ func _physics_process(_delta: float) -> void:
 	_last_pos = p
 	_min_clearance = minf(_min_clearance, p.y - WorldTerrain.height_at(p.x, p.z))
 	_max_leg_swing = maxf(_max_leg_swing, _player.body.leg_swing_degrees())
+	if _player.current_water != null:
+		_waters_seen[_player.current_water.volume_id] = true
 
 
 func _begin_track() -> void:
@@ -523,6 +762,36 @@ func _walk_for(direction: Vector3, seconds: float) -> void:
 	_player.autopilot_enabled = false
 
 
+## 自动驾驶朝 target 走/游（三维方向；水中可上下）。horizontal = 只按水平距离判断到达（目标点在地板以下时用）。
+func _move_to(target: Vector3, timeout_s: float, horizontal := false) -> bool:
+	_player.autopilot_enabled = true
+	var limit := int(timeout_s * Engine.physics_ticks_per_second)
+	var arrived := false
+	for i in limit:
+		var to := target - _player.global_position
+		var flat := Vector2(to.x, to.z).length()
+		var dist := flat if horizontal or not _player.swimming else to.length()
+		if dist < 0.35:
+			arrived = true
+			break
+		_player.autopilot_direction = to
+		_player.autopilot_run = false
+		await get_tree().physics_frame
+	_player.autopilot_direction = Vector3.ZERO
+	await _frames(15)
+	_player.autopilot_enabled = false
+	return arrived
+
+
+func _ph(x: float, y: float, z: float) -> Vector3:
+	return _house.to_global(Vector3(x, y, z))
+
+
+func _ph_xz(local_xz: Vector2) -> Vector2:
+	var p := _house.to_global(Vector3(local_xz.x, 0.0, local_xz.y))
+	return Vector2(p.x, p.z)
+
+
 func _ray_info() -> String:
 	var ray := _player.interact_ray
 	ray.force_raycast_update()
@@ -531,6 +800,16 @@ func _ray_info() -> String:
 		return "未命中（玩家 %.2f, %.2f, %.2f）" % [p.x, p.y, p.z]
 	var c := ray.get_collider() as Node
 	return "%s @ %s（玩家 %.2f, %.2f, %.2f）" % [c.get_path(), str(ray.get_collision_point()), p.x, p.y, p.z]
+
+
+func _near_pit_edge(x: float, z: float) -> bool:
+	for pit in WorldLayout.section("terrain").get("pits", []):
+		var r: Array = pit["rect"]
+		var outer := Rect2(float(r[0]) - 1.5, float(r[1]) - 1.5, float(r[2]) - float(r[0]) + 3.0, float(r[3]) - float(r[1]) + 3.0)
+		var inner := Rect2(float(r[0]) + 1.5, float(r[1]) + 1.5, float(r[2]) - float(r[0]) - 3.0, float(r[3]) - float(r[1]) - 3.0)
+		if outer.has_point(Vector2(x, z)) and not inner.has_point(Vector2(x, z)):
+			return true
+	return false
 
 
 func _cabin_xz(local_x: float, local_z: float) -> Vector2:

@@ -5,7 +5,7 @@ extends RefCounted
 
 const SEASONS_PATH := "res://data/seasons/seasons.json"
 const WEATHER_PATH := "res://data/weather/weather.json"
-const WEATHER_IDS := [&"CLEAR", &"OVERCAST", &"LIGHT_RAIN", &"HEAVY_RAIN", &"FOG", &"SNOW"]
+const WEATHER_IDS := [&"CLEAR", &"OVERCAST", &"LIGHT_RAIN", &"HEAVY_RAIN", &"THUNDERSTORM", &"FOG", &"SNOW"]
 const MINUTES_PER_DAY := 1440.0
 
 static var _seasons: Dictionary = {}

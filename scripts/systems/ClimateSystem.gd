@@ -23,6 +23,7 @@ func apply_preset(preset: String) -> bool:
 	# 预设代表“已经持续了一段时间”的天气，所以地面积雪与湿润度直接给到稳定值
 	WorldState.ground_snow = float(p.get("ground_snow", WorldState.ground_snow))
 	WorldState.ground_wetness = float(p.get("wetness", WorldState.ground_wetness))
+	WorldState.rain_recent = float(p.get("rain_recent", 0.0))
 	return weather.request_weather(StringName(p["weather"]), 0.0)
 
 

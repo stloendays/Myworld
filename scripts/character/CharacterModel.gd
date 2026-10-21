@@ -34,7 +34,6 @@ const SOCKETS := {
 var parts: Dictionary = {}       ## 部位名 -> 转轴 Node3D
 var sockets: Dictionary = {}     ## 挂点名 -> Node3D
 
-var _material: StandardMaterial3D = null
 var _phase := 0.0
 var _swing := 0.0
 
@@ -123,65 +122,15 @@ func _ensure_skeleton() -> void:
 		sockets[socket_name] = s
 
 
-## 把一组像素盒子合成一个网格（顶点色 = 颜色键对应的颜色）。
+## 把一组像素盒子合成一个网格（顶点色 = 颜色键对应的颜色），画风与小动物一致（BlockyMesh）。
 func _build_mesh(pieces: Array) -> ArrayMesh:
-	var px := Wardrobe.px()
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	for piece in pieces:
-		var b: Array = piece["box"]
-		var lo := Vector3(float(b[0]), float(b[1]), float(b[2])) * px
-		var hi := Vector3(float(b[3]), float(b[4]), float(b[5])) * px
-		_add_box(st, lo, hi, _resolve_color(str(piece["color"])))
-	var mesh := st.commit()
-	mesh.surface_set_material(0, _shared_material())
-	return mesh
+	return BlockyMesh.build(pieces, _resolve_color, Wardrobe.px())
 
 
 func _resolve_color(key: String) -> Color:
 	if key.begins_with("#"):
 		return Color.html(key)
 	return appearance.color(key)
-
-
-static func _add_box(st: SurfaceTool, lo: Vector3, hi: Vector3, color: Color) -> void:
-	var c := [
-		Vector3(lo.x, lo.y, lo.z), Vector3(hi.x, lo.y, lo.z), Vector3(hi.x, hi.y, lo.z), Vector3(lo.x, hi.y, lo.z),
-		Vector3(lo.x, lo.y, hi.z), Vector3(hi.x, lo.y, hi.z), Vector3(hi.x, hi.y, hi.z), Vector3(lo.x, hi.y, hi.z),
-	]
-	var faces := [
-		[[0, 3, 2, 1], Vector3.FORWARD], [[4, 5, 6, 7], Vector3.BACK],
-		[[0, 4, 7, 3], Vector3.LEFT], [[1, 2, 6, 5], Vector3.RIGHT],
-		[[3, 7, 6, 2], Vector3.UP], [[0, 1, 5, 4], Vector3.DOWN],
-	]
-	st.set_color(color)
-	for f in faces:
-		var q: Array = f[0]
-		var n: Vector3 = f[1]
-		MeshUtil.add_tri(st, c[q[0]], c[q[1]], c[q[2]], n)
-		MeshUtil.add_tri(st, c[q[0]], c[q[2]], c[q[3]], n)
-
-
-## 共用材质：顶点色 × 16×16 像素噪点贴图（最近邻采样，1 个贴图像素 = 1 个模型像素），呈现方块像素质感。
-func _shared_material() -> StandardMaterial3D:
-	if _material == null:
-		var img := Image.create(16, 16, false, Image.FORMAT_RGB8)
-		var rng := RandomNumberGenerator.new()
-		rng.seed = 1717
-		for y in 16:
-			for x in 16:
-				var v := rng.randf_range(0.86, 1.0)
-				img.set_pixel(x, y, Color(v, v, v))
-		_material = StandardMaterial3D.new()
-		_material.albedo_texture = ImageTexture.create_from_image(img)
-		_material.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-		_material.uv1_triplanar = true
-		_material.uv1_scale = Vector3.ONE / (16.0 * Wardrobe.px())
-		_material.vertex_color_use_as_albedo = true
-		_material.vertex_color_is_srgb = true
-		_material.roughness = 0.9
-	return _material
-
 
 func _apply_layers() -> void:
 	for mi in find_children("*", "MeshInstance3D", true, false):

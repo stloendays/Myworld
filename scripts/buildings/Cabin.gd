@@ -87,23 +87,14 @@ func rebuild() -> void:
 	g.add_child(body)
 	_build_collision(body)
 	g.add_child(ZoneArea.create_box(&"cabin_interior", Vector3(9.7, 3.6, 7.8), Vector3(0.0, 1.8, 0.0), true))
+	# 屋内的落叶挡板：A 字形内接矩形（半高处宽度正好是半跨），两侧屋面另有挡板
+	g.add_child(Precipitation.leaf_blocker(Vector3(LENGTH, RIDGE * 0.5, HALF_SPAN), Transform3D(Basis(), Vector3(0.0, RIDGE * 0.25, 0.0))))
 
 
 func _prop(prop: Dictionary) -> Node3D:
-	var asset: String = prop["asset"]
-	var path := (NATURE if prop.get("nature", false) else FURNITURE) + asset + ".glb"
-	var info := ArtMaterials.kenney_mesh(path)
-	var aabb: AABB = info["aabb"]
-	var s := float(prop["scale"])
-	var basis := Basis(Vector3.UP, deg_to_rad(float(prop["yaw"]))).scaled(Vector3(s, s, s))
+	var path := (NATURE if prop.get("nature", false) else FURNITURE) + str(prop["asset"]) + ".glb"
 	var c := Vector3(float(prop["center"][0]), float(prop["center"][1]), float(prop["center"][2]))
-	var bottom_center := Vector3(aabb.get_center().x, aabb.position.y, aabb.get_center().z)
-	var node := (load(path) as PackedScene).instantiate() as Node3D
-	node.name = asset
-	node.transform = Transform3D(basis, c - basis * bottom_center)
-	ArtMaterials.restyle_kenney(node, asset)
-	return node
-
+	return ArtMaterials.kenney_prop(path, c, float(prop["yaw"]), float(prop["scale"]))
 
 func _build_lights(g: Node3D) -> void:
 	_omni(g, Vector3(2.35, 1.5, 2.6), Color(1.0, 0.72, 0.45), 1.6, 6.5, false)
@@ -128,6 +119,8 @@ func _build_collision(body: StaticBody3D) -> void:
 		var out := Vector3(0.0, HALF_SPAN, side * RIDGE).normalized()
 		var basis := Basis(Vector3.RIGHT, up_dir, Vector3.RIGHT.cross(up_dir))
 		_solid(body, Vector3(LENGTH + 0.8, slope_len + 0.5, 0.22), (eave + ridge) * 0.5 + out * 0.17, basis)
+		if not Engine.is_editor_hint():
+			body.get_parent().add_child(Precipitation.leaf_blocker(Vector3(LENGTH + 0.8, slope_len + 0.5, 0.6), Transform3D(basis, (eave + ridge) * 0.5 + out * 0.3)))
 	# 正立面玻璃（门洞留空）与背墙
 	var front_x := LENGTH * 0.5
 	var y_edge := RIDGE * (1.0 - DOOR_HALF / HALF_SPAN)

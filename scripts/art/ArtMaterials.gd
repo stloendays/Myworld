@@ -14,10 +14,12 @@ const SIZE_M := {
 	"brown_mud_rocks_01": 1.3, "roof_slates_02": 3.0, "brown_planks_05": 1.0, "wood_floor": 1.7,
 	"weathered_planks": 2.0, "stained_pine": 0.9, "rough_pine_door": 2.0, "rustic_stone_wall": 1.52,
 	"slate_floor": 2.29, "wool_boucle": 0.35, "poly_wool_herringbone": 0.27, "pine_bark": 2.0,
+	"floor_tiles_02": 4.0, "concrete_floor_01": 2.0, "damp_beach_sand": 2.0,
 }
 
 const SNOW_OVERLAY := preload("res://shaders/snow_overlay.gdshader")
 const GLASS_SHADER := preload("res://shaders/glass.gdshader")
+const FOLIAGE_SHADER := preload("res://shaders/foliage.gdshader")
 
 static var _cache: Dictionary = {}
 static var _snowable: Array[BaseMaterial3D] = []
@@ -110,6 +112,59 @@ static func glass() -> ShaderMaterial:
 	return m
 
 
+## 植被材质（foliage.gdshader）：tree 树冠大幅慢摆、bush 灌木、grass 草叶（厚雪会埋住）、moss 岩石苔藓（不摆）。
+## 积雪、风、湿润都在着色器内处理，所以不挂积雪覆盖层。
+static func foliage(kind: String) -> ShaderMaterial:
+	var key := "foliage:" + kind
+	if _cache.has(key):
+		return _cache[key]
+	var m := ShaderMaterial.new()
+	m.shader = FOLIAGE_SHADER
+	match kind:
+		"tree":
+			m.set_shader_parameter("sway", 0.11)
+			m.set_shader_parameter("sway_height", 1.6)
+		"bush":
+			m.set_shader_parameter("sway", 0.05)
+			m.set_shader_parameter("sway_height", 0.35)
+		"grass":
+			m.set_shader_parameter("sway", 0.12)
+			m.set_shader_parameter("sway_height", 0.22)
+			m.set_shader_parameter("sink_in_snow", true)
+		_:
+			m.set_shader_parameter("sway", 0.0)
+	_cache[key] = m
+	return m
+
+
+## 室内用的清透玻璃（水族箱、玻璃水管），不带雨痕。
+static func clear_glass() -> StandardMaterial3D:
+	if _cache.has("clear_glass"):
+		return _cache["clear_glass"]
+	var m := StandardMaterial3D.new()
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.albedo_color = Color(0.70, 0.86, 0.92, 0.10)
+	m.roughness = 0.02
+	m.metallic_specular = 0.9
+	m.cull_mode = BaseMaterial3D.CULL_DISABLED
+	_cache["clear_glass"] = m
+	return m
+
+
+## 放一件 Kenney 摆件：center 为底面中心（局部坐标，y 为底面高度），yaw 为朝向（度，0 = 正面朝 +Z）。
+static func kenney_prop(path: String, center: Vector3, yaw_deg: float, scale: float) -> Node3D:
+	var info := kenney_mesh(path)
+	var aabb: AABB = info["aabb"]
+	var basis := Basis(Vector3.UP, deg_to_rad(yaw_deg)).scaled(Vector3(scale, scale, scale))
+	var bottom_center := Vector3(aabb.get_center().x, aabb.position.y, aabb.get_center().z)
+	var asset := path.get_file().get_basename()
+	var node := (load(path) as PackedScene).instantiate() as Node3D
+	node.name = asset
+	node.transform = Transform3D(basis, center - basis * bottom_center)
+	restyle_kenney(node, asset)
+	return node
+
+
 ## 标记为室外朝天的材质：下雪积雪时叠加 snow_overlay 覆盖层。
 static func snowable(m: Material) -> Material:
 	var base := m as BaseMaterial3D
@@ -179,11 +234,11 @@ static func for_kenney(asset: String, material: String) -> Material:
 	match material:
 		# 树冠、草叶：白色底色，实际颜色由 MultiMesh 实例颜色给出（便于季节批量换色）
 		"leafsDark", "leafsGreen":
-			return snowable(flat(Color.WHITE, 0.9, true))
+			return foliage("tree" if asset.begins_with("tree") else "bush")
 		"leafsFall":
 			if asset.begins_with("canoe"):
 				return flat(Color(0.55, 0.18, 0.11), 0.6)
-			return snowable(flat(Color.WHITE, 0.9, true))
+			return foliage("tree")
 		"woodBark", "woodBarkDark":
 			return pbr("pine_bark", Color(0.62, 0.52, 0.46), "world")
 		"woodBirch":
@@ -191,7 +246,7 @@ static func for_kenney(asset: String, material: String) -> Material:
 		"woodInner":
 			return flat(Color(0.76, 0.60, 0.42), 0.8)
 		"grass":
-			return snowable(flat(Color.WHITE, 0.91, true, 0.0, true))
+			return foliage("moss" if asset.begins_with("rock") else "grass")
 		"dirt":
 			return snowable(pbr("rock_face_03", Color(0.78, 0.75, 0.72), "world"))
 		"_defaultMat":

@@ -5,6 +5,8 @@ shader_type spatial;
 
 render_mode cull_back, diffuse_burley, specular_schlick_ggx;
 
+#include "res://shaders/include/rain_ripples.gdshaderinc"
+
 uniform vec3 shallow_color : source_color = vec3(0.30, 0.27, 0.30);
 uniform vec3 deep_color : source_color = vec3(0.035, 0.045, 0.085);
 uniform float ripple_scale = 0.05;
@@ -31,6 +33,10 @@ void fragment() {
 	// 下雨时水面更碎、更粗糙（雨点打出的细纹）
 	vec3 nc = texture(ripple_b, uv * 9.0 + vec2(TIME * 0.31, -TIME * 0.27)).rgb;
 	NORMAL_MAP = normalize(mix(NORMAL_MAP, nc, rain_amount * 0.6));
+	if (rain_amount > 0.01) {
+		vec2 r = rain_ripple(world_pos.xz * 1.6, TIME, 0.55) * rain_amount;
+		NORMAL_MAP = normalize(NORMAL_MAP + vec3(r.x, -r.y, 0.0) * 0.45);
+	}
 	NORMAL_MAP_DEPTH = ripple_strength * (1.0 + rain_amount * 2.5);
 	ALBEDO = mix(shallow_color, deep_color, smoothstep(0.0, 1.0, depth01));
 	ROUGHNESS = roughness_value + rain_amount * 0.12;
