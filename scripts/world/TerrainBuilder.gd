@@ -141,6 +141,9 @@ func _make_material() -> ShaderMaterial:
 	for c in LAYER_TINTS:
 		tints.append(Vector3(c.r, c.g, c.b))
 	mat.set_shader_parameter("layer_tint", tints)
+	var terrain := WorldLayout.section("terrain")
+	mat.set_shader_parameter("snowline", float(terrain.get("snowline", 9999.0)))
+	mat.set_shader_parameter("snowline_band", float(terrain.get("snowline_band", 3.0)))
 	return mat
 
 

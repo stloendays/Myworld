@@ -15,6 +15,9 @@ uniform float layer_size[5];
 uniform vec3 layer_tint[5] : source_color;
 uniform float normal_strength = 0.8;
 uniform float blend_sharpness = 2.5;
+// 雪线（world_layout.json → terrain.snowline）：这个高度以上常年积雪，陡峭的岩壁不挂雪
+uniform float snowline = 9999.0;
+uniform float snowline_band = 3.0;
 global uniform vec4 season_tint;
 global uniform float snow_cover;
 global uniform float wetness;
@@ -107,6 +110,9 @@ void fragment() {
 	// 积雪先盖平地，再随覆盖度往坡面扩展；用贴图明度打散边缘
 	float snow_edge = mix(0.85, 0.45, snow_cover);
 	float snow = smoothstep(snow_edge, snow_edge + 0.15, n_world.y + (dot(alb, vec3(0.333)) - 0.3) * 0.4) * smoothstep(0.0, 0.25, snow_cover);
+	float alt = smoothstep(snowline - snowline_band, snowline + snowline_band, wpos.y + (value_noise(wpos.xz * 0.08) - 0.5) * 5.0);
+	float alt_snow = alt * smoothstep(0.42, 0.62, n_world.y + (dot(alb, vec3(0.333)) - 0.3) * 0.3);
+	snow = max(snow, alt_snow);
 	alb = mix(alb, vec3(0.92, 0.94, 0.98), snow);
 	alb *= mix(1.0, 0.55, wetness * (1.0 - snow));
 	rgh = mix(rgh, 0.25, wetness * (1.0 - snow));

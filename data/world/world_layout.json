@@ -16,17 +16,20 @@
     "boundary_start": 108.0,
     "boundary_end": 125.0,
     "boundary_height": 24.0,
+    "snowline": 27.0,
+    "snowline_band": 3.0,
     "hills": [
       {"zone_id": "nw_viewpoint", "center": [-93, -101], "height": 15.0, "sigma": 16.0},
       {"center": [-112, 10], "height": 5.0, "sigma": 18.0},
       {"center": [92, 92], "height": 6.0, "sigma": 20.0},
-      {"center": [80, -98], "height": 7.0, "sigma": 22.0}
+      {"zone_id": "snow_peak", "center": [104, -109], "height": 38.0, "sigma": 31.0}
     ],
     "pads": [
       {"id": "cabin_pad", "center": [-66, 37], "radius": 11.5, "blend": 9.0, "height": 2.0},
       {"id": "dock_landing", "center": [-45, 26], "radius": 3.5, "blend": 10.0, "height": 1.0},
       {"id": "poolhouse_pad", "center": [4, 84], "radius": 18.0, "blend": 8.0, "height": 2.0},
-      {"id": "fairy_glade_pad", "center": [76, 88], "radius": 15.0, "blend": 10.0, "height": 6.6}
+      {"id": "fairy_glade_pad", "center": [76, 88], "radius": 15.0, "blend": 10.0, "height": 6.6},
+      {"id": "snow_peak_summit", "center": [102, -108], "radius": 4.0, "blend": 6.0, "height": 39.4}
     ],
     "pits": [
       {"id": "poolhouse_basement", "rect": [-8.5, 75.5, 16.5, 92.5], "floor": -10.6}
@@ -71,6 +74,17 @@
 
   "canoe": {"pos": [-28.0, 24.0], "heading": 90.0},
 
+  "snow_peak": {
+    "zone_id": "snow_peak",
+    "center": [102, -108],
+    "summit": [102, -108],
+    "backdrop": [
+      {"center": [178, -178], "height": 190.0, "radius": 115.0, "snow_from": 0.45},
+      {"center": [222, -118], "height": 125.0, "radius": 85.0, "snow_from": 0.52},
+      {"center": [128, -222], "height": 115.0, "radius": 80.0, "snow_from": 0.55}
+    ]
+  },
+
   "fairy_glade": {
     "zone_id": "fairy_glade",
     "center": [76, 88],
@@ -97,7 +111,9 @@
     {"id": "sign_trail_poolhouse", "text": "trail_poolhouse", "pos": [-47.0, 32.0], "yaw_deg": 180.0, "style": "stand", "width": 1.6, "scale": 1.5},
     {"id": "sign_canoe", "text": "canoe_dock", "pos": [-43.8, 22.6], "yaw_deg": -90.0, "style": "stand", "width": 1.5, "scale": 1.4},
     {"id": "sign_islet", "text": "lake_islet", "pos": [37.6, -3.2], "yaw_deg": -70.0, "style": "stand", "width": 1.4, "scale": 1.4},
-    {"id": "sign_fairy_glade", "text": "fairy_glade", "pos": [62.5, 90.6], "yaw_deg": -115.0, "style": "stand", "width": 1.5, "scale": 1.45}
+    {"id": "sign_fairy_glade", "text": "fairy_glade", "pos": [62.5, 90.6], "yaw_deg": -115.0, "style": "stand", "width": 1.5, "scale": 1.45},
+    {"id": "sign_snow_trail", "text": "snow_peak_trail", "pos": [-76.5, -51.5], "yaw_deg": -90.0, "style": "stand", "width": 1.5, "scale": 1.45},
+    {"id": "sign_snow_summit", "text": "snow_peak_summit", "pos": [99.0, -105.5], "yaw_deg": -78.0, "style": "stand", "width": 1.5, "scale": 1.45}
   ],
 
   "dev_spots": [
@@ -111,6 +127,7 @@
     {"name": "地下水族馆", "pos": [-0.5, -5.0, 87.5], "heading": 90.0},
     {"name": "海洋大缸（潜水）", "pos": [4.0, -5.6, 78.4], "heading": 90.0},
     {"name": "仙境林地", "pos": [62.0, 88.0], "ground": true, "heading": 90.0},
+    {"name": "雪山顶", "pos": [99.5, -106.5], "ground": true, "heading": 240.0},
     {"name": "南部草甸", "pos": [-84.0, 93.0], "ground": true, "heading": 0.0},
     {"name": "西北观景点", "pos": [-93.0, -101.0], "ground": true, "heading": 135.0},
     {"name": "湖心上空（飞行）", "pos": [35.0, 30.0, -2.0], "heading": 250.0, "fly": true}
@@ -129,7 +146,8 @@
     {"zone_id": "nw_viewpoint", "name": "西北观景点", "center": [-93, -101], "size": [24, 24]},
     {"zone_id": "south_meadow", "name": "南部林间草甸", "center": [-84, 93], "size": [60, 40]},
     {"zone_id": "poolhouse_grounds", "name": "泳池馆前庭", "center": [4, 84], "size": [32, 28]},
-    {"zone_id": "fairy_glade", "name": "仙境林地", "center": [76, 88], "size": [32, 32]}
+    {"zone_id": "fairy_glade", "name": "仙境林地", "center": [76, 88], "size": [32, 32]},
+    {"zone_id": "snow_peak", "name": "雪山", "center": [92, -98], "size": [40, 40]}
   ],
 
   "paths": [
@@ -138,7 +156,8 @@
     {"id": "trail_meadow", "points": [[-57, 38], [-64, 52], [-74, 68], [-84, 90], [-98, 104]]},
     {"id": "dock_walk", "points": [[-57, 37], [-51, 31], [-46, 26]]},
     {"id": "trail_poolhouse", "points": [[-51, 31], [-40, 44], [-25, 58], [-15, 70], [-12, 80], [-11, 84]]},
-    {"id": "trail_fairy", "points": [[-15, 70], [2, 68], [20, 70], [36, 76], [50, 84], [62, 88], [68, 88]]}
+    {"id": "trail_fairy", "points": [[-15, 70], [2, 68], [20, 70], [36, 76], [50, 84], [62, 88], [68, 88]]},
+    {"id": "trail_snow_peak", "points": [[-80, -50], [-60, -74], [-30, -86], [0, -88], [25, -84], [45, -86], [58, -92], [64, -101], [74, -97], [82, -106], [92, -104], [100, -107]]}
   ],
 
   "forest": {
@@ -167,6 +186,7 @@
       {"id": "poolhouse_clearing", "center": [4, 84], "radius": 21},
       {"id": "fairy_glade_clearing", "center": [76, 88], "radius": 17}
     ],
+    "treeline": 21.0,
     "rock_count": 160,
     "rock_seed": 4411
   },

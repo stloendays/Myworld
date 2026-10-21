@@ -90,6 +90,7 @@ func _run() -> void:
 	await _test_fullscreen_and_world_map()
 	_test_updater()
 	await _test_fairy_glade()
+	await _test_snow_peak()
 	_report()
 
 
@@ -1850,4 +1851,50 @@ func _test_fairy_glade() -> void:
 	_check("传送门按 E 提示目标世界还在建设中；天亮后仙境消失", focused and used and portal_toast != "" and gone,
 		"对准 %s，交互 %s，提示「%s」，天亮消失 %s" % [focused, used, portal_toast, gone])
 	climate.apply_preset("Autumn_Dusk_Clear")
+	await _setup_at(Vector2(-50.0, 29.0), 0.0)
+
+
+func _test_snow_peak() -> void:
+	var peak := get_tree().get_first_node_in_group("snow_peak") as SnowPeak
+	if peak == null:
+		_check("雪山已生成", false)
+		return
+	var terrain_cfg := WorldLayout.section("terrain")
+	var snowline := float(terrain_cfg["snowline"])
+	var top := WorldTerrain.height_at(peak.summit.x, peak.summit.y)
+	var no_trees := Vegetation.tree_density(peak.summit.x, peak.summit.y) == 0.0 and Vegetation.tree_density(88.0, -105.0) == 0.0
+	var mat := (_main.get_node("World/Terrain").find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D).mesh.surface_get_material(0) as ShaderMaterial
+	var shader_ok := mat != null and absf(float(mat.get_shader_parameter("snowline")) - snowline) < 0.01
+	var massif := _main.find_child("SnowMassif", true, false) as MeshInstance3D
+	var massif_ok := massif != null and massif.mesh.get_surface_count() == 2
+	# 地图内的山体处处可走（坡度 < 1，即 45°）；湖岸和地图边缘的陡坡不算
+	var worst := 0.0
+	for x in range(48, 106, 3):
+		for z in range(-106, -60, 3):
+			if WorldTerrain.lake_radius(x, z) < 1.25:
+				continue
+			worst = maxf(worst, WorldTerrain.slope_at(x, z))
+	_check("雪山：山顶 %.1f m（雪线 %.0f m 以上常年积雪），林线以上无树，坡度处处可走，背后有雪顶主峰远景" % [top, snowline],
+		top > snowline + 8.0 and no_trees and shader_ok and massif_ok and worst < 0.95,
+		"无树 %s · 地形雪线参数 %s · 远景主峰 %s · 山体最大坡度 %.2f" % [no_trees, shader_ok, massif_ok, worst])
+	# 沿步道折返上山
+	await _setup_at(Vector2(58.0, -92.0), 0.0)
+	_begin_track()
+	var ok := true
+	for p in [Vector2(64.0, -101.0), Vector2(74.0, -97.0), Vector2(82.0, -106.0), Vector2(92.0, -104.0), Vector2(100.0, -107.0)]:
+		ok = await _walk_to(p, 40.0) and ok
+	_track = false
+	var inside := WorldState.zones_of(_player.entity_id).has(&"snow_peak")
+	var height := _player.global_position.y
+	_check("沿雪山步道走上山顶（区域 snow_peak），连续步行", ok and inside and height > snowline + 8.0 and _max_step < MAX_STEP,
+		"到达 %s，区域 %s，高度 %.1f m，单帧最大位移 %.3f m" % [ok, inside, height, _max_step])
+	# 山顶长椅：坐下看湖，小雪在飘
+	_player.global_position = peak.seat.exit_point() + Vector3(0.0, 0.2, 0.0)
+	_player.velocity = Vector3.ZERO
+	await _seconds(0.5)
+	_player.sit(peak.seat)
+	var sat := _player.seat == peak.seat
+	_player.stand_up()
+	var flurry_ok := peak.flurry != null and peak.flurry.emitting
+	_check("山顶长椅可以坐，周围常年飘小雪", sat and flurry_ok, "坐下 %s · 小雪 %s" % [sat, flurry_ok])
 	await _setup_at(Vector2(-50.0, 29.0), 0.0)

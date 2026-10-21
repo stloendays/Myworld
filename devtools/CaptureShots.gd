@@ -90,6 +90,11 @@ const SHOTS := [
 	{"name": "m2i_04_moon_gate", "climate": {"season": "SUMMER", "hour": 21.5, "weather": "CLEAR"}, "eye": [79.5, 1.7, 89.5], "ground": true, "look": [86, 9.0, 88]},
 	{"name": "m2i_05_fairy_tree", "climate": {"season": "SUMMER", "hour": 21.0, "weather": "CLEAR"}, "eye": [77, 1.6, 95.5], "ground": true, "look": [76, 12.0, 82]},
 	{"name": "m2i_06_fairy_glade_day", "climate": {"season": "SUMMER", "hour": 12.0, "weather": "CLEAR"}, "eye": [58.4, 1.75, 88.7], "ground": true, "look": [72, 7.2, 89]},
+	{"name": "m2j_01_snow_peak_from_dock", "climate": {"season": "SUMMER", "hour": 16.0, "weather": "CLEAR"}, "eye": [-2, 2.65, 26], "look": [96, 26.0, -104]},
+	{"name": "m2j_02_snow_peak_dusk", "climate": DUSK, "eye": [-50, 1.65, 29], "ground": true, "look": [96, 24.0, -104]},
+	{"name": "m2j_03_summit_view", "climate": DUSK, "eye": [100.5, 1.7, -105.0], "ground": true, "look": [35, 4.0, -2]},
+	{"name": "m2j_04_summit_cairn", "climate": {"season": "SUMMER", "hour": 14.0, "weather": "CLEAR"}, "eye": [97.5, 1.8, -103.0], "ground": true, "look": [103.6, 40.5, -107.4]},
+	{"name": "m2j_05_ridge_trail", "climate": {"season": "SUMMER", "hour": 15.0, "weather": "CLEAR"}, "eye": [62, 1.7, -96], "ground": true, "look": [86, 33.0, -106]},
 ]
 
 const OUTFITS := [

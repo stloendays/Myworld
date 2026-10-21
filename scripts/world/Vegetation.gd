@@ -53,6 +53,15 @@ static func base_density(x: float, z: float) -> float:
 	return d
 
 
+## 高山系数：低于 limit - 4 m 为 1，到 limit 渐变为 0（树木用林线 treeline，草和花用雪线下方 2 m）。
+static func below(limit: float, h: float) -> float:
+	return 1.0 - smoothstep(limit - 4.0, limit, h)
+
+
+static func treeline() -> float:
+	return float(cfg().get("treeline", 9999.0))
+
+
 ## 树木摆放密度：在基础密度上排除湖水、空地、步道走廊和可达区域内的陡坡，并稀疏湖岸。
 static func tree_density(x: float, z: float) -> float:
 	var p := Vector2(x, z)
@@ -68,7 +77,7 @@ static func tree_density(x: float, z: float) -> float:
 	var inner_limit := float(WorldLayout.section("terrain").get("boundary_start", 108.0)) - 2.0
 	if edge > mx - inner_limit and WorldTerrain.slope_at(x, z) > float(c.get("max_slope", 0.9)):
 		return 0.0
-	var d := base_density(x, z)
+	var d := base_density(x, z) * below(treeline(), h)
 	if h < water + 1.3:
 		d *= float(c.get("shore_thinning", 0.3))
 	return d

@@ -1200,3 +1200,9 @@ msgstr "Fairy"
 msgid "东南方的林子里亮起了奇异的光……仙境林地出现了"
 msgstr "A strange light glows in the woods to the southeast… the Fairy Glade has appeared"
 
+msgid "雪山"
+msgstr "Snow Peak"
+
+msgid "雪山顶"
+msgstr "Snow Peak Summit"
+

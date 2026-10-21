@@ -8,7 +8,7 @@ const SIZE := 210.0
 const MARGIN := 18.0
 const BAKE_RES := 256
 const CACHE_PATH := "user://minimap_%s.png"
-const MAP_VERSION := 1
+const MAP_VERSION := 2   ## 2：雪线以上画成雪
 
 const WATER_SHALLOW := Color(0.40, 0.66, 0.74)
 const WATER_DEEP := Color(0.13, 0.31, 0.47)
@@ -16,6 +16,7 @@ const SAND := Color(0.80, 0.74, 0.58)
 const GRASS := Color(0.50, 0.60, 0.34)
 const FOREST := Color(0.18, 0.34, 0.21)
 const ROCK := Color(0.56, 0.53, 0.49)
+const SNOW := Color(0.93, 0.95, 0.98)
 const PATH_COLOR := Color(0.88, 0.80, 0.62)
 const DOCK_COLOR := Color(0.55, 0.38, 0.24)
 
@@ -230,6 +231,7 @@ func _load_or_bake() -> void:
 func _bake(img: Image) -> void:
 	var n := BAKE_RES
 	var cell := world_rect.size.x / n
+	var snowline := float(WorldLayout.section("terrain").get("snowline", 9999.0))
 	var water := WorldLayout.water_level()
 	var heights := PackedFloat32Array()
 	heights.resize(n * n)
@@ -256,6 +258,7 @@ func _bake(img: Image) -> void:
 				if h < water + 0.45:
 					col = SAND
 				col = col.lerp(ROCK, smoothstep(0.7, 1.2, slope))
+				col = col.lerp(SNOW, smoothstep(snowline - 2.0, snowline + 2.0, h) * (1.0 - smoothstep(1.0, 1.4, slope)))
 				col *= clampf(0.55 + normal.dot(light) * 0.55, 0.45, 1.15)
 			img.set_pixel(i, j, Color(col.r, col.g, col.b))
 
