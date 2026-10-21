@@ -169,6 +169,9 @@ func _suitability(x: float, z: float, where: String, meadow: Dictionary) -> floa
 		return 0.0
 	if WorldLayout.distance_to_paths(p) < 1.8 or WorldTerrain.slope_at(x, z) > 0.6 or Vegetation.in_keepout(p):
 		return 0.0
+	# 雪线下方 2 m 以上不长草和花
+	if h > float(WorldLayout.section("terrain").get("snowline", 9999.0)) - 2.0:
+		return 0.0
 	var forest := clampf((Vegetation.base_density(x, z) - 0.3) / 0.35, 0.0, 1.0)
 	match where:
 		"grass":

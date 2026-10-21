@@ -63,6 +63,18 @@
     "body_zh": "只有划独木舟才能到这里。岛上有个小营地，晴朗的夜晚适合坐在营火边看星星。",
     "body_en": "You can only get here by canoe. There is a small camp on the islet; on a clear night, sit by the campfire and watch the stars."
   },
+  "snow_peak_trail": {
+    "title_zh": "雪山步道",
+    "title_en": "Snow Peak Trail",
+    "body_zh": "沿北岸往东，再顺着西侧山脊折返上山，约 200 m 到达雪山顶。林线以上没有树，27 m 以上终年积雪，山顶常年飘着小雪，能看见整片湖。",
+    "body_en": "Follow the north shore east, then switchback up the west ridge: about 200 m to the summit. Above the tree line there are no trees; above 27 m the snow never melts, light snow always drifts at the top, and you can see the whole lake."
+  },
+  "snow_peak_summit": {
+    "title_zh": "雪山顶 · 海拔 39 m",
+    "title_en": "Snow Peak Summit · 39 m",
+    "body_zh": "暮色湖畔的最高处。往西南看是整片湖、码头和木屋，东边和北边是地图尽头的群山。累了就在石堆旁的长椅上坐一会儿。",
+    "body_en": "The highest point of Dusk Lake. To the south-west lie the whole lake, the dock and the cabin; to the east and north the mountains at the edge of the map. Rest a while on the bench beside the cairn."
+  },
   "fairy_glade": {
     "title_zh": "仙境林地",
     "title_en": "Fairy Glade",

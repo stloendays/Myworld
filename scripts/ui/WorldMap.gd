@@ -170,7 +170,7 @@ func _draw_map() -> void:
 	var lake := WorldLayout.section("lake")
 	if not lake.is_empty():
 		_label(font, t * WorldLayout.v2(lake["center"]) + Vector2(0.0, 40.0), tr("暮色湖"), 20, Color(0.9, 0.96, 1.0))
-	for item in [["cabin", "木屋"], ["poolhouse", "泳池馆"], ["fairy_glade", "仙境林地"]]:
+	for item in [["cabin", "木屋"], ["poolhouse", "泳池馆"], ["fairy_glade", "仙境林地"], ["snow_peak", "雪山"]]:
 		var cfg := WorldLayout.section(item[0])
 		if item[0] == "fairy_glade" and (glade == null or not glade.active):
 			continue
