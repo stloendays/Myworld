@@ -84,6 +84,12 @@ const SHOTS := [
 	{"name": "m2h_13_world_map_en", "lang": "en", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "world_map": true},
 	{"name": "m2h_14_lobby", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "lobby": true},
 	{"name": "m2h_15_lobby_en", "lang": "en", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "lobby": true},
+	{"name": "m2i_01_sign_day", "climate": {"season": "SUMMER", "hour": 15.0, "weather": "CLEAR"}, "eye": [-47.4, 1.75, 29.0], "ground": true, "look": [-47.0, 2.9, 32.0]},
+	{"name": "m2i_02_update_banner", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "lobby": true, "update": "0.3.1"},
+	{"name": "m2i_03_fairy_glade_night", "climate": {"season": "SUMMER", "hour": 22.5, "weather": "CLEAR"}, "eye": [62, 1.7, 86.5], "ground": true, "look": [82, 9.0, 86]},
+	{"name": "m2i_04_moon_gate", "climate": {"season": "SUMMER", "hour": 21.5, "weather": "CLEAR"}, "eye": [79.5, 1.7, 89.5], "ground": true, "look": [86, 9.0, 88]},
+	{"name": "m2i_05_fairy_tree", "climate": {"season": "SUMMER", "hour": 21.0, "weather": "CLEAR"}, "eye": [77, 1.6, 95.5], "ground": true, "look": [76, 12.0, 82]},
+	{"name": "m2i_06_fairy_glade_day", "climate": {"season": "SUMMER", "hour": 12.0, "weather": "CLEAR"}, "eye": [58.4, 1.75, 88.7], "ground": true, "look": [72, 7.2, 89]},
 ]
 
 const OUTFITS := [
@@ -140,6 +146,10 @@ func _run() -> void:
 			_apply_climate(climate)
 			last_climate = climate
 			await _wait(150)
+			# 仙境林地按时间天气直接到位（截图不等它慢慢长出来）
+			var glade := get_tree().get_first_node_in_group("fairy_glade") as FairyGlade
+			if glade != null:
+				glade._apply(FairyGlade.should_appear(WorldState.time_minutes, WorldState.weather_id), true)
 			# 雪花寿命约 11 秒：从下雪切走后等残留雪花落完再拍
 			if was_snowing and WorldState.weather_id != &"SNOW":
 				await get_tree().create_timer(12.0).timeout
@@ -322,6 +332,11 @@ func _setup_player_view(shot: Dictionary) -> void:
 	var wheel := _main.get_node("ActionBar") as ActionBar
 	if wheel.wheel_open:
 		wheel._set_wheel(false)
+	if shot.has("update"):
+		Updater.latest_version = str(shot["update"])
+		Updater._set_state(Updater.State.AVAILABLE, tr("发现新版本 v%s") % Updater.latest_version)
+	elif Updater.state == Updater.State.AVAILABLE:
+		Updater._set_state(Updater.State.IDLE, "")
 	var lobby := _main.get_node_or_null("LobbyMenu") as LobbyMenu
 	if lobby != null and lobby.is_open() != shot.get("lobby", false):
 		if shot.get("lobby", false):

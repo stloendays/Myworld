@@ -88,6 +88,8 @@ func _run() -> void:
 	await _test_emotes()
 	await _test_seasonal_fx()
 	await _test_fullscreen_and_world_map()
+	_test_updater()
+	await _test_fairy_glade()
 	_report()
 
 
@@ -1141,13 +1143,13 @@ func _test_fauna() -> void:
 		if ids.has(a.entity_id):
 			dup.append(str(a.entity_id))
 		ids[a.entity_id] = true
-	var kinds := ["rabbit", "fox", "squirrel", "duck", "bird", "butterfly"]
+	var kinds := ["rabbit", "fox", "squirrel", "duck", "bird", "butterfly", "fairy"]
 	var counts := PackedStringArray()
 	var all_present := true
 	for k in kinds:
 		counts.append("%s %d" % [k, spawner.count(k)])
 		all_present = all_present and spawner.count(k) > 0
-	_check("小动物：6 种都已生成，entity_id 不重复", all_present and dup.is_empty(), ", ".join(counts) + ("；重复 " + ", ".join(dup) if not dup.is_empty() else ""))
+	_check("小动物：7 种（含仙境的小仙子）都已生成，entity_id 不重复", all_present and dup.is_empty(), ", ".join(counts) + ("；重复 " + ", ".join(dup) if not dup.is_empty() else ""))
 
 	var rules := {}
 	for k in kinds:
@@ -1368,7 +1370,7 @@ func _test_release() -> void:
 	GameSettings.set_value("language", "en", false)
 	var skip := ["帮助", "时间", "天气", "季节", "预设", "坐标", "传送", "名字", "清屏", "中文", "、", "：", "季", "天",
 		"%s：%s", "%s — %s", "×%d", "%d°", "—", "  ·  ", "出生点", "语言 / Language",
-		"♟", "♞", "♝", "♜", "♛", "♚", "%s  ·  %s"]
+		"♟", "♞", "♝", "♜", "♛", "♚", "%s  ·  %s", "  ·  "]
 	var missing := PackedStringArray()
 	var re := RegEx.create_from_string(r'"([^"\n]*[^\x00-\x7F][^"\n]*)"')
 	for dir in ["res://scripts/ui", "res://scripts/net", "res://scripts/interactions", "res://scripts/core", "res://scripts/games",
@@ -1749,3 +1751,103 @@ func _report() -> void:
 	if f != null:
 		f.store_string(JSON.stringify(_results, "  "))
 	get_tree().quit(1 if failed > 0 else 0)
+
+
+# ---------------------------------------------------------------- 自动更新与仙境林地（夜里的特殊事件）
+
+func _test_updater() -> void:
+	var cmp_ok := Updater.compare_versions("0.3.1", "0.3.0") == 1 and Updater.compare_versions("v0.3.0", "0.3") == 0 \
+		and Updater.compare_versions("0.2.9", "0.10.0") == -1 and Updater.compare_versions("1.0", "0.99.99") == 1
+	var release := {"tag_name": "v0.4.0", "body": "notes", "assets": [
+		{"name": "DuskLake.exe", "browser_download_url": "https://example.invalid/DuskLake.exe", "size": 1234},
+		{"name": "DuskLake.exe.sha256", "browser_download_url": "https://example.invalid/DuskLake.exe.sha256", "size": 80}]}
+	var r := Updater.read_release(release)
+	var read_ok: bool = r.get("version", "") == "0.4.0" and r.get("size", 0) == 1234 and str(r.get("sha_url", "")).ends_with(".sha256")
+	var draft := release.duplicate(true)
+	draft["draft"] = true
+	var no_asset := {"tag_name": "v0.5.0", "assets": [{"name": "other.zip", "browser_download_url": "x", "size": 1}]}
+	var skip_ok := Updater.read_release(draft).is_empty() and Updater.read_release(no_asset).is_empty()
+	# 下载核对：大小、SHA-256
+	var path := ProjectSettings.globalize_path("user://updater_test.bin")
+	var f := FileAccess.open(path, FileAccess.WRITE)
+	f.store_string("dusk lake")
+	f.close()
+	var sha := FileAccess.get_sha256(path)
+	var verify_ok := Updater.verify_file(path, 9, sha) == "" and Updater.verify_file(path, 10, "") != "" \
+		and Updater.verify_file(path, 9, "00" + sha.substr(2)) != "" and Updater.verify_file(path + ".missing", 9, "") != ""
+	DirAccess.remove_absolute(path)
+	# 替换脚本：等进程、换文件、可选重启；中文路径和单引号要正确转义
+	var s := Updater.update_script(4321, "D:/个人世界/it's/DuskLake.exe", "D:/个人世界/it's/DuskLake.exe.download", true)
+	var s2 := Updater.update_script(4321, "C:/Games/DuskLake.exe", "C:/Games/DuskLake.exe.download", false)
+	var script_ok := s.contains("Wait-Process -Id 4321") and s.contains("'D:\\个人世界\\it''s\\DuskLake.exe'") \
+		and s.contains("Move-Item -LiteralPath $new -Destination $exe") and s.contains("Start-Process") and not s2.contains("Start-Process")
+	var offline_ok := not Updater.can_self_update() and Updater.state != Updater.State.CHECKING
+	_check("自动更新：版本比较、读取发布、核对下载、替换脚本；自动检查里不联网",
+		cmp_ok and read_ok and skip_ok and verify_ok and script_ok and offline_ok,
+		"比较 %s · 读取 %s · 跳过草稿/无附件 %s · 核对 %s · 脚本 %s · 不联网 %s" % [cmp_ok, read_ok, skip_ok, verify_ok, script_ok, offline_ok])
+
+
+
+func _test_fairy_glade() -> void:
+	var glade := get_tree().get_first_node_in_group("fairy_glade") as FairyGlade
+	var climate := _main.get_node("Systems") as ClimateSystem
+	if glade == null:
+		_check("仙境林地已生成", false)
+		return
+	var rule_ok := FairyGlade.should_appear(22.0 * 60.0, &"CLEAR") and FairyGlade.should_appear(3.0 * 60.0, &"OVERCAST") \
+		and not FairyGlade.should_appear(12.0 * 60.0, &"CLEAR") and not FairyGlade.should_appear(23.0 * 60.0, &"HEAVY_RAIN") \
+		and not FairyGlade.should_appear(5.0 * 60.0, &"CLEAR")
+	# 白天：看不见、没有碰撞、传送门不能用
+	climate.jump_to_season(&"SUMMER")
+	climate.set_weather(&"CLEAR", 0.0)
+	climate.set_hour(12.0)
+	await _seconds(3.0)
+	var magic := glade.get_node("Magic") as Node3D
+	var day_hidden := not glade.active and not magic.visible and (glade.get_node("Magic/Collision") as StaticBody3D).collision_layer == 0
+	# 晴朗的夜里：长出来，碰撞和传送门打开，有提示
+	var hud := _main.get_node("HUD")
+	climate.set_hour(22.0)
+	await _seconds(1.0)
+	var toast: String = hud.toast_text()
+	await _seconds(FairyGlade.GROW_SECONDS + 0.5)
+	var night_on := glade.active and magic.visible and magic.scale.is_equal_approx(Vector3.ONE) \
+		and (glade.get_node("Magic/Collision") as StaticBody3D).collision_layer == PhysicsLayers.WORLD
+	var crystals := magic.find_children("Crystal*", "MeshInstance3D", false, false).size()
+	var built := glade.mushrooms.size() >= 8 and glade.islands.size() == 3 and glade.portal != null and crystals >= 10
+	var c := Vector2(glade.position.x, glade.position.z)
+	var flat := 0.0
+	for i in 16:
+		var a := i * TAU / 16.0
+		flat = maxf(flat, absf(WorldTerrain.height_at(c.x + cos(a) * 9.0, c.y + sin(a) * 9.0) - glade.position.y))
+	_check("仙境林地是夜里的特殊事件：白天隐藏、晴夜长出来并提示（仙树、%d 朵蘑菇、%d 颗水晶、3 座小岛、传送门）" % [glade.mushrooms.size(), crystals],
+		rule_ok and day_hidden and night_on and built and toast != "" and flat < 0.4,
+		"规则 %s · 白天隐藏 %s · 夜里出现 %s · 提示「%s」· 9 m 内高差 %.2f m" % [rule_ok, day_hidden, night_on, toast, flat])
+	# 沿新步道走进林地
+	await _setup_at(Vector2(50.0, 84.0), -PI * 0.5)
+	_begin_track()
+	var ok := true
+	for p in [Vector2(62.0, 88.0), Vector2(68.0, 88.0), Vector2(72.0, 88.0)]:
+		ok = await _walk_to(p, 25.0) and ok
+	_track = false
+	var inside := WorldState.zones_of(_player.entity_id).has(&"fairy_glade")
+	_check("沿仙境步道走进林地（区域 fairy_glade），连续步行", ok and inside and _max_step < MAX_STEP,
+		"到达 %s，区域 %s，单帧最大位移 %.3f m" % [ok, inside, _max_step])
+	# 看着传送门按 E：其他世界还在建设中，只提示
+	var gate := glade.portal.global_position
+	_player.global_position = gate + Vector3(-2.2, -2.5, 0.0)
+	_player.velocity = Vector3.ZERO
+	await _seconds(0.6)
+	_player.look_at_point(gate)
+	await _frames(3)
+	var focused := _player.focused_target() == glade.portal
+	var used := _player.try_interact()
+	await _frames(2)
+	var portal_toast: String = hud.toast_text()
+	# 天亮：缩回去，碰撞关掉
+	climate.set_hour(6.0)
+	await _seconds(FairyGlade.GROW_SECONDS + 1.0)
+	var gone := not glade.active and not magic.visible and (glade.get_node("Magic/Collision") as StaticBody3D).collision_layer == 0
+	_check("传送门按 E 提示目标世界还在建设中；天亮后仙境消失", focused and used and portal_toast != "" and gone,
+		"对准 %s，交互 %s，提示「%s」，天亮消失 %s" % [focused, used, portal_toast, gone])
+	climate.apply_preset("Autumn_Dusk_Clear")
+	await _setup_at(Vector2(-50.0, 29.0), 0.0)

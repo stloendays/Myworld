@@ -91,6 +91,24 @@
         "wing_r": {"pivot": [0.35, 0, 0], "boxes": [{"box": [0, 0, -3, 4.5, 0.12, 2.5], "color": "wing"}, {"box": [2.2, 0.13, -1.5, 3.2, 0.16, -0.5], "color": "spot"}]}
       }
     },
+    "fairy": {
+      "name": "小仙子", "px": 0.035, "locomotion": "flutter", "speed": 1.1, "material": "glow", "fly_height": [1.2, 3.2],
+      "palette": {"skin": "#ffe6d2", "dress": "#c9a6ff", "hair": "#ffd86e", "wing": "#bdf4ff"},
+      "variants": [{"dress": "#c9a6ff", "hair": "#ffd86e"}, {"dress": "#ffb3da", "hair": "#f4f0e6"}, {"dress": "#9ff2d2", "hair": "#a8744a"}, {"dress": "#ffe08a", "hair": "#e86a9a"}],
+      "active": {"seasons": ["SPRING", "SUMMER", "AUTUMN", "WINTER"], "day": false, "night": true, "max_rain": 0.05, "max_wind": 0.9},
+      "parts": {
+        "body": {"pivot": [0, 0, 0], "boxes": [
+          {"box": [-1.1, -2.6, -0.9, 1.1, 0.4, 0.9], "color": "dress"},
+          {"box": [-1.5, -3.2, -1.2, 1.5, -2.2, 1.2], "color": "dress"},
+          {"box": [-0.5, -4.2, -0.4, 0.5, -3.2, 0.4], "color": "skin"},
+          {"box": [-1.0, 0.4, -1.0, 1.0, 2.4, 1.0], "color": "skin"},
+          {"box": [-1.15, 1.6, -0.3, 1.15, 2.7, 1.15], "color": "hair"},
+          {"box": [-0.3, 2.7, -0.3, 0.3, 3.3, 0.3], "color": "wing"}
+        ]},
+        "wing_l": {"pivot": [-0.4, 0.2, 0.9], "boxes": [{"box": [-4.2, 0, -0.5, 0, 0.12, 3.2], "color": "wing"}]},
+        "wing_r": {"pivot": [0.4, 0.2, 0.9], "boxes": [{"box": [0, 0, -0.5, 4.2, 0.12, 3.2], "color": "wing"}]}
+      }
+    },
     "clownfish": {
       "name": "小丑鱼", "px": 0.035, "locomotion": "fish", "speed": 0.7, "school_size": 6,
       "palette": {"main": "#f07a1e", "stripe": "#f8f6f0", "fin": "#e0601a", "eye": "#101010"},
@@ -177,12 +195,14 @@
     {"species": "bird", "center": [58, 58], "radius": 28, "count": 5},
     {"species": "butterfly", "center": [-84, 93], "radius": 16, "count": 8},
     {"species": "butterfly", "center": [-58, 46], "radius": 7, "count": 3},
-    {"species": "butterfly", "center": [4, 100], "radius": 5, "count": 3}
+    {"species": "butterfly", "center": [4, 100], "radius": 5, "count": 3},
+    {"species": "fairy", "center": [76, 88], "radius": 11, "count": 7}
   ],
   "fireflies": [
     {"center": [-84, 93], "radius": 20, "amount": 140},
     {"center": [-47, 20], "radius": 10, "amount": 60},
-    {"center": [10, 66], "radius": 10, "amount": 50}
+    {"center": [10, 66], "radius": 10, "amount": 50},
+    {"center": [76, 88], "radius": 14, "amount": 90}
   ],
   "firefly_active": {"seasons": ["SPRING", "SUMMER"], "day": false, "night": true, "max_rain": 0.05}
 }

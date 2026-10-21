@@ -163,6 +163,38 @@ func _build_settings() -> Control:
 	_check(minimap, "minimap_rotate", "随朝向旋转（关闭 = 北朝上）")
 	_slider(minimap, "minimap_range", "显示范围（半径）", 25.0, 150.0, 5.0, "%d m")
 
+	var about := _tab(tabs, "关于")
+	var ver := Label.new()
+	ver.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
+	ver.text = "Dusk Lake v%s" % Updater.current_version()
+	ver.add_theme_font_size_override("font_size", 22)
+	about.add_child(ver)
+	_check(about, "auto_update_check", "启动时自动检查更新")
+	var upd_status := Label.new()
+	upd_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	about.add_child(upd_status)
+	var upd_row := HBoxContainer.new()
+	upd_row.add_theme_constant_override("separation", 10)
+	about.add_child(upd_row)
+	var check_btn := Button.new()
+	check_btn.text = "检查更新"
+	check_btn.pressed.connect(Updater.check)
+	upd_row.add_child(check_btn)
+	var install_btn := Button.new()
+	install_btn.text = "更新并重启"
+	install_btn.pressed.connect(Updater.download_and_install)
+	upd_row.add_child(install_btn)
+	var page_btn := Button.new()
+	page_btn.text = "打开发布页"
+	page_btn.pressed.connect(Updater.open_releases_page)
+	upd_row.add_child(page_btn)
+	var sync_update := func(_s: int = 0, _t: String = "") -> void:
+		upd_status.text = Updater.status_text if Updater.status_text != "" else tr("还没检查过更新")
+		install_btn.visible = Updater.state == Updater.State.AVAILABLE
+		check_btn.disabled = Updater.state == Updater.State.CHECKING or Updater.state == Updater.State.DOWNLOADING
+	Updater.status_changed.connect(sync_update)
+	sync_update.call()
+
 	var dev := _tab(tabs, "开发者")
 	var dev_check := CheckBox.new()
 	dev_check.text = "开发者模式（F2）"

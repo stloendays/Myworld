@@ -14,6 +14,7 @@ const SPOTS := [
 	{"name": "泳池馆大厅·秋日暮色", "eye": [-0.5, 3.7, 77.8], "look": [14, 1.5, 85.5], "abs": true, "preset": "Autumn_Dusk_Clear"},
 	{"name": "地下水族馆", "eye": [13, -3.3, 85], "look": [1, -3.6, 83.5], "abs": true},
 	{"name": "夏夜雷雨·湖岸", "eye": [-50, 1.65, 29], "look": [35, 8, -2], "preset": "Summer_Night_Thunderstorm"},
+	{"name": "仙境林地·夏夜", "eye": [62, 1.7, 86.5], "look": [82, 9.0, 86], "night": true},
 ]
 
 
@@ -46,6 +47,15 @@ func _run() -> void:
 	for spot in SPOTS:
 		if spot.has("preset"):
 			(main.get_node("Systems") as ClimateSystem).apply_preset(str(spot["preset"]))
+		if spot.get("night", false):
+			var sys := main.get_node("Systems") as ClimateSystem
+			sys.jump_to_season(&"SUMMER")
+			sys.set_weather(&"CLEAR", 0.0)
+			sys.set_hour(22.0)
+			await _frames(60)
+			var glade := get_tree().get_first_node_in_group("fairy_glade") as FairyGlade
+			if glade != null:
+				glade._apply(true, true)
 		var e: Array = spot["eye"]
 		var y := float(e[1]) + (0.0 if spot.get("abs", false) else WorldTerrain.height_at(float(e[0]), float(e[2])))
 		cam.global_position = Vector3(float(e[0]), y, float(e[2]))

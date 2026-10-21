@@ -161,14 +161,19 @@ func _draw_map() -> void:
 		_map.draw_line(WorldLayout.v2(dock["from"]), WorldLayout.v2(dock["to"]), Minimap.DOCK_COLOR, float(dock.get("width", 2.6)))
 	_building(WorldLayout.section("cabin"), Vector2(Cabin.LENGTH + Cabin.DECK_DEPTH, Cabin.HALF_SPAN * 2.0), Vector2(Cabin.DECK_DEPTH * 0.5, 0.0), Color(0.62, 0.33, 0.22))
 	_building(WorldLayout.section("poolhouse"), Vector2(PoolHouse.HX * 2.0, PoolHouse.HZ * 2.0), Vector2.ZERO, Color(0.55, 0.74, 0.84))
+	var glade := get_tree().get_first_node_in_group("fairy_glade") as FairyGlade
+	if glade != null and glade.active:
+		_map.draw_circle(Vector2(glade.position.x, glade.position.z), glade.radius, Color(0.86, 0.66, 1.0, 0.6))
 	_map.draw_set_transform_matrix(Transform2D.IDENTITY)
 	_map.draw_rect(Rect2(t * rect.position, t.basis_xform(rect.size)), Color(0.08, 0.07, 0.06), false, 3.0)
 	# 地名
 	var lake := WorldLayout.section("lake")
 	if not lake.is_empty():
 		_label(font, t * WorldLayout.v2(lake["center"]) + Vector2(0.0, 40.0), tr("暮色湖"), 20, Color(0.9, 0.96, 1.0))
-	for item in [["cabin", "木屋"], ["poolhouse", "泳池馆"]]:
+	for item in [["cabin", "木屋"], ["poolhouse", "泳池馆"], ["fairy_glade", "仙境林地"]]:
 		var cfg := WorldLayout.section(item[0])
+		if item[0] == "fairy_glade" and (glade == null or not glade.active):
+			continue
 		if not cfg.is_empty():
 			_label(font, t * WorldLayout.v2(cfg["center"]) + Vector2(0.0, -22.0), tr(item[1]), 17, INK)
 	for poi in Exploration.pois():
