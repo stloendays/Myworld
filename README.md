@@ -71,6 +71,7 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | 暂停 / 释放鼠标 | Esc（菜单内可调 FOV 65°–95°、鼠标灵敏度；“人物外观”换发型和衣服） |
 | 坐标信息 | F3（日期时间天气、帧率、世界坐标、朝向、所在区域、室内/室外） |
 | 天气调试 | F4（预设、季节、天气、时刻、时间流速） |
+| 聊天 | T 或 Enter 打开，/ 直接输入命令（/help 查看），↑↓ 翻历史，Esc 取消 |
 
 ## 如何验证坐标与室内外连续性
 
@@ -121,6 +122,7 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | `data/characters/wardrobe.json`、`default_appearance.json` | 所有发型/帽子/衣服/鞋/背饰款式（像素盒子），默认外观 |
 | `scripts/core/PlayerProfile.gd`、`scripts/ui/WardrobePanel.gd` | 本地玩家外观（存 user://appearance.json）、外观编辑面板 |
 | `scripts/ui/WeatherDebugPanel.gd` | F4 天气调试面板 |
+| `scripts/ui/ChatBox.gd`、`ChatCommands.gd` | 聊天框（左下角消息记录与输入行、系统消息）与 / 命令 |
 | `scripts/systems/AudioDirector.gd`、`SaveManager.gd` | M3/M4 的**接口占位**（未运行） |
 | `scripts/buildings/PoolHouse.gd` | 泳池馆与地下水族馆：大厅、泳池、池底洞口与玻璃水管、楼梯、鱼缸、灯光、碰撞、水体与区域（全部程序生成，坐标来自布局） |
 | `scripts/world/WaterVolume.gd`、`scripts/ui/UnderwaterOverlay.gd`、`shaders/underwater.gdshader` | 可游泳水体（盒形 / 圆柱）、水下滤镜 |
@@ -128,7 +130,7 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | `scripts/animals/`（FaunaData、FaunaSpawner、Animal、BlockyModel、BlockyMesh、FishSchool） | 小动物：出没规则、生成、行为、方块模型、鱼群 |
 | `data/animals/species.json` | 所有动物的部件、配色、速度、出没规则与生成点、萤火虫 |
 | `scripts/world/SignBoard.gd`、`SignsBuilder.gd`、`data/world/signs.json` | 中英双语解说立牌（立式 / 讲台 / 挂墙，牌面按文字自动定尺寸）；室外立牌位置在布局文件 `signs` 里 |
-| `tests/TestRunner.tscn` | 自动检查（40 项：QA-01、QA-02、QA-10、天气、人物、泳池馆、游泳、动物等） |
+| `tests/TestRunner.tscn` | 自动检查（48 项：QA-01、QA-02、QA-10、天气、人物、泳池馆、游泳、动物、聊天框等） |
 | `devtools/CaptureShots.tscn` | 按预设机位截图到 `docs/screenshots/` |
 | `devtools/Benchmark.tscn` | 固定机位测帧率、帧时、绘制调用与显存 |
 | `devtools/fetch_polyhaven.ps1` | 下载 Poly Haven 贴图并核对 md5，写清单 |
@@ -152,7 +154,8 @@ pwsh -File devtools/fetch_polyhaven.ps1
 - **小动物**：兔子、狐狸、松鼠、绿头鸭、知更鸟、蝴蝶、萤火虫，按季节、昼夜、天气出没，兔子和松鼠见人就跑
 - **天气细化**：雷暴（闪电照亮天地）、风（植被摆动，带阵风）、雨后彩虹、地面水坑与雨点涟漪、雨滴溅水花、秋季落叶与春季花瓣
 - **解说立牌**：步道、泳池馆、鱼缸前的中英双语立牌，场景里没有悬空文字
-- 自动检查（40 项）、截图与性能测试工具
+- **聊天框**：T 打开，可写消息、用 / 命令改时间、天气、季节与传送，天气和季节变化自动提示（见 `docs/CHAT.md`）
+- 自动检查（48 项）、截图与性能测试工具
 
 ## 未实现（按里程碑）
 

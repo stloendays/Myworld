@@ -4,6 +4,7 @@ extends Node
 ## 机位 eye/look 为世界坐标；"ground": true 表示 eye.y 为离地高度。
 ## climate：preset（weather.json 预设）或 season/hour/weather；截图期间时间暂停，光照固定。
 ## character：front / back 为玩家人物特写（第三人称），lineup 为多套外观并排。
+## chat：open / recent 为聊天框（输入中 / 关闭后最近消息）；其他机位隐藏聊天框。
 
 const MAIN_SCENE := "res://scenes/main/Main.tscn"
 const OUT_DIR := "res://docs/screenshots"
@@ -44,6 +45,8 @@ const SHOTS := [
 	{"name": "m2b_13_fox", "climate": {"season": "SUMMER", "hour": 10.0, "weather": "CLEAR"}, "animal": "fox"},
 	{"name": "m2b_14_butterfly", "climate": {"season": "SUMMER", "hour": 10.0, "weather": "CLEAR"}, "animal": "butterfly"},
 	{"name": "m2b_15_squirrel", "climate": {"season": "SUMMER", "hour": 10.0, "weather": "CLEAR"}, "animal": "squirrel"},
+	{"name": "m2d_01_chat_open", "climate": DUSK, "eye": [-50, 1.65, 29], "ground": true, "look": [35, 2, -2], "chat": "open"},
+	{"name": "m2d_02_chat_recent", "climate": DUSK, "eye": [-53, 1.65, 40], "ground": true, "look": [-66, 4.0, 37], "chat": "recent"},
 	{"name": "m2b_16_entrance_sign", "climate": DUSK, "house": true, "eye": [-19.5, 1.8, -0.5], "look": [-13.0, 1.9, 1.5]},
 	{"name": "m2b_17_pool_sign", "climate": DUSK, "house": true, "eye": [-1.6, 1.75, -5.4], "look": [-1.6, 0.85, -3.6]},
 	{"name": "m2b_18_tank_sign", "climate": DUSK, "house": true, "eye": [-1.2, -5.25, -2.4], "look": [-2.6, -6.0, -4.8]},
@@ -126,6 +129,10 @@ func _run() -> void:
 			else:
 				_camera.look_at(Vector3(float(shot["look"][0]), float(shot["look"][1]), float(shot["look"][2])), Vector3.UP)
 		await _wait(40)
+		var chat := _main.get_node("ChatBox") as ChatBox
+		chat.visible = shot.has("chat")
+		if shot.has("chat"):
+			await _stage_chat(chat, str(shot["chat"]))
 		if shot.get("lightning", false):
 			var env := _main.get_node("World/Environment") as EnvironmentDirector
 			env._flash_t = 0.0
@@ -134,6 +141,8 @@ func _run() -> void:
 		var path := ProjectSettings.globalize_path("%s/%s.png" % [OUT_DIR, shot["name"]])
 		img.save_png(path)
 		print("saved ", path)
+		if shot.has("chat"):
+			chat.close()
 	get_tree().quit()
 
 
@@ -230,3 +239,19 @@ func _frame_animal(species: String) -> void:
 func _wait(frames: int) -> void:
 	for i in frames:
 		await get_tree().process_frame
+
+
+## 聊天框机位："chat": "open" 为正在输入（显示全部记录与输入行），"recent" 为关闭后左下角浮现的最近消息。
+func _stage_chat(chat: ChatBox, mode: String) -> void:
+	chat.clear()
+	chat.post_system("欢迎来到暮色湖畔。按 T 聊天，输入 /help 查看命令。")
+	chat.submit("今天的晚霞真好看")
+	chat.submit("/time")
+	chat.submit("/weather")
+	chat.submit("/me 坐在湖边看日落")
+	if mode == "open":
+		chat.submit("/help")
+		chat.open()
+		chat._field.text = "去码头那边走走"
+		chat._field.caret_column = chat._field.text.length()
+	await _wait(10)
