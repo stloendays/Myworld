@@ -4,7 +4,7 @@
 
 - 引擎：**Godot 4.7.2 Standard**（GDScript，Forward+，Jolt Physics），Windows 单机优先
 - 需求规格：[docs/DEVELOPMENT_SPEC.md](docs/DEVELOPMENT_SPEC.md)（唯一需求来源）；阶段指令：[docs/AGENT_HANDOFF.md](docs/AGENT_HANDOFF.md)
-- 当前进度：**M0、M1、第一轮正式美术、M2 天气系统、方块人物、泳池馆与地下水族馆、小动物、雷暴/彩虹/风、小地图、开发者模式、第一人称双手已完成**，自动检查 44/44 通过。见 [docs/QA_M0_M1.md](docs/QA_M0_M1.md)、[docs/ART_PASS.md](docs/ART_PASS.md)、[docs/M2_WEATHER_CHARACTER.md](docs/M2_WEATHER_CHARACTER.md)、[docs/POOLHOUSE_FAUNA.md](docs/POOLHOUSE_FAUNA.md)、[docs/MINIMAP_DEVMODE.md](docs/MINIMAP_DEVMODE.md)
+- 当前进度：**M0、M1、第一轮正式美术、M2 天气系统、方块人物、泳池馆与地下水族馆、小动物、雷暴/彩虹/风、小地图、开发者模式、第一人称双手、木屋生活、独木舟与湖上探索已完成**，自动检查 48/48 通过。见 [docs/QA_M0_M1.md](docs/QA_M0_M1.md)、[docs/ART_PASS.md](docs/ART_PASS.md)、[docs/M2_WEATHER_CHARACTER.md](docs/M2_WEATHER_CHARACTER.md)、[docs/POOLHOUSE_FAUNA.md](docs/POOLHOUSE_FAUNA.md)、[docs/MINIMAP_DEVMODE.md](docs/MINIMAP_DEVMODE.md)、[docs/CABIN_LIFE_CANOE.md](docs/CABIN_LIFE_CANOE.md)
 
 ![湖岸出生点](docs/screenshots/m1_01_spawn_dusk.png)
 
@@ -66,7 +66,8 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | 奔跑 | Shift（步行 3.2 m/s，奔跑 5.2 m/s） |
 | 跳跃 | 空格（水中：上浮；靠池壁按空格爬上岸） |
 | 下潜 | C 或 Ctrl（水中） |
-| 交互 | E（准星中心射线 2.5 m，例如开关木门） |
+| 交互 | E（准星中心射线 2.5 m）：开关门、生火 / 熄火、开关灯、坐下 / 站起、睡觉、上 / 下独木舟 |
+| 划独木舟 | W / S 划、A / D 转向、Shift 用力划、E 下船（靠码头或岸边） |
 | 第一 / 第三人称 | V（第一人称能看到自己的双手） |
 | 小地图 | M（右上角圆形小地图，随朝向旋转，下方显示区域名） |
 | 暂停 / 释放鼠标 | Esc（“设置”：画面、视角、操作、小地图、开发者，自动保存；“人物外观”换发型和衣服） |
@@ -113,6 +114,9 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | `scripts/core/EventBus.gd` | 事件总线（Autoload），信号名按规格第 08 章 |
 | `scripts/core/WorldState.gd` | 世界状态唯一权威（Autoload）：可交互物状态、角色所在区域 |
 | `scripts/core/GameSettings.gd` | 设置与按键表（Autoload），运行时注册按键 |
+| `scripts/buildings/CabinLife.gd`、`scripts/interactions/`（InteractableToggle、Seat、Bed） | 木屋生活：炉火与炊烟、灯和开关、座位、床 |
+| `scripts/vehicles/Canoe.gd` | 独木舟：划桨、四点取水面高度的浮动、搁浅、上下船、位置存档 |
+| `scripts/world/Exploration.gd` | 湖上探索点（`world_layout.json → lake_pois`）：发现记录、营火帐篷芦苇睡莲摆件 |
 | `scripts/core/WorldLayout.gd`、`WorldTerrain.gd`、`PhysicsLayers.gd` | 布局数据读取、解析式地形高度函数、物理层常量 |
 | `scripts/systems/WorldClock.gd`、`SeasonController.gd`、`WeatherController.gd`、`ClimateSystem.gd` | 世界时间、季节、天气规则与过渡、预设入口（Main/Systems） |
 | `scripts/systems/EnvironmentDirector.gd` | 把时间/季节/天气合成为太阳月亮、天空、雾、湿润积雪、降水、植被季节色 |
@@ -134,7 +138,7 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | `scripts/animals/`（FaunaData、FaunaSpawner、Animal、BlockyModel、BlockyMesh、FishSchool） | 小动物：出没规则、生成、行为、方块模型、鱼群 |
 | `data/animals/species.json` | 所有动物的部件、配色、速度、出没规则与生成点、萤火虫 |
 | `scripts/world/SignBoard.gd`、`SignsBuilder.gd`、`data/world/signs.json` | 中英双语解说立牌（立式 / 讲台 / 挂墙，牌面按文字自动定尺寸）；室外立牌位置在布局文件 `signs` 里 |
-| `tests/TestRunner.tscn` | 自动检查（44 项：QA-01、QA-02、QA-10、天气、人物、泳池馆、游泳、动物、聊天框、小地图、开发者模式、设置等；`DUSK_TEST_ONLY=_test_xxx` 只跑某几项） |
+| `tests/TestRunner.tscn` | 自动检查（48 项：QA-01、QA-02、QA-10、天气、人物、泳池馆、游泳、动物、聊天框、小地图、开发者模式、设置等；`DUSK_TEST_ONLY=_test_xxx` 只跑某几项） |
 | `devtools/CaptureShots.tscn` | 按预设机位截图到 `docs/screenshots/` |
 | `devtools/Benchmark.tscn` | 固定机位测帧率、帧时、绘制调用与显存 |
 | `devtools/fetch_polyhaven.ps1` | 下载 Poly Haven 贴图并核对 md5，写清单 |
@@ -162,7 +166,9 @@ pwsh -File devtools/fetch_polyhaven.ps1
 - **小地图与开发者模式**：右上角圆形小地图；F2 开发者模式里改天气季节、飞行、穿墙、传送
 - **设置**：画面、视角（启动视角、手的显示、镜头晃动、第三人称距离与肩位）、操作、小地图，自动保存
 - **第一人称的双手**：从画面下方伸出的方块手臂，袖子随外观变化，走路、跳跃、开门、游泳都有动作
-- 自动检查（44 项）、截图与性能测试工具
+- **木屋生活**：炉子生火 / 熄火（火光、火苗、炊烟）、四盏灯的开关、沙发扶手椅长椅可以坐、床可以睡到早上
+- **独木舟与湖上探索**：从码头上船划到湖心小岛营地，四个探索点（小地图问号 → 金色标记）
+- 自动检查（48 项）、截图与性能测试工具
 
 ## 未实现（按里程碑）
 

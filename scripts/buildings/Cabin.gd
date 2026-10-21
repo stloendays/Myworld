@@ -37,6 +37,7 @@ const PROPS := [
 	{"asset": "books", "center": [-1.1, 0.42, -2.95], "yaw": 0.0, "scale": 2.4},
 	{"asset": "books", "center": [-1.25, 1.2, -2.95], "yaw": 180.0, "scale": 2.4},
 	{"asset": "lampSquareFloor", "center": [2.35, 0.0, 2.6], "yaw": 0.0, "scale": 1.9},
+	{"asset": "bedDouble", "center": [-3.77, 0.0, 2.08], "yaw": 90.0, "scale": 2.0},
 	{"asset": "loungeChairRelax", "center": [-2.4, 0.0, 0.6], "yaw": -110.0, "scale": 2.0},
 	{"asset": "sideTable", "center": [3.9, 0.0, -2.55], "yaw": 0.0, "scale": 2.0},
 	{"asset": "radio", "center": [3.9, 0.76, -2.55], "yaw": 0.0, "scale": 1.8},
@@ -77,9 +78,14 @@ func rebuild() -> void:
 	g.add_child(model)
 	for prop in PROPS:
 		g.add_child(_prop(prop))
-	_build_lights(g)
+	var lights := _build_lights(g)
 	if Engine.is_editor_hint():
 		return
+	# 木屋生活：炉火、灯的开关、座位、床（运行时）
+	var life := CabinLife.new()
+	life.name = "Life"
+	g.add_child(life)
+	life.setup(lights, model)
 	var body := StaticBody3D.new()
 	body.name = "Structure"
 	body.collision_layer = PhysicsLayers.WORLD
@@ -96,12 +102,14 @@ func _prop(prop: Dictionary) -> Node3D:
 	var c := Vector3(float(prop["center"][0]), float(prop["center"][1]), float(prop["center"][2]))
 	return ArtMaterials.kenney_prop(path, c, float(prop["yaw"]), float(prop["scale"]))
 
-func _build_lights(g: Node3D) -> void:
-	_omni(g, Vector3(2.35, 1.5, 2.6), Color(1.0, 0.72, 0.45), 1.6, 6.5, false)
-	_omni(g, Vector3(1.75, 0.85, 1.35), Color(1.0, 0.75, 0.48), 0.6, 3.0, false)
-	_omni(g, Vector3(-3.4, 0.65, -1.0), Color(1.0, 0.5, 0.2), 2.4, 6.5, true)
-	_omni(g, Vector3(0.0, 3.4, 0.0), Color(1.0, 0.78, 0.55), 0.45, 7.5, false)
-	_omni(g, Vector3(LENGTH * 0.5 + 0.55, 2.4, 1.25), Color(1.0, 0.7, 0.42), 1.3, 7.0, false)
+func _build_lights(g: Node3D) -> Dictionary:
+	return {
+		"floor_lamp": _omni(g, Vector3(2.35, 1.5, 2.6), Color(1.0, 0.72, 0.45), 1.6, 6.5, false),
+		"table_lamp": _omni(g, Vector3(1.75, 0.85, 1.35), Color(1.0, 0.75, 0.48), 0.6, 3.0, false),
+		"stove": _omni(g, Vector3(-3.4, 0.65, -1.0), Color(1.0, 0.5, 0.2), 2.4, 6.5, true),
+		"ceiling": _omni(g, Vector3(0.0, 3.4, 0.0), Color(1.0, 0.78, 0.55), 0.45, 7.5, false),
+		"porch": _omni(g, Vector3(LENGTH * 0.5 + 0.55, 2.4, 1.25), Color(1.0, 0.7, 0.42), 1.3, 7.0, false),
+	}
 
 
 # ---------------------------------------------------------------- 碰撞（与 GLB 几何一致）
@@ -143,6 +151,7 @@ func _build_collision(body: StaticBody3D) -> void:
 	_solid(body, Vector3(1.5, 1.6, 0.45), Vector3(-1.58, 0.8, -2.98))
 	_solid(body, Vector3(1.0, 0.9, 1.0), Vector3(-2.4, 0.45, 0.6))
 	_solid(body, Vector3(0.75, 1.05, 0.6), Vector3(-3.9, 0.52, -1.0))
+	_solid(body, Vector3(2.25, 0.75, 1.9), Vector3(-3.77, 0.375, 2.08))   # 床
 
 
 func _solid(body: StaticBody3D, size: Vector3, pos: Vector3, basis := Basis()) -> void:
@@ -162,7 +171,7 @@ func _convex(body: StaticBody3D, poly: PackedVector2Array, x_center: float, thic
 	body.add_child(cs)
 
 
-func _omni(parent: Node3D, pos: Vector3, color: Color, energy: float, light_range: float, shadows: bool) -> void:
+func _omni(parent: Node3D, pos: Vector3, color: Color, energy: float, light_range: float, shadows: bool) -> OmniLight3D:
 	var light := OmniLight3D.new()
 	light.position = pos
 	light.light_color = color
@@ -170,3 +179,4 @@ func _omni(parent: Node3D, pos: Vector3, color: Color, energy: float, light_rang
 	light.omni_range = light_range
 	light.shadow_enabled = shadows
 	parent.add_child(light)
+	return light

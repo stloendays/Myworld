@@ -3,6 +3,8 @@ extends CanvasLayer
 
 var _prompt: Label
 var _dev: Label
+var _toast: Label
+var _toast_time := 0.0
 
 
 func _ready() -> void:
@@ -53,6 +55,26 @@ func _ready() -> void:
 	_dev.label_settings = dev_settings
 	root.add_child(_dev)
 
+	# 短提示（发现新地点、睡醒、下不了船等），屏幕中上方停留几秒后淡出
+	_toast = Label.new()
+	_toast.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_toast.anchor_left = 0.5
+	_toast.anchor_right = 0.5
+	_toast.anchor_top = 0.18
+	_toast.anchor_bottom = 0.18
+	_toast.offset_left = -420.0
+	_toast.offset_right = 420.0
+	_toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var toast_settings := LabelSettings.new()
+	toast_settings.font_size = 26
+	toast_settings.font_color = Color(1.0, 0.93, 0.75)
+	toast_settings.outline_size = 7
+	toast_settings.outline_color = Color(0.0, 0.0, 0.0, 0.7)
+	_toast.label_settings = toast_settings
+	_toast.modulate.a = 0.0
+	root.add_child(_toast)
+	EventBus.toast_requested.connect(show_toast)
+
 	EventBus.interaction_prompt_changed.connect(_on_prompt)
 
 
@@ -60,7 +82,10 @@ func _on_prompt(text: String) -> void:
 	_prompt.text = text
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	if _toast_time > 0.0:
+		_toast_time -= delta
+		_toast.modulate.a = clampf(_toast_time / 0.6, 0.0, 1.0)
 	_dev.visible = GameSettings.developer_mode
 	if not _dev.visible:
 		return
@@ -71,3 +96,13 @@ func _process(_delta: float) -> void:
 	else:
 		parts.append("F 飞行")
 	_dev.text = "  ·  ".join(parts)
+
+
+func show_toast(text: String) -> void:
+	_toast.text = text
+	_toast_time = 4.0
+	_toast.modulate.a = 1.0
+
+
+func toast_text() -> String:
+	return _toast.text if _toast_time > 0.0 else ""

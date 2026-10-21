@@ -71,6 +71,12 @@ static func height_at(x: float, z: float) -> float:
 		h = lerpf(h, float(pad["height"]), t)
 	var s := 1.0 - smoothstep(float(_lake["inner"]), float(_lake["outer"]), lake_radius(x, z))
 	h = lerpf(h, float(_lake["bed_height"]), s)
+	# 湖中小岛：在湖盆之上隆起，顶部比水面高 top 米
+	for isl in _lake.get("islands", []):
+		var radius := float(isl["radius"])
+		var t := 1.0 - smoothstep(radius * 0.45, radius, p.distance_to(WorldLayout.v2(isl["center"])))
+		if t > 0.0:
+			h = lerpf(h, WorldLayout.water_level() + float(isl["top"]) + _detail.get_noise_2d(x, z) * 0.15, t)
 	var b0 := float(_cfg["boundary_start"])
 	var b1 := float(_cfg["boundary_end"])
 	var tx := maxf(0.0, (absf(x) - b0) / (b1 - b0))

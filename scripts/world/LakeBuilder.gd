@@ -14,6 +14,7 @@ const WALL_TOP := 1.6
 const WATER_VISUAL_LAYER := 2
 
 var wall_points := PackedVector3Array()
+var island_points := PackedVector3Array()
 
 
 func _ready() -> void:
@@ -175,4 +176,30 @@ func _make_wade_limit() -> StaticBody3D:
 		var forward := Vector3(b.x - a.x, 0.0, b.y - a.y).normalized()
 		cs.transform = Transform3D(Basis.looking_at(forward, Vector3.UP), Vector3(mid.x, (top + WALL_BOTTOM) * 0.5, mid.y))
 		body.add_child(cs)
+	_add_island_walls(body, limit)
 	return body
+
+
+## 湖心小岛四周也围一圈：从岛中心往外找到“水深 = wade_limit_depth”的位置，玩家上岛后走不进深水。
+func _add_island_walls(body: StaticBody3D, limit: float) -> void:
+	island_points.clear()
+	for isl in WorldLayout.section("lake").get("islands", []):
+		var c := WorldLayout.v2(isl["center"])
+		var ring := PackedVector2Array()
+		for i in 64:
+			var dir := Vector2.from_angle(TAU * float(i) / 64.0)
+			var r := 0.5
+			while r < float(isl["radius"]) * 2.0 and WorldTerrain.height_at(c.x + dir.x * r, c.y + dir.y * r) >= limit:
+				r += 0.1
+			ring.append(c + dir * r)
+		for i in ring.size():
+			var a := ring[i]
+			var b := ring[(i + 1) % ring.size()]
+			island_points.append(Vector3(a.x, limit, a.y))
+			var shape := BoxShape3D.new()
+			shape.size = Vector3(0.4, WALL_TOP - WALL_BOTTOM, a.distance_to(b) + 0.3)
+			var cs := CollisionShape3D.new()
+			cs.shape = shape
+			var mid := (a + b) * 0.5
+			cs.transform = Transform3D(Basis.looking_at(Vector3(b.x - a.x, 0.0, b.y - a.y).normalized(), Vector3.UP), Vector3(mid.x, (WALL_TOP + WALL_BOTTOM) * 0.5, mid.y))
+			body.add_child(cs)

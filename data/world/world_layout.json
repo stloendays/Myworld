@@ -39,7 +39,10 @@
     "inner": 0.82,
     "outer": 1.10,
     "bed_height": -3.5,
-    "wade_limit_depth": 0.7
+    "wade_limit_depth": 0.7,
+    "islands": [
+      {"id": "lake_islet", "center": [42, -6], "radius": 13, "top": 1.1}
+    ]
   },
 
   "cabin": {
@@ -65,14 +68,35 @@
     "rail_start_x": -40.0
   },
 
+  "canoe": {"pos": [-28.0, 24.0], "heading": 90.0},
+
+  "lake_pois": [
+    {"id": "dock_end", "name": "码头尽头", "name_en": "Dock End", "center": [-2, 26], "radius": 5},
+    {"id": "lake_islet", "name": "湖心小岛", "name_en": "Lake Islet", "center": [42, -6], "radius": 16,
+     "props": [
+       {"asset": "campfire_stones", "pos": [40.6, -4.6], "yaw": 0, "scale": 2.6},
+       {"asset": "campfire_logs", "pos": [40.6, -4.6], "yaw": 30, "scale": 2.6},
+       {"asset": "tent_smallOpen", "pos": [44.6, -8.2], "yaw": 215, "scale": 3.4},
+       {"asset": "log_large", "pos": [39.2, -6.6], "yaw": 80, "scale": 2.4}
+     ]},
+    {"id": "north_reed_bay", "name": "北岸芦苇湾", "name_en": "North Reed Bay", "center": [35, -65], "radius": 13,
+     "scatter": {"assets": ["plant_flatTall"], "count": 70, "depth": [-0.35, 0.45], "scale": [3.2, 4.6]}},
+    {"id": "east_lily_cove", "name": "东岸睡莲湾", "name_en": "East Lily Cove", "center": [108, -2], "radius": 13,
+     "scatter": {"assets": ["lily_large", "lily_small"], "count": 55, "depth": [0.3, 1.8], "scale": [3.0, 4.6], "float": true}}
+  ],
+
   "signs": [
-    {"id": "sign_trail_poolhouse", "text": "trail_poolhouse", "pos": [-47.0, 32.0], "yaw_deg": 180.0, "style": "stand", "width": 1.6, "scale": 1.5}
+    {"id": "sign_trail_poolhouse", "text": "trail_poolhouse", "pos": [-47.0, 32.0], "yaw_deg": 180.0, "style": "stand", "width": 1.6, "scale": 1.5},
+    {"id": "sign_canoe", "text": "canoe_dock", "pos": [-43.8, 22.6], "yaw_deg": -90.0, "style": "stand", "width": 1.5, "scale": 1.4},
+    {"id": "sign_islet", "text": "lake_islet", "pos": [37.6, -3.2], "yaw_deg": -70.0, "style": "stand", "width": 1.4, "scale": 1.4}
   ],
 
   "dev_spots": [
     {"name": "出生点", "pos": [-50.0, 29.0], "ground": true, "heading": 70.0},
     {"name": "木屋门廊", "pos": [-62.4, 2.4, 37.0], "heading": 270.0},
     {"name": "码头尽头", "pos": [-2.0, 1.0, 26.0], "heading": 90.0},
+    {"name": "独木舟旁（码头）", "pos": [-28.0, 1.0, 25.4], "heading": 180.0},
+    {"name": "湖心小岛", "pos": [41.0, -7.0], "ground": true, "heading": 270.0},
     {"name": "泳池馆门口", "pos": [-9.4, 2.0, 84.0], "heading": 90.0},
     {"name": "泳池大厅", "pos": [-0.3, 2.0, 84.0], "heading": 90.0},
     {"name": "地下水族馆", "pos": [-0.5, -5.0, 87.5], "heading": 90.0},

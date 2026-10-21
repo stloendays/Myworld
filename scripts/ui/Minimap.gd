@@ -186,6 +186,7 @@ func _draw_overlay() -> void:
 	_overlay.draw_arc(center, r - 4.0, 0.0, TAU, 96, Color(0.95, 0.92, 0.84, 0.55), 1.2, true)
 	var player := _player()
 	var rot := player.rotation.y if player != null and GameSettings.minimap_rotate else 0.0
+	_draw_markers(center, r)
 	# 北方标记：世界 -Z 方向在圆周上的位置
 	var north := center + Vector2(0.0, -(r - 13.0)).rotated(rot)
 	_overlay.draw_circle(north, 9.0, Color(0.12, 0.10, 0.09, 0.85))
@@ -252,3 +253,31 @@ func _bake(img: Image) -> void:
 				col = col.lerp(ROCK, smoothstep(0.7, 1.2, slope))
 				col *= clampf(0.55 + normal.dot(light) * 0.55, 0.45, 1.15)
 			img.set_pixel(i, j, Color(col.r, col.g, col.b))
+
+
+## 探索点（未发现 = 灰色问号，已发现 = 金色圆点）和独木舟（没人坐时显示船形）。只画在圆内。
+func _draw_markers(center: Vector2, r: float) -> void:
+	var t := world_to_map()
+	var font := GameSettings.ui_theme().default_font
+	for poi in Exploration.pois():
+		var p := t * WorldLayout.v2(poi["center"])
+		if p.distance_to(center) > r - 10.0:
+			continue
+		if StringName(poi["id"]) in WorldState.discoveries:
+			_overlay.draw_circle(p, 5.0, Color(1.0, 0.82, 0.35))
+			_overlay.draw_arc(p, 5.0, 0.0, TAU, 24, Color(0.15, 0.1, 0.05), 1.2, true)
+		else:
+			_overlay.draw_circle(p, 6.5, Color(0.12, 0.12, 0.14, 0.75))
+			_overlay.draw_string(font, p + Vector2(-3.6, 5.0), "?", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(0.85, 0.85, 0.85))
+	for v in get_tree().get_nodes_in_group("vehicles"):
+		var canoe := v as Canoe
+		if canoe == null or canoe.rider != null:
+			continue
+		var p := t * canoe.world_position_2d()
+		if p.distance_to(center) > r - 8.0:
+			continue
+		var fwd := Vector2(-sin(canoe.heading), -cos(canoe.heading))
+		var screen_fwd := (t.basis_xform(fwd)).normalized()
+		var side := Vector2(-screen_fwd.y, screen_fwd.x)
+		var hull := PackedVector2Array([p + screen_fwd * 7.0, p + side * 2.6, p - screen_fwd * 7.0, p - side * 2.6])
+		_overlay.draw_colored_polygon(hull, Color(0.85, 0.25, 0.18))

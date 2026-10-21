@@ -76,6 +76,10 @@ func _run() -> void:
 	await _test_settings()
 	await _test_minimap()
 	await _test_developer_mode()
+	await _test_cabin_life()
+	await _test_sleep()
+	await _test_canoe()
+	await _test_exploration_save()
 	_report()
 
 
@@ -565,7 +569,7 @@ func _test_minimap() -> void:
 	var img := mm.map_texture.get_image() if mm.is_ready() else null
 	var colors_ok := false
 	if img != null:
-		var lake := _map_pixel(mm, img, Vector2(35.0, -2.0))
+		var lake := _map_pixel(mm, img, Vector2(70.0, 20.0))
 		var forest := _map_pixel(mm, img, Vector2(-85.0, -70.0))
 		colors_ok = lake.b > lake.r + 0.15 and forest.g > forest.b and forest.g > forest.r
 	await _setup_at(Vector2(-50.0, 29.0), 0.0)
@@ -664,6 +668,179 @@ func _press(action: String) -> void:
 	up.action = action
 	up.pressed = false
 	Input.parse_input_event(up)
+
+
+# ---------------------------------------------------------------- 木屋生活、独木舟、探索
+
+func _cabin_point(local: Vector3) -> Vector3:
+	return _cabin.to_global(local)
+
+
+func _test_cabin_life() -> void:
+	var life := _cabin.get_node("Generated/Life") as CabinLife
+	var notes := PackedStringArray()
+	_player.set_third_person(false)
+	_player.teleport_to(_cabin_point(Vector3(-2.4, 0.05, -1.0)))
+	await _seconds(0.5)
+	# 铸铁炉：看着它按 E 熄火、再按 E 生火
+	_player.look_at_point(_cabin_point(Vector3(-3.9, 0.7, -1.0)))
+	await _frames(2)
+	var off_ok := _player.try_interact() and WorldState.get_interactable_state(&"cabin_stove") == "off" \
+		and not life.light_on("stove") and not life._fire.emitting and not life._smoke.emitting
+	var on_ok := _player.try_interact() and WorldState.get_interactable_state(&"cabin_stove") == "on" \
+		and life.light_on("stove") and life._fire.emitting and life._smoke.emitting
+	notes.append("炉子熄火 %s / 生火 %s" % [off_ok, on_ok])
+	# 落地灯：走到茶几旁看着它按 E
+	_player.teleport_to(_cabin_point(Vector3(2.6, 0.05, 1.0)))
+	await _seconds(0.4)
+	_player.look_at_point(_cabin_point(Vector3(2.35, 1.2, 2.6)))
+	await _frames(2)
+	var lamp_ok := _player.try_interact() and WorldState.get_interactable_state(&"cabin_floor_lamp") == "off" and not life.light_on("floor_lamp")
+	_player.try_interact()
+	lamp_ok = lamp_ok and life.light_on("floor_lamp")
+	notes.append("落地灯 %s" % lamp_ok)
+	# 墙上开关：门边的吊灯开关
+	_player.teleport_to(_cabin_point(Vector3(3.8, 0.05, -0.9)))
+	await _seconds(0.4)
+	_player.look_at_point(_cabin_point(Vector3(4.86, 1.25, -0.95)))
+	await _frames(2)
+	var switch_ok := _player.try_interact() and not life.light_on("ceiling")
+	_player.try_interact()
+	switch_ok = switch_ok and life.light_on("ceiling")
+	notes.append("吊灯开关 %s" % switch_ok)
+	# 沙发：看着坐垫按 E 坐下，按 E 站起；再坐下后用移动键站起
+	_player.teleport_to(_cabin_point(Vector3(1.4, 0.05, 0.9)))
+	await _seconds(0.4)
+	var sofa := _cabin.get_node("Generated/Life/Seat_cabin_sofa_left") as Seat
+	_player.look_at_point(sofa.global_position + Vector3(0.0, 0.2, 0.0))
+	await _frames(2)
+	var sat := _player.try_interact() and _player.seat == sofa and _player.body.pose == "sit"
+	await _seconds(0.5)
+	var held := _player.global_position.distance_to(sofa.occupant_origin()) < 0.05 and _player.collision_mask == 0
+	var stood := _player.try_interact() and _player.seat == null and _player.body.pose == "stand"
+	await _seconds(0.8)
+	var floor_ok := _player.is_on_floor() and absf(_player.global_position.y - _cabin.global_position.y) < 0.15
+	sofa.interact(_player)
+	_player.autopilot_enabled = true
+	_player.autopilot_direction = -_cabin.global_basis.z
+	await _frames(3)
+	_player.autopilot_direction = Vector3.ZERO
+	_player.autopilot_enabled = false
+	var move_stand := _player.seat == null
+	notes.append("坐下 %s，定在座位上 %s，E 站起 %s，落地 %s，移动键站起 %s" % [sat, held, stood, floor_ok, move_stand])
+	_check("木屋生活：炉子生火 / 熄火（火光、火苗、烟囱冒烟），落地灯和墙上开关，沙发坐下 / 站起",
+		off_ok and on_ok and lamp_ok and switch_ok and sat and held and stood and floor_ok and move_stand, "；".join(notes))
+
+
+func _test_sleep() -> void:
+	var climate := _main.get_node("Systems") as ClimateSystem
+	var bed := _cabin.get_node("Generated/Life/Bed_cabin_bed") as Bed
+	climate.set_hour(22.0)
+	var day0 := WorldState.world_day
+	var hours: float = await bed.sleep(_player, true)
+	var night_ok := WorldState.world_day == day0 + 1 and absf(WorldState.time_minutes - 7.0 * 60.0) < 1.0 and absf(hours - 9.0) < 0.01
+	var woke := _player.global_position.distance_to(bed.to_global(bed.wake_point)) < 0.1
+	climate.set_hour(13.0)
+	var nap: float = await bed.sleep(_player, true)
+	var nap_ok := absf(nap - 1.0) < 0.01 and absf(WorldState.time_minutes - 14.0 * 60.0) < 1.0
+	await _seconds(0.8)
+	_check("床：晚上 22:00 睡到第二天 7:00，白天小睡 1 小时，醒来站在床边",
+		night_ok and nap_ok and woke and _player.is_on_floor(), "睡 %.1f 小时 → 第 %d 天 %s，小睡 %.1f 小时，醒在床边 %s" % [hours, WorldState.world_day, "07:00" if night_ok else "?", nap, woke])
+	climate.set_hour(10.0)
+
+
+func _test_canoe() -> void:
+	var canoe := _main.get_node("World/Dock/Generated/Canoe") as Canoe
+	var notes := PackedStringArray()
+	var start_xz := canoe.world_position_2d()
+	# 从码头上看着船按 E
+	_player.teleport_to(Vector3(-28.0, 1.05, 25.2), 180.0)
+	await _seconds(2.0)
+	var moored := canoe.world_position_2d().distance_to(start_xz) < 0.001   # 没人时系在原地，不随风漂
+	_player.look_at_point(canoe.global_position + Vector3(0.0, 0.2, 0.0))
+	await _frames(2)
+	var boarded := _player.try_interact() and _player.boat == canoe and canoe.rider == _player
+	notes.append("无人时不漂 %s，上船 %s" % [moored, boarded])
+	# 往东划 10 s
+	_player.autopilot_enabled = true
+	_player.autopilot_direction = Vector3(1.0, 0.0, 0.0)
+	var min_y := INF
+	var max_y := -INF
+	for i in 600:
+		await get_tree().physics_frame
+		min_y = minf(min_y, canoe.global_position.y)
+		max_y = maxf(max_y, canoe.global_position.y)
+	var moved := canoe.world_position_2d().x - start_xz.x
+	var follows := _player.global_position.distance_to(canoe.seat_position() - Vector3(0.0, 12.0 * Wardrobe.px(), 0.0)) < 0.05
+	notes.append("10 s 向东 %.1f m，速度 %.1f m/s，起伏 %.2f m，人跟船 %s" % [moved, canoe.speed, max_y - min_y, follows])
+	# 绕过码头尽头到开阔水面：这里离岸太远，下不了船
+	var open_water := Vector2(5.0, 22.0)
+	for i in 60 * 40:
+		var to := open_water - canoe.world_position_2d()
+		if to.length() < 2.0:
+			break
+		_player.autopilot_direction = Vector3(to.x, 0.0, to.y)
+		await get_tree().physics_frame
+	var too_far := not _player.try_interact() and _player.boat == canoe
+	# 划向湖心小岛，直到船头碰到浅水搁浅
+	var islet := Vector2(42.0, -6.0)
+	var arrived := false
+	for i in 60 * 90:
+		var to := islet - canoe.world_position_2d()
+		_player.autopilot_direction = Vector3(to.x, 0.0, to.y)
+		await get_tree().physics_frame
+		if canoe.grounded:
+			arrived = true
+			break
+	_player.autopilot_direction = Vector3.ZERO
+	await _seconds(1.0)
+	var hull_ok := canoe._hull_clear(canoe.world_position_2d(), canoe.heading)
+	var landed := _player.try_interact() and _player.boat == null
+	await _seconds(1.0)
+	var on_island := _player.global_position.y > WorldLayout.water_level() + 0.05 and Vector2(_player.global_position.x, _player.global_position.z).distance_to(islet) < 14.0 and _player.is_on_floor()
+	var found_islet := &"lake_islet" in WorldState.discoveries
+	notes.append("到岛 %s，船身在水里 %s，上岸 %s（在岛上 %s），发现小岛 %s，湖中间下船被拒 %s" % [arrived, hull_ok, landed, on_island, found_islet, too_far])
+	# 在岛上往深水走：被岛边挡墙挡住
+	var away := Vector2(_player.global_position.x, _player.global_position.z) - islet
+	_player.autopilot_direction = Vector3(away.x, 0.0, away.y).normalized()
+	await _seconds(8.0)
+	_player.autopilot_direction = Vector3.ZERO
+	await _frames(15)
+	var depth := WorldLayout.water_level() - _player.global_position.y
+	var wall_ok := depth < float(WorldLayout.section("lake")["wade_limit_depth"]) + 0.25
+	notes.append("岛边涉水深度 %.2f m" % depth)
+	# 再上船，放到码头边，按 E 落到码头板上
+	_player.autopilot_enabled = false
+	_player.board(canoe)
+	canoe.place_at(Vector2(-20.0, 24.0), 90.0)
+	await _frames(5)
+	var dock_ok := _player.disembark() and absf(_player.global_position.y - (float(WorldLayout.section("dock")["deck_height"]) + 0.05)) < 0.2
+	await _seconds(0.8)
+	dock_ok = dock_ok and _player.is_on_floor()
+	var saved: Dictionary = WorldState.vehicles.get("lake_canoe", {})
+	notes.append("码头下船 %s，存档里的船位置 %s" % [dock_ok, str(saved.get("pos", []))])
+	canoe.place_at(start_xz, 90.0)
+	_check("独木舟：码头上船、划行有起伏、湖中间不能下船、划到湖心小岛靠岸上岛、岛边有涉水挡墙、码头边下船、位置记进存档",
+		moored and boarded and moved > 15.0 and follows and max_y - min_y > 0.005 and too_far and arrived and hull_ok and landed and on_island \
+		and found_islet and wall_ok and dock_ok and not saved.is_empty(), "；".join(notes))
+
+
+func _test_exploration_save() -> void:
+	var exp := _main.get_node("World/Exploration") as Exploration
+	WorldState.discoveries.erase(&"dock_end")   # 前面的测试可能已经路过码头尽头
+	var before := WorldState.discoveries.size()
+	var found := exp.check(Vector2(-2.0, 26.0))
+	var again := exp.check(Vector2(-2.0, 26.0))
+	var hud := _main.get_node("HUD")
+	await _frames(2)
+	var toast: String = hud.toast_text()
+	var snap := WorldState.snapshot()
+	var migrated := WorldState.migrate({"schema_version": 1, "world_day": 3})
+	var ok: bool = found == [&"dock_end"] and again.is_empty() and WorldState.discoveries.size() == before + 1 \
+		and toast.contains("码头尽头") and snap["schema_version"] == 2 and (snap["discoveries"] as Array).has("dock_end") \
+		and snap.has("vehicles") and migrated["schema_version"] == 2 and migrated["discoveries"] == [] and migrated["vehicles"] == {}
+	_check("探索：走到码头尽头记为新发现（不重复）、弹出提示；存档快照含发现与船位置，v1 存档能升级到 v2",
+		ok, "新发现 %s，提示「%s」，快照版本 %d，发现列表 %s" % [str(found), toast, snap["schema_version"], str(snap["discoveries"])])
 
 
 # ---------------------------------------------------------------- 立牌
