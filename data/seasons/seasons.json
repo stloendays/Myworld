@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "note": "时间尺度与四季参数（规格 5.2、5.3）。数值是开发预设，可调。季节顺序固定为 SPRING → SUMMER → AUTUMN → WINTER。",
+  "day_length_real_minutes": 48.0,
+  "season_days": 12,
+  "first_day_season": "AUTUMN",
+  "start": {"world_day": 1, "time": "17:20", "weather": "CLEAR"},
+  "sun_set_azimuth_deg": 79.0,
+  "order": ["SPRING", "SUMMER", "AUTUMN", "WINTER"],
+  "seasons": {
+    "SPRING": {
+      "name": "春",
+      "sunrise": "06:00", "sunset": "18:40", "noon_elevation_deg": 52.0,
+      "sky_tint": [0.98, 1.02, 1.0], "terrain_tint": [0.95, 1.08, 0.88],
+      "pine_colors": [[0.18, 0.30, 0.18], [0.20, 0.33, 0.19], [0.16, 0.28, 0.17]],
+      "broadleaf_colors": [[0.48, 0.66, 0.30], [0.56, 0.72, 0.34], [0.86, 0.72, 0.80]],
+      "broadleaf_mesh": "summer",
+      "grass_colors": [[0.46, 0.60, 0.24], [0.52, 0.64, 0.28], [0.42, 0.56, 0.22]],
+      "weather_weights": {"CLEAR": 4, "OVERCAST": 3, "LIGHT_RAIN": 3, "HEAVY_RAIN": 1, "FOG": 2, "SNOW": 0}
+    },
+    "SUMMER": {
+      "name": "夏",
+      "sunrise": "05:20", "sunset": "19:40", "noon_elevation_deg": 66.0,
+      "sky_tint": [1.0, 1.02, 1.04], "terrain_tint": [0.92, 1.05, 0.82],
+      "pine_colors": [[0.15, 0.28, 0.16], [0.17, 0.30, 0.17], [0.13, 0.25, 0.15]],
+      "broadleaf_colors": [[0.26, 0.46, 0.18], [0.30, 0.50, 0.20], [0.22, 0.42, 0.16]],
+      "broadleaf_mesh": "summer",
+      "grass_colors": [[0.36, 0.52, 0.18], [0.42, 0.56, 0.20], [0.32, 0.48, 0.16]],
+      "weather_weights": {"CLEAR": 6, "OVERCAST": 2, "LIGHT_RAIN": 2, "HEAVY_RAIN": 2, "FOG": 1, "SNOW": 0}
+    },
+    "AUTUMN": {
+      "name": "秋",
+      "sunrise": "06:20", "sunset": "18:20", "noon_elevation_deg": 40.0,
+      "sky_tint": [1.0, 0.98, 1.0], "terrain_tint": [1.0, 1.0, 1.0],
+      "pine_colors": [[0.16, 0.26, 0.17], [0.13, 0.22, 0.15], [0.19, 0.29, 0.18], [0.15, 0.25, 0.20]],
+      "broadleaf_colors": [[0.76, 0.44, 0.17], [0.78, 0.60, 0.24], [0.62, 0.25, 0.14], [0.72, 0.50, 0.20]],
+      "broadleaf_mesh": "fall",
+      "grass_colors": [[0.50, 0.52, 0.22], [0.60, 0.55, 0.26], [0.44, 0.48, 0.20], [0.56, 0.50, 0.24]],
+      "weather_weights": {"CLEAR": 4, "OVERCAST": 3, "LIGHT_RAIN": 3, "HEAVY_RAIN": 2, "FOG": 2, "SNOW": 0}
+    },
+    "WINTER": {
+      "name": "冬",
+      "sunrise": "07:20", "sunset": "16:50", "noon_elevation_deg": 24.0,
+      "sky_tint": [0.92, 0.98, 1.08], "terrain_tint": [0.86, 0.88, 0.92],
+      "pine_colors": [[0.20, 0.28, 0.24], [0.17, 0.25, 0.22], [0.22, 0.30, 0.26]],
+      "broadleaf_colors": [[0.46, 0.40, 0.34], [0.40, 0.35, 0.30], [0.50, 0.45, 0.40]],
+      "broadleaf_mesh": "fall",
+      "grass_colors": [[0.48, 0.46, 0.34], [0.54, 0.50, 0.38], [0.44, 0.42, 0.32]],
+      "weather_weights": {"CLEAR": 4, "OVERCAST": 3, "LIGHT_RAIN": 0, "HEAVY_RAIN": 0, "FOG": 2, "SNOW": 4}
+    }
+  }
+}

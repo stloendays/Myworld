@@ -1,7 +1,8 @@
 class_name FirstPersonController
 extends CharacterBody3D
 ## 第一人称角色（CharacterBody3D）。与地图解耦：不引用场景中的任何固定路径。
-## WASD 移动、鼠标环视、Shift 奔跑、空格跳跃、E 交互（相机中心射线 2.5 m）。
+## WASD 移动、鼠标环视、Shift 奔跑、空格跳跃、E 交互（眼睛位置的视线射线 2.5 m）、V 切换第一/第三人称。
+## 身体是方块人物（CharacterModel，外观来自 PlayerProfile）；第一人称时身体只投影子、不进画面。
 ## autopilot_* 供自动化测试与以后的 NPC / 回放使用：开启后忽略键盘输入，按给定世界方向移动。
 ## 只有 is_local_controlled 的实例读取输入、拥有当前相机（为将来多人预留）。
 
@@ -15,10 +16,18 @@ extends CharacterBody3D
 @export var jump_velocity := 4.2
 @export var pitch_limit_deg := 85.0
 @export var interact_distance := 2.5
+@export var third_person_distance := 3.2
+@export var third_person_offset := Vector3(0.45, 0.25, 0.0)
 
 @onready var head: Node3D = $Head
-@onready var camera: Camera3D = $Head/Camera3D
-@onready var interact_ray: RayCast3D = $Head/Camera3D/InteractRay
+@onready var camera_boom: SpringArm3D = $Head/CameraBoom
+@onready var camera: Camera3D = $Head/CameraBoom/Camera3D
+@onready var interact_ray: RayCast3D = $Head/InteractRay
+@onready var body: CharacterModel = $Body
+
+const BODY_LAYER := 4   ## 渲染层 3（player_body）
+
+var third_person := false
 
 var autopilot_enabled := false
 var autopilot_direction := Vector3.ZERO
@@ -36,6 +45,8 @@ func _ready() -> void:
 	interact_ray.target_position = Vector3(0.0, 0.0, -interact_distance)
 	interact_ray.collision_mask = PhysicsLayers.WORLD | PhysicsLayers.INTERACTABLE
 	interact_ray.add_exception(self)
+	camera_boom.add_excluded_object(get_rid())
+	set_third_person(false)
 	GameSettings.changed.connect(_apply_settings)
 	_apply_settings()
 
@@ -55,6 +66,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		head.rotation.x = clampf(head.rotation.x - dy, -limit, limit)
 	elif event.is_action_pressed("interact"):
 		try_interact()
+	elif event.is_action_pressed("toggle_view"):
+		set_third_person(not third_person)
 
 
 func _physics_process(delta: float) -> void:
@@ -77,6 +90,20 @@ func _physics_process(delta: float) -> void:
 	velocity.z = horizontal.z
 	move_and_slide()
 	_update_focus()
+	body.animate(delta, Vector2(velocity.x, velocity.z).length(), is_on_floor(), head.rotation.x, run_speed)
+	var boom_target := third_person_distance if third_person else 0.0
+	camera_boom.spring_length = lerpf(camera_boom.spring_length, boom_target, 1.0 - exp(-12.0 * delta))
+	camera_boom.position = camera_boom.position.lerp(third_person_offset if third_person else Vector3.ZERO, 1.0 - exp(-12.0 * delta))
+
+
+## 第一人称：相机在眼睛处，身体不进画面（仍投影子）；第三人称：相机退到肩后，身体可见。
+func set_third_person(enabled: bool) -> void:
+	third_person = enabled
+	if enabled:
+		camera.cull_mask = 0xFFFFF
+	else:
+		camera.cull_mask = 0xFFFFF & ~BODY_LAYER
+	body.render_layers = BODY_LAYER
 
 
 func _wish_direction() -> Vector3:

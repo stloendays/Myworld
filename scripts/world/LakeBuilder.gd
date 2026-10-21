@@ -17,6 +17,7 @@ var wall_points := PackedVector3Array()
 
 
 func _ready() -> void:
+	add_to_group("lake_reflection")
 	rebuild()
 
 

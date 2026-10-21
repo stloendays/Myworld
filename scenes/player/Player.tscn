@@ -1,10 +1,14 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/player/FirstPersonController.gd" id="1_fpc"]
+[ext_resource type="Script" path="res://scripts/character/CharacterModel.gd" id="2_model"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
 radius = 0.35
 height = 1.8
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_boom"]
+radius = 0.22
 
 [node name="Player" type="CharacterBody3D"]
 collision_layer = 2
@@ -17,14 +21,23 @@ script = ExtResource("1_fpc")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 shape = SubResource("CapsuleShape3D_body")
 
+[node name="Body" type="Node3D" parent="."]
+script = ExtResource("2_model")
+render_layers = 4
+
 [node name="Head" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.65, 0)
 
-[node name="Camera3D" type="Camera3D" parent="Head"]
+[node name="InteractRay" type="RayCast3D" parent="Head"]
+target_position = Vector3(0, 0, -2.5)
+collision_mask = 5
+
+[node name="CameraBoom" type="SpringArm3D" parent="Head"]
+shape = SubResource("SphereShape3D_boom")
+spring_length = 0.0
+collision_mask = 1
+
+[node name="Camera3D" type="Camera3D" parent="Head/CameraBoom"]
 fov = 75.0
 near = 0.05
 far = 1500.0
-
-[node name="InteractRay" type="RayCast3D" parent="Head/Camera3D"]
-target_position = Vector3(0, 0, -2.5)
-collision_mask = 5

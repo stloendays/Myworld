@@ -52,6 +52,7 @@ var _collision: StaticBody3D = null
 
 
 func _ready() -> void:
+	add_to_group("seasonal")
 	rebuild()
 
 
@@ -72,12 +73,62 @@ func rebuild() -> void:
 	for r in rocks.values():
 		rock_count += (r as Array).size()
 	for asset in trees:
-		root.add_child(_multimesh(asset, trees[asset], 400.0))
+		var tree_mmi := _multimesh(asset, trees[asset], 400.0)
+		var variant := _variant(asset)
+		tree_mmi.set_meta("kind", variant.get("kind", "pine"))
+		tree_mmi.set_meta("fall_asset", asset)
+		tree_mmi.set_meta("summer_asset", variant.get("summer", asset))
+		root.add_child(tree_mmi)
 	for asset in rocks:
 		root.add_child(_multimesh(asset, rocks[asset], 300.0))
 	if not Engine.is_editor_hint():
 		_collision = _make_collision(trees, rocks)
 		root.add_child(_collision)
+
+
+var current_season: StringName = &"AUTUMN"
+
+
+## 换季：针叶树按季节色板重新上色；阔叶树换成该季对应的模型（春夏绿叶 / 秋冬秋叶）并上色。
+## 由 EnvironmentDirector 通过 "seasonal" 组调用；只改实例颜色与网格，不重建树木。
+func apply_season(season: StringName) -> void:
+	var p := ClimateData.season_profile(season)
+	if p.is_empty():
+		return
+	current_season = season
+	var pine := ClimateData.colors(p.get("pine_colors"))
+	var broad := ClimateData.colors(p.get("broadleaf_colors"))
+	var summer := str(p.get("broadleaf_mesh", "fall")) == "summer"
+	var root := get_node_or_null(GENERATED)
+	if root == null:
+		return
+	for child in root.get_children():
+		var mmi := child as MultiMeshInstance3D
+		if mmi == null or not mmi.has_meta("kind"):
+			continue
+		if mmi.get_meta("kind") == "broadleaf":
+			var asset: String = mmi.get_meta("summer_asset") if summer else mmi.get_meta("fall_asset")
+			mmi.multimesh.mesh = ArtMaterials.kenney_mesh(NATURE + asset + ".glb")["mesh"]
+			recolor(mmi.multimesh, broad)
+		else:
+			recolor(mmi.multimesh, pine)
+
+
+## 按实例序号稳定地从色板取色（同一棵树每季取同一档颜色）。
+static func recolor(mm: MultiMesh, palette: Array) -> void:
+	if palette.is_empty():
+		return
+	for i in mm.instance_count:
+		mm.set_instance_color(i, palette[(i * 7919 + 13) % palette.size()])
+	# CPU 侧记录首个实例的颜色（无头模式下渲染服务器不保存实例数据，测试与调试读这里）
+	mm.set_meta("tint_sample", palette[13 % palette.size()])
+
+
+func _variant(asset: String) -> Dictionary:
+	for v in TREE_VARIANTS:
+		if v["asset"] == asset:
+			return v
+	return {}
 
 
 ## 测试用：临时关闭树木/岩石碰撞，以单独验证地形本身的边界封闭。

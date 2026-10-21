@@ -10,8 +10,13 @@
 
 ```
 Main (Main.gd)
+├── Systems (ClimateSystem)              预设 / 跳季 / 改时刻 / 改天气的统一入口
+│   ├── WorldClock                       推进时间（一天 = 现实 48 分钟）
+│   ├── SeasonController                 由日期推出季节
+│   └── WeatherController                按季节权重抽天气、过渡、种子
 ├── World
-│   ├── Lighting   StaticDuskLighting   M1 固定暮色；M2 由 EnvironmentDirector 取代
+│   ├── Environment EnvironmentDirector  太阳月亮、天空、雾、环境光、湿润积雪、降水强度、植被季节色
+│   ├── Precipitation                    雨雪粒子 + 跟随相机的高度场碰撞（屋顶下无雨雪）
 │   ├── Terrain    TerrainBuilder       高度场网格 + HeightMapShape3D，terrain.gdshader 五层 PBR
 │   ├── Lake       LakeBuilder          水面 + 反射探针 + 涉水上限
 │   ├── Forest     ForestBuilder        Kenney 树木 / 岩石 MultiMesh + 碰撞
@@ -23,7 +28,9 @@ Main (Main.gd)
 │   ├── FrontDoor  InteractableDoor     uid = cabin_front_door（门板 door_leaf.glb）
 │   └── Generated  cabin_aframe.glb + Kenney 家具 / 灯光 / 碰撞 / 室内区域 cabin_interior
 ├── Player (FirstPersonController)       entity_id = player_local
-├── HUD / PauseMenu / DebugOverlay
+│   ├── Body (CharacterModel)            方块人物：6 部位 × 7 外观插槽 + 4 挂点，渲染层 player_body
+│   └── Head ── InteractRay / CameraBoom(SpringArm3D) ── Camera3D   V 切换第一/第三人称
+├── HUD / PauseMenu（含人物外观面板）/ DebugOverlay / WeatherDebugPanel（F4）
 ```
 
 木屋是主场景里常驻的真实子场景；进屋只是角色走进一个 `Area3D`。工程中没有任何场景切换调用（自动检查会扫描 `scripts/`）。
@@ -46,16 +53,31 @@ Main (Main.gd)
 
 | 模块 | 状态 | 职责 |
 |---|---|---|
-| `WorldState`（Autoload） | M1 已实现部分 | 可交互物状态（按 uid）、角色所在区域（按 entity_id）；M2/M4 扩展时间、季节、天气与存档字段 |
-| `EventBus`（Autoload） | M1 已实现部分 | 只发通知不存状态 |
-| `GameSettings`（Autoload） | M1 已实现 | FOV、灵敏度、按键表、UI 中文字体主题 |
-| `InteractionSystem` / `Interactable` | M1 已实现 | 统一 `interact(actor, target)`；子类提供提示、状态、`apply_state()` |
-| `WorldClock` / `SeasonController` / `WeatherController` / `EnvironmentDirector` | M2 接口占位 | 见 `scripts/systems/` 文件头的计划接口 |
-| `AudioDirector` | M3 接口占位 | 订阅区域事件做室内外混音 |
+| `WorldState`（Autoload） | 已实现 | 日期时间、季节覆盖、天气与过渡进度、种子、地面积雪/湿润、可交互物状态、角色区域；`snapshot()` 给 M4 存档 |
+| `EventBus`（Autoload） | 已实现 | 只发通知不存状态 |
+| `GameSettings`（Autoload） | 已实现 | FOV、灵敏度、按键表、UI 中文字体主题 |
+| `PlayerProfile`（Autoload） | 已实现 | 本地玩家外观，存 `user://appearance.json` |
+| `InteractionSystem` / `Interactable` | 已实现 | 统一 `interact(actor, target)`；子类提供提示、状态、`apply_state()` |
+| `WorldClock` / `SeasonController` / `WeatherController` / `ClimateSystem` | M2 已实现 | 只写 WorldState、只发事件，不碰任何画面节点 |
+| `EnvironmentDirector` | M2 已实现 | 只读 WorldState，把状态合成为画面；通过 `seasonal`、`precipitation`、`lake_reflection` 组通知各生成器 |
+| `CharacterModel` / `CharacterAppearance` / `Wardrobe` | 已实现 | 方块人物、可序列化外观、衣橱目录（`data/characters/`） |
+| `AudioDirector` | M3 接口占位 | 订阅区域与天气事件做室内外混音 |
 | `SaveManager` | M4 接口占位 | `user://saves/` 版本化 JSON |
 
-已使用的事件：`zone_entered(zone_id, actor_id)`、`zone_exited`、`interactable_state_changed(uid, state)`、`interaction_prompt_changed(text)`。
-预留事件（目前没有发送方）：`time_changed`、`season_changed`、`weather_transition_started`、`weather_changed`、`save_loaded`。
+已使用的事件：`time_changed`、`season_changed`、`weather_transition_started`、`weather_changed`、`zone_entered`、`zone_exited`、`interactable_state_changed`、`interaction_prompt_changed`。
+预留事件（目前没有发送方）：`save_loaded`。
+
+事件顺序：WorldClock 推进时间 → SeasonController / WeatherController 更新状态 → EnvironmentDirector 每帧读取 WorldState 合成画面。天气随机数只由 `weather_seed` 与 `weather_change_count` 决定，读档后天气序列不变。
+
+## 渲染层与全局着色器参数
+
+| 渲染层 | 值 | 内容 |
+|---|---|---|
+| world | 1 | 一般场景 |
+| water | 2 | 湖面（反射探针不拍它） |
+| player_body | 4 | 本地玩家身体（第一人称相机不画，仍投影子） |
+
+全局着色器参数（`project.godot → shader_globals`，由 EnvironmentDirector 每帧写入）：`rain_amount`、`snow_fall`、`snow_cover`、`wetness`、`season_tint`。
 
 ## 为 NPC 与多人预留的部分
 
@@ -74,7 +96,7 @@ Main (Main.gd)
 
 ## 设计取舍（M1）
 
-- **太阳方位**：为还原参考图 01 的构图（从木屋/码头望向湖对岸的落日），M1 把暮色太阳放在湖对岸，方位角 64°（从北顺时针）。M2 改为按时间计算，方位由配置决定。
+- **太阳方位**：为还原参考图 01 的构图（从木屋/码头望向湖对岸的落日），本世界的太阳在湖对岸落下：`seasons.json → sun_set_azimuth_deg = 79°`，太阳从日出到日落沿正弦弧线转 180°，秋季 17:20 正好位于方位 64°、高度约 10°（与 M1 的暮色构图一致）。
 - **涉水**：MVP 不做游泳，用沿 0.7 m 等深线的水下挡墙限制，码头处压低到甲板以下。
 - **码头栏杆**：入水段加栏杆，碰撞比可见栏杆高 0.45 m，防止跳过后落入深水。
 - **湖面倒影**：屏幕空间反射负责近处（码头、岸边），远岸树林由湖心上方 2 m 处只拍一次的盒投影反射探针提供；水面在可见层 2，不进入探针。反射图集只开 2 个槽（`reflection_count=2`），避免默认 64 槽占用数 GB 显存。

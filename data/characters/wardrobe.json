@@ -1,0 +1,150 @@
+{
+  "schema_version": 1,
+  "note": "方块风格人物的衣橱。单位为“像素”（1 px = px_meters 米，身高 32 px = 1.8 m）。每件部件是若干盒子：part 指挂在哪个身体部位（可写数组表示左右对称），box = [x0, y0, z0, x1, y1, z1]（部位局部坐标，人物面朝 -Z，+X 为人物右手边），color 为颜色键或 #十六进制。新增发型/衣服只需在对应 slot 下加一个条目。",
+  "px_meters": 0.05625,
+  "parts": {
+    "leg_r":  {"pivot": [2, 12, 0]},
+    "leg_l":  {"pivot": [-2, 12, 0]},
+    "torso":  {"pivot": [0, 12, 0]},
+    "arm_r":  {"pivot": [6, 22, 0]},
+    "arm_l":  {"pivot": [-6, 22, 0]},
+    "head":   {"pivot": [0, 24, 0]}
+  },
+  "body": [
+    {"part": "head", "box": [-4, 0, -4, 4, 8, 4], "color": "skin"},
+    {"part": "torso", "box": [-4, 0, -2, 4, 12, 2], "color": "skin"},
+    {"part": ["arm_l", "arm_r"], "box": [-2, -10, -2, 2, 2, 2], "color": "skin"},
+    {"part": ["leg_l", "leg_r"], "box": [-2, -12, -2, 2, 0, 2], "color": "skin"}
+  ],
+  "slot_order": ["face", "hair", "hat", "top", "bottom", "shoes", "back"],
+  "slot_labels": {"face": "脸", "hair": "发型", "hat": "帽子", "top": "上衣", "bottom": "下装", "shoes": "鞋", "back": "背饰"},
+  "color_labels": {
+    "skin": "肤色", "eyes": "瞳色", "hair": "发色", "hat": "帽子", "hat_accent": "帽子饰色",
+    "top": "上衣", "top_accent": "上衣饰色", "bottom": "下装", "shoes": "鞋", "back": "背包"
+  },
+  "slots": {
+    "face": {
+      "default": {"label": "平静", "pieces": [
+        {"part": "head", "box": [-3, 3, -4.06, -2, 4, -3.9], "color": "eye_white"},
+        {"part": "head", "box": [2, 3, -4.06, 3, 4, -3.9], "color": "eye_white"},
+        {"part": "head", "box": [-2, 3, -4.07, -1, 4, -3.9], "color": "eyes"},
+        {"part": "head", "box": [1, 3, -4.07, 2, 4, -3.9], "color": "eyes"},
+        {"part": "head", "box": [-3, 4.6, -4.06, -1, 5.0, -3.9], "color": "hair"},
+        {"part": "head", "box": [1, 4.6, -4.06, 3, 5.0, -3.9], "color": "hair"},
+        {"part": "head", "box": [-1.5, 1.4, -4.06, 1.5, 1.9, -3.9], "color": "mouth"}
+      ]},
+      "smile": {"label": "微笑", "pieces": [
+        {"part": "head", "box": [-3, 3, -4.06, -2, 4, -3.9], "color": "eye_white"},
+        {"part": "head", "box": [2, 3, -4.06, 3, 4, -3.9], "color": "eye_white"},
+        {"part": "head", "box": [-2, 3, -4.07, -1, 4, -3.9], "color": "eyes"},
+        {"part": "head", "box": [1, 3, -4.07, 2, 4, -3.9], "color": "eyes"},
+        {"part": "head", "box": [-3, 4.6, -4.06, -1, 5.0, -3.9], "color": "hair"},
+        {"part": "head", "box": [1, 4.6, -4.06, 3, 5.0, -3.9], "color": "hair"},
+        {"part": "head", "box": [-1.5, 1.4, -4.06, 1.5, 1.9, -3.9], "color": "mouth"},
+        {"part": "head", "box": [-2.2, 1.9, -4.06, -1.5, 2.4, -3.9], "color": "mouth"},
+        {"part": "head", "box": [1.5, 1.9, -4.06, 2.2, 2.4, -3.9], "color": "mouth"}
+      ]}
+    },
+    "hair": {
+      "none": {"label": "光头", "pieces": []},
+      "short": {"label": "短发", "pieces": [
+        {"part": "head", "box": [-4.3, 6.5, -4.3, 4.3, 8.4, 4.3], "color": "hair"},
+        {"part": "head", "box": [-4.3, 2.5, 3.6, 4.3, 8.4, 4.3], "color": "hair"},
+        {"part": "head", "box": [-4.3, 4.0, -2.5, -3.6, 8.4, 4.3], "color": "hair"},
+        {"part": "head", "box": [3.6, 4.0, -2.5, 4.3, 8.4, 4.3], "color": "hair"},
+        {"part": "head", "box": [-4.3, 5.8, -4.3, -0.5, 6.6, -3.6], "color": "hair"}
+      ]},
+      "long": {"label": "长发", "pieces": [
+        {"part": "head", "box": [-4.3, 6.5, -4.3, 4.3, 8.4, 4.3], "color": "hair"},
+        {"part": "head", "box": [-4.3, -0.5, 3.6, 4.3, 8.4, 4.4], "color": "hair"},
+        {"part": "head", "box": [-4.4, 0.5, -1.5, -3.6, 8.4, 4.4], "color": "hair"},
+        {"part": "head", "box": [3.6, 0.5, -1.5, 4.4, 8.4, 4.4], "color": "hair"},
+        {"part": "head", "box": [-4.3, 5.6, -4.3, 4.3, 6.6, -3.6], "color": "hair"},
+        {"part": "torso", "box": [-4.2, 6.5, 2.3, 4.2, 12.3, 2.9], "color": "hair"}
+      ]},
+      "ponytail": {"label": "马尾", "pieces": [
+        {"part": "head", "box": [-4.3, 6.5, -4.3, 4.3, 8.4, 4.3], "color": "hair"},
+        {"part": "head", "box": [-4.3, 3.5, 3.6, 4.3, 8.4, 4.3], "color": "hair"},
+        {"part": "head", "box": [-4.3, 4.5, -2.5, -3.6, 8.4, 4.3], "color": "hair"},
+        {"part": "head", "box": [3.6, 4.5, -2.5, 4.3, 8.4, 4.3], "color": "hair"},
+        {"part": "head", "box": [-1.1, 4.5, 4.3, 1.1, 6.7, 5.4], "color": "hat_accent"},
+        {"part": "head", "box": [-0.9, -1.5, 4.6, 0.9, 5.0, 6.0], "color": "hair"}
+      ]},
+      "bun": {"label": "丸子头", "pieces": [
+        {"part": "head", "box": [-4.3, 6.5, -4.3, 4.3, 8.4, 4.3], "color": "hair"},
+        {"part": "head", "box": [-4.3, 3.0, 3.6, 4.3, 8.4, 4.3], "color": "hair"},
+        {"part": "head", "box": [-4.3, 4.5, -2.5, -3.6, 8.4, 4.3], "color": "hair"},
+        {"part": "head", "box": [3.6, 4.5, -2.5, 4.3, 8.4, 4.3], "color": "hair"},
+        {"part": "head", "box": [-1.7, 8.2, -0.2, 1.7, 10.4, 3.2], "color": "hair"}
+      ]}
+    },
+    "hat": {
+      "none": {"label": "不戴", "pieces": []},
+      "beanie": {"label": "毛线帽", "pieces": [
+        {"part": "head", "box": [-4.45, 5.6, -4.45, 4.45, 9.0, 4.45], "color": "hat"},
+        {"part": "head", "box": [-4.55, 5.3, -4.55, 4.55, 6.5, 4.55], "color": "hat_accent"},
+        {"part": "head", "box": [-1.0, 9.0, -1.0, 1.0, 10.4, 1.0], "color": "hat_accent"}
+      ]},
+      "cap": {"label": "棒球帽", "pieces": [
+        {"part": "head", "box": [-4.45, 6.6, -4.45, 4.45, 8.9, 4.45], "color": "hat"},
+        {"part": "head", "box": [-4.2, 6.5, -7.4, 4.2, 6.95, -4.3], "color": "hat_accent"},
+        {"part": "head", "box": [-0.6, 8.9, -0.6, 0.6, 9.3, 0.6], "color": "hat_accent"}
+      ]}
+    },
+    "top": {
+      "tee": {"label": "T 恤", "pieces": [
+        {"part": "torso", "box": [-4.25, -0.2, -2.25, 4.25, 12.25, 2.25], "color": "top"},
+        {"part": ["arm_l", "arm_r"], "box": [-2.25, -2.0, -2.25, 2.25, 2.25, 2.25], "color": "top"},
+        {"part": "torso", "box": [-1.0, 10.6, -2.32, 1.0, 12.27, -2.26], "color": "skin"}
+      ]},
+      "hoodie": {"label": "连帽卫衣", "pieces": [
+        {"part": "torso", "box": [-4.25, -0.2, -2.25, 4.25, 12.25, 2.25], "color": "top"},
+        {"part": ["arm_l", "arm_r"], "box": [-2.25, -9.4, -2.25, 2.25, 2.25, 2.25], "color": "top"},
+        {"part": ["arm_l", "arm_r"], "box": [-2.32, -10.2, -2.32, 2.32, -9.2, 2.32], "color": "top_accent"},
+        {"part": "torso", "box": [-3.6, 9.0, 2.25, 3.6, 12.6, 3.3], "color": "top_accent"},
+        {"part": "torso", "box": [-2.6, 1.4, -2.36, 2.6, 4.6, -2.26], "color": "top_accent"},
+        {"part": "torso", "box": [-1.3, 8.0, -2.34, -0.9, 11.0, -2.27], "color": "top_accent"},
+        {"part": "torso", "box": [0.9, 8.0, -2.34, 1.3, 11.0, -2.27], "color": "top_accent"}
+      ]},
+      "jacket": {"label": "夹克", "pieces": [
+        {"part": "torso", "box": [-4.25, -0.2, -2.25, 4.25, 12.25, 2.25], "color": "top"},
+        {"part": ["arm_l", "arm_r"], "box": [-2.25, -9.6, -2.25, 2.25, 2.25, 2.25], "color": "top"},
+        {"part": "torso", "box": [-1.3, -0.2, -2.33, 1.3, 11.4, -2.26], "color": "top_accent"},
+        {"part": "torso", "box": [-4.35, 11.2, -2.4, 4.35, 12.7, 2.4], "color": "top"},
+        {"part": "torso", "box": [-3.6, 3.0, -2.36, -2.2, 3.4, -2.26], "color": "sole"},
+        {"part": "torso", "box": [2.2, 3.0, -2.36, 3.6, 3.4, -2.26], "color": "sole"}
+      ]}
+    },
+    "bottom": {
+      "jeans": {"label": "长裤", "pieces": [
+        {"part": ["leg_l", "leg_r"], "box": [-2.25, -11.0, -2.25, 2.25, 0.3, 2.25], "color": "bottom"},
+        {"part": "torso", "box": [-4.3, -0.15, -2.3, 4.3, 1.7, 2.3], "color": "bottom"},
+        {"part": "torso", "box": [-4.35, 1.1, -2.35, 4.35, 1.7, 2.35], "color": "sole"}
+      ]},
+      "shorts": {"label": "短裤", "pieces": [
+        {"part": ["leg_l", "leg_r"], "box": [-2.25, -5.0, -2.25, 2.25, 0.3, 2.25], "color": "bottom"},
+        {"part": "torso", "box": [-4.3, -0.15, -2.3, 4.3, 1.7, 2.3], "color": "bottom"}
+      ]}
+    },
+    "shoes": {
+      "sneakers": {"label": "运动鞋", "pieces": [
+        {"part": ["leg_l", "leg_r"], "box": [-2.35, -12.3, -2.7, 2.35, -10.4, 2.35], "color": "shoes"},
+        {"part": ["leg_l", "leg_r"], "box": [-2.4, -12.4, -2.75, 2.4, -11.8, 2.4], "color": "sole"}
+      ]},
+      "boots": {"label": "靴子", "pieces": [
+        {"part": ["leg_l", "leg_r"], "box": [-2.4, -12.3, -2.7, 2.4, -7.0, 2.4], "color": "shoes"},
+        {"part": ["leg_l", "leg_r"], "box": [-2.45, -12.4, -2.8, 2.45, -11.7, 2.45], "color": "sole"},
+        {"part": ["leg_l", "leg_r"], "box": [-2.45, -7.6, -2.45, 2.45, -7.0, 2.45], "color": "sole"}
+      ]}
+    },
+    "back": {
+      "none": {"label": "无", "pieces": []},
+      "backpack": {"label": "背包", "pieces": [
+        {"part": "torso", "box": [-3.2, 2.0, 2.25, 3.2, 10.6, 4.7], "color": "back"},
+        {"part": "torso", "box": [-2.5, 2.4, 4.7, 2.5, 6.0, 5.2], "color": "back_accent"},
+        {"part": "torso", "box": [-3.1, 3.5, -2.38, -2.1, 12.3, -2.27], "color": "back_accent"},
+        {"part": "torso", "box": [2.1, 3.5, -2.38, 3.1, 12.3, -2.27], "color": "back_accent"}
+      ]}
+    }
+  }
+}

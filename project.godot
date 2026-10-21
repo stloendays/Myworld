@@ -17,6 +17,7 @@ config/icon="res://icon.svg"
 GameSettings="*res://scripts/core/GameSettings.gd"
 EventBus="*res://scripts/core/EventBus.gd"
 WorldState="*res://scripts/core/WorldState.gd"
+PlayerProfile="*res://scripts/core/PlayerProfile.gd"
 
 [display]
 
@@ -30,7 +31,32 @@ window/size/viewport_height=900
 3d_physics/layer_3="interactable"
 3d_physics/layer_4="water_limit"
 3d_physics/layer_5="terrain"
+3d_render/layer_1="world"
+3d_render/layer_2="water"
+3d_render/layer_3="player_body"
 
+[shader_globals]
+
+rain_amount={
+"type": "float",
+"value": 0.0
+}
+snow_fall={
+"type": "float",
+"value": 0.0
+}
+snow_cover={
+"type": "float",
+"value": 0.0
+}
+wetness={
+"type": "float",
+"value": 0.0
+}
+season_tint={
+"type": "color",
+"value": Color(1, 1, 1, 1)
+}
 [physics]
 
 3d/physics_engine="Jolt Physics"

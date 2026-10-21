@@ -31,7 +31,7 @@ func rebuild() -> void:
 	var rail_x := float(cfg.get("rail_start_x", a.x))
 	var length := b.x - a.x
 	var z := a.y
-	var wood := ArtMaterials.pbr("weathered_planks", Color(1.0, 0.9, 0.8), "world")
+	var wood := ArtMaterials.snowable(ArtMaterials.pbr("weathered_planks", Color(1.0, 0.9, 0.8), "world"))
 	var wood_dark := ArtMaterials.pbr("stained_pine", Color(0.45, 0.33, 0.27), "world")
 
 	# 甲板木板（MultiMesh）

@@ -2,7 +2,7 @@ shader_type spatial;
 // 地形五层 PBR 混合：0 草地 · 1 林下落叶 · 2 土路 · 3 岩石（三平面投影）· 4 湖岸泥石。
 // 权重来自顶点色：R 落叶、G 土路、B 岩石、A 湖岸，草地 = 1 - 其余之和。
 // 法线在世界空间扰动后写回 NORMAL，地形网格不需要切线。
-// season_tint / snow_amount / wetness 为 M2 季节天气预留的参数，默认值即当前秋季晴天外观。
+// 季节色调、积雪、湿润度来自全局着色器参数（EnvironmentDirector 每帧写入）。
 
 render_mode diffuse_burley, specular_schlick_ggx;
 
@@ -13,9 +13,9 @@ uniform float layer_size[5];
 uniform vec3 layer_tint[5] : source_color;
 uniform float normal_strength = 0.8;
 uniform float blend_sharpness = 2.5;
-uniform vec3 season_tint : source_color = vec3(1.0);
-uniform float snow_amount : hint_range(0.0, 1.0) = 0.0;
-uniform float wetness : hint_range(0.0, 1.0) = 0.0;
+global uniform vec4 season_tint;
+global uniform float snow_cover;
+global uniform float wetness;
 
 varying vec3 wpos;
 varying vec3 wnrm;
@@ -88,9 +88,11 @@ void fragment() {
 	nrm /= max(total, 1e-4);
 	rgh /= max(total, 1e-4);
 
-	alb *= season_tint;
+	alb *= season_tint.rgb;
 	vec3 n_world = normalize(wnrm + nrm * normal_strength);
-	float snow = snow_amount * smoothstep(0.55, 0.85, n_world.y);
+	// 积雪先盖平地，再随覆盖度往坡面扩展；用贴图明度打散边缘
+	float snow_edge = mix(0.85, 0.45, snow_cover);
+	float snow = smoothstep(snow_edge, snow_edge + 0.15, n_world.y + (dot(alb, vec3(0.333)) - 0.3) * 0.4) * smoothstep(0.0, 0.25, snow_cover);
 	alb = mix(alb, vec3(0.92, 0.94, 0.98), snow);
 	alb *= mix(1.0, 0.55, wetness * (1.0 - snow));
 	rgh = mix(rgh, 0.25, wetness * (1.0 - snow));

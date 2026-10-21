@@ -4,7 +4,7 @@
 
 - 引擎：**Godot 4.7.2 Standard**（GDScript，Forward+，Jolt Physics），Windows 单机优先
 - 需求规格：[docs/DEVELOPMENT_SPEC.md](docs/DEVELOPMENT_SPEC.md)（唯一需求来源）；阶段指令：[docs/AGENT_HANDOFF.md](docs/AGENT_HANDOFF.md)
-- 当前进度：**M0 基础工程 + M1 地图闭环已完成，并完成第一轮正式美术**（Kenney 模型 + Poly Haven PBR 贴图 + Blender 建模的木屋），自动检查 16/16 通过。见 [docs/QA_M0_M1.md](docs/QA_M0_M1.md)、[docs/ART_PASS.md](docs/ART_PASS.md)
+- 当前进度：**M0、M1、第一轮正式美术、M2 天气系统、方块人物已完成**，自动检查 29/29 通过。见 [docs/QA_M0_M1.md](docs/QA_M0_M1.md)、[docs/ART_PASS.md](docs/ART_PASS.md)、[docs/M2_WEATHER_CHARACTER.md](docs/M2_WEATHER_CHARACTER.md)
 
 ![湖岸出生点](docs/screenshots/m1_01_spawn_dusk.png)
 
@@ -13,6 +13,10 @@
 | ![](docs/screenshots/m1_03_cabin_front.png) | ![](docs/screenshots/m1_04_cabin_interior.png) |
 | 码头望向木屋 | 湖面倒影 |
 | ![](docs/screenshots/m1_02_lake_to_cabin.png) | ![](docs/screenshots/m1_09_lake_reflection.png) |
+| 秋夜大雨（屋内无雨） | 冬日下雪 |
+| ![](docs/screenshots/m2_01_night_rain_cabin.png) | ![](docs/screenshots/m2_03_winter_snow.png) |
+| 方块人物 | 换装 |
+| ![](docs/screenshots/m2_08_character_front.png) | ![](docs/screenshots/m2_10_outfits.png) |
 
 ## 运行
 
@@ -58,8 +62,10 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | 奔跑 | Shift（步行 3.2 m/s，奔跑 5.2 m/s） |
 | 跳跃 | 空格 |
 | 交互 | E（准星中心射线 2.5 m，例如开关木门） |
-| 暂停 / 释放鼠标 | Esc（菜单内可调 FOV 65°–95°、鼠标灵敏度） |
-| 坐标信息 | F3（帧率、世界坐标、朝向、所在区域、室内/室外） |
+| 第一 / 第三人称 | V |
+| 暂停 / 释放鼠标 | Esc（菜单内可调 FOV 65°–95°、鼠标灵敏度；“人物外观”换发型和衣服） |
+| 坐标信息 | F3（日期时间天气、帧率、世界坐标、朝向、所在区域、室内/室外） |
+| 天气调试 | F4（预设、季节、天气、时刻、时间流速） |
 
 ## 如何验证坐标与室内外连续性
 
@@ -74,7 +80,6 @@ pwsh -File devtools/fetch_polyhaven.ps1
 |---|---|
 | `project.godot` | 工程配置：主场景、Autoload、物理层命名、Forward+、Jolt Physics |
 | `data/world/world_layout.json` | **世界布局唯一数据源**：边界、地形参数、湖泊、木屋、码头、区域 zone_id、步道、森林密度、M1 光照、出生点 |
-| `data/seasons/`、`data/weather/` | M2 的季节 / 天气配置目录（目前只有说明） |
 | `scenes/main/Main.tscn` + `scripts/main/Main.gd` | 主场景：常驻 World、Cabin、Player 与 UI；放置出生点 |
 | `scenes/world/World.tscn` | 室外世界：光照、地形、湖、森林、码头、远景、区域触发器 |
 | `scenes/world/Terrain.tscn` + `scripts/world/TerrainBuilder.gd` | 257×257 高度场网格与碰撞；顶点色写入五层地表的混合权重 |
@@ -84,9 +89,7 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | `scripts/world/GroundCoverBuilder.gd` | 地被层：草丛、灌木、野花（南部草甸）、蘑菇、树桩倒木、小石块、睡莲；40 m 区块 + 可见距离 |
 | `scripts/world/Vegetation.gd` | 植被分布规则（林地密度、空地、步道走廊），地形、树木、地被共用 |
 | `scripts/art/ArtMaterials.gd` | 材质库：Poly Haven 贴图按真实尺寸平铺；Kenney 模型与自制 GLB 按材质名换成项目配色 |
-| `shaders/sky.gdshader` | 天空：渐变、太阳盘与光晕、飘动薄云（颜色与云量为 M2 预留参数） |
 | `scripts/world/DockBuilder.gd` | 码头木板、桩、栏杆与碰撞 |
-| `scripts/world/StaticDuskLighting.gd` | M1 固定暮色光照（Autumn_Dusk_Clear），M2 由 EnvironmentDirector 取代 |
 | `scripts/world/DistantBackdrop.gd` | 地图外的远山与台地（无碰撞） |
 | `scripts/world/ZoneArea.gd`、`ZonesBuilder.gd` | 区域触发器，按 zone_id 记录角色进出 |
 | `scripts/world/MeshUtil.gd` | 程序化几何工具（远山、碰撞用凸棱柱） |
@@ -103,7 +106,16 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | `scripts/core/WorldState.gd` | 世界状态唯一权威（Autoload）：可交互物状态、角色所在区域 |
 | `scripts/core/GameSettings.gd` | 设置与按键表（Autoload），运行时注册按键 |
 | `scripts/core/WorldLayout.gd`、`WorldTerrain.gd`、`PhysicsLayers.gd` | 布局数据读取、解析式地形高度函数、物理层常量 |
-| `scripts/systems/*.gd` | WorldClock / SeasonController / WeatherController / EnvironmentDirector / AudioDirector / SaveManager 的**接口占位**（未运行，标注所属里程碑） |
+| `scripts/systems/WorldClock.gd`、`SeasonController.gd`、`WeatherController.gd`、`ClimateSystem.gd` | 世界时间、季节、天气规则与过渡、预设入口（Main/Systems） |
+| `scripts/systems/EnvironmentDirector.gd` | 把时间/季节/天气合成为太阳月亮、天空、雾、湿润积雪、降水、植被季节色 |
+| `scripts/world/Precipitation.gd` | 雨雪粒子 + 跟随相机的屋顶/地面高度场碰撞（室内不下雨雪） |
+| `shaders/sky.gdshader`、`glass.gdshader`、`snow_overlay.gdshader` | 天空（星空、月亮、云）、带雨痕的玻璃、积雪覆盖层 |
+| `data/seasons/seasons.json`、`data/weather/weather.json` | 四季与六类天气的全部参数、测试预设 |
+| `scripts/character/`（CharacterModel、CharacterAppearance、Wardrobe） | 方块人物：部位、外观插槽与挂点、动画；外观数据；衣橱目录 |
+| `data/characters/wardrobe.json`、`default_appearance.json` | 所有发型/帽子/衣服/鞋/背饰款式（像素盒子），默认外观 |
+| `scripts/core/PlayerProfile.gd`、`scripts/ui/WardrobePanel.gd` | 本地玩家外观（存 user://appearance.json）、外观编辑面板 |
+| `scripts/ui/WeatherDebugPanel.gd` | F4 天气调试面板 |
+| `scripts/systems/AudioDirector.gd`、`SaveManager.gd` | M3/M4 的**接口占位**（未运行） |
 | `tests/TestRunner.tscn` | 自动检查（QA-01、QA-02、QA-10 等 16 项） |
 | `devtools/CaptureShots.tscn` | 按预设机位截图到 `docs/screenshots/` |
 | `devtools/Benchmark.tscn` | 固定机位测帧率、帧时、绘制调用与显存 |
@@ -122,15 +134,15 @@ pwsh -File devtools/fetch_polyhaven.ps1
 - A 字形木屋：真实门窗、可进入的室内（沙发、茶几、书架、铸铁炉、落地灯、暖光），可开关的木门；同一场景、同一坐标系
 - 第一人称控制：WASD、鼠标、Shift、空格、E、Esc、F3；FOV / 灵敏度可调
 - 区域 zone_id、室内外判定（为 M3 的音区准备）
-- 自动检查与截图工具
+- **M2 天气系统**：世界时钟（一天 = 现实 48 分钟）与昼夜、四季（每季 12 天，植被与地表随季变色）、六类天气（晴/阴/小雨/大雨/雾/雪）及平滑过渡；雨雪粒子不进室内，窗上有雨痕，地面会变湿、积雪；F4 调试面板与四个测试预设
+- **方块人物**：脸、发型、帽子、上衣、下装、鞋、背饰七个外观插槽和四个挂点，款式全部写在 JSON 里；Esc 菜单“人物外观”实时预览与保存；V 切换第一/第三人称；走跑摆臂摆腿
+- 自动检查（29 项）、截图与性能测试工具
 
 ## 未实现（按里程碑）
 
-- **M2**：世界时钟、四季、6 类天气、昼夜光照（`scripts/systems/` 中只有接口占位）
 - **M3**：音频 Bus 与环境音、壁炉 / 灯 / 沙发交互
 - **M4**：存档读档、完整设置菜单、画质档位、Windows 导出、性能统计（尚未测帧率，不宣称 60 FPS）
 - **M5**：NPC、联机（只保留了 entity_id、统一交互契约与区域事件）
-- 季节换装：树冠颜色、阔叶树夏季模型、地表季节色和积雪参数已经留好接口，切换逻辑属于 M2
 
 ## 素材与版权
 

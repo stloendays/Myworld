@@ -98,13 +98,6 @@
     "rock_seed": 4411
   },
 
-  "lighting_m1": {
-    "preset": "Autumn_Dusk_Clear (static)",
-    "sun_elevation_deg": 10.0,
-    "sun_azimuth_deg": 64.0,
-    "note": "M1 固定暮色。太阳放在湖对岸（方位角从北顺时针 64°），以还原参考图 01 的构图；M2 由 EnvironmentDirector 按时间计算。"
-  },
-
   "spawn": {
     "position": [-50, 29],
     "look_at": [35, -2]
