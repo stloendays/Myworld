@@ -78,7 +78,81 @@ func _run() -> void:
 	await _test_sleep()
 	await _test_canoe()
 	await _test_exploration_save()
+	await _test_performance()
 	_report()
+
+
+# ---------------------------------------------------------------- 性能
+
+func _test_performance() -> void:
+	var notes := PackedStringArray()
+	# 树林分块：每块的包围盒不超过一个方格（加树冠余量）
+	var forest := _main.get_node("World/Forest") as ForestBuilder
+	var mmis := forest.get_node("Generated").find_children("*", "MultiMeshInstance3D", false, false)
+	var cells := {}
+	var tagged := 0
+	for mmi: MultiMeshInstance3D in mmis:
+		if mmi.has_meta("cell"):
+			tagged += 1
+			cells[mmi.get_meta("cell")] = true
+	# 分块规则本身：同一方格里的点进同一块
+	var grouped := ForestBuilder._by_cell([{"transform": Transform3D(Basis(), Vector3(1, 0, 1))}, {"transform": Transform3D(Basis(), Vector3(63, 0, 10))}, {"transform": Transform3D(Basis(), Vector3(65, 0, 10))}])
+	var chunk_ok := mmis.size() > 40 and tagged == mmis.size() and cells.size() >= 12 and grouped.size() == 2
+	notes.append("树林 %d 块（%d 个 64 m 方格）" % [mmis.size(), cells.size()])
+	# 遮挡剔除：工程开启 + 地形遮挡体
+	var occ_ok := bool(ProjectSettings.get_setting("rendering/occlusion_culling/use_occlusion_culling")) \
+		and _main.find_child("TerrainOccluder", true, false) != null
+	notes.append("遮挡剔除 %s" % occ_ok)
+	# 画质分级
+	var perf := _main.get_node("Performance") as PerformanceDirector
+	var env := _main.get_node("World/Environment") as EnvironmentDirector
+	GameSettings.set_value("graphics_quality", "low", false)
+	await _frames(2)
+	var low_ok := not env.environment.ssr_enabled and not env.environment.ssao_enabled and env.sun.directional_shadow_max_distance == 60.0 \
+		and env.sun.directional_shadow_mode == DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS and get_viewport().msaa_3d == Viewport.MSAA_DISABLED
+	GameSettings.set_value("graphics_quality", "high", false)
+	await _frames(2)
+	var high_ok := env.environment.ssr_enabled and env.sun.directional_shadow_max_distance == 120.0 and get_viewport().msaa_3d == Viewport.MSAA_2X
+	notes.append("画质 低 %s / 高 %s" % [low_ok, high_ok])
+	# 动态分辨率：GPU 25 ms（超 60 fps 预算）一路降到下限，GPU 5 ms 一路升回 100%
+	var lowest := 1.0
+	for i in 20:
+		lowest = minf(lowest, perf.update_dynamic_scale(25.0))
+	var fsr := get_viewport().scaling_3d_mode == Viewport.SCALING_3D_MODE_FSR
+	var floor_ok := absf(perf.effective_scale() - PerformanceDirector.MIN_SCALE) < 0.01
+	var back := 0.0
+	for i in 20:
+		back = perf.update_dynamic_scale(5.0)
+	var dyn_ok := floor_ok and fsr and absf(back - 1.0) < 0.001 and get_viewport().scaling_3d_mode == Viewport.SCALING_3D_MODE_BILINEAR
+	notes.append("动态分辨率 最低 %.0f%%（FSR %s），恢复 %.0f%%" % [perf.effective_scale() * 100.0 if not dyn_ok else PerformanceDirector.MIN_SCALE * 100.0, fsr, back * 100.0])
+	# 帧率上限：默认 60；无窗口的自动检查不限
+	var cap_ok := int(GameSettings.DEFAULTS["max_fps"]) == 60 and Engine.max_fps == 0
+	# 局部灯都按距离淡出
+	await _frames(2)
+	perf.fade_lights()
+	var lights := _main.find_children("*", "OmniLight3D", true, false)
+	var faded := 0
+	for l: OmniLight3D in lights:
+		if l.distance_fade_enabled:
+			faded += 1
+	notes.append("局部灯淡出 %d / %d" % [faded, lights.size()])
+	# 在地下水族馆时不算太阳阴影
+	_player.teleport_to(_ph(-4.5, -6.95, 3.5))
+	await _seconds(0.6)
+	var under_ok := not env.sun_shadows_allowed
+	await _setup_at(Vector2(-50.0, 29.0), 0.0)
+	await _seconds(0.3)
+	under_ok = under_ok and env.sun_shadows_allowed
+	notes.append("地下关太阳阴影 %s" % under_ok)
+	# 远处动物降频
+	var far_animal: Animal = null
+	for a in (_main.get_node("World/Fauna") as FaunaSpawner).animals:
+		if a.global_position.distance_to(_player.camera.global_position) > 160.0:
+			far_animal = a
+			break
+	var lod_ok := far_animal != null and far_animal._lod_interval() == 12
+	_check("性能：树林分块、地形遮挡剔除、画质分级、动态分辨率（FSR）、默认 60 帧上限、局部灯淡出、地下关太阳阴影、远处动物降频",
+		chunk_ok and occ_ok and low_ok and high_ok and dyn_ok and cap_ok and faded == lights.size() and under_ok and lod_ok, "；".join(notes))
 
 
 # ---------------------------------------------------------------- 静态检查

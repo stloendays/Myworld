@@ -40,6 +40,35 @@ func rebuild() -> void:
 	root.add_child(_make_mesh(heights, n, ext))
 	if not Engine.is_editor_hint():
 		root.add_child(_make_collision(heights, n))
+		root.add_child(_make_occluder(heights, n, ext))
+
+
+## 遮挡剔除用的粗地形（4 m 间距）：每个顶点取周围 4×4 m 里最低的高度再压低 0.5 m，
+## 所以遮挡体永远在真实地面以下，不会把地面上的草、石头误剔；山包后面、地下水族馆四周的东西被挡住时就不画。
+func _make_occluder(h: PackedFloat32Array, n: int, ext: float) -> OccluderInstance3D:
+	var step := 4
+	var m := (n - 1) / step + 1
+	var verts := PackedVector3Array()
+	for gz in m:
+		for gx in m:
+			var lowest := INF
+			for dz in range(-2, 3):
+				for dx in range(-2, 3):
+					var ix := clampi(gx * step + dx, 0, n - 1)
+					var iz := clampi(gz * step + dz, 0, n - 1)
+					lowest = minf(lowest, h[iz * n + ix])
+			verts.append(Vector3(-ext + float(gx * step), lowest - 0.5, -ext + float(gz * step)))
+	var idx := PackedInt32Array()
+	for gz in m - 1:
+		for gx in m - 1:
+			var a := gz * m + gx
+			idx.append_array([a, a + 1, a + m, a + 1, a + m + 1, a + m])
+	var occ := ArrayOccluder3D.new()
+	occ.set_arrays(verts, idx)
+	var oi := OccluderInstance3D.new()
+	oi.name = "TerrainOccluder"
+	oi.occluder = occ
+	return oi
 
 
 func _make_mesh(h: PackedFloat32Array, n: int, ext: float) -> MeshInstance3D:

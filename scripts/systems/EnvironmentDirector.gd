@@ -30,6 +30,7 @@ var sun_azimuth := 0.0
 var night := 0.0
 var wind_strength := 0.0
 var wind_direction := Vector2(0.8, 0.6)   ## 风吹向的方向（世界 XZ），独木舟漂流用
+var sun_shadows_allowed := true            ## PerformanceDirector 在玩家位于地下时关掉（地下看不到阳光，阴影白算）
 var rainbow := 0.0
 var lightning_count := 0
 var flash := 0.0
@@ -205,7 +206,7 @@ func _apply(season: StringName, minutes: float, w: Dictionary) -> void:
 	sun.basis = Basis.looking_at(-to_sun, Vector3.UP)
 	sun.light_color = _key(SUN_COLOR, sun_elevation)
 	sun.light_energy = _keyf(SUN_ENERGY, sun_elevation) * float(w["sun"])
-	sun.shadow_enabled = sun_elevation > -2.0
+	sun.shadow_enabled = sun_elevation > -2.0 and sun_shadows_allowed
 	sun.shadow_opacity = 1.0 - overcast * 0.75
 	var moon_el := clampf(-sun_elevation, 12.0, 50.0)
 	moon.basis = Basis.looking_at(-_direction(moon_el, sun_azimuth + 180.0), Vector3.UP)

@@ -29,6 +29,10 @@ func _run() -> void:
 	WorldState.time_paused = true
 	# 测的是渲染能力，不受显示器刷新率封顶（否则 165 Hz 屏幕上帧率会卡在 165）
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
+	# 测渲染能力：不限帧率、不用动态分辨率
+	GameSettings.set_value("max_fps", 0, false)
+	GameSettings.set_value("dynamic_resolution", false, false)
+	RenderingServer.viewport_set_measure_render_time(get_viewport().get_viewport_rid(), true)
 	if OS.get_environment("DUSK_BENCH_NO_MINIMAP") != "":
 		GameSettings.set_value("minimap_enabled", false, false)
 	var cam := Camera3D.new()
@@ -46,6 +50,8 @@ func _run() -> void:
 		var y := float(e[1]) + (0.0 if spot.get("abs", false) else WorldTerrain.height_at(float(e[0]), float(e[2])))
 		cam.global_position = Vector3(float(e[0]), y, float(e[2]))
 		cam.look_at(Vector3(float(spot["look"][0]), float(spot["look"][1]), float(spot["look"][2])), Vector3.UP)
+		# 玩家也站到机位上（所在区域会影响渲染，例如在地下时不算太阳阴影）
+		player.global_position = cam.global_position - Vector3(0.0, 1.65, 0.0)
 		await _frames(30)
 		var start := Time.get_ticks_usec()
 		var frames := 0
@@ -57,6 +63,8 @@ func _run() -> void:
 			"spot": spot["name"],
 			"fps": snappedf(frames / seconds, 0.1),
 			"frame_ms": snappedf(1000.0 * seconds / frames, 0.01),
+			"gpu_ms": snappedf(RenderingServer.viewport_get_measured_render_time_gpu(get_viewport().get_viewport_rid()), 0.01),
+			"cpu_ms": snappedf(RenderingServer.viewport_get_measured_render_time_cpu(get_viewport().get_viewport_rid()) + RenderingServer.get_frame_setup_time_cpu(), 0.01),
 			"draw_calls": RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_DRAW_CALLS_IN_FRAME),
 			"primitives": RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_PRIMITIVES_IN_FRAME),
 			"vram_mb": snappedf(RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_VIDEO_MEM_USED) / 1048576.0, 0.1),

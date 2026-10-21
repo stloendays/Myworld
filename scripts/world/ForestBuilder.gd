@@ -2,11 +2,14 @@
 class_name ForestBuilder
 extends Node3D
 ## 针叶林 + 秋色阔叶树 + 岩石（Kenney Nature Kit，CC0，按本项目配色重新上色）。
-## 固定随机种子，结果可复现；每个模型变体一个 MultiMesh，树冠颜色由实例颜色决定，
+## 固定随机种子，结果可复现；每个模型变体按 64 m 方格分块，每块一个 MultiMesh（树冠颜色由实例颜色决定）。
+## 分块是为了让视锥剔除、阴影级联剔除、点光源阴影剔除和网格自动 LOD 生效：整张图一个 MultiMesh 时包围盒覆盖全图，
+## 每盏带阴影的灯、每级阴影都要把全图的树画一遍（剖析：每帧约 630 万三角形，其中约 420 万来自树木投影）。
 ## M2 的 SeasonController 可按季节批量改实例颜色或把阔叶树换成 summer 变体。
 ## 碰撞：每棵树一个树干圆柱，每块大岩石一个盒子。
 
 const GENERATED := "Generated"
+const CHUNK := 64.0   ## 分块边长（米）：太小绘制调用变多，太大剔除失效
 const NATURE := "res://assets/imported/kenney/nature/"
 
 ## kind = pine / broadleaf；height 为目标树高范围（米）；summer 为 M2 换季时使用的夏季模型。
@@ -73,14 +76,21 @@ func rebuild() -> void:
 	for r in rocks.values():
 		rock_count += (r as Array).size()
 	for asset in trees:
-		var tree_mmi := _multimesh(asset, trees[asset], 400.0)
 		var variant := _variant(asset)
-		tree_mmi.set_meta("kind", variant.get("kind", "pine"))
-		tree_mmi.set_meta("fall_asset", asset)
-		tree_mmi.set_meta("summer_asset", variant.get("summer", asset))
-		root.add_child(tree_mmi)
+		var tree_cells := _by_cell(trees[asset])
+		for key in tree_cells:
+			var tree_mmi := _multimesh(asset, tree_cells[key], 400.0)
+			tree_mmi.set_meta("cell", key)
+			tree_mmi.set_meta("kind", variant.get("kind", "pine"))
+			tree_mmi.set_meta("fall_asset", asset)
+			tree_mmi.set_meta("summer_asset", variant.get("summer", asset))
+			root.add_child(tree_mmi)
 	for asset in rocks:
-		root.add_child(_multimesh(asset, rocks[asset], 300.0))
+		var rock_cells := _by_cell(rocks[asset])
+		for key in rock_cells:
+			var rock_mmi := _multimesh(asset, rock_cells[key], 300.0)
+			rock_mmi.set_meta("cell", key)
+			root.add_child(rock_mmi)
 	if not Engine.is_editor_hint():
 		_collision = _make_collision(trees, rocks)
 		root.add_child(_collision)
@@ -250,6 +260,18 @@ func _place_rocks(cfg: Dictionary) -> Dictionary:
 			result[asset] = []
 		result[asset].append(entry)
 	return result
+
+
+## 按 CHUNK 方格把实例分组（键 = 方格坐标）。
+static func _by_cell(entries: Array) -> Dictionary:
+	var cells := {}
+	for e in entries:
+		var o: Vector3 = (e["transform"] as Transform3D).origin
+		var key := Vector2i(floori(o.x / CHUNK), floori(o.z / CHUNK))
+		if not cells.has(key):
+			cells[key] = []
+		cells[key].append(e)
+	return cells
 
 
 func _multimesh(asset: String, entries: Array, visible_to: float) -> MultiMeshInstance3D:

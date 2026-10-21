@@ -45,7 +45,9 @@ const DEFAULTS := {
 	"render_scale": 1.0,
 	"vsync": true,
 	"fullscreen": false,
-	"max_fps": 0,                     ## 0 = 不限
+	"max_fps": 60,                    ## 0 = 不限；默认 60，笔记本不用满负荷跑
+	"graphics_quality": "high",       ## low / medium / high / ultra（PerformanceDirector）
+	"dynamic_resolution": true,       ## 按 GPU 帧时自动调 3D 渲染比例
 	"fly_speed": 10.0,
 }
 
@@ -63,7 +65,9 @@ var minimap_range := 60.0
 var render_scale := 1.0
 var vsync := true
 var fullscreen := false
-var max_fps := 0
+var max_fps := 60
+var graphics_quality := "high"
+var dynamic_resolution := true
 var fly_speed := 10.0
 
 var developer_mode := false
@@ -109,6 +113,8 @@ func set_value(key: String, value: Variant, save := true) -> void:
 			value = clampf(float(value), 0.5, 1.0)
 		"fly_speed":
 			value = clampf(float(value), 3.0, 40.0)
+		"graphics_quality":
+			value = value if str(value) in ["low", "medium", "high", "ultra"] else "high"
 		"first_person_arms":
 			value = value if str(value) in ["both", "right", "none"] else "both"
 	set(key, value)
@@ -188,8 +194,8 @@ func load_from(path: String) -> bool:
 func apply_display() -> void:
 	if not is_inside_tree():
 		return
-	get_viewport().scaling_3d_scale = render_scale
-	Engine.max_fps = max_fps
+	# 自动检查（无窗口）不限帧率，否则 --fixed-fps 的模拟会被拖成实时
+	Engine.max_fps = 0 if DisplayServer.get_name() == "headless" else max_fps
 	if DisplayServer.get_name() == "headless" or not _window_user_set:
 		return
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if vsync else DisplayServer.VSYNC_DISABLED)

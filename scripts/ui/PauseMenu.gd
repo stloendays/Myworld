@@ -132,6 +132,8 @@ func _build_settings() -> Control:
 	box.add_child(tabs)
 
 	var display := _tab(tabs, "画面")
+	_option(display, "graphics_quality", "画质", ["低（轻薄本）", "中", "高（推荐）", "极高"], ["low", "medium", "high", "ultra"])
+	_check(display, "dynamic_resolution", "动态分辨率（GPU 忙时自动降低渲染比例，用 FSR 放大）")
 	_slider(display, "fov", "视野 FOV", GameSettings.FOV_MIN, GameSettings.FOV_MAX, 1.0, "%d°")
 	_slider(display, "render_scale", "渲染比例", 0.5, 1.0, 0.05, "%d%%", 100.0)
 	_option(display, "max_fps", "帧率上限", ["不限", "30", "60", "120", "144", "165", "240"], FPS_CHOICES)
