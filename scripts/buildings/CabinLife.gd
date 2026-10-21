@@ -1,7 +1,7 @@
 class_name CabinLife
 extends Node3D
 ## 木屋生活：铸铁炉生火 / 熄火（炉膛火苗、火光闪烁、烟囱冒烟）、落地灯 / 台灯 / 吊灯 / 门廊灯开关、
-## 沙发 / 扶手椅 / 门廊长椅可以坐下、床可以睡到第二天早上。
+## 沙发 / 扶手椅 / 门廊长椅可以坐下、床可以睡到第二天早上、茶几上可以下国际象棋（ChessTable）。
 ## 挂在 Cabin/Generated 下，用木屋局部坐标（地板顶面 y = 0，+X 朝湖）。状态按 uid 记在 WorldState。
 ## 只在运行时生成（编辑器里只看木屋本体）。
 
@@ -12,6 +12,7 @@ var stove: InteractableToggle
 var lamps := {}                 ## uid -> InteractableToggle
 var seats: Array[Seat] = []
 var bed: Bed
+var chess: ChessTable
 
 var _lights := {}               ## 名称 -> [OmniLight3D, 亮着时的能量]
 var _fire: GPUParticles3D
@@ -31,6 +32,9 @@ func setup(lights: Dictionary, model: Node) -> void:
 	_build_seats()
 	bed = Bed.create(&"cabin_bed", Vector3(-3.77, 0.0, 2.08), Vector3(2.3, 0.85, 1.95), Vector3(1.6, 0.05, -0.1))
 	add_child(bed)
+	# 茶几上的国际象棋（白方靠沙发一侧）
+	chess = ChessTable.create(&"cabin_chess", Vector3(1.08, 0.47, 1.3), 0.0)
+	add_child(chess)
 
 
 func _find_glow_materials(model: Node) -> void:

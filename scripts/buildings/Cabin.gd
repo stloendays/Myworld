@@ -24,7 +24,6 @@ const PROPS := [
 	{"asset": "loungeSofaCorner", "center": [0.78, 0.0, 2.03], "yaw": 180.0, "scale": 2.3},
 	{"asset": "tableCoffee", "center": [1.35, 0.0, 1.3], "yaw": 0.0, "scale": 2.0},
 	{"asset": "rugRectangle", "center": [1.2, 0.005, 1.45], "yaw": 0.0, "scale": 2.0},
-	{"asset": "books", "center": [1.1, 0.47, 1.25], "yaw": 20.0, "scale": 2.0},
 	{"asset": "lampRoundTable", "center": [1.75, 0.47, 1.35], "yaw": 0.0, "scale": 1.6},
 	{"asset": "pillowLong", "center": [1.1, 0.48, 2.85], "yaw": 180.0, "scale": 2.3},
 	{"asset": "pillow", "center": [0.15, 0.48, 1.9], "yaw": 90.0, "scale": 2.3},

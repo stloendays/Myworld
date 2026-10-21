@@ -4,7 +4,7 @@
 
 - 引擎：**Godot 4.7.2 Standard**（GDScript，Forward+，Jolt Physics），Windows 单机优先
 - 需求规格：[docs/DEVELOPMENT_SPEC.md](docs/DEVELOPMENT_SPEC.md)（唯一需求来源）；阶段指令：[docs/AGENT_HANDOFF.md](docs/AGENT_HANDOFF.md)
-- 当前进度：**M0、M1、第一轮正式美术、M2 天气系统、方块人物、泳池馆与地下水族馆、小动物、雷暴/彩虹/风、小地图、开发者模式、第一人称双手、木屋生活、独木舟与湖上探索、性能优化、可潜水的海洋大缸已完成**，自动检查 49/49 通过。见 [docs/QA_M0_M1.md](docs/QA_M0_M1.md)、[docs/ART_PASS.md](docs/ART_PASS.md)、[docs/M2_WEATHER_CHARACTER.md](docs/M2_WEATHER_CHARACTER.md)、[docs/POOLHOUSE_FAUNA.md](docs/POOLHOUSE_FAUNA.md)、[docs/MINIMAP_DEVMODE.md](docs/MINIMAP_DEVMODE.md)、[docs/CABIN_LIFE_CANOE.md](docs/CABIN_LIFE_CANOE.md)、[docs/PERFORMANCE.md](docs/PERFORMANCE.md)、[docs/AQUARIUM_DIVE.md](docs/AQUARIUM_DIVE.md)
+- 当前进度：**M0、M1、第一轮正式美术、M2 天气系统、方块人物、泳池馆与地下水族馆、小动物、雷暴/彩虹/风、小地图、开发者模式、第一人称双手、木屋生活、独木舟与湖上探索、性能优化、可潜水的海洋大缸、木屋国际象棋已完成**，自动检查 51/51 通过。见 [docs/QA_M0_M1.md](docs/QA_M0_M1.md)、[docs/ART_PASS.md](docs/ART_PASS.md)、[docs/M2_WEATHER_CHARACTER.md](docs/M2_WEATHER_CHARACTER.md)、[docs/POOLHOUSE_FAUNA.md](docs/POOLHOUSE_FAUNA.md)、[docs/MINIMAP_DEVMODE.md](docs/MINIMAP_DEVMODE.md)、[docs/CABIN_LIFE_CANOE.md](docs/CABIN_LIFE_CANOE.md)、[docs/PERFORMANCE.md](docs/PERFORMANCE.md)、[docs/AQUARIUM_DIVE.md](docs/AQUARIUM_DIVE.md)、[docs/CHESS.md](docs/CHESS.md)
 
 ![湖岸出生点](docs/screenshots/m1_01_spawn_dusk.png)
 
@@ -68,6 +68,7 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | 下潜 | C 或 Ctrl（水中） |
 | 交互 | E（准星中心射线 2.5 m）：开关门、生火 / 熄火、开关灯、坐下 / 站起、睡觉、上 / 下独木舟 |
 | 划独木舟 | W / S 划、A / D 转向、Shift 用力划、E 下船（靠码头或岸边） |
+| 国际象棋 | 看着木屋茶几上的棋盘按 E；鼠标点子再点格子；Esc 关闭 |
 | 第一 / 第三人称 | V（第一人称能看到自己的双手） |
 | 小地图 | M（右上角圆形小地图，随朝向旋转，下方显示区域名） |
 | 暂停 / 释放鼠标 | Esc（“设置”：画面、视角、操作、小地图、开发者，自动保存；“人物外观”换发型和衣服） |
@@ -134,12 +135,13 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | `scripts/systems/AudioDirector.gd`、`SaveManager.gd` | M3/M4 的**接口占位**（未运行） |
 | `scripts/buildings/PoolHouse.gd` | 泳池馆与地下水族馆：大厅、泳池、池底洞口与玻璃水管、楼梯、鱼缸、灯光、碰撞、水体与区域（全部程序生成，坐标来自布局） |
 | `scripts/buildings/ReefTank.gd` | 地下水族馆的海洋大缸：落地玻璃、水下通道、礁石海带沉船、气泡与光束、灯光 |
+| `scripts/games/`（ChessGame、ChessAI、ChessPanel、ChessTable） | 国际象棋：完整规则（perft 验证）、电脑对手、2D 棋盘界面、茶几上的 3D 棋盘 |
 | `scripts/world/WaterVolume.gd`、`scripts/ui/UnderwaterOverlay.gd`、`shaders/underwater.gdshader` | 可游泳水体（盒形 / 圆柱）、水下滤镜 |
 | `shaders/pool_tiles.gdshader`、`pool_water.gdshader`、`caustic_sand.gdshader`、`foliage.gdshader`、`include/` | 泳池马赛克与焦散、池水、缸底沙、随风摆动的植被、雨点涟漪与焦散函数 |
 | `scripts/animals/`（FaunaData、FaunaSpawner、Animal、BlockyModel、BlockyMesh、FishSchool） | 小动物：出没规则、生成、行为、方块模型、鱼群 |
 | `data/animals/species.json` | 所有动物的部件、配色、速度、出没规则与生成点、萤火虫 |
 | `scripts/world/SignBoard.gd`、`SignsBuilder.gd`、`data/world/signs.json` | 中英双语解说立牌（立式 / 讲台 / 挂墙，牌面按文字自动定尺寸）；室外立牌位置在布局文件 `signs` 里 |
-| `tests/TestRunner.tscn` | 自动检查（49 项：QA-01、QA-02、QA-10、天气、人物、泳池馆、游泳、动物、小地图、开发者模式、设置等；`DUSK_TEST_ONLY=_test_xxx` 只跑某几项） |
+| `tests/TestRunner.tscn` | 自动检查（51 项：QA-01、QA-02、QA-10、天气、人物、泳池馆、游泳、动物、小地图、开发者模式、设置等；`DUSK_TEST_ONLY=_test_xxx` 只跑某几项） |
 | `devtools/CaptureShots.tscn` | 按预设机位截图到 `docs/screenshots/` |
 | `devtools/Benchmark.tscn` | 固定机位测帧率、帧时、绘制调用与显存 |
 | `devtools/fetch_polyhaven.ps1` | 下载 Poly Haven 贴图并核对 md5，写清单 |
@@ -170,7 +172,8 @@ pwsh -File devtools/fetch_polyhaven.ps1
 - **独木舟与湖上探索**：从码头上船划到湖心小岛营地，四个探索点（小地图问号 → 金色标记）
 - **性能优化**：树林分块、地形遮挡剔除、画质分级、默认 60 帧上限、动态分辨率、远处动物降频；地下水族馆每帧三角形从 630 万降到 37 万
 - **海洋大缸**：从泳池一路潜进 24 m 长的大缸，和蝠鲼、礁鲨、鱼群一起游；地下大厅换了水磨石地面、水纹光和灯带
-- 自动检查（49 项）、截图与性能测试工具
+- **国际象棋**：木屋茶几上的棋盘按 E 打开 2D 对弈，双人同屏或和电脑下（三档难度），3D 棋盘同步、棋局存档
+- 自动检查（51 项）、截图与性能测试工具
 
 ## 未实现（按里程碑）
 

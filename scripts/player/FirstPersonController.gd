@@ -41,6 +41,7 @@ var noclip := false
 var arms: FirstPersonArms = null
 var seat: Seat = null       ## 坐着时所在的座位（沙发、长椅、躺椅）
 var boat: Canoe = null      ## 在独木舟上时所乘的船
+var input_locked := false   ## 打开棋盘等全屏界面时为 true：不读移动、视角和交互键
 
 var autopilot_enabled := false
 var autopilot_direction := Vector3.ZERO
@@ -116,7 +117,7 @@ func teleport_to(pos: Vector3, yaw_deg := INF) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not is_local_controlled:
+	if not is_local_controlled or input_locked:
 		return
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		var s := GameSettings.mouse_sensitivity
@@ -181,7 +182,7 @@ func _fly(delta: float) -> void:
 	var dir: Vector3
 	if autopilot_enabled:
 		dir = autopilot_direction.normalized() if autopilot_direction.length_squared() > 1e-6 else Vector3.ZERO
-	elif is_local_controlled:
+	elif is_local_controlled and not input_locked:
 		dir = _wish_direction()
 		if Input.is_action_pressed("jump"):
 			dir.y += 1.0
@@ -215,7 +216,7 @@ func _swim(delta: float) -> void:
 func _swim_direction() -> Vector3:
 	if autopilot_enabled:
 		return autopilot_direction.normalized() if autopilot_direction.length_squared() > 1e-6 else Vector3.ZERO
-	if not is_local_controlled:
+	if not is_local_controlled or input_locked:
 		return Vector3.ZERO
 	var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var forward := -camera.global_basis.z
@@ -234,7 +235,7 @@ func _walk(delta: float) -> void:
 	var speed := run_speed if running else walk_speed
 
 	if is_on_floor():
-		if not autopilot_enabled and is_local_controlled and Input.is_action_just_pressed("jump"):
+		if not autopilot_enabled and is_local_controlled and not input_locked and Input.is_action_just_pressed("jump"):
 			velocity.y = jump_velocity
 	else:
 		velocity.y -= _gravity * delta
@@ -264,7 +265,7 @@ func _wish_direction() -> Vector3:
 	if autopilot_enabled:
 		var d := Vector3(autopilot_direction.x, 0.0, autopilot_direction.z)
 		return d.normalized() if d.length_squared() > 1e-6 else Vector3.ZERO
-	if not is_local_controlled:
+	if not is_local_controlled or input_locked:
 		return Vector3.ZERO
 	var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var d := global_transform.basis * Vector3(input.x, 0.0, input.y)
@@ -296,7 +297,12 @@ func _nearby_vehicle() -> Interactable:
 
 func _update_focus() -> void:
 	if is_riding():
-		var text := "E  站起来（或按移动键）" if seat != null else "E  下船（靠近码头或岸边）  ·  W/S 划  A/D 转向  Shift 用力划"
+		var seated_target: Interactable = null
+		if seat != null:
+			seated_target = _current_target()
+			if seated_target is Seat:
+				seated_target = null
+		var text := (seated_target.get_prompt(self) + "    ·    E 对着别处：站起来" if seated_target != null else "E  站起来（或按移动键）") if seat != null else "E  下船（靠近码头或岸边）  ·  W/S 划  A/D 转向  Shift 用力划"
 		if text != _ride_prompt and is_local_controlled:
 			_ride_prompt = text
 			EventBus.interaction_prompt_changed.emit(text)
@@ -320,6 +326,11 @@ func focused_target() -> Interactable:
 ## 对准星所指的对象执行交互；返回是否成功。
 func try_interact() -> bool:
 	if seat != null:
+		# 坐着也能用准星对着的东西（例如坐在沙发上下棋）；没对着东西就站起来
+		interact_ray.force_raycast_update()
+		var near := _current_target()
+		if near != null and near != seat and not near is Seat and InteractionSystem.interact(self, near):
+			return true
 		stand_up()
 		return true
 	if boat != null:
@@ -437,7 +448,7 @@ func _ride(_delta: float) -> void:
 	if seat != null:
 		global_position = seat.occupant_origin()
 		body.rotation.y = seat.global_rotation.y - rotation.y
-		var moving := is_local_controlled and not autopilot_enabled and Input.get_vector("move_left", "move_right", "move_forward", "move_back").length() > 0.5
+		var moving := is_local_controlled and not autopilot_enabled and not input_locked and Input.get_vector("move_left", "move_right", "move_forward", "move_back").length() > 0.5
 		if moving or (autopilot_enabled and autopilot_direction.length_squared() > 0.01):
 			stand_up()
 		return
@@ -452,7 +463,7 @@ func _ride(_delta: float) -> void:
 			steer = clampf(-diff * 2.0, -1.0, 1.0)
 			throttle = 1.0 if absf(diff) < 0.8 else 0.2
 		sprint = autopilot_run
-	elif is_local_controlled:
+	elif is_local_controlled and not input_locked:
 		throttle = Input.get_axis("move_back", "move_forward")
 		steer = Input.get_axis("move_left", "move_right")
 		sprint = Input.is_action_pressed("sprint")
