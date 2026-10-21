@@ -420,9 +420,14 @@ func _build_props(g: Node3D) -> void:
 		g.add_child(ArtMaterials.kenney_prop(FURNITURE + "bench.glb", p, 0.0, 2.2))
 	if Engine.is_editor_hint():
 		return
-	_label(g, "地下水族馆 ↓", Vector3(-5.45, 2.2, 6.4), Vector3(0.0, 90.0, 0.0))
-	_label(g, "暮色湖畔 · 泳池馆", Vector3(-HX - 0.17, 3.1, 0.0), Vector3(0.0, -90.0, 0.0))
-	_label(g, "从池底洞口潜下去，可以游进水族馆", Vector3(-3.5, 1.5, -2.0), Vector3(0.0, -90.0, 0.0), 0.0035)
+	# 解说立牌（中英双语，文字见 data/world/signs.json）。yaw 让正面朝向读牌的人
+	_sign(g, "poolhouse_name", "wall", 2.4, Vector3(-HX - 0.16, 3.1, 0.0), -90.0, 2.0)
+	_sign(g, "poolhouse_entrance", "stand", 1.4, Vector3(-15.0, 0.0, 2.6), -90.0, 1.4)
+	_sign(g, "pool_dive", "lectern", 1.0, Vector3(-1.6, 0.0, -3.8), 180.0)
+	_sign(g, "stairs_aquarium", "stand", 1.0, Vector3(-3.6, 0.0, 7.45), 180.0)
+	_sign(g, "tank_north", "lectern", 0.9, Vector3(-2.6, FLOOR_B, -4.55), 0.0)
+	_sign(g, "tank_south", "lectern", 0.9, Vector3(-2.6, FLOOR_B, 4.55), 180.0)
+	_sign(g, "tank_jelly", "lectern", 0.9, Vector3(8.85, FLOOR_B, 2.2), -90.0)
 
 
 func _build_door(g: Node3D) -> void:
@@ -524,17 +529,11 @@ func _omni(parent: Node3D, pos: Vector3, color: Color, energy: float, light_rang
 	parent.add_child(light)
 
 
-func _label(parent: Node3D, text: String, pos: Vector3, rot_deg: Vector3, pixel := 0.005) -> void:
-	var l := Label3D.new()
-	l.text = text
-	l.font = GameSettings.ui_theme().default_font
-	l.font_size = 64
-	l.pixel_size = pixel
-	l.modulate = Color(0.95, 0.92, 0.85)
-	l.outline_size = 8
-	l.position = pos
-	l.rotation_degrees = rot_deg
-	parent.add_child(l)
+func _sign(parent: Node3D, id: String, style: String, width: float, pos: Vector3, yaw_deg: float, scale := 1.0) -> void:
+	var s := SignBoard.create(id, style, width, scale)
+	s.position = pos
+	s.rotation.y = deg_to_rad(yaw_deg)
+	parent.add_child(s)
 
 
 ## 矩形减去若干矩形孔，返回覆盖剩余区域的矩形列表（按网格切分后沿 Z 合并）。

@@ -1,0 +1,48 @@
+{
+  "trail_poolhouse": {
+    "title_zh": "暮色湖畔 · 泳池馆",
+    "title_en": "Dusk Lake Pool House",
+    "body_zh": "沿这条林间小路向东南走约 75 m。馆内有室内泳池，从深水区池底潜下去，可以一路游进地下水族馆。",
+    "body_en": "Follow this forest path southeast for about 75 m. Dive through the floor of the deep end to swim all the way down into the underground aquarium."
+  },
+  "poolhouse_name": {
+    "title_zh": "暮色湖畔 · 泳池馆",
+    "title_en": "Dusk Lake Pool House"
+  },
+  "poolhouse_entrance": {
+    "title_zh": "泳池馆",
+    "title_en": "Pool House",
+    "body_zh": "室内泳池深 1.0–3.1 m。大厅西南角的楼梯通往地下 7 m 的水族馆。",
+    "body_en": "Indoor pool, 1.0–3.1 m deep. The stairs in the southwest corner of the hall lead 7 m down to the aquarium."
+  },
+  "pool_dive": {
+    "title_zh": "潜水通道",
+    "title_en": "Dive Passage",
+    "body_zh": "深水区池底有一个方形洞口，下面接玻璃水管。按住 C 或 Ctrl 下潜，穿过水管就到了水族馆的下潜池，从东侧坡道上岸。",
+    "body_en": "A square opening in the deep end leads into a glass tube. Hold C or Ctrl to dive, swim through the tube into the aquarium's dive basin, then walk out up the ramp on its east side."
+  },
+  "stairs_aquarium": {
+    "title_zh": "地下水族馆",
+    "title_en": "Underground Aquarium",
+    "body_zh": "由此下楼 · 两跑楼梯，共 7 m",
+    "body_en": "Stairs down · two flights, 7 m"
+  },
+  "tank_north": {
+    "title_zh": "珊瑚礁鱼缸（北）",
+    "title_en": "Coral Reef Tank (North)",
+    "body_zh": "小丑鱼、蓝倒吊、黄高鳍刺尾鱼和银色小鱼成群游动，海龟贴着沙底慢慢巡游。",
+    "body_en": "Clownfish, blue tangs, yellow tangs and silver fish swim in schools while a sea turtle cruises slowly along the sand."
+  },
+  "tank_south": {
+    "title_zh": "珊瑚礁鱼缸（南）",
+    "title_en": "Coral Reef Tank (South)",
+    "body_zh": "小丑鱼喜欢待在珊瑚附近；蓝倒吊和黄高鳍刺尾鱼都以藻类为食。",
+    "body_en": "Clownfish stay close to the corals; blue tangs and yellow tangs graze on algae."
+  },
+  "tank_jelly": {
+    "title_zh": "水母缸",
+    "title_en": "Jellyfish Tank",
+    "body_zh": "水母没有大脑，也几乎不会主动游泳，靠伞盖一张一缩随水漂动。蓝紫色的灯光让半透明的身体更清楚。",
+    "body_en": "Jellyfish have no brain and barely swim; they drift by pulsing their bell. The violet light shows off their translucent bodies."
+  }
+}

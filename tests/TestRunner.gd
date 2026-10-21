@@ -54,6 +54,7 @@ func _run() -> void:
 	await _test_climate_runtime()
 	await _test_character()
 	_house = _main.get_node("PoolHouse") as PoolHouse
+	_test_signs()
 	await _test_poolhouse_walk()
 	await _test_poolhouse_swim()
 	await _test_pool_climb_out()
@@ -465,6 +466,26 @@ func _test_character() -> void:
 	await _seconds(1.0)
 	_check("V 切换视角：第一人称不画自己（只投影子），第三人称相机退到身后", fp_hidden and tp_visible and tp_len > 1.0,
 		"第三人称相机距离 %.2f m" % tp_len)
+
+
+# ---------------------------------------------------------------- 立牌
+
+func _test_signs() -> void:
+	var floating := PackedStringArray()
+	for l in _main.find_children("*", "Label3D", true, false):
+		var n: Node = l
+		while n != null and not n is SignBoard:
+			n = n.get_parent()
+		if n == null:
+			floating.append(str(_main.get_path_to(l)))
+	var signs := get_tree().get_nodes_in_group("sign_boards")
+	var missing := PackedStringArray()
+	for s: SignBoard in signs:
+		var t: Dictionary = SignBoard.texts().get(s.text_id, {})
+		if str(t.get("title_zh", "")) == "" or str(t.get("title_en", "")) == "" or t.has("body_zh") != t.has("body_en"):
+			missing.append(s.text_id)
+	_check("3D 文字都写在立牌上（无悬空文字），每块中英双语", floating.is_empty() and missing.is_empty() and signs.size() >= 8,
+		"立牌 %d 块；悬空文字 %s；缺译文 %s" % [signs.size(), ", ".join(floating) if not floating.is_empty() else "无", ", ".join(missing) if not missing.is_empty() else "无"])
 
 
 # ---------------------------------------------------------------- 泳池馆与水族馆

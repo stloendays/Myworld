@@ -10,6 +10,7 @@
 [ext_resource type="Script" path="res://scripts/world/DistantBackdrop.gd" id="6_backdrop"]
 [ext_resource type="Script" path="res://scripts/world/ZonesBuilder.gd" id="7_zones"]
 [ext_resource type="Script" path="res://scripts/world/GroundCoverBuilder.gd" id="8_cover"]
+[ext_resource type="Script" path="res://scripts/world/SignsBuilder.gd" id="12_signs"]
 
 [node name="World" type="Node3D"]
 
@@ -39,3 +40,6 @@ script = ExtResource("11_fauna")
 
 [node name="Zones" type="Node3D" parent="."]
 script = ExtResource("7_zones")
+
+[node name="Signs" type="Node3D" parent="."]
+script = ExtResource("12_signs")

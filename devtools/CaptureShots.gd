@@ -44,6 +44,10 @@ const SHOTS := [
 	{"name": "m2b_13_fox", "climate": {"season": "SUMMER", "hour": 10.0, "weather": "CLEAR"}, "animal": "fox"},
 	{"name": "m2b_14_butterfly", "climate": {"season": "SUMMER", "hour": 10.0, "weather": "CLEAR"}, "animal": "butterfly"},
 	{"name": "m2b_15_squirrel", "climate": {"season": "SUMMER", "hour": 10.0, "weather": "CLEAR"}, "animal": "squirrel"},
+	{"name": "m2b_16_entrance_sign", "climate": DUSK, "house": true, "eye": [-19.5, 1.8, -0.5], "look": [-13.0, 1.9, 1.5]},
+	{"name": "m2b_17_pool_sign", "climate": DUSK, "house": true, "eye": [-1.6, 1.75, -5.4], "look": [-1.6, 0.85, -3.6]},
+	{"name": "m2b_18_tank_sign", "climate": DUSK, "house": true, "eye": [-1.2, -5.25, -2.4], "look": [-2.6, -6.0, -4.8]},
+	{"name": "m2b_19_trail_sign", "climate": DUSK, "eye": [-47.3, 1.65, 29.4], "ground": true, "look": [-47.0, 2.0, 32.0]},
 ]
 
 const OUTFITS := [

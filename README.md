@@ -4,7 +4,7 @@
 
 - 引擎：**Godot 4.7.2 Standard**（GDScript，Forward+，Jolt Physics），Windows 单机优先
 - 需求规格：[docs/DEVELOPMENT_SPEC.md](docs/DEVELOPMENT_SPEC.md)（唯一需求来源）；阶段指令：[docs/AGENT_HANDOFF.md](docs/AGENT_HANDOFF.md)
-- 当前进度：**M0、M1、第一轮正式美术、M2 天气系统、方块人物、泳池馆与地下水族馆、小动物、雷暴/彩虹/风已完成**，自动检查 39/39 通过。见 [docs/QA_M0_M1.md](docs/QA_M0_M1.md)、[docs/ART_PASS.md](docs/ART_PASS.md)、[docs/M2_WEATHER_CHARACTER.md](docs/M2_WEATHER_CHARACTER.md)、[docs/POOLHOUSE_FAUNA.md](docs/POOLHOUSE_FAUNA.md)
+- 当前进度：**M0、M1、第一轮正式美术、M2 天气系统、方块人物、泳池馆与地下水族馆、小动物、雷暴/彩虹/风已完成**，自动检查 40/40 通过。见 [docs/QA_M0_M1.md](docs/QA_M0_M1.md)、[docs/ART_PASS.md](docs/ART_PASS.md)、[docs/M2_WEATHER_CHARACTER.md](docs/M2_WEATHER_CHARACTER.md)、[docs/POOLHOUSE_FAUNA.md](docs/POOLHOUSE_FAUNA.md)
 
 ![湖岸出生点](docs/screenshots/m1_01_spawn_dusk.png)
 
@@ -127,7 +127,8 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | `shaders/pool_tiles.gdshader`、`pool_water.gdshader`、`caustic_sand.gdshader`、`foliage.gdshader`、`include/` | 泳池马赛克与焦散、池水、缸底沙、随风摆动的植被、雨点涟漪与焦散函数 |
 | `scripts/animals/`（FaunaData、FaunaSpawner、Animal、BlockyModel、BlockyMesh、FishSchool） | 小动物：出没规则、生成、行为、方块模型、鱼群 |
 | `data/animals/species.json` | 所有动物的部件、配色、速度、出没规则与生成点、萤火虫 |
-| `tests/TestRunner.tscn` | 自动检查（39 项：QA-01、QA-02、QA-10、天气、人物、泳池馆、游泳、动物等） |
+| `scripts/world/SignBoard.gd`、`SignsBuilder.gd`、`data/world/signs.json` | 中英双语解说立牌（立式 / 讲台 / 挂墙，牌面按文字自动定尺寸）；室外立牌位置在布局文件 `signs` 里 |
+| `tests/TestRunner.tscn` | 自动检查（40 项：QA-01、QA-02、QA-10、天气、人物、泳池馆、游泳、动物等） |
 | `devtools/CaptureShots.tscn` | 按预设机位截图到 `docs/screenshots/` |
 | `devtools/Benchmark.tscn` | 固定机位测帧率、帧时、绘制调用与显存 |
 | `devtools/fetch_polyhaven.ps1` | 下载 Poly Haven 贴图并核对 md5，写清单 |
@@ -150,7 +151,8 @@ pwsh -File devtools/fetch_polyhaven.ps1
 - **泳池馆与地下水族馆**：玻璃大厅与泳池（深水区 3.1 m），池底洞口接玻璃水管通到地下水族馆的下潜池，也可以走楼梯下去；三个鱼缸里有 59 只鱼、海龟和水母；可以游泳（浮力、下潜、爬上岸）和看到水下画面
 - **小动物**：兔子、狐狸、松鼠、绿头鸭、知更鸟、蝴蝶、萤火虫，按季节、昼夜、天气出没，兔子和松鼠见人就跑
 - **天气细化**：雷暴（闪电照亮天地）、风（植被摆动，带阵风）、雨后彩虹、地面水坑与雨点涟漪、雨滴溅水花、秋季落叶与春季花瓣
-- 自动检查（39 项）、截图与性能测试工具
+- **解说立牌**：步道、泳池馆、鱼缸前的中英双语立牌，场景里没有悬空文字
+- 自动检查（40 项）、截图与性能测试工具
 
 ## 未实现（按里程碑）
 
