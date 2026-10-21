@@ -4,7 +4,7 @@
 
 - 引擎：**Godot 4.7.2 Standard**（GDScript，Forward+，Jolt Physics），Windows 单机优先
 - 需求规格：[docs/DEVELOPMENT_SPEC.md](docs/DEVELOPMENT_SPEC.md)（唯一需求来源）；阶段指令：[docs/AGENT_HANDOFF.md](docs/AGENT_HANDOFF.md)
-- 当前进度：**M0、M1、第一轮正式美术、M2 天气系统、方块人物、泳池馆与地下水族馆、小动物、雷暴/彩虹/风已完成**，自动检查 40/40 通过。见 [docs/QA_M0_M1.md](docs/QA_M0_M1.md)、[docs/ART_PASS.md](docs/ART_PASS.md)、[docs/M2_WEATHER_CHARACTER.md](docs/M2_WEATHER_CHARACTER.md)、[docs/POOLHOUSE_FAUNA.md](docs/POOLHOUSE_FAUNA.md)
+- 当前进度：**M0、M1、第一轮正式美术、M2 天气系统、方块人物、泳池馆与地下水族馆、小动物、雷暴/彩虹/风、小地图、开发者模式、第一人称双手已完成**，自动检查 44/44 通过。见 [docs/QA_M0_M1.md](docs/QA_M0_M1.md)、[docs/ART_PASS.md](docs/ART_PASS.md)、[docs/M2_WEATHER_CHARACTER.md](docs/M2_WEATHER_CHARACTER.md)、[docs/POOLHOUSE_FAUNA.md](docs/POOLHOUSE_FAUNA.md)、[docs/MINIMAP_DEVMODE.md](docs/MINIMAP_DEVMODE.md)
 
 ![湖岸出生点](docs/screenshots/m1_01_spawn_dusk.png)
 
@@ -67,10 +67,11 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | 跳跃 | 空格（水中：上浮；靠池壁按空格爬上岸） |
 | 下潜 | C 或 Ctrl（水中） |
 | 交互 | E（准星中心射线 2.5 m，例如开关木门） |
-| 第一 / 第三人称 | V |
-| 暂停 / 释放鼠标 | Esc（菜单内可调 FOV 65°–95°、鼠标灵敏度；“人物外观”换发型和衣服） |
+| 第一 / 第三人称 | V（第一人称能看到自己的双手） |
+| 小地图 | M（右上角圆形小地图，随朝向旋转，下方显示区域名） |
+| 暂停 / 释放鼠标 | Esc（“设置”：画面、视角、操作、小地图、开发者，自动保存；“人物外观”换发型和衣服） |
 | 坐标信息 | F3（日期时间天气、帧率、世界坐标、朝向、所在区域、室内/室外） |
-| 天气调试 | F4（预设、季节、天气、时刻、时间流速） |
+| 开发者模式 | F2（左侧开发者面板：天气、季节、时间、传送；F 飞行，N 穿墙，F4 收起面板） |
 
 ## 如何验证坐标与室内外连续性
 
@@ -120,7 +121,10 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | `scripts/character/`（CharacterModel、CharacterAppearance、Wardrobe） | 方块人物：部位、外观插槽与挂点、动画；外观数据；衣橱目录 |
 | `data/characters/wardrobe.json`、`default_appearance.json` | 所有发型/帽子/衣服/鞋/背饰款式（像素盒子），默认外观 |
 | `scripts/core/PlayerProfile.gd`、`scripts/ui/WardrobePanel.gd` | 本地玩家外观（存 user://appearance.json）、外观编辑面板 |
-| `scripts/ui/WeatherDebugPanel.gd` | F4 天气调试面板 |
+| `scripts/ui/DevPanel.gd` | F2 开发者面板：天气、季节、时间、飞行、穿墙、传送（地点在布局文件 `dev_spots`） |
+| `scripts/ui/Minimap.gd` | 右上角圆形小地图：底图后台烘焙并缓存，步道和建筑矢量绘制 |
+| `scripts/player/FirstPersonArms.gd` | 第一人称的双手（随外观变化，走路、跳跃、交互、游泳都有动作） |
+| `scripts/core/GameSettings.gd` | 设置与按键（Autoload），保存在 `user://settings.json` |
 | `scripts/systems/AudioDirector.gd`、`SaveManager.gd` | M3/M4 的**接口占位**（未运行） |
 | `scripts/buildings/PoolHouse.gd` | 泳池馆与地下水族馆：大厅、泳池、池底洞口与玻璃水管、楼梯、鱼缸、灯光、碰撞、水体与区域（全部程序生成，坐标来自布局） |
 | `scripts/world/WaterVolume.gd`、`scripts/ui/UnderwaterOverlay.gd`、`shaders/underwater.gdshader` | 可游泳水体（盒形 / 圆柱）、水下滤镜 |
@@ -128,7 +132,7 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | `scripts/animals/`（FaunaData、FaunaSpawner、Animal、BlockyModel、BlockyMesh、FishSchool） | 小动物：出没规则、生成、行为、方块模型、鱼群 |
 | `data/animals/species.json` | 所有动物的部件、配色、速度、出没规则与生成点、萤火虫 |
 | `scripts/world/SignBoard.gd`、`SignsBuilder.gd`、`data/world/signs.json` | 中英双语解说立牌（立式 / 讲台 / 挂墙，牌面按文字自动定尺寸）；室外立牌位置在布局文件 `signs` 里 |
-| `tests/TestRunner.tscn` | 自动检查（40 项：QA-01、QA-02、QA-10、天气、人物、泳池馆、游泳、动物等） |
+| `tests/TestRunner.tscn` | 自动检查（44 项：QA-01、QA-02、QA-10、天气、人物、泳池馆、游泳、动物、小地图、开发者模式、设置等；`DUSK_TEST_ONLY=_test_xxx` 只跑某几项） |
 | `devtools/CaptureShots.tscn` | 按预设机位截图到 `docs/screenshots/` |
 | `devtools/Benchmark.tscn` | 固定机位测帧率、帧时、绘制调用与显存 |
 | `devtools/fetch_polyhaven.ps1` | 下载 Poly Haven 贴图并核对 md5，写清单 |
@@ -152,7 +156,10 @@ pwsh -File devtools/fetch_polyhaven.ps1
 - **小动物**：兔子、狐狸、松鼠、绿头鸭、知更鸟、蝴蝶、萤火虫，按季节、昼夜、天气出没，兔子和松鼠见人就跑
 - **天气细化**：雷暴（闪电照亮天地）、风（植被摆动，带阵风）、雨后彩虹、地面水坑与雨点涟漪、雨滴溅水花、秋季落叶与春季花瓣
 - **解说立牌**：步道、泳池馆、鱼缸前的中英双语立牌，场景里没有悬空文字
-- 自动检查（40 项）、截图与性能测试工具
+- **小地图与开发者模式**：右上角圆形小地图；F2 开发者模式里改天气季节、飞行、穿墙、传送
+- **设置**：画面、视角（启动视角、手的显示、镜头晃动、第三人称距离与肩位）、操作、小地图，自动保存
+- **第一人称的双手**：从画面下方伸出的方块手臂，袖子随外观变化，走路、跳跃、开门、游泳都有动作
+- 自动检查（44 项）、截图与性能测试工具
 
 ## 未实现（按里程碑）
 

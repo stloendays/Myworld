@@ -33,6 +33,8 @@ func _ready() -> void:
 
 func _run() -> void:
 	print("=== Dusk Lake M0/M1 自动检查 · Godot %s ===" % Engine.get_version_info()["string"])
+	# 不受本机 user://settings.json 影响：测试一律从默认设置开始
+	GameSettings.reset_defaults()
 	_test_scripts_load()
 	_test_no_scene_switching()
 	_test_layout_bounds()
@@ -42,6 +44,14 @@ func _run() -> void:
 	await _frames(10)
 	_player = get_tree().get_first_node_in_group("local_player") as FirstPersonController
 	_cabin = _main.get_node("Cabin")
+	_house = _main.get_node("PoolHouse") as PoolHouse
+	# 调试单项：DUSK_TEST_ONLY=_test_xxx（逗号分隔可多项）只跑这些，不跑全套（全套约 8 分钟）
+	var only := OS.get_environment("DUSK_TEST_ONLY")
+	if only != "":
+		for test_name in only.split(","):
+			await call(test_name.strip_edges())
+		_report()
+		return
 	_test_structure()
 	_test_heightmap_alignment()
 	await _test_spawn_settles()
@@ -60,6 +70,10 @@ func _run() -> void:
 	await _test_pool_climb_out()
 	await _test_fauna()
 	await _test_storm_rainbow_leaves()
+	await _test_first_person_arms()
+	await _test_settings()
+	await _test_minimap()
+	await _test_developer_mode()
 	_report()
 
 
@@ -466,6 +480,188 @@ func _test_character() -> void:
 	await _seconds(1.0)
 	_check("V 切换视角：第一人称不画自己（只投影子），第三人称相机退到身后", fp_hidden and tp_visible and tp_len > 1.0,
 		"第三人称相机距离 %.2f m" % tp_len)
+
+
+# ---------------------------------------------------------------- 第一人称的手、设置、小地图、开发者模式
+
+func _test_first_person_arms() -> void:
+	await _setup_at(Vector2(-50.0, 29.0), 0.0)
+	_player.set_third_person(false)
+	var arms := _player.arms
+	await _frames(5)
+	var meshes := arms.model.find_children("*", "MeshInstance3D", true, false)
+	var layers_ok := not meshes.is_empty()
+	for mi: MeshInstance3D in meshes:
+		layers_ok = layers_ok and mi.layers == FirstPersonArms.FP_ARMS_LAYER and mi.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_OFF and mi.material_override != null
+	var cam := _player.camera
+	var fp_mask_ok := (cam.cull_mask & FirstPersonArms.FP_ARMS_LAYER) != 0 and (cam.cull_mask & FirstPersonController.BODY_LAYER) == 0
+	# 两只手（手臂末端）都在画面里，而且离相机不到 0.35 m（在碰撞体以内，贴墙不会插进墙里）
+	var hands_ok := true
+	var hand_detail := PackedStringArray()
+	for part in ["arm_r", "arm_l"]:
+		var pivot := arms.model.parts[part] as Node3D
+		var hand := pivot.to_global(Vector3(0.0, -10.0 * Wardrobe.px(), 0.0))
+		var dist := hand.distance_to(cam.global_position)
+		# 按游戏的 16:9 画面算（无窗口测试的视口只有 64×64，不能直接用 is_position_in_frustum）
+		var local := cam.global_transform.affine_inverse() * hand
+		var tan_v := tan(deg_to_rad(cam.fov * 0.5))
+		var seen := local.z < 0.0 and absf(local.y / local.z) < tan_v and absf(local.x / local.z) < tan_v * 16.0 / 9.0
+		hand_detail.append("%s 手端距相机 %.2f m，在画面内 %s" % [part, dist, seen])
+		hands_ok = hands_ok and seen and dist < 0.35 and pivot.visible
+	var right_ok: bool = arms.model.parts["arm_r"].visible
+	_player.set_third_person(true)
+	await _frames(3)
+	var tp_ok := not arms.visible and (cam.cull_mask & FirstPersonArms.FP_ARMS_LAYER) == 0
+	_player.set_third_person(false)
+	# 换上衣后袖子跟着变，手臂仍是专用材质
+	var a := PlayerProfile.appearance
+	var old_top := a.style("top")
+	a.set_style("top", "jacket" if old_top != "jacket" else "tee")
+	await _frames(3)
+	var restyled := true
+	for mi: MeshInstance3D in arms.model.find_children("*", "MeshInstance3D", true, false):
+		restyled = restyled and mi.layers == FirstPersonArms.FP_ARMS_LAYER and mi.material_override != null
+	a.set_style("top", old_top)
+	await _frames(2)
+	_check("第一人称看得到双手：手在画面内且在碰撞体以内，第三人称不画，换衣服袖子跟着变",
+		layers_ok and fp_mask_ok and hands_ok and right_ok and tp_ok and restyled,
+		"%s；第三人称隐藏 %s；换装后仍正确 %s" % ["；".join(hand_detail), tp_ok, restyled])
+
+
+func _test_settings() -> void:
+	var path := "user://test_settings_roundtrip.json"
+	GameSettings.set_value("fov", 200.0, false)
+	var clamped := GameSettings.fov == GameSettings.FOV_MAX
+	GameSettings.set_value("third_person_distance", 5.0, false)
+	GameSettings.set_value("shoulder_left", true, false)
+	GameSettings.set_value("first_person_arms", "right", false)
+	GameSettings.set_value("minimap_range", 90.0, false)
+	GameSettings.set_value("view_bob", false, false)
+	await _frames(2)
+	var applied: bool = absf(_player.third_person_distance - 5.0) < 0.001 and _player.third_person_offset.x < 0.0 \
+		and _player.arms.model.parts["arm_r"].visible and not _player.arms.model.parts["arm_l"].visible
+	var saved := GameSettings.to_dict()
+	GameSettings.save_to(path)
+	GameSettings.reset_defaults()
+	var reset_ok := GameSettings.fov == 75.0 and not GameSettings.shoulder_left
+	GameSettings.load_from(path)
+	var roundtrip := GameSettings.to_dict() == saved
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+	GameSettings.reset_defaults()
+	await _frames(2)
+	_check("设置：限幅、立即生效（第三人称距离/肩位/手的显示）、保存后读回一致、恢复默认",
+		clamped and applied and reset_ok and roundtrip and _player.arms.model.parts["arm_l"].visible,
+		"FOV 限幅 %s，生效 %s，恢复默认 %s，读回一致 %s" % [clamped, applied, reset_ok, roundtrip])
+
+
+func _test_minimap() -> void:
+	var mm := _main.get_node("Minimap") as Minimap
+	for i in 600:
+		if mm.is_ready():
+			break
+		await get_tree().process_frame
+	var img := mm.map_texture.get_image() if mm.is_ready() else null
+	var colors_ok := false
+	if img != null:
+		var lake := _map_pixel(mm, img, Vector2(35.0, -2.0))
+		var forest := _map_pixel(mm, img, Vector2(-85.0, -70.0))
+		colors_ok = lake.b > lake.r + 0.15 and forest.g > forest.b and forest.g > forest.r
+	await _setup_at(Vector2(-50.0, 29.0), 0.0)
+	var center := Vector2(Minimap.SIZE, Minimap.SIZE) * 0.5
+	var k := Minimap.SIZE * 0.5 / GameSettings.minimap_range
+	var p := Vector2(_player.global_position.x, _player.global_position.z)
+	GameSettings.set_value("minimap_rotate", false, false)
+	var north_up := mm.world_to_map() * (p + Vector2(0.0, -10.0))
+	var north_ok := north_up.distance_to(center + Vector2(0.0, -10.0 * k)) < 0.5
+	GameSettings.set_value("minimap_rotate", true, false)
+	_player.rotation.y = -PI * 0.5   # 朝东
+	var east_up := mm.world_to_map() * (p + Vector2(10.0, 0.0))
+	var rotate_ok := east_up.distance_to(center + Vector2(0.0, -10.0 * k)) < 0.5
+	_player.rotation.y = 0.0
+	GameSettings.set_value("minimap_enabled", false, false)
+	var hidden := not (mm.get_node("MinimapRoot") as Control).visible
+	GameSettings.set_value("minimap_enabled", true, false)
+	var shown := (mm.get_node("MinimapRoot") as Control).visible
+	_check("小地图：底图烘焙完成（湖是蓝的、林子是绿的），玩家在圆心，北朝上/随朝向旋转都对，可以关掉",
+		mm.is_ready() and colors_ok and north_ok and rotate_ok and hidden and shown,
+		"底图 %s，颜色 %s，北朝上 %s，旋转 %s，关闭 %s / 打开 %s" % [mm.is_ready(), colors_ok, north_ok, rotate_ok, hidden, shown])
+
+
+func _map_pixel(mm: Minimap, img: Image, world: Vector2) -> Color:
+	var uv := (world - mm.world_rect.position) / mm.world_rect.size
+	return img.get_pixel(clampi(int(uv.x * img.get_width()), 0, img.get_width() - 1), clampi(int(uv.y * img.get_height()), 0, img.get_height() - 1))
+
+
+func _test_developer_mode() -> void:
+	var panel := _main.get_node("DevPanel")
+	await _setup_at(Vector2(-50.0, 29.0), 0.0)
+	var mask := _player.collision_mask
+	_press("toggle_fly")
+	await _frames(2)
+	var locked: bool = not _player.flying and not panel.is_open()
+	GameSettings.set_developer_mode(true)
+	await _frames(2)
+	var panel_open: bool = panel.is_open()
+	_press("toggle_fly")
+	await _frames(2)
+	var flying := _player.flying
+	var y0 := _player.global_position.y
+	_player.autopilot_enabled = true
+	_player.autopilot_direction = Vector3.UP
+	await _seconds(1.5)
+	var climbed := _player.global_position.y - y0
+	_player.autopilot_direction = Vector3.ZERO
+	await _seconds(0.5)
+	var y1 := _player.global_position.y
+	await _seconds(1.0)
+	var hover := absf(_player.global_position.y - y1)
+	_player.autopilot_enabled = false
+
+	# 穿墙：从门廊朝木屋正立面玻璃飞，关着穿墙被挡住，开着能穿过去
+	var start := _cabin.to_global(Vector3(7.0, 1.6, 2.5))
+	_player.teleport_to(start)
+	_player.autopilot_enabled = true
+	_player.autopilot_direction = _cabin.global_basis * Vector3(-1.0, 0.0, 0.0)
+	await _seconds(2.0)
+	var blocked_x := _cabin.to_local(_player.global_position).x
+	_press("toggle_noclip")
+	await _seconds(2.0)
+	var through_x := _cabin.to_local(_player.global_position).x
+	_player.autopilot_direction = Vector3.ZERO
+	await _frames(10)
+	_player.autopilot_enabled = false
+	var noclip_ok := blocked_x > 4.6 and through_x < 3.0
+
+	# 传送到每个地点，站稳（不掉下去）
+	var spots: Array = WorldLayout.data().get("dev_spots", [])
+	var bad := PackedStringArray()
+	for i in spots.size():
+		_player.set_flying(false)
+		panel.teleport(i)
+		await _seconds(1.0)
+		var want: Vector3 = panel.spot_position(spots[i])
+		var got := _player.global_position
+		if got.distance_to(want) > 1.2 or (spots[i].get("fly", false) and not _player.flying):
+			bad.append("%s 目标 %s 实际 %s" % [spots[i]["name"], str(want), str(got)])
+	GameSettings.set_developer_mode(false)
+	await _seconds(2.5)
+	var landed: bool = not _player.flying and not _player.noclip and _player.collision_mask == mask and not panel.is_open()
+	await _setup_at(Vector2(-50.0, 29.0), 0.0)
+	_check("开发者模式：普通模式不能飞；F2 打开面板，F 飞行（上升、悬停）、N 穿墙；各传送点能到；退出后恢复碰撞并落地",
+		locked and panel_open and flying and climbed > 5.0 and hover < 0.3 and noclip_ok and bad.is_empty() and landed,
+		"普通模式锁定 %s，面板 %s，1.5 s 上升 %.1f m，悬停漂移 %.2f m，穿墙前 x=%.1f / 穿墙后 x=%.1f，传送 %d 处%s，退出后 %s" % [
+			locked, panel_open, climbed, hover, blocked_x, through_x, spots.size(), ("，失败：" + "；".join(bad)) if not bad.is_empty() else "全部到达", landed])
+
+
+func _press(action: String) -> void:
+	var ev := InputEventAction.new()
+	ev.action = action
+	ev.pressed = true
+	Input.parse_input_event(ev)
+	var up := InputEventAction.new()
+	up.action = action
+	up.pressed = false
+	Input.parse_input_event(up)
 
 
 # ---------------------------------------------------------------- 立牌

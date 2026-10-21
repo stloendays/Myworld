@@ -30,7 +30,7 @@ Main (Main.gd)
 ├── Player (FirstPersonController)       entity_id = player_local
 │   ├── Body (CharacterModel)            方块人物：6 部位 × 7 外观插槽 + 4 挂点，渲染层 player_body
 │   └── Head ── InteractRay / CameraBoom(SpringArm3D) ── Camera3D   V 切换第一/第三人称
-├── HUD / PauseMenu（含人物外观面板）/ DebugOverlay / WeatherDebugPanel（F4）
+├── HUD / PauseMenu（含人物外观面板）/ DebugOverlay / DevPanel（F2 开发者模式）/ Minimap（M）
 ```
 
 木屋是主场景里常驻的真实子场景；进屋只是角色走进一个 `Area3D`。工程中没有任何场景切换调用（自动检查会扫描 `scripts/`）。
@@ -79,6 +79,7 @@ Main (Main.gd)
 | water | 2 | 湖面（反射探针不拍它） |
 | player_body | 4 | 本地玩家身体（第一人称相机不画，仍投影子） |
 | 落叶层 | 8 | 季节落叶/花瓣粒子（不接跟随相机的高度场，只碰建筑的 `Precipitation.leaf_blocker()` 挡板） |
+| first_person_arms | 16 | 第一人称的双手（只有第一人称相机画；不投影、不受影） |
 
 全局着色器参数（`project.godot → shader_globals`，由 EnvironmentDirector 每帧写入）：`rain_amount`、`snow_fall`、`snow_cover`、`wetness`、`season_tint`、`wind_strength`、`wind_direction`、`lightning_flash`。
 

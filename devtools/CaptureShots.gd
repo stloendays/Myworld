@@ -48,6 +48,11 @@ const SHOTS := [
 	{"name": "m2b_17_pool_sign", "climate": DUSK, "house": true, "eye": [-1.6, 1.75, -5.4], "look": [-1.6, 0.85, -3.6]},
 	{"name": "m2b_18_tank_sign", "climate": DUSK, "house": true, "eye": [-1.2, -5.25, -2.4], "look": [-2.6, -6.0, -4.8]},
 	{"name": "m2b_19_trail_sign", "climate": DUSK, "eye": [-47.3, 1.65, 29.4], "ground": true, "look": [-47.0, 2.0, 32.0]},
+	{"name": "m2c_01_first_person_hands", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "pitch": -6.0},
+	{"name": "m2c_02_minimap_poolhouse", "climate": DUSK, "player": [-12.0, 80.0], "heading": 95.0, "pitch": -4.0},
+	{"name": "m2c_03_dev_panel", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "pitch": -2.0, "dev": true},
+	{"name": "m2c_04_settings_view", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "settings": 1},
+	{"name": "m2c_05_hands_aquarium", "climate": DUSK, "player": [12.0, 84.0], "y": -5.0, "heading": 270.0, "pitch": -4.0},
 ]
 
 const OUTFITS := [
@@ -103,10 +108,13 @@ func _run() -> void:
 			# 雪花寿命约 11 秒：从下雪切走后等残留雪花落完再拍
 			if was_snowing and WorldState.weather_id != &"SNOW":
 				await get_tree().create_timer(12.0).timeout
-		_camera.cull_mask = 0xFFFFF if shot.has("character") else (0xFFFFF & ~FirstPersonController.BODY_LAYER)
+		_camera.cull_mask = 0xFFFFF & ~FirstPersonArms.FP_ARMS_LAYER if shot.has("character") else (0xFFFFF & ~FirstPersonController.BODY_LAYER & ~FirstPersonArms.FP_ARMS_LAYER)
+		await _setup_player_view(shot)
 		if _lineup != null:
 			_lineup.visible = shot.get("character", "") == "lineup"
-		if shot.has("character"):
+		if shot.has("player"):
+			pass
+		elif shot.has("character"):
 			_frame_character(str(shot["character"]))
 		elif shot.has("animal"):
 			_frame_animal(str(shot["animal"]))
@@ -230,3 +238,34 @@ func _frame_animal(species: String) -> void:
 func _wait(frames: int) -> void:
 	for i in frames:
 		await get_tree().process_frame
+
+
+## 用玩家自己的相机拍（看得到第一人称的手、HUD、小地图）："player": [x, z]，"heading"/"pitch" 度，
+## "dev": true 打开开发者面板，"settings": 分页序号 打开设置菜单，"walk": true 让手按走路姿势摆。
+func _setup_player_view(shot: Dictionary) -> void:
+	var player_view := shot.has("player")
+	var pause := _main.get_node("PauseMenu")
+	if pause.is_open():
+		pause._set_open(false)
+	GameSettings.set_developer_mode(shot.get("dev", false))
+	for layer_name in ["HUD", "Minimap"]:
+		(_main.get_node(layer_name) as CanvasLayer).visible = player_view
+	_player.set_physics_process(player_view)
+	if not player_view:
+		_camera.current = true
+		return
+	var a: Array = shot["player"]
+	var x := float(a[0])
+	var z := float(a[1])
+	_player.set_flying(false)
+	var y := float(shot["y"]) if shot.has("y") else WorldTerrain.height_at(x, z)
+	_player.teleport_to(Vector3(x, y + 0.05, z), float(shot.get("heading", 0.0)))
+	_player.head.rotation.x = deg_to_rad(float(shot.get("pitch", 0.0)))
+	_player.set_third_person(shot.get("third_person", false))
+	_player.camera.current = true
+	_player.autopilot_enabled = shot.get("walk", false)
+	await _wait(30)
+	if shot.has("settings"):
+		pause.open_settings(int(shot["settings"]))
+	if shot.get("dev", false):
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
