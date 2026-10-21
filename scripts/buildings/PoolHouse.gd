@@ -80,6 +80,7 @@ func rebuild() -> void:
 	_build_aquarium(g)
 	_build_lights(g)
 	_build_props(g)
+	_build_aquarium_decor(g)
 	if Engine.is_editor_hint():
 		return
 	_build_door(g)
@@ -416,10 +417,6 @@ func _build_props(g: Node3D) -> void:
 		g.add_child(ArtMaterials.kenney_prop(FURNITURE + "pottedPlant.glb", p, 30.0, 2.3))
 	g.add_child(ArtMaterials.kenney_prop(FURNITURE + "rugRectangle.glb", Vector3(-8.6, 0.006, -3.2), 90.0, 2.0))
 	g.add_child(ArtMaterials.kenney_prop(FURNITURE + "bench.glb", Vector3(-8.6, 0.0, -6.8), 0.0, 2.2))
-	for p in [Vector3(1.5, FLOOR_B, -3.7), Vector3(6.0, FLOOR_B, -3.7)]:
-		g.add_child(ArtMaterials.kenney_prop(FURNITURE + "bench.glb", p, 180.0, 2.2))
-	for p in [Vector3(1.5, FLOOR_B, 3.7), Vector3(6.0, FLOOR_B, 3.7)]:
-		g.add_child(ArtMaterials.kenney_prop(FURNITURE + "bench.glb", p, 0.0, 2.2))
 	if Engine.is_editor_hint():
 		return
 	# 解说立牌（中英双语，文字见 data/world/signs.json）。yaw 让正面朝向读牌的人
@@ -430,19 +427,169 @@ func _build_props(g: Node3D) -> void:
 	_sign(g, "tank_north", "lectern", 0.9, Vector3(-2.6, FLOOR_B, -4.55), 0.0)
 	_sign(g, "tank_south", "lectern", 0.9, Vector3(-2.6, FLOOR_B, 4.55), 180.0)
 	_sign(g, "tank_jelly", "lectern", 0.9, Vector3(8.85, FLOOR_B, 2.2), -90.0)
-	# 能坐的地方：泳池躺椅、大厅长椅、水族馆长椅（面朝鱼缸）
+	# 能坐的地方：泳池躺椅、大厅长椅（水族馆是私人空间，不放长椅，换成珊瑚花坛与吊饰）
 	var seat_list := [
 		[&"pool_lounger_1", "躺椅", Vector3(-1.0, 0.42, -6.2), 0.0],
 		[&"pool_lounger_2", "躺椅", Vector3(2.2, 0.42, -6.2), 0.0],
 		[&"pool_lounger_3", "躺椅", Vector3(5.4, 0.42, -6.2), 0.0],
 		[&"hall_bench", "长椅", Vector3(-8.6, 0.48, -6.8), 180.0],
-		[&"aquarium_bench_1", "长椅", Vector3(1.5, FLOOR_B + 0.48, -3.7), 0.0],
-		[&"aquarium_bench_2", "长椅", Vector3(6.0, FLOOR_B + 0.48, -3.7), 0.0],
-		[&"aquarium_bench_3", "长椅", Vector3(1.5, FLOOR_B + 0.48, 3.7), 180.0],
-		[&"aquarium_bench_4", "长椅", Vector3(6.0, FLOOR_B + 0.48, 3.7), 180.0],
 	]
 	for item in seat_list:
 		g.add_child(Seat.create(item[0], item[1], item[2], item[3], 0.45, 0.9))
+
+
+## 水族馆装饰（私人空间不放长椅）：鱼缸前四个珊瑚花坛、两盏玻璃球落地灯、西墙两盆绿植，
+## 头顶吊着方块蝠鲼与方块鲸鱼（细钢丝挂在顶板下，缓慢转动、上下浮动）。
+const MANTA := [
+	[-3, 0, -9, -2, 1, -6, "top"], [2, 0, -9, 3, 1, -6, "top"], [-3, 0, -6, 3, 2, -4, "top"],
+	[-8, 0, -4, 8, 2, -2, "top"], [-13, 0, -2, 13, 1.5, 0, "top"], [-16, 0, 0, 16, 1.2, 2, "top"],
+	[-12, 0, 2, 12, 1.5, 4, "top"], [-7, 0, 4, 7, 2, 6, "top"], [-3, 0, 6, 3, 2, 8, "top"],
+	[-0.5, 0.5, 8, 0.5, 1.2, 20, "top"],
+	[-3, -0.3, -6, 3, 0, -4, "belly"], [-8, -0.3, -4, 8, 0, -2, "belly"], [-13, -0.3, -2, 13, 0, 0, "belly"],
+	[-16, -0.3, 0, 16, 0, 2, "belly"], [-12, -0.3, 2, 12, 0, 4, "belly"], [-7, -0.3, 4, 7, 0, 6, "belly"], [-3, -0.3, 6, 3, 0, 8, "belly"],
+	[-10, 1.2, 0.4, -8, 1.3, 1.6, "spot"], [8, 1.2, 0.4, 10, 1.3, 1.6, "spot"], [-1, 2, -1, 1, 2.1, 3, "spot"],
+	[-3.2, 1.0, -5.6, -3.0, 1.5, -5.0, "eye"], [3.0, 1.0, -5.6, 3.2, 1.5, -5.0, "eye"],
+]
+const WHALE := [
+	[-4, 0, -12, 4, 7, 8, "blue"], [-3.5, 0.5, -16, 3.5, 6, -12, "blue"], [-3, 1, -18, 3, 5, -16, "blue"],
+	[-3.5, -0.3, -17, 3.5, 0, 6, "belly"], [-3, 0.5, -18.3, 3, 2.5, -16, "belly"],
+	[-2.5, 1.5, 8, 2.5, 5.5, 14, "blue"], [-1.5, 2.5, 14, 1.5, 4.5, 18, "blue"], [-7, 3, 17, 7, 4, 21, "blue"],
+	[-8, 1, -6, -4, 2, -2, "blue"], [4, 1, -6, 8, 2, -2, "blue"], [-0.5, 7, 2, 0.5, 8.5, 5, "blue"],
+	[-4.2, 3, -11, -4, 4, -10, "eye"], [4, 3, -11, 4.2, 4, -10, "eye"],
+]
+const DECOR_COLORS := {
+	"top": Color(0.3, 0.39, 0.52), "belly": Color(0.88, 0.9, 0.92), "spot": Color(0.72, 0.78, 0.84),
+	"eye": Color(0.05, 0.05, 0.06), "blue": Color(0.26, 0.44, 0.62),
+}
+const CORAL := [Color(0.95, 0.45, 0.5), Color(1.0, 0.66, 0.3), Color(0.6, 0.38, 0.82), Color(0.3, 0.68, 0.5), Color(0.98, 0.85, 0.4)]
+
+
+func _build_aquarium_decor(g: Node3D) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 4242
+	var sand := ArtMaterials.flat(Color(0.86, 0.78, 0.6), 0.95)
+	var planters := [Vector2(1.5, -3.7), Vector2(6.0, -3.7), Vector2(1.5, 3.7), Vector2(6.0, 3.7)]
+	for i in planters.size():
+		var c: Vector2 = planters[i]
+		_box(g, Vector3(2.0, 0.42, 0.8), Vector3(c.x, FLOOR_B + 0.21, c.y), _m.stone)
+		_box(g, Vector3(1.84, 0.04, 0.64), Vector3(c.x, FLOOR_B + 0.43, c.y), sand, false)
+		var coral := MeshInstance3D.new()
+		coral.name = "CoralPlanter%d" % i
+		coral.mesh = _coral_mesh(rng)
+		coral.position = Vector3(c.x, FLOOR_B + 0.45, c.y)
+		g.add_child(coral)
+	for z: float in [-4.1, 4.1]:
+		_box(g, Vector3(0.2, 0.8, 0.2), Vector3(3.75, FLOOR_B + 0.4, z), _m.frame)
+		var orb := MeshInstance3D.new()
+		var sphere := SphereMesh.new()
+		sphere.radius = 0.2
+		sphere.height = 0.4
+		sphere.material = _m.blue_lamp
+		orb.mesh = sphere
+		orb.position = Vector3(3.75, FLOOR_B + 1.0, z)
+		orb.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		g.add_child(orb)
+		_omni(g, Vector3(3.75, FLOOR_B + 1.0, z), Color(0.45, 0.85, 1.0), 0.6, 3.0)
+	for p in [Vector3(-11.3, FLOOR_B, -4.9), Vector3(-11.3, FLOOR_B, 1.6)]:
+		g.add_child(ArtMaterials.kenney_prop(FURNITURE + "pottedPlant.glb", p, 30.0, 2.3))
+	_hanging(g, "Manta", MANTA, 0.07, Vector3(6.6, -4.75, 0.0), 25.0, 70.0)
+	_hanging(g, "Whale", WHALE, 0.075, Vector3(-8.4, -4.65, -1.6), -60.0, -95.0)
+	# 吊饰下方的柔光，鲸鱼下面再放一个海带花坛，西侧角落不再空着
+	_omni(g, Vector3(6.6, -5.6, 0.0), Color(0.75, 0.9, 1.0), 0.5, 3.5)
+	_omni(g, Vector3(-8.4, -5.6, -1.6), Color(0.75, 0.9, 1.0), 0.6, 4.0)
+	_box(g, Vector3(1.8, 0.42, 1.8), Vector3(-8.4, FLOOR_B + 0.21, -1.6), _m.stone)
+	_box(g, Vector3(1.64, 0.04, 1.64), Vector3(-8.4, FLOOR_B + 0.43, -1.6), sand, false)
+	var kelp := MeshInstance3D.new()
+	kelp.name = "KelpPlanter"
+	kelp.mesh = _kelp_mesh(rng)
+	kelp.position = Vector3(-8.4, FLOOR_B + 0.45, -1.6)
+	g.add_child(kelp)
+
+
+## 吊饰：顶板上一个转轴，钢丝垂下，模型挂在钢丝下端；游戏里慢慢转、轻轻上下浮动。
+func _hanging(g: Node3D, id: String, pieces: Array, px: float, pos: Vector3, yaw_deg: float, turn_seconds: float) -> void:
+	var pivot := Node3D.new()
+	pivot.name = id
+	pivot.position = Vector3(pos.x, CEIL_B, pos.z)
+	pivot.rotation.y = deg_to_rad(yaw_deg)
+	g.add_child(pivot)
+	var model := MeshInstance3D.new()
+	model.name = "Model"
+	var boxes := []
+	for p: Array in pieces:
+		boxes.append({"box": p.slice(0, 6), "color": p[6]})
+	model.mesh = BlockyMesh.build(boxes, func(k: String) -> Color: return DECOR_COLORS.get(k, Color.WHITE), px)
+	model.position = Vector3(0.0, pos.y - CEIL_B, 0.0)
+	pivot.add_child(model)
+	var wire := ArtMaterials.flat(Color(0.75, 0.78, 0.8), 0.3, false, 0.8)
+	for x: float in [-0.5, 0.5]:
+		_box(pivot, Vector3(0.012, CEIL_B - pos.y, 0.012), Vector3(x, (pos.y - CEIL_B) * 0.5 + 0.05, 0.0), wire, false)
+	if Engine.is_editor_hint():
+		return
+	var spin := pivot.create_tween().set_loops()
+	spin.tween_property(pivot, "rotation:y", TAU * signf(turn_seconds), absf(turn_seconds)).as_relative()
+	var bob := model.create_tween().set_loops().set_trans(Tween.TRANS_SINE)
+	bob.tween_property(model, "position:y", model.position.y + 0.12, 3.5)
+	bob.tween_property(model, "position:y", model.position.y, 3.5)
+
+
+## 海带花坛：十几根高低不一、略带弯折的绿色海带，夹几块卵石。
+func _kelp_mesh(rng: RandomNumberGenerator) -> ArrayMesh:
+	var pieces := []
+	var greens := {"k0": Color(0.24, 0.5, 0.3), "k1": Color(0.34, 0.6, 0.32), "k2": Color(0.45, 0.62, 0.28), "pebble": Color(0.62, 0.6, 0.56)}
+	for i in 14:
+		var x := rng.randf_range(-13.0, 13.0)
+		var z := rng.randf_range(-13.0, 13.0)
+		var col := "k%d" % rng.randi_range(0, 2)
+		var h := 0.0
+		var segs := rng.randi_range(3, 5)
+		for s in segs:
+			var seg_len := rng.randf_range(3.0, 6.0)
+			pieces.append({"box": [x - 0.8, h, z - 0.4, x + 0.8, h + seg_len, z + 0.4], "color": col})
+			h += seg_len
+			x += rng.randf_range(-1.0, 1.0)
+	for p in 6:
+		var px := rng.randf_range(-14.0, 14.0)
+		var pz := rng.randf_range(-14.0, 14.0)
+		pieces.append({"box": [px - 1, 0, pz - 0.8, px + 1, 0.8, pz + 0.8], "color": "pebble"})
+	return BlockyMesh.build(pieces, func(k: String) -> Color: return greens.get(k, Color.WHITE), 0.05)
+
+
+## 一个花坛里的珊瑚：几丛分枝珊瑚、一片扇珊瑚、两只海星、几块卵石（方块像素，5 cm 一格）。
+func _coral_mesh(rng: RandomNumberGenerator) -> ArrayMesh:
+	var pieces := []
+	var colors := {}
+	var pick := func() -> String:
+		var key := "c%d" % rng.randi_range(0, CORAL.size() - 1)
+		colors[key] = CORAL[int(key.substr(1))]
+		return key
+	for i in 4:
+		var x := rng.randf_range(-14.0, 14.0)
+		var z := rng.randf_range(-3.0, 3.0)
+		var h := rng.randf_range(5.0, 10.0)
+		var col: String = pick.call()
+		pieces.append({"box": [x - 1, 0, z - 1, x + 1, h, z + 1], "color": col})
+		for b in 2:
+			var side := -1.0 if b == 0 else 1.0
+			var y := rng.randf_range(2.0, h - 2.0)
+			pieces.append({"box": [x + side * 1, y, z - 0.7, x + side * 3, y + 1, z + 0.7], "color": col})
+			pieces.append({"box": [x + side * 2, y + 1, z - 0.7, x + side * 3, y + rng.randf_range(2.0, 4.0), z + 0.7], "color": col})
+	var fx := rng.randf_range(-10.0, 10.0)
+	pieces.append({"box": [fx - 3, 1, 3.5, fx + 3, 7, 4.2], "color": pick.call()})
+	pieces.append({"box": [fx - 0.5, 0, 3.5, fx + 0.5, 1, 4.2], "color": "stem"})
+	colors["stem"] = Color(0.5, 0.36, 0.3)
+	for s in 2:
+		var sx := rng.randf_range(-15.0, 15.0)
+		var sz := rng.randf_range(-4.0, 4.0)
+		var col: String = pick.call()
+		pieces.append({"box": [sx - 2, 0, sz - 0.5, sx + 2, 0.4, sz + 0.5], "color": col})
+		pieces.append({"box": [sx - 0.5, 0, sz - 2, sx + 0.5, 0.4, sz + 2], "color": col})
+	colors["pebble"] = Color(0.62, 0.6, 0.56)
+	for p in 5:
+		var px := rng.randf_range(-16.0, 16.0)
+		var pz := rng.randf_range(-5.0, 5.0)
+		pieces.append({"box": [px - 1, 0, pz - 0.8, px + 1, 0.8, pz + 0.8], "color": "pebble"})
+	return BlockyMesh.build(pieces, func(k: String) -> Color: return colors.get(k, Color.WHITE), 0.05)
 
 
 func _build_door(g: Node3D) -> void:

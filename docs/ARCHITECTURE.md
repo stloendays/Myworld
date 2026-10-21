@@ -31,6 +31,7 @@ Main (Main.gd)
 │   ├── Body (CharacterModel)            方块人物：6 部位 × 7 外观插槽 + 4 挂点，渲染层 player_body
 │   └── Head ── InteractRay / CameraBoom(SpringArm3D) ── Camera3D   V 切换第一/第三人称
 ├── HUD / PauseMenu（含人物外观面板）/ DebugOverlay / DevPanel（F2 开发者模式）/ Minimap（M）
+├── ActionBar（G 动作轮盘，快捷键 1–4，F12 拍照）/ WorldMap（Tab 世界地图）
 ```
 
 木屋是主场景里常驻的真实子场景；进屋只是角色走进一个 `Area3D`。工程中没有任何场景切换调用（自动检查会扫描 `scripts/`）。
@@ -65,6 +66,9 @@ Main (Main.gd)
 | `FaunaSpawner` / `Animal` / `FishSchool` / `FaunaData` | 已实现 | 小动物按 `data/animals/species.json` 生成；出没规则只读 WorldState；每只有稳定 `entity_id`；鱼群只在缸的 AABB 内游 |
 | `CabinLife` / `InteractableToggle` / `Seat` / `Bed` | 已实现 | 木屋生活交互，状态按 uid 记在 WorldState |
 | `Canoe` / `Exploration` | 已实现 | 独木舟（自算运动，位置记在 `WorldState.vehicles`）；湖上探索点（`WorldState.discoveries`，存档 v2） |
+| `ActionBar`（动作轮盘）/ 控制器 `do_emote()` / `CharacterModel` 姿势与手势 | 已实现 | 动作：`ground_sit`、`lie` 是姿势（身体放低或放倒，眼睛跟着移动），`wave`、`dance`、`clap` 是叠加在站姿上的手势；状态在 `FirstPersonController.emote` |
+| `WorldRegistry` / `WorldMap` | 已实现（跨世界进入为接口占位） | `data/worlds/worlds.json` 列出所有世界；地图读注册表与布局绘制；`WorldRegistry.enter()` 目前只提示“还在建设中” |
+| `Precipitation` 季节飘落物 | 已实现 | 方案在 `data/weather/seasonal_fx.json`（落叶、花瓣、保留的原版红点）；`profile_override` 供开发者面板临时切换 |
 | `AudioDirector` | M3 接口占位 | 订阅区域与天气事件做室内外混音 |
 | `SaveManager` | M4 接口占位 | `user://saves/` 版本化 JSON |
 

@@ -79,6 +79,10 @@ func _run() -> void:
 	await _test_canoe()
 	await _test_exploration_save()
 	await _test_performance()
+	_test_aquarium_decor()
+	await _test_emotes()
+	await _test_seasonal_fx()
+	await _test_fullscreen_and_world_map()
 	_report()
 
 
@@ -1143,6 +1147,144 @@ func _slot_mesh(body: CharacterModel, part: String, slot: String) -> Mesh:
 	var holder := body.slot_node(part, slot)
 	var mi := holder.get_node_or_null("Mesh") as MeshInstance3D if holder != null else null
 	return mi.mesh if mi != null else null
+
+# ---------------------------------------------------------------- 水族馆装饰、动作、飘落物、全屏与世界地图
+
+func _test_aquarium_decor() -> void:
+	var aq_seats := 0
+	for s in _house.find_children("*", "Seat", true, false):
+		if String((s as Seat).uid).begins_with("aquarium"):
+			aq_seats += 1
+	var planters := _house.find_children("CoralPlanter*", "MeshInstance3D", true, false).size()
+	var manta := _house.find_child("Manta", true, false) as Node3D
+	var whale := _house.find_child("Whale", true, false) as Node3D
+	var hung := manta != null and whale != null
+	var clear_head := true
+	for n in [manta, whale]:
+		if n != null:
+			var m := (n as Node3D).get_node("Model") as MeshInstance3D
+			var low := m.global_transform * m.get_aabb().position
+			clear_head = clear_head and _house.to_local(low).y > PoolHouse.FLOOR_B + 1.95
+	_check("水族馆不放长椅，换成珊瑚花坛与头顶吊饰（蝠鲼、鲸鱼）", aq_seats == 0 and planters == 4 and hung and clear_head,
+		"水族馆座位 %d，珊瑚花坛 %d，吊饰 %s，离地 ≥ 1.95 m %s" % [aq_seats, planters, hung, clear_head])
+
+
+func _test_emotes() -> void:
+	var notes := PackedStringArray()
+	await _setup_at(Vector2(-50.0, 29.0), 0.0)
+	await _seconds(1.0)
+	var bar := _main.get_node("ActionBar") as ActionBar
+	var stand_eye := _player.head.global_position.y
+	var wheel_hidden := not bar.wheel_open and not (bar.get_node("ActionWheelRoot") as Control).visible
+	var sat := bar.trigger("rest") and _player.body.pose == "ground_sit"
+	await _seconds(1.5)
+	var sit_drop := stand_eye - _player.head.global_position.y
+	notes.append("坐下 %s，眼睛降低 %.2f m" % [sat, sit_drop])
+	# 想走就起身
+	_player.autopilot_enabled = true
+	_player.autopilot_direction = Vector3(1.0, 0.0, 0.0)
+	await _frames(3)
+	_player.autopilot_direction = Vector3.ZERO
+	await _frames(20)
+	_player.autopilot_enabled = false
+	var stood := _player.emote == "" and _player.body.pose == "stand"
+	notes.append("走动起身 %s" % stood)
+	var lay := bar.trigger("rest") and _player.emote == "ground_sit" and bar.trigger("rest") and _player.body.pose == "lie"
+	await _seconds(1.5)
+	var flat := absf(rad_to_deg(_player.body.rotation.x) - 90.0) < 1.0
+	var eye_low := _player.head.global_position.y - _player.global_position.y < 0.6
+	var arms_hidden := not _player.arms.visible
+	var toggled_off := bar.trigger("rest") and _player.emote == "" and absf(_player.body.rotation.x) < 0.01
+	notes.append("躺下 %s，放平 %s，视线低 %s，第一人称手隐藏 %s，再按起身 %s" % [lay, flat, eye_low, arms_hidden, toggled_off])
+	_player.set_third_person(false)
+	# 轮盘：往右推选中“挥手”，松开即执行
+	var dirs_ok := ActionBar.slice_at(Vector2(0, -80)) == 0 and ActionBar.slice_at(Vector2(80, 0)) == 1 \
+		and ActionBar.slice_at(Vector2(0, 80)) == 2 and ActionBar.slice_at(Vector2(-80, 0)) == 3 and ActionBar.slice_at(Vector2(10, 5)) == -1
+	bar._set_wheel(true)
+	var wheel_shown := bar.wheel_open
+	bar.hovered = 1
+	bar._choose_or_close()
+	var waved := not bar.wheel_open and _player.body.gesture == "wave" and _player.third_person
+	await _frames(20)
+	var arm_up := rad_to_deg((_player.body.parts["arm_r"] as Node3D).rotation.z) > 100.0
+	await _seconds(3.0)
+	var wave_done := _player.emote == "" and not _player.third_person
+	notes.append("轮盘方向 %s，平时隐藏 %s、按 G 显示 %s" % [dirs_ok, wheel_hidden, wheel_shown])
+	notes.append("挥手 %s，手举起 %s，做完自动结束并切回第一人称 %s" % [waved, arm_up, wave_done])
+	var danced := bar.trigger("dance")
+	await _seconds(4.0)
+	var still_dancing := _player.emote == "dance"
+	_player.end_emote()
+	var clapped := bar.trigger("clap") and _player.body.gesture == "clap"
+	await _seconds(3.2)
+	var clap_done := _player.emote == ""
+	notes.append("跳舞持续 %s，鼓掌 %s → 结束 %s" % [danced and still_dancing, clapped, clap_done])
+	# 水里不能做动作
+	_player.global_position = _ph(1.0, -1.6, 0.0)
+	_player.velocity = Vector3.ZERO
+	await _seconds(1.0)
+	var refused := not bar.trigger("rest") and _player.emote == ""
+	notes.append("游泳时拒绝 %s" % refused)
+	var photo_path: String = await bar.take_photo() if DisplayServer.get_name() == "headless" else ""
+	var photo_ok := photo_path == ""
+	var keys_ok := true
+	for i in 4:
+		keys_ok = keys_ok and InputMap.has_action("action_%d" % (i + 1))
+	keys_ok = keys_ok and InputMap.has_action("photo") and InputMap.has_action("toggle_actions")
+	_check("动作轮盘：平时隐藏、G 弹出；休息（坐下 → 躺下 → 起身）、挥手、跳舞、鼓掌，移动起身，水里不能做", sat and sit_drop > 0.5 and stood and lay and flat and eye_low and arms_hidden \
+		and toggled_off and waved and arm_up and wave_done and danced and still_dancing and clapped and clap_done and refused and photo_ok and keys_ok and dirs_ok and wheel_hidden and wheel_shown,
+		"；".join(notes))
+	await _setup_at(Vector2(-50.0, 29.0), 0.0)
+
+
+func _test_seasonal_fx() -> void:
+	var climate := _main.get_node("Systems") as ClimateSystem
+	var env := _main.get_node("World/Environment") as EnvironmentDirector
+	var precip := get_tree().get_first_node_in_group("precipitation") as Precipitation
+	climate.jump_to_season(&"AUTUMN")
+	climate.set_hour(15.0)
+	climate.set_weather(&"CLEAR", 0.0)
+	await _seconds(1.0)
+	var calm_count := precip.leaves.amount * precip.leaves.amount_ratio
+	var calm_wind := env.wind_strength
+	var leaf_shape := ((precip.leaves.draw_pass_1 as QuadMesh).material as StandardMaterial3D).albedo_texture != null
+	precip.profile_override = "legacy_red_motes"
+	await _seconds(1.0)
+	var legacy_count := precip.leaves.amount * precip.leaves.amount_ratio
+	var legacy_kept := precip.leaves_kind == "legacy_red_motes" and precip.leaves.amount == 700 \
+		and ((precip.leaves.draw_pass_1 as QuadMesh).material as StandardMaterial3D).albedo_texture == null
+	precip.profile_override = ""
+	await _seconds(1.0)
+	var back := precip.leaves_kind == "leaves"
+	_check("晴天落叶零星（原版红点保留为可切换方案）", calm_count < 120.0 and calm_count > 0.0 and leaf_shape and legacy_kept and legacy_count > calm_count * 3.0 and back,
+		"秋天晴 %.0f 个（风 %.2f，叶形 %s）；原版红点 %.0f 个，保留 %s；切回 %s" % [calm_count, calm_wind, leaf_shape, legacy_count, legacy_kept, back])
+
+
+func _test_fullscreen_and_world_map() -> void:
+	var f11 := false
+	for ev in InputMap.action_get_events("toggle_fullscreen"):
+		f11 = f11 or (ev as InputEventKey).physical_keycode == KEY_F11
+	GameSettings.set_value("fullscreen", true, false)
+	var on := GameSettings.fullscreen
+	GameSettings.set_value("fullscreen", false, false)
+	var wm := _main.get_node("WorldMap") as WorldMap
+	var ev := InputEventAction.new()
+	ev.action = "world_map"
+	ev.pressed = true
+	Input.parse_input_event(ev)
+	await _frames(3)
+	var opened := wm.open
+	var cur := WorldRegistry.current()
+	var planned := 0
+	for w in WorldRegistry.worlds():
+		if not WorldRegistry.is_open(str(w["id"])):
+			planned += 1
+	var blocked := not WorldRegistry.enter("world_02") and not WorldRegistry.can_enter("world_02")
+	wm.toggle()
+	await _frames(2)
+	_check("F11 全屏切换；Tab 打开世界地图，世界注册表含规划中的其他世界", f11 and on and opened and not wm.open \
+		and str(cur.get("id", "")) == "dusk_lake" and planned >= 1 and blocked,
+		"F11 %s，全屏 %s，地图打开 %s，当前 %s，规划中 %d 个，未开放世界不能进 %s" % [f11, on, opened, cur.get("name", "?"), planned, blocked])
 
 # ---------------------------------------------------------------- 工具
 

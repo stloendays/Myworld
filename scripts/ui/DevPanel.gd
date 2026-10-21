@@ -191,6 +191,15 @@ func _build() -> void:
 	time_speed.add_child(_button("暂停/继续时间", func() -> void: WorldState.time_paused = not WorldState.time_paused))
 	box.add_child(time_speed)
 
+	box.add_child(_section("季节飘落物（data/weather/seasonal_fx.json）"))
+	var fx := HFlowContainer.new()
+	fx.add_child(_button("按季节", func() -> void: _set_fx_override("")))
+	for pid in (Precipitation.fx_data()["profiles"] as Dictionary).keys():
+		var pname := str(Precipitation.fx_profile(str(pid)).get("name", pid))
+		fx.add_child(_button(pname, func() -> void: _set_fx_override(str(pid))))
+	fx.add_child(_button("关闭", func() -> void: _set_fx_override("off")))
+	box.add_child(fx)
+
 	box.add_child(_section("显示"))
 	var show := HFlowContainer.new()
 	show.add_child(_button("坐标信息（F3）", _toggle_debug_overlay))
@@ -217,6 +226,13 @@ func _button(text: String, action: Callable) -> Button:
 func _on_fly_speed(v: float) -> void:
 	GameSettings.set_value("fly_speed", v)
 	_speed_label.text = "飞行速度 %d m/s" % int(v)
+
+
+## 季节飘落物方案：""（按季节）/ 方案 id（如保留的“原版红点” legacy_red_motes）/ "off"。只影响本次运行。
+func _set_fx_override(id: String) -> void:
+	var precip := get_tree().get_first_node_in_group("precipitation") as Precipitation
+	if precip != null:
+		precip.profile_override = id
 
 
 func _toggle_debug_overlay() -> void:

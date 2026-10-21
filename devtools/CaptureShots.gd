@@ -59,6 +59,18 @@ const SHOTS := [
 	{"name": "m2e_04_islet_camp", "climate": DUSK, "eye": [33, 2.2, 3], "look": [42, 1.6, -6]},
 	{"name": "m2e_05_minimap_lake", "climate": DUSK, "player": [-28.0, 24.0], "canoe": [-2.0, 18.0, 70.0], "heading": 70.0, "pitch": -4.0},
 	{"name": "m2e_06_cabin_bed", "climate": {"season": "AUTUMN", "hour": 21.0, "weather": "CLEAR"}, "eye": [-69.0, 4.3, 36.4], "look": [-73.0, 2.7, 39.4]},
+	{"name": "m2g_01_aquarium_decor", "climate": DUSK, "house": true, "eye": [9.0, -5.3, 1.0], "look": [-3.0, -5.6, -0.5]},
+	{"name": "m2g_02_aquarium_manta", "climate": DUSK, "house": true, "eye": [0.6, -5.75, 3.2], "look": [6.6, -4.75, -0.4]},
+	{"name": "m2g_03_aquarium_whale", "climate": DUSK, "house": true, "eye": [-3.6, -5.7, 2.6], "look": [-8.4, -4.75, -1.8]},
+	{"name": "m2g_04_emote_sit", "climate": {"season": "AUTUMN", "hour": 16.0, "weather": "CLEAR"}, "character": "front", "emote": "ground_sit"},
+	{"name": "m2g_05_emote_wave", "climate": {"season": "AUTUMN", "hour": 16.0, "weather": "CLEAR"}, "character": "front", "emote": "wave"},
+	{"name": "m2g_06_emote_dance", "climate": {"season": "AUTUMN", "hour": 16.0, "weather": "CLEAR"}, "character": "front", "emote": "dance"},
+	{"name": "m2g_07_lie_stars", "climate": {"season": "SUMMER", "hour": 22.5, "weather": "CLEAR"}, "player": [-50.0, 29.0], "heading": 75.0, "emote": "lie", "pitch": 60.0},
+	{"name": "m2g_08_action_wheel", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "pitch": -4.0, "wheel": 0},
+	{"name": "m2g_09_world_map", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "world_map": true},
+	{"name": "m2g_10_autumn_clear_leaves", "climate": {"season": "AUTUMN", "hour": 15.0, "weather": "CLEAR"}, "eye": [-80, 1.65, -50], "ground": true, "look": [-78, 2.5, -28]},
+	{"name": "m2g_11_legacy_red_motes", "climate": {"season": "AUTUMN", "hour": 15.0, "weather": "CLEAR"}, "fx": "legacy_red_motes", "eye": [-80, 1.65, -50], "ground": true, "look": [-78, 2.5, -28]},
+	{"name": "m2g_12_rain_lighter", "climate": {"season": "SUMMER", "hour": 14.0, "weather": "HEAVY_RAIN"}, "eye": [-8, 2.65, 25], "look": [-69, 4, 37]},
 ]
 
 const OUTFITS := [
@@ -114,6 +126,10 @@ func _run() -> void:
 			# 雪花寿命约 11 秒：从下雪切走后等残留雪花落完再拍
 			if was_snowing and WorldState.weather_id != &"SNOW":
 				await get_tree().create_timer(12.0).timeout
+		var precip := get_tree().get_first_node_in_group("precipitation") as Precipitation
+		if precip.profile_override != str(shot.get("fx", "")):
+			precip.profile_override = str(shot.get("fx", ""))
+			await _wait(30)
 		_camera.cull_mask = 0xFFFFF & ~FirstPersonArms.FP_ARMS_LAYER if shot.has("character") else (0xFFFFF & ~FirstPersonController.BODY_LAYER & ~FirstPersonArms.FP_ARMS_LAYER)
 		await _setup_player_view(shot)
 		if _lineup != null:
@@ -121,6 +137,7 @@ func _run() -> void:
 		if shot.has("player"):
 			pass
 		elif shot.has("character"):
+			_force_emote(str(shot.get("emote", "")))
 			_frame_character(str(shot["character"]))
 		elif shot.has("animal"):
 			_frame_animal(str(shot["animal"]))
@@ -254,8 +271,14 @@ func _setup_player_view(shot: Dictionary) -> void:
 	if pause.is_open():
 		pause._set_open(false)
 	GameSettings.set_developer_mode(shot.get("dev", false))
-	for layer_name in ["HUD", "Minimap"]:
+	for layer_name in ["HUD", "Minimap", "ActionBar"]:
 		(_main.get_node(layer_name) as CanvasLayer).visible = player_view
+	var wheel := _main.get_node("ActionBar") as ActionBar
+	if wheel.wheel_open:
+		wheel._set_wheel(false)
+	var world_map := _main.get_node("WorldMap") as WorldMap
+	if world_map.open != shot.get("world_map", false):
+		world_map.toggle()
 	_player.set_physics_process(player_view)
 	if not player_view:
 		_camera.current = true
@@ -285,7 +308,30 @@ func _setup_player_view(shot: Dictionary) -> void:
 			_player.sit(seat)
 			_player.rotation.y = deg_to_rad(-float(shot.get("heading", 0.0)))
 	await _wait(30)
+	if shot.has("emote"):
+		_player.do_emote(str(shot["emote"]))
+		_player.head.rotation.x = deg_to_rad(float(shot.get("pitch", 0.0)))
+	await _wait(30)
 	if shot.has("settings"):
 		pause.open_settings(int(shot["settings"]))
 	if shot.get("dev", false):
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	if shot.has("wheel"):
+		wheel._set_wheel(true)
+		var dir := [Vector2.UP, Vector2.RIGHT, Vector2.DOWN, Vector2.LEFT][int(shot["wheel"])] as Vector2
+		Input.warp_mouse(get_viewport().get_visible_rect().size * 0.5 + dir * 95.0)
+		await _wait(5)
+
+
+## 人物特写里摆动作（截图时玩家物理关着，直接设好姿势与手势，不经过 do_emote 的落地检查）。
+func _force_emote(id: String) -> void:
+	_player.end_emote()
+	if id == "":
+		return
+	_player.emote = id
+	if id in FirstPersonController.EMOTE_POSES:
+		_player.body.pose = id
+	else:
+		_player.body.set_gesture(id)
+		_player.body._gesture_t = 0.35
+	_player._place_body()

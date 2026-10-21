@@ -1,0 +1,36 @@
+{
+  "_doc": "世界注册表（WorldRegistry 读取）：世界地图右侧的世界列表与以后的跨世界传送都以这里为准。status：open = 可以进入 / planned = 规划中（地图上显示为未开放）。atlas 为世界地图里“世界总览”小图上的相对位置（0–1）。",
+  "current": "dusk_lake",
+  "worlds": [
+    {
+      "id": "dusk_lake",
+      "name": "暮色湖畔",
+      "name_en": "Dusk Lake",
+      "status": "open",
+      "scene": "res://scenes/main/Main.tscn",
+      "size_m": 250,
+      "summary": "湖、森林、木屋、玻璃泳池馆与地下水族馆。",
+      "atlas": [0.5, 0.55],
+      "color": "#d9a35a"
+    },
+    {
+      "id": "world_02",
+      "name": "未命名世界 · 二",
+      "name_en": "World II",
+      "status": "planned",
+      "summary": "规划中：以后从暮色湖畔的传送门进入。",
+      "atlas": [0.18, 0.25],
+      "color": "#7fa6c9"
+    },
+    {
+      "id": "world_03",
+      "name": "未命名世界 · 三",
+      "name_en": "World III",
+      "status": "planned",
+      "summary": "规划中。",
+      "atlas": [0.82, 0.3],
+      "color": "#9cc28a"
+    }
+  ],
+  "links": [["dusk_lake", "world_02"], ["dusk_lake", "world_03"]]
+}
