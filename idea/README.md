@@ -11,6 +11,7 @@
 | 木屋生活系统（Cabin Life） | 真正能在木屋中生活、休息和布置自己的空间 | [cabin-life.md](cabin-life.md) | M3 交互／音频；M4 存档 |
 | 神秘信件与温柔剧情（Gentle Mystery） | 非强制探索、通过书信了解湖畔的小故事 | [gentle-mystery.md](gentle-mystery.md) | 现有 Interactable；M4 持久化 |
 | 独木舟探索（Canoe Exploration） | 驾舟看湖景，寻找隐藏岸线 | [canoe-exploration.md](canoe-exploration.md) | 现有码头／湖泊、船与玩家状态 |
+| 私人联机与玩家自建房（Player-hosted Co-op） | 任意玩家的电脑都可当房主，最多 4 人共享湖畔；未来正式 Windows 安装版内置建房和加入功能 | [multiplayer-player-hosted.md](multiplayer-player-hosted.md) | 角色外观／M4 存档／M5 网络改造 |
 
 ## 喜欢的 GitHub 开源项目（只记录，尚未引入）
 
@@ -32,6 +33,12 @@
 - M2 时间／四季／天气、M3 AudioDirector 与部分生活交互、M4 SaveManager 仍须以代码和验收确认。不要将创意文档当作功能状态依据。
 - 保留稳定 `uid`／`entity_id`／`zone_id`，`WorldState` 是状态权威，`EventBus` 负责通知；不允许为了新玩法打破室内外连续场景。
 - **公开仓库安全要求**：不提交未确认许可的截图、第三方模型、素材。正式集成任何插件时锁定具体版本并保留相应开源许可文件。
+
+## 未来 Windows 安装包的联机目标（新增）
+- **确定的产品方向：** 在面向朋友发布的正式 Windows 安装版里，默认附带创建私人房间、加入朋友房间和单人模式。所有人的客户端都能充当房主，**无需单独下载服务端程序**。
+- **首发最低能力：** 玩家托管式 Listen Server，房主权威管理共享世界、上限 4 人、各自角色外观和访客权限；异地连接途径应经过真实测试。
+- **不混淆的限制：** 房主退出后房间默认结束。自动房主迁移、无人在线仍运行的专服、无需外部网络配置的房间码／Relay 是后续能力；Windows 游戏内置建房 ≠ 自带公网 NAT 穿透服务。
+- **尚未实现：** 本项是安装包规划与以后版本的发行验收要求，不代表现有仓库已经有网络代码或安装包。详细见 [multiplayer-player-hosted.md](multiplayer-player-hosted.md)。
 
 ## 实施提示
 
