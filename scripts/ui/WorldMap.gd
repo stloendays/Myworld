@@ -112,7 +112,7 @@ func _build() -> void:
 
 func _refresh_list() -> void:
 	var cur := WorldRegistry.current()
-	_title.text = "世界地图 · %s %s" % [cur.get("name", ""), cur.get("name_en", "")]
+	_title.text = tr("世界地图 · %s") % tr(str(cur.get("name", "")))
 	for c in _list.get_children():
 		c.queue_free()
 	for w in WorldRegistry.worlds():
@@ -121,12 +121,12 @@ func _refresh_list() -> void:
 		b.focus_mode = Control.FOCUS_NONE
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		var state := "当前所在" if id == WorldRegistry.current_id() else ("可前往" if WorldRegistry.is_open(id) else "规划中")
-		b.text = "%s  %s  ·  %s" % [w["name"], w.get("name_en", ""), state]
-		b.tooltip_text = str(w.get("summary", ""))
+		b.text = "%s  ·  %s" % [tr(str(w["name"])), tr(state)]
+		b.tooltip_text = tr(str(w.get("summary", "")))
 		b.pressed.connect(func() -> void: WorldRegistry.enter(id))
 		_list.add_child(b)
 		var s := Label.new()
-		s.text = "    " + str(w.get("summary", ""))
+		s.text = "    " + tr(str(w.get("summary", "")))
 		s.add_theme_color_override("font_color", MUTED)
 		s.add_theme_font_size_override("font_size", 15)
 		_list.add_child(s)
@@ -166,17 +166,17 @@ func _draw_map() -> void:
 	# 地名
 	var lake := WorldLayout.section("lake")
 	if not lake.is_empty():
-		_label(font, t * WorldLayout.v2(lake["center"]) + Vector2(0.0, 40.0), "暮色湖", 20, Color(0.9, 0.96, 1.0))
+		_label(font, t * WorldLayout.v2(lake["center"]) + Vector2(0.0, 40.0), tr("暮色湖"), 20, Color(0.9, 0.96, 1.0))
 	for item in [["cabin", "木屋"], ["poolhouse", "泳池馆"]]:
 		var cfg := WorldLayout.section(item[0])
 		if not cfg.is_empty():
-			_label(font, t * WorldLayout.v2(cfg["center"]) + Vector2(0.0, -22.0), item[1], 17, INK)
+			_label(font, t * WorldLayout.v2(cfg["center"]) + Vector2(0.0, -22.0), tr(item[1]), 17, INK)
 	for poi in Exploration.pois():
 		var p := t * WorldLayout.v2(poi["center"])
 		if StringName(poi["id"]) in WorldState.discoveries:
 			_map.draw_circle(p, 6.0, Color(1.0, 0.82, 0.35))
 			_map.draw_arc(p, 6.0, 0.0, TAU, 24, Color(0.15, 0.1, 0.05), 1.4, true)
-			_label(font, p + Vector2(0.0, 22.0), str(poi["name"]), 15, Color(1.0, 0.9, 0.65))
+			_label(font, p + Vector2(0.0, 22.0), tr(str(poi["name"])), 15, Color(1.0, 0.9, 0.65))
 		else:
 			_map.draw_circle(p, 8.0, Color(0.12, 0.12, 0.14, 0.8))
 			_map.draw_string(font, p + Vector2(-4.5, 6.0), "?", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color(0.9, 0.9, 0.9))
@@ -250,7 +250,7 @@ func _draw_atlas() -> void:
 		_atlas.draw_circle(p, 26.0 if open_world else 20.0, col)
 		if id == WorldRegistry.current_id():
 			_atlas.draw_arc(p, 32.0, 0.0, TAU, 48, Color(1.0, 0.9, 0.6), 2.5, true)
-		var label_text := str(w["name"])
+		var label_text := tr(str(w["name"]))
 		var text_w := font.get_string_size(label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
 		_atlas.draw_string(font, p + Vector2(-text_w * 0.5, 48.0), label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, INK if open_world else MUTED)
 		if not open_world:

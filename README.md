@@ -4,7 +4,7 @@
 
 - 引擎：**Godot 4.7.2 Standard**（GDScript，Forward+，Jolt Physics），Windows 单机优先
 - 需求规格：[docs/DEVELOPMENT_SPEC.md](docs/DEVELOPMENT_SPEC.md)（唯一需求来源）；阶段指令：[docs/AGENT_HANDOFF.md](docs/AGENT_HANDOFF.md)
-- 当前进度：**M0、M1、第一轮正式美术、M2 天气系统、方块人物、泳池馆与地下水族馆、小动物、雷暴/彩虹/风、聊天框、小地图、开发者模式、第一人称双手、木屋生活、独木舟与湖上探索、性能优化、可潜水的海洋大缸、木屋国际象棋、动作轮盘、世界地图与全屏已完成**，自动检查 63/63 通过。见 [docs/QA_M0_M1.md](docs/QA_M0_M1.md)、[docs/ART_PASS.md](docs/ART_PASS.md)、[docs/M2_WEATHER_CHARACTER.md](docs/M2_WEATHER_CHARACTER.md)、[docs/POOLHOUSE_FAUNA.md](docs/POOLHOUSE_FAUNA.md)、[docs/CHAT.md](docs/CHAT.md)、[docs/MINIMAP_DEVMODE.md](docs/MINIMAP_DEVMODE.md)、[docs/CABIN_LIFE_CANOE.md](docs/CABIN_LIFE_CANOE.md)、[docs/PERFORMANCE.md](docs/PERFORMANCE.md)、[docs/AQUARIUM_DIVE.md](docs/AQUARIUM_DIVE.md)、[docs/CHESS.md](docs/CHESS.md)、[docs/INTERACTIONS_WORLDMAP.md](docs/INTERACTIONS_WORLDMAP.md)
+- 当前进度：**M0、M1、第一轮正式美术、M2 天气系统、方块人物、泳池馆与地下水族馆、小动物、雷暴/彩虹/风、聊天框、小地图、开发者模式、第一人称双手、木屋生活、独木舟与湖上探索、性能优化、可潜水的海洋大缸、木屋国际象棋、动作轮盘、世界地图与全屏、联机（最多 4 人）与中英界面已完成**，自动检查 68/68、联机检查 10/10 通过。见 [docs/QA_M0_M1.md](docs/QA_M0_M1.md)、[docs/ART_PASS.md](docs/ART_PASS.md)、[docs/M2_WEATHER_CHARACTER.md](docs/M2_WEATHER_CHARACTER.md)、[docs/POOLHOUSE_FAUNA.md](docs/POOLHOUSE_FAUNA.md)、[docs/CHAT.md](docs/CHAT.md)、[docs/MINIMAP_DEVMODE.md](docs/MINIMAP_DEVMODE.md)、[docs/CABIN_LIFE_CANOE.md](docs/CABIN_LIFE_CANOE.md)、[docs/PERFORMANCE.md](docs/PERFORMANCE.md)、[docs/AQUARIUM_DIVE.md](docs/AQUARIUM_DIVE.md)、[docs/CHESS.md](docs/CHESS.md)、[docs/INTERACTIONS_WORLDMAP.md](docs/INTERACTIONS_WORLDMAP.md)、[docs/COOP.md](docs/COOP.md)
 
 ![湖岸出生点](docs/screenshots/m1_01_spawn_dusk.png)
 
@@ -73,6 +73,8 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | 拍照 | F12（存到“图片\Dusk Lake”） |
 | 世界地图 | Tab（整张地图 + 世界总览，Esc 或 Tab 关闭） |
 | 全屏 | F11 或 Alt + Enter |
+| 联机 | 启动时的大厅里“创建房间 / 加入房间”（输入房间号）；游戏中 Esc →“多人房间” |
+| 界面语言 | 默认跟随系统（中文系统显示中文）；大厅或 设置 → 操作 里可改 English / 中文 |
 | 第一 / 第三人称 | V（第一人称能看到自己的双手） |
 | 小地图 | M（右上角圆形小地图，随朝向旋转，下方显示区域名） |
 | 暂停 / 释放鼠标 | Esc（“设置”：画面、视角、操作、小地图、开发者，自动保存；“人物外观”换发型和衣服） |
@@ -150,7 +152,10 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | `scripts/ui/ActionBar.gd` | G 动作轮盘（平时不显示）：休息、挥手、跳舞、鼓掌，F12 拍照（动作本身在 `FirstPersonController.do_emote()` 与 `CharacterModel` 的姿势和手势里） |
 | `scripts/ui/WorldMap.gd`、`scripts/core/WorldRegistry.gd`、`data/worlds/worlds.json` | Tab 世界地图；世界注册表（当前世界与规划中的其他世界，跨世界进入的预留接口） |
 | `data/weather/seasonal_fx.json` | 季节飘落物方案：落叶、花瓣，以及保留的“原版红点”（`legacy_red_motes`） |
-| `tests/TestRunner.tscn` | 自动检查（63 项：QA-01、QA-02、QA-10、天气、人物、泳池馆、游泳、动物、聊天框、小地图、开发者模式、设置、国际象棋、动作轮盘、世界地图等；`DUSK_TEST_ONLY=_test_xxx` 只跑某几项） |
+| `tests/TestRunner.tscn` | 自动检查（68 项：QA-01、QA-02、QA-10、天气、人物、泳池馆、游泳、动物、聊天框、小地图、开发者模式、设置、国际象棋、动作轮盘、世界地图等；`DUSK_TEST_ONLY=_test_xxx` 只跑某几项） |
+| `tests/NetTest.tscn` | 联机检查（两个进程本机回环，10 项：加入、同步人物与动作、门、聊天、独木舟、天气时间、房主离开、版本不一致） |
+| `scripts/net/`（NetworkManager、RemotePlayer、RemotePlayers、RoomCode）、`scripts/ui/LobbyMenu.gd` | 联机：房主自建房间（ENet）、房间号、远端玩家显示与同步；启动大厅 |
+| `locale/en.tsv`、`locale/en.po`、`devtools/make_po.sh` | 英文翻译表（界面原文是中文） |
 | `devtools/CaptureShots.tscn` | 按预设机位截图到 `docs/screenshots/` |
 | `devtools/Benchmark.tscn` | 固定机位测帧率、帧时、绘制调用与显存 |
 | `devtools/fetch_polyhaven.ps1` | 下载 Poly Haven 贴图并核对 md5，写清单 |
@@ -185,13 +190,14 @@ pwsh -File devtools/fetch_polyhaven.ps1
 - **国际象棋**：木屋茶几上的棋盘按 E 打开 2D 对弈，双人同屏或和电脑下（三档难度），3D 棋盘同步、棋局存档
 - **动作轮盘**：G 弹出，席地坐、躺下看天、挥手、跳舞、鼓掌，F12 拍照；水族馆换成珊瑚花坛、玻璃球灯和鲸鱼吊饰
 - **世界地图与全屏**：Tab 世界地图（含其他世界的预留槽位）；F11 全屏；秋天晴天的落叶改成零星几片，原版红点保留为可切换方案；雨下得慢一点、雨丝细一点
-- 自动检查（63 项）、截图与性能测试工具
+- **联机与中英界面**：启动大厅建房 / 用房间号加入，最多 4 人，人物、动作、门、聊天、独木舟、天气时间同步；界面默认跟随系统语言
+- 自动检查（68 项）与联机检查（10 项）、截图与性能测试工具
 
 ## 未实现（按里程碑）
 
 - **M3**：音频 Bus 与环境音、壁炉 / 灯 / 沙发交互
 - **M4**：存档读档、完整设置菜单、画质档位、Windows 导出、性能统计（尚未测帧率，不宣称 60 FPS）
-- **M5**：NPC、联机（只保留了 entity_id、统一交互契约与区域事件）
+- **M5**：NPC（联机已提前做了房主自建房间、最多 4 人的版本，见 docs/COOP.md）
 
 ## 素材与版权
 

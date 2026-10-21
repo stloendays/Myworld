@@ -80,6 +80,10 @@ const SHOTS := [
 	{"name": "m2h_09_autumn_clear_leaves", "climate": {"season": "AUTUMN", "hour": 15.0, "weather": "CLEAR"}, "eye": [-80, 1.65, -50], "ground": true, "look": [-78, 2.5, -28]},
 	{"name": "m2h_10_legacy_red_motes", "climate": {"season": "AUTUMN", "hour": 15.0, "weather": "CLEAR"}, "fx": "legacy_red_motes", "eye": [-80, 1.65, -50], "ground": true, "look": [-78, 2.5, -28]},
 	{"name": "m2h_11_rain_lighter", "climate": {"season": "SUMMER", "hour": 14.0, "weather": "HEAVY_RAIN"}, "eye": [-8, 2.65, 25], "look": [-69, 4, 37]},
+	{"name": "m2h_12_action_wheel_en", "lang": "en", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "pitch": -4.0, "wheel": 1},
+	{"name": "m2h_13_world_map_en", "lang": "en", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "world_map": true},
+	{"name": "m2h_14_lobby", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "lobby": true},
+	{"name": "m2h_15_lobby_en", "lang": "en", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "lobby": true},
 ]
 
 const OUTFITS := [
@@ -104,6 +108,8 @@ func _ready() -> void:
 
 
 func _run() -> void:
+	# 截图不受本机设置影响：窗口模式、语言跟随每个机位的 "lang"（默认跟随系统）
+	GameSettings.set_value("fullscreen", false, false)
 	_main = (load(MAIN_SCENE) as PackedScene).instantiate()
 	add_child(_main)
 	for layer_name in ["HUD", "DebugOverlay"]:
@@ -126,6 +132,8 @@ func _run() -> void:
 	for shot in SHOTS:
 		if not str(shot["name"]).begins_with(prefix):
 			continue
+		if GameSettings.language != str(shot.get("lang", "auto")):
+			GameSettings.set_value("language", str(shot.get("lang", "auto")), false)
 		var climate: Dictionary = shot.get("climate", DUSK)
 		if climate != last_climate:
 			var was_snowing := WorldState.weather_id == &"SNOW"
@@ -314,6 +322,12 @@ func _setup_player_view(shot: Dictionary) -> void:
 	var wheel := _main.get_node("ActionBar") as ActionBar
 	if wheel.wheel_open:
 		wheel._set_wheel(false)
+	var lobby := _main.get_node_or_null("LobbyMenu") as LobbyMenu
+	if lobby != null and lobby.is_open() != shot.get("lobby", false):
+		if shot.get("lobby", false):
+			lobby.open()
+		else:
+			lobby.close()
 	var world_map := _main.get_node("WorldMap") as WorldMap
 	if world_map.open != shot.get("world_map", false):
 		world_map.toggle()

@@ -169,7 +169,7 @@ func _reset() -> void:
 
 
 func _save() -> void:
-	_status.text = "已保存（下次启动自动读取）" if PlayerProfile.save_appearance() else "保存失败"
+	_status.text = tr("已保存（下次启动自动读取）") if PlayerProfile.save_appearance() else tr("保存失败")
 
 
 func _randomize() -> void:

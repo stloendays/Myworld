@@ -90,11 +90,11 @@ func _process(delta: float) -> void:
 	if not _dev.visible:
 		return
 	var player := get_tree().get_first_node_in_group("local_player") as FirstPersonController
-	var parts := PackedStringArray(["开发者模式（F2 退出）"])
+	var parts := PackedStringArray([tr("开发者模式（F2 退出）")])
 	if player != null and player.flying:
-		parts.append("飞行中" + ("  ·  穿墙" if player.noclip else ""))
+		parts.append(tr("飞行中") + (tr("  ·  穿墙") if player.noclip else ""))
 	else:
-		parts.append("F 飞行")
+		parts.append(tr("F 飞行"))
 	_dev.text = "  ·  ".join(parts)
 
 

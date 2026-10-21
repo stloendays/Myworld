@@ -41,14 +41,14 @@ func _process(delta: float) -> void:
 	var zones := WorldState.zones_of(player.entity_id)
 	var target := player.focused_target()
 	var lines := PackedStringArray()
-	lines.append("FPS %d  ·  帧时 %.1f ms" % [Engine.get_frames_per_second(), 1000.0 / maxf(1.0, Engine.get_frames_per_second())])
+	lines.append(tr("FPS %d  ·  帧时 %.1f ms") % [Engine.get_frames_per_second(), 1000.0 / maxf(1.0, Engine.get_frames_per_second())])
 	var season := ClimateData.season_profile(WorldState.season_id)
-	lines.append("%s 第 %d 天 %s  ·  %s" % [season.get("name", ""), WorldState.world_day,
-		ClimateData.format_time(WorldState.time_minutes), ClimateData.weather_profile(WorldState.weather_id).get("name", "")])
-	lines.append("位置  X %.1f   Y %.2f   Z %.1f" % [p.x, p.y, p.z])
-	lines.append("朝向  %.0f°（%s）" % [heading, COMPASS[int(round(heading / 45.0)) % 8]])
-	lines.append("区域  %s  ·  %s" % [", ".join(PackedStringArray(zones)) if not zones.is_empty() else "—",
-		"室内" if WorldState.is_indoors(player.entity_id) else "室外"])
+	lines.append(tr("%s 第 %d 天 %s  ·  %s") % [tr(str(season.get("name", ""))), WorldState.world_day,
+		ClimateData.format_time(WorldState.time_minutes), tr(str(ClimateData.weather_profile(WorldState.weather_id).get("name", "")))])
+	lines.append(tr("位置  X %.1f   Y %.2f   Z %.1f") % [p.x, p.y, p.z])
+	lines.append(tr("朝向  %.0f°（%s）") % [heading, tr(COMPASS[int(round(heading / 45.0)) % 8])])
+	lines.append(tr("区域  %s  ·  %s") % [", ".join(PackedStringArray(zones)) if not zones.is_empty() else "—",
+		tr("室内") if WorldState.is_indoors(player.entity_id) else tr("室外")])
 	if target != null:
-		lines.append("目标  %s（%s）" % [target.uid, target.get_state()])
+		lines.append(tr("目标  %s（%s）") % [target.uid, target.get_state()])
 	_label.text = "\n".join(lines)

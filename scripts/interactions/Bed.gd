@@ -53,6 +53,10 @@ func can_interact(_actor: Node) -> bool:
 
 
 func interact(actor: Node) -> void:
+	# 联机时时间以房主为准：只有房主能睡过去，访客睡了也会被同步改回
+	if Net.is_client():
+		EventBus.toast_requested.emit(tr("联机时只有房主能睡到早上"))
+		return
 	sleep(actor)
 
 
@@ -67,7 +71,7 @@ func sleep(actor: Node, instant := false) -> float:
 		climate.skip_hours(hours)
 	if actor is FirstPersonController:
 		(actor as FirstPersonController).teleport_to(to_global(wake_point))
-	EventBus.toast_requested.emit("睡了 %.1f 小时 · 现在 %s" % [hours, ClimateData.format_time(WorldState.time_minutes)])
+	EventBus.toast_requested.emit(tr("睡了 %.1f 小时 · 现在 %s") % [hours, ClimateData.format_time(WorldState.time_minutes)])
 	if not instant:
 		await get_tree().create_timer(0.4).timeout
 		await _fade_to(0.0, 1.2)

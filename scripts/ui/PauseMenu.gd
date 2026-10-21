@@ -1,5 +1,5 @@
 extends CanvasLayer
-## Esc 暂停菜单：释放鼠标、暂停世界。主菜单：继续 / 设置 / 人物外观 / 退出。
+## Esc 暂停菜单：释放鼠标、暂停世界（联机时不暂停，只让人物站定）。主菜单：继续 / 多人房间 / 设置 / 人物外观 / 退出。
 ## 设置分页：画面、视角、操作、小地图、开发者；每项改动立刻生效并保存到 user://settings.json。
 ## 未暂停时点击窗口会重新锁定鼠标。
 
@@ -54,7 +54,9 @@ func _set_open(open: bool) -> void:
 		_show_menu()
 	else:
 		_refresh()
-	get_tree().paused = open
+	# 联机时世界不能停（房主一停，大家的时间天气都停了）：只让自己的人物站定
+	get_tree().paused = open and not Net.is_online()
+	PlayerHold.set_held(self, get_tree(), open)
 	if _can_capture():
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if open or _dev_panel_open() else Input.MOUSE_MODE_CAPTURED
 
@@ -109,9 +111,9 @@ func _build_main_menu() -> Control:
 	title.add_theme_font_size_override("font_size", 28)
 	box.add_child(title)
 	var keys := Label.new()
-	keys.text = "WASD 移动 · Shift 奔跑 · 空格 跳跃/上浮 · C 下潜 · E 交互 · V 视角\nG 动作轮盘（1 休息 · 2 挥手 · 3 跳舞 · 4 鼓掌）· F12 拍照\nM 小地图 · Tab 世界地图 · F11 全屏 · F3 坐标 · F2 开发者模式（F 飞行 · N 穿墙 · F4 面板）"
+	keys.text = "WASD 移动 · Shift 奔跑 · 空格 跳跃/上浮 · C 下潜 · E 交互 · V 视角\nG 动作轮盘（1 休息 · 2 挥手 · 3 跳舞 · 4 鼓掌）· F12 拍照 · T 聊天\nM 小地图 · Tab 世界地图 · F11 全屏 · F3 坐标 · F2 开发者模式（F 飞行 · N 穿墙 · F4 面板）"
 	box.add_child(keys)
-	for item in [["继续", _close], ["全屏 / 窗口（F11）", func() -> void: GameSettings.set_value("fullscreen", not GameSettings.fullscreen)], ["设置", open_settings.bind(0)], ["人物外观", _show_wardrobe], ["退出游戏", _quit]]:
+	for item in [["继续", _close], ["多人房间", _open_room], ["全屏 / 窗口（F11）", func() -> void: GameSettings.set_value("fullscreen", not GameSettings.fullscreen)], ["设置", open_settings.bind(0)], ["人物外观", _show_wardrobe], ["退出游戏", _quit]]:
 		var b := Button.new()
 		b.text = item[0]
 		b.pressed.connect(item[1])
@@ -154,6 +156,7 @@ func _build_settings() -> Control:
 	_slider(control, "mouse_sensitivity", "鼠标灵敏度", 0.0005, 0.008, 0.0001, "%.4f")
 	_check(control, "invert_y", "鼠标 Y 轴反转")
 	_check(control, "emote_third_person", "挥手 / 跳舞 / 鼓掌时自动切到第三人称")
+	_option(control, "language", "语言 / Language", GameSettings.LANGUAGE_NAMES, GameSettings.LANGUAGES)
 
 	var minimap := _tab(tabs, "小地图")
 	_check(minimap, "minimap_enabled", "显示小地图（M）")
@@ -283,6 +286,13 @@ func _reset_defaults() -> void:
 
 func _close() -> void:
 	_set_open(false)
+
+
+func _open_room() -> void:
+	_set_open(false)
+	var lobby := get_parent().get_node_or_null("LobbyMenu") as LobbyMenu
+	if lobby != null:
+		lobby.open_room()
 
 
 func _quit() -> void:

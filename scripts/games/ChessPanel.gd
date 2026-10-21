@@ -127,7 +127,7 @@ func _build() -> void:
 	side.add_child(mode_opt)
 	var level_opt := OptionButton.new()
 	for n in LEVEL_NAMES:
-		level_opt.add_item("电脑难度：" + n)
+		level_opt.add_item(tr("电脑难度：") + tr(n))
 	level_opt.select(LEVELS.find(level))
 	level_opt.item_selected.connect(_on_level)
 	level_opt.name = "Level"
@@ -230,21 +230,21 @@ func _draw_piece(rect: Rect2, p: int) -> void:
 func _refresh() -> void:
 	_board.queue_redraw()
 	var r := game.result()
-	var side := "白方" if game.white_to_move else "黑方"
+	var side := tr("白方") if game.white_to_move else tr("黑方")
 	var text := ""
 	match r:
-		"checkmate_white": text = "将死！白方胜"
-		"checkmate_black": text = "将死！黑方胜"
-		"stalemate": text = "逼和（无子可动）"
-		"fifty": text = "和棋（50 步无吃子、无兵动）"
-		"repetition": text = "和棋（同一局面出现三次）"
-		"material": text = "和棋（双方子力都不足以将死）"
+		"checkmate_white": text = tr("将死！白方胜")
+		"checkmate_black": text = tr("将死！黑方胜")
+		"stalemate": text = tr("逼和（无子可动）")
+		"fifty": text = tr("和棋（50 步无吃子、无兵动）")
+		"repetition": text = tr("和棋（同一局面出现三次）")
+		"material": text = tr("和棋（双方子力都不足以将死）")
 		_:
-			text = "%s走棋%s" % [side, "（将军！）" if game.in_check() else ""]
+			text = tr("%s走棋%s") % [side, tr("（将军！）") if game.in_check() else ""]
 			if thinking:
-				text += "\n电脑思考中…"
+				text += "\n" + tr("电脑思考中…")
 			elif _is_human_turn():
-				text += "\n轮到你"
+				text += "\n" + tr("轮到你")
 	_status.text = text
 	var lines := PackedStringArray()
 	for i in range(0, game.moves_san.size(), 2):

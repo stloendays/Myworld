@@ -54,7 +54,7 @@ static func enter(id: String) -> bool:
 	if w.is_empty():
 		return false
 	if id == current_id():
-		EventBus.toast_requested.emit("你就在「%s」" % w["name"])
+		EventBus.toast_requested.emit(TranslationServer.translate("你就在「%s」") % TranslationServer.translate(str(w["name"])))
 	else:
-		EventBus.toast_requested.emit("「%s」还在建设中，以后从传送门进入" % w["name"])
+		EventBus.toast_requested.emit(TranslationServer.translate("「%s」还在建设中，以后从传送门进入") % TranslationServer.translate(str(w["name"])))
 	return false

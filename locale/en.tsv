@@ -1,0 +1,375 @@
+  ·  穿墙	  ·  noclip
+%s 来到了湖畔。	%s arrived at the lake.
+%s 的房间	%s's room
+%s 离开了湖畔。	%s left the lake.
+%s 第 %d 天 %s  ·  %s	%s · day %d %s  ·  %s
+%s季不会出现%s。	In %s there is no %s.
++1 小时	+1 hour
+/me <动作>	/me <action>
+/name <名字>	/name <name>
+/preset [名称]	/preset [name]
+/season [季节]	/season [season]
+/time [时:分]	/time [hh:mm]
+/tp <x> <z> | /tp 出生点	/tp <x> <z> | /tp spawn
+/weather [天气]	/weather [weather]
+Dusk Lake · 暂停	Dusk Lake · Paused
+E  关上木门	E  Close the door
+E  打开木门	E  Open the door
+F 飞行	F fly
+FPS %d  ·  帧时 %.1f ms	FPS %d  ·  frame %.1f ms
+Tailscale（双方都装了 Tailscale）	Tailscale (both players use Tailscale)
+WASD 移动 · Shift 奔跑 · 空格 跳跃/上浮 · C 下潜 · E 交互 · V 视角\nT 聊天 · M 小地图 · F3 坐标 · F2 开发者模式（F 飞行 · N 穿墙 · F4 面板）	WASD move · Shift run · Space jump/swim up · C dive · E interact · V camera\nT chat · M minimap · F3 position · F2 developer mode (F fly · N noclip · F4 panel)
+\n地面湿润 %.2f  积雪 %.2f  时间流速 ×%d%s	\nwetness %.2f  snow %.2f  time speed ×%d%s
+\n太阳高度 %.1f°  方位 %.0f°  夜 %.2f  风 %.2f	\nsun elevation %.1f°  azimuth %.0f°  night %.2f  wind %.2f
+不显示	Hidden
+不能传送到 (%.1f, %.1f)：%s。	Can't teleport to (%.1f, %.1f): %s.
+不限	Unlimited
+东	E
+东北	NE
+东南	SE
+人物外观	Appearance
+以第三人称描述动作	Describe an action in the third person
+传送	Teleport
+传送到室外地面（不能传进建筑）	Teleport to outdoor ground (not into buildings)
+位置  X %.1f   Y %.2f   Z %.1f	Position  X %.1f   Y %.2f   Z %.1f
+你的名字	Your name
+你的房间	Your room
+你的网络没有公网 IP（运营商级 NAT），其他网络的朋友连不进来。同一个 Wi-Fi 的朋友用局域网房间号；异地朋友可以双方都装 Tailscale，再用它的房间号。	Your connection has no public IP (carrier-grade NAT), so friends on other networks can't reach you. Friends on the same Wi-Fi can use the LAN code; friends elsewhere can install Tailscale on both PCs and use the Tailscale code.
+保存	Save
+保存失败	Save failed
+修改聊天名字	Change your name
+全屏	Fullscreen
+公网（其他网络的朋友）	Internet (friends on other networks)
+关	off
+出生点	Spawn point
+列出命令	List commands
+创建房间	Host a Room
+加入	Join
+加入房间	Join a Room
+北	N
+区域  %s  ·  %s	Zone  %s  ·  %s
+单人游戏	Single Player
+南	S
+只显示右手	Right hand only
+只有房主可以改时间、天气和季节。	Only the host can change the time, weather and season.
+右肩	Right shoulder
+名字需要 1–%d 个字。	Names need 1–%d characters.
+启动时视角	Starting camera
+回到湖畔	Back to the lake
+地下水族馆	Underground aquarium
+坐标 x %.1f  y %.1f  z %.1f%s	Position x %.1f  y %.1f  z %.1f%s
+坐标信息（F3）	Position info (F3)
+垂直同步	V-Sync
+复制	Copy
+复制房间号	Copy room code
+多人房间	Multiplayer
+天气正在转为%s…	The weather is turning to %s…
+天气转为%s。	The weather is now %s.
+天气（8 秒过渡；灰色 = 本季不出现）	Weather (8 s transition; grey = not this season)
+季节	Seasons
+室内	indoors
+室外	outdoors
+小地图	Minimap
+小地图（M）	Minimap (M)
+局域网（同一个 Wi-Fi）	LAN (same Wi-Fi)
+左肩	Left shoulder
+已传送到 (%.1f, %.1f)。	Teleported to (%.1f, %.1f).
+已保存（下次启动自动读取）	Saved (loaded on next start)
+已加入 %s 的房间。	Joined %s's room.
+已复制	Copied
+已应用预设 %s。	Applied preset %s.
+已离开房间，回到你自己的湖畔。	You left the room and are back at your own lake.
+帧率上限	Frame rate limit
+应用天气预设；不带名称列出全部	Apply a weather preset; list them without a name
+开	on
+开发者	Developer
+开发者模式（F2 退出）	Developer mode (F2 to exit)
+开发者模式（F2）	Developer mode (F2)
+开发者模式（F4 收起面板 · F2 退出）	Developer mode (F4 hide panel · F2 exit)
+开发者模式：左侧出现开发者面板，可改天气、季节、时间，传送到各地点；\n按 F 飞行（空格上升、C 下降、Shift 加速），飞行时按 N 穿墙。退出开发者模式会自动落地。\n开发者模式不保存，每次启动都是普通模式。	Developer mode shows a panel on the left to change weather, season and time, and to teleport;\npress F to fly (Space up, C down, Shift faster) and N while flying to pass through walls. Leaving developer mode lands you.\nDeveloper mode is not saved; every start is in normal mode.
+当前坐标与所在区域	Show your position and zone
+恢复默认	Reset to defaults
+房主已离开，房间关闭了。你回到了自己的湖畔。	The host left and the room closed. You are back at your own lake.
+房主拒绝了连接	The host refused the connection
+房间号	Room code
+房间号不对，请检查有没有抄错	That room code isn't valid. Please check it for typos
+房间号应为 7 位或 10 位	A room code has 7 or 10 characters
+房间号里有无效的字符	The room code contains invalid characters
+房间已创建。把房间号发给朋友，他们就能加入。	Room created. Send the room code to your friends so they can join.
+房间已满	The room is full
+操作	Controls
+旅人	Traveler
+无法在端口 %d 上建房（可能已被占用）	Can't host on port %d (it may be in use)
+无法连接到 %s	Can't connect to %s
+时间	Time
+时间设为 %s。	Time set to %s.
+显示	Display
+显示双手	Both hands
+显示小地图（M）	Show minimap (M)
+显示范围（半径）	Range (radius)
+暂停/继续时间	Pause/resume time
+暮色湖畔 · 一片属于你的湖	A lake of your own at dusk
+朝向  %.0f°（%s）	Heading  %.0f° (%s)
+木屋	Cabin
+木屋室内	Cabin interior
+未知命令 /%s。输入 /help 查看命令。	Unknown command /%s. Type /help for commands.
+查看或切换天气：晴 阴 小雨 大雨 雷雨 雾 下雪	Show or change the weather: clear, overcast, light-rain, heavy-rain, thunderstorm, fog, snow
+查看或设置时刻，如 /time 18:30	Show or set the time, e.g. /time 18:30
+查看或跳到某季：春 夏 秋 冬	Show or jump to a season: spring, summer, autumn, winter
+欢迎来到暮色湖畔。按 T 聊天，输入 /help 查看命令。	Welcome to Dusk Lake. Press T to chat; type /help for commands.
+正在尝试打开路由器端口（UPnP）…	Trying to open a port on your router (UPnP)…
+正在连接…	Connecting…
+没找到支持 UPnP 的路由器，其他网络的朋友连不进来。同一个 Wi-Fi 的朋友用局域网房间号；异地朋友可以双方都装 Tailscale，再用它的房间号。	No UPnP router found, so friends on other networks can't reach you. Friends on the same Wi-Fi can use the LAN code; friends elsewhere can install Tailscale on both PCs and use the Tailscale code.
+没有“%s”这个季节。可选：%s	There is no season "%s". Options: %s
+没有“%s”这种天气。可选：%s	There is no weather "%s". Options: %s
+没有预设“%s”。输入 /preset 列出全部。	There is no preset "%s". Type /preset to list them.
+泳池馆	Pool house
+泳池馆大厅	Pool hall
+泳池馆正门	Pool house door
+清空聊天记录	Clear the chat
+渲染比例	Render scale
+游戏中按 V 随时切换第一 / 第三人称	Press V in game to switch between first and third person
+版本不一致	Version mismatch
+版本不一致：房主是 %s，你是 %s。请双方安装同一版本。	Version mismatch: the host has %s and you have %s. Please both install the same version.
+玩家 %d / %d：	Players %d / %d:
+现在是%s。可选：%s	It's %s now. Options: %s
+现在是%s季（第 %d 天）。	It's %s (day %d).
+现在是单人游戏。可以创建房间请朋友来，或加入朋友的房间。	You're playing alone. Host a room to invite friends, or join a friend's room.
+现在是第 %d 天 %s。	It's day %d, %s.
+用法：/me <动作>	Usage: /me <action>
+用法：/time 时:分，例如 /time 18:30	Usage: /time hh:mm, e.g. /time 18:30
+用法：/tp <x> <z> 或 /tp 出生点	Usage: /tp <x> <z> or /tp spawn
+画面	Display
+目标  %s（%s）	Target  %s (%s)
+离开房间	Leave Room
+移动	Movement
+空命令。输入 /help 查看命令。	Empty command. Type /help for commands.
+穿墙（N）	Noclip (N)
+穿墙：%s（N）	Noclip: %s (N)
+端口应为 1–65535	The port must be 1–65535
+第一/第三人称（V）	First/third person (V)
+第一人称	First person
+第一人称的手	First-person hands
+第一次建房时 Windows 可能会问是否允许 Dusk Lake 访问网络，请选择“允许”。	The first time you host, Windows may ask whether Dusk Lake may use the network. Choose "Allow".
+第三人称	Third person
+第三人称肩位	Third-person shoulder
+第三人称距离	Third-person distance
+继续	Resume
+聊天名字已改为 %s。	Your name is now %s.
+西	W
+西北	NW
+西南	SW
+视角	View
+视野 FOV	Field of view
+设置	Settings
+说点什么…（/help 查看命令，Esc 取消）	Say something… (/help for commands, Esc to cancel)
+请输入房间号	Please enter a room code
+走路时镜头晃动	Head bob while walking
+超出地图（|x|、|z| ≤ %d）	outside the map (|x|, |z| ≤ %d)
+路由器拒绝打开端口。可以在路由器里手动转发 UDP %d，或改用局域网 / Tailscale 房间号。	Your router refused to open the port. Forward UDP %d on your router manually, or use the LAN / Tailscale code.
+路由器端口已打开：其他网络的朋友可以用公网房间号加入。	Router port opened: friends on other networks can join with the Internet code.
+跳到%s季第一天。	Jumped to the first day of %s.
+输入朋友发来的房间号（例如 K7Q-3MXA），也可以直接输入 IP 地址。	Enter the room code your friend sent you (for example K7Q-3MXA), or an IP address.
+返回	Back
+进入%s季。	The season turns to %s.
+连接失败：找不到这个房间（房主没开房，或网络不通）	Connection failed: the room wasn't found (the host isn't hosting, or the network can't reach them)
+连接超时：找不到这个房间（房主没开房，或网络不通）	Connection timed out: the room wasn't found (the host isn't hosting, or the network can't reach them)
+退出游戏	Quit
+那里是建筑（%s），请从门进去	that's a building (%s); go in through the door
+那里是湖面	that's the lake
+随朝向旋转（关闭 = 北朝上）	Rotate with heading (off = north up)
+随机搭配	Randomize
+预设	Presets
+预设：	Presets:
+飞行中	Flying
+飞行时：WASD 平移 · 空格上升 · C / Ctrl 下降 · Shift 三倍速	While flying: WASD move · Space up · C / Ctrl down · Shift 3× speed
+飞行速度 %d m/s	Fly speed %d m/s
+飞行（F）	Fly (F)
+飞行：%s（F）	Fly: %s (F)
+鼠标 Y 轴反转	Invert mouse Y
+鼠标灵敏度	Mouse sensitivity
+（你）	 (you)
+（房主）	 (host)
+（暂停）	 (paused)
+（由 %s 过渡中 %d%%）	 (changing from %s, %d%%)
+春	spring
+夏	summer
+秋	autumn
+冬	winter
+晴	clear
+阴	overcast
+小雨	light-rain
+大雨	heavy-rain
+雷雨	thunderstorm
+雾	fog
+下雪	snow
+湖泊	Lake
+木质码头	Wooden dock
+木屋前院	Cabin yard
+北部针叶林	North pine forest
+西北观景点	Northwest lookout
+南部林间草甸	South forest meadow
+泳池馆前庭	Pool house forecourt
+木屋门廊	Cabin porch
+码头尽头	End of the dock
+泳池馆门口	Pool house entrance
+泳池大厅	Pool hall
+南部草甸	South meadow
+湖心上空（飞行）	Above the lake (flying)
+脸	Face
+发型	Hair
+帽子	Hat
+上衣	Top
+下装	Bottoms
+鞋	Shoes
+背饰	Back
+肤色	Skin
+瞳色	Eyes
+发色	Hair colour
+帽子饰色	Hat accent
+上衣饰色	Top accent
+背包	Backpack
+T 恤	T-shirt
+不戴	None
+丸子头	Bun
+光头	Bald
+夹克	Jacket
+平静	Calm
+微笑	Smile
+无	None
+棒球帽	Cap
+毛线帽	Beanie
+短发	Short
+短裤	Shorts
+运动鞋	Sneakers
+连帽卫衣	Hoodie
+长发	Long
+长裤	Trousers
+靴子	Boots
+马尾	Ponytail
+兔子	Rabbit
+狐狸	Fox
+松鼠	Squirrel
+绿头鸭	Mallard
+知更鸟	Robin
+蝴蝶	Butterfly
+小丑鱼	Clownfish
+蓝倒吊	Blue tang
+黄金吊	Yellow tang
+银鱼	Silverside
+海龟	Sea turtle
+水母	Jellyfish
+铸铁炉	Stove
+E  熄灭炉火	E  Put out the fire
+E  生火	E  Light the fire
+落地灯	Floor lamp
+台灯	Table lamp
+吊灯	Ceiling light
+门廊灯	Porch light
+E  关落地灯	E  Turn off the floor lamp
+E  开落地灯	E  Turn on the floor lamp
+E  关台灯	E  Turn off the table lamp
+E  开台灯	E  Turn on the table lamp
+E  关吊灯	E  Turn off the ceiling light
+E  开吊灯	E  Turn on the ceiling light
+E  关门廊灯	E  Turn off the porch light
+E  开门廊灯	E  Turn on the porch light
+沙发	Sofa
+扶手椅	Armchair
+门廊长椅	Porch bench
+躺椅	Lounger
+长椅	Bench
+床	Bed
+E  睡觉（睡到早上 7 点）	E  Sleep (until 7 am)
+E  小睡一会儿（1 小时）	E  Take a nap (1 hour)
+睡了 %.1f 小时 · 现在 %s	Slept %.1f hours · it's %s
+联机时只有房主能睡到早上	In a shared room only the host can sleep the night away
+E  坐下	E  Sit down
+E  站起来（或按移动键）	E  Stand up (or press a movement key)
+E  下船（靠近码头或岸边）  ·  W/S 划  A/D 转向  Shift 用力划	E  Get out (near the dock or shore)  ·  W/S paddle  A/D steer  Shift paddle hard
+离岸太远：划到岸边或码头再下船	Too far from shore: paddle to the shore or dock to get out
+E  上独木舟	E  Board the canoe
+独木舟	Canoe
+发现：%s（%d / %d）	Discovered: %s (%d / %d)
+独木舟旁（码头）	By the canoe (dock)
+湖心小岛	Lake island
+E  关%s	E  Turn off %s
+E  开%s	E  Turn on %s
+你就在「%s」	You are already in %s
+「%s」还在建设中，以后从传送门进入	%s is still being built — you will reach it through a portal later
+双人同屏	Two players, one screen
+人机 · 我执白	Vs computer · I play White
+人机 · 我执黑	Vs computer · I play Black
+简单	Easy
+普通	Normal
+困难	Hard
+国际象棋 · Chess	Chess
+电脑难度：	Computer level:
+新局	New game
+悔棋	Undo
+翻转棋盘	Flip board
+关闭（Esc）	Close (Esc)
+升变为：	Promote to:
+马	Knight
+象	Bishop
+车	Rook
+后	Queen
+着法记录	Moves
+白方	White
+黑方	Black
+将死！白方胜	Checkmate! White wins
+将死！黑方胜	Checkmate! Black wins
+逼和（无子可动）	Stalemate (no legal moves)
+和棋（50 步无吃子、无兵动）	Draw (50 moves without a capture or pawn move)
+和棋（同一局面出现三次）	Draw (same position three times)
+和棋（双方子力都不足以将死）	Draw (neither side can checkmate)
+%s走棋%s	%s to move%s
+（将军！）	 (check!)
+电脑思考中…	Computer is thinking…
+轮到你	Your move
+国际象棋	Chess
+E  下国际象棋	E  Play chess
+坐下	Sit down
+躺下	Lie down
+挥手	Wave
+跳舞	Dance
+鼓掌	Clap
+起身	Stand up
+休息	Rest
+坐下 / 躺下 / 起身	Sit / lie down / stand up
+    ·    E 对着别处：站起来	    ·    E elsewhere: stand up
+现在不能%s	You can't %s right now
+松开 G 确认	Release G to confirm
+动作	Actions
+拍照 F12  ·  G / Esc 收起	Photo F12  ·  G / Esc to close
+照片没存下来	The photo could not be saved
+已拍照，存在图片文件夹的 %s 里	Photo saved to the %s folder in Pictures
+季节飘落物（data/weather/seasonal_fx.json）	Seasonal particles (data/weather/seasonal_fx.json)
+按季节	By season
+关闭	Off
+落叶	Falling leaves
+花瓣	Petals
+原版红点	Legacy red motes
+WASD 移动 · Shift 奔跑 · 空格 跳跃/上浮 · C 下潜 · E 交互 · V 视角\nG 动作轮盘（1 休息 · 2 挥手 · 3 跳舞 · 4 鼓掌）· F12 拍照 · T 聊天\nM 小地图 · Tab 世界地图 · F11 全屏 · F3 坐标 · F2 开发者模式（F 飞行 · N 穿墙 · F4 面板）	WASD move · Shift run · Space jump/swim up · C dive · E interact · V view\nG action wheel (1 rest · 2 wave · 3 dance · 4 clap) · F12 photo · T chat\nM minimap · Tab world map · F11 fullscreen · F3 coordinates · F2 developer mode (F fly · N noclip · F4 panel)
+全屏 / 窗口（F11）	Fullscreen / window (F11)
+画质	Quality
+低（轻薄本）	Low (thin laptops)
+中	Medium
+高（推荐）	High (recommended)
+极高	Ultra
+动态分辨率（GPU 忙时自动降低渲染比例，用 FSR 放大）	Dynamic resolution (lowers render scale when the GPU is busy, upscaled with FSR)
+全屏（F11 或 Alt + Enter 随时切换）	Fullscreen (F11 or Alt + Enter at any time)
+挥手 / 跳舞 / 鼓掌时自动切到第三人称	Switch to third person while waving, dancing or clapping
+世界总览	Worlds
+Tab / Esc 关闭	Tab / Esc to close
+世界地图 · %s	World map · %s
+当前所在	You are here
+可前往	Open
+规划中	Planned
+暮色湖	Dusk Lake
+暮色湖畔	Dusk Lake
+未命名世界 · 二	World II
+未命名世界 · 三	World III
+湖、森林、木屋、玻璃泳池馆与地下水族馆。	A lake, forest, cabin, glass pool house and an underground aquarium.
+规划中：以后从暮色湖畔的传送门进入。	Planned: you will enter it through a portal from Dusk Lake.
+规划中。	Planned.

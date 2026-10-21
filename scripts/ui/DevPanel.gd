@@ -51,19 +51,19 @@ func _process(_delta: float) -> void:
 	var w := ClimateData.weather_profile(WorldState.weather_id)
 	var s := ClimateData.season_profile(WorldState.season_id)
 	var env := get_tree().get_first_node_in_group("environment_director") as EnvironmentDirector
-	var text := "%s 第 %d 天 %s  ·  %s" % [s.get("name", ""), WorldState.world_day, ClimateData.format_time(WorldState.time_minutes), w.get("name", "")]
+	var text := tr("%s 第 %d 天 %s  ·  %s") % [tr(str(s.get("name", ""))), WorldState.world_day, ClimateData.format_time(WorldState.time_minutes), tr(str(w.get("name", "")))]
 	if WorldState.weather_progress < 1.0:
-		text += "（由 %s 过渡中 %d%%）" % [ClimateData.weather_profile(WorldState.weather_from).get("name", ""), int(WorldState.weather_progress * 100.0)]
+		text += tr("（由 %s 过渡中 %d%%）") % [tr(str(ClimateData.weather_profile(WorldState.weather_from).get("name", ""))), int(WorldState.weather_progress * 100.0)]
 	if env != null:
-		text += "\n太阳高度 %.1f°  方位 %.0f°  夜 %.2f  风 %.2f" % [env.sun_elevation, env.sun_azimuth, env.night, env.wind_strength]
-	text += "\n地面湿润 %.2f  积雪 %.2f  时间流速 ×%d%s" % [WorldState.ground_wetness, WorldState.ground_snow, int(WorldState.time_scale), "（暂停）" if WorldState.time_paused else ""]
+		text += tr("\n太阳高度 %.1f°  方位 %.0f°  夜 %.2f  风 %.2f") % [env.sun_elevation, env.sun_azimuth, env.night, env.wind_strength]
+	text += tr("\n地面湿润 %.2f  积雪 %.2f  时间流速 ×%d%s") % [WorldState.ground_wetness, WorldState.ground_snow, int(WorldState.time_scale), tr("（暂停）") if WorldState.time_paused else ""]
 	_status.text = text
 	for id in _weather_buttons:
 		(_weather_buttons[id] as Button).disabled = not ClimateData.is_allowed(WorldState.season_id, id)
 	var p := _player()
 	if p != null:
-		_fly_button.text = "飞行：%s（F）" % ("开" if p.flying else "关")
-		_noclip_button.text = "穿墙：%s（N）" % ("开" if p.noclip else "关")
+		_fly_button.text = tr("飞行：%s（F）") % (tr("开") if p.flying else tr("关"))
+		_noclip_button.text = tr("穿墙：%s（N）") % (tr("开") if p.noclip else tr("关"))
 		_noclip_button.disabled = not p.flying
 
 
@@ -141,7 +141,7 @@ func _build() -> void:
 	speed.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	speed.focus_mode = Control.FOCUS_NONE
 	speed.value_changed.connect(_on_fly_speed)
-	_speed_label.text = "飞行速度 %d m/s" % int(GameSettings.fly_speed)
+	_speed_label.text = tr("飞行速度 %d m/s") % int(GameSettings.fly_speed)
 	move.add_child(_speed_label)
 	move.add_child(speed)
 	box.add_child(move)
@@ -225,7 +225,7 @@ func _button(text: String, action: Callable) -> Button:
 
 func _on_fly_speed(v: float) -> void:
 	GameSettings.set_value("fly_speed", v)
-	_speed_label.text = "飞行速度 %d m/s" % int(v)
+	_speed_label.text = tr("飞行速度 %d m/s") % int(v)
 
 
 ## 季节飘落物方案：""（按季节）/ 方案 id（如保留的“原版红点” legacy_red_motes）/ "off"。只影响本次运行。

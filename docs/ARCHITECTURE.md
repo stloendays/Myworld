@@ -59,6 +59,8 @@ Main (Main.gd)
 | `EventBus`（Autoload） | 已实现 | 只发通知不存状态 |
 | `GameSettings`（Autoload） | 已实现 | FOV、灵敏度、按键表、UI 中文字体主题 |
 | `PlayerProfile`（Autoload） | 已实现 | 本地玩家外观，存 `user://appearance.json` |
+| `Net`（Autoload，NetworkManager）/ `RemotePlayers` / `LobbyMenu` | M2 扩展已实现 | 房主自建房间（ENet），20 Hz 同步人物位置与身体状态（坐、躺、划船、手势），4 Hz 广播房主的时间天气；门等交互由房主核对距离后广播；协议版本 2。见 `docs/COOP.md` |
+| 界面语言 | 已实现 | 原文中文，`locale/en.po` 英文；`GameSettings.language` = auto（跟随系统）/ en / zh |
 | `InteractionSystem` / `Interactable` | 已实现 | 统一 `interact(actor, target)`；子类提供提示、状态、`apply_state()` |
 | `WorldClock` / `SeasonController` / `WeatherController` / `ClimateSystem` | M2 已实现 | 只写 WorldState、只发事件，不碰任何画面节点 |
 | `EnvironmentDirector` | M2 已实现 | 只读 WorldState，把状态合成为画面；通过 `seasonal`、`precipitation`、`lake_reflection` 组通知各生成器 |
