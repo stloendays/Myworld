@@ -34,6 +34,7 @@ var _collision: StaticBody3D = null
 
 func _ready() -> void:
 	add_to_group("seasonal")
+	add_to_group("ground_cover")
 	rebuild()
 
 

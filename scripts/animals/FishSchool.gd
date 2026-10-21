@@ -31,6 +31,10 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	# 鱼缸在地下：相机离缸 45 m 以外根本看不见，不更新（省 CPU）
+	var cam := get_viewport().get_camera_3d()
+	if cam != null and cam.global_position.distance_squared_to(bounds.get_center()) > 45.0 * 45.0:
+		return
 	for sp in _group_targets:
 		if _rng.randf() < delta * 0.25:
 			_group_targets[sp] = _random_point(FaunaData.species(str(sp)))

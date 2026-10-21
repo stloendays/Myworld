@@ -13,6 +13,8 @@ var radius := 10.0
 var model: BlockyModel = null
 var active := true
 var fleeing := false
+var _lod_accum := 0.0
+var _lod_frame := 0
 
 var _rng := RandomNumberGenerator.new()
 var _target := Vector3.ZERO
@@ -45,7 +47,23 @@ func setup(id: StringName, species: String, zone_center: Vector2, zone_radius: f
 	add_to_group("fauna")
 
 
+## 更新降频（大作里的“AI LOD”）：离相机 70 m 外每 4 帧更新一次，150 m 外每 12 帧一次，
+## 跳过的帧把时间攒起来一起算，所以走动速度不变，只是远处的动画没那么细。
+func _lod_interval() -> int:
+	var cam := get_viewport().get_camera_3d()
+	if cam == null:
+		return 1
+	var d := cam.global_position.distance_squared_to(global_position)
+	return 12 if d > 150.0 * 150.0 else (4 if d > 70.0 * 70.0 else 1)
+
+
 func _physics_process(delta: float) -> void:
+	_lod_accum += delta
+	_lod_frame += 1
+	if _lod_frame % _lod_interval() != 0:
+		return
+	delta = minf(_lod_accum, 0.25)
+	_lod_accum = 0.0
 	_rule_timer -= delta
 	if _rule_timer <= 0.0:
 		_rule_timer = 1.0 + _rng.randf() * 0.5
