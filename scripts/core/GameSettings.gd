@@ -17,6 +17,8 @@ const ACTIONS := {
 	"interact": [KEY_E],
 	"pause": [KEY_ESCAPE],
 	"toggle_debug": [KEY_F3],
+	"toggle_weather_panel": [KEY_F4],
+	"toggle_view": [KEY_V],
 }
 
 var fov := 75.0

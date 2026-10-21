@@ -6,6 +6,8 @@ var _root: Control
 var _open := false
 var _fov_value: Label
 var _sens_value: Label
+var _menu: Control
+var _wardrobe = null   ## WardrobePanel（带 closed 信号）
 
 
 func _ready() -> void:
@@ -35,6 +37,8 @@ func _can_capture() -> bool:
 func _set_open(open: bool) -> void:
 	_open = open
 	_root.visible = open
+	if _wardrobe != null and not open:
+		_show_menu()
 	get_tree().paused = open
 	if _can_capture():
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if open else Input.MOUSE_MODE_CAPTURED
@@ -54,6 +58,11 @@ func _build() -> void:
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_root.add_child(center)
+	_menu = center
+	_wardrobe = preload("res://scripts/ui/WardrobePanel.gd").new()
+	_wardrobe.visible = false
+	_wardrobe.closed.connect(_show_menu)
+	_root.add_child(_wardrobe)
 
 	var panel := PanelContainer.new()
 	center.add_child(panel)
@@ -71,13 +80,18 @@ func _build() -> void:
 	box.add_child(title)
 
 	var keys := Label.new()
-	keys.text = "WASD 移动 · Shift 奔跑 · 空格 跳跃 · E 交互 · F3 坐标信息"
+	keys.text = "WASD 移动 · Shift 奔跑 · 空格 跳跃 · E 交互 · V 第一/第三人称 · F3 坐标 · F4 天气"
 	box.add_child(keys)
 
 	var resume := Button.new()
 	resume.text = "继续"
 	resume.pressed.connect(func() -> void: _set_open(false))
 	box.add_child(resume)
+
+	var dress := Button.new()
+	dress.text = "人物外观"
+	dress.pressed.connect(_show_wardrobe)
+	box.add_child(dress)
 
 	_fov_value = Label.new()
 	box.add_child(_slider_row("视野 FOV", GameSettings.FOV_MIN, GameSettings.FOV_MAX, 1.0, GameSettings.fov,
@@ -93,6 +107,16 @@ func _build() -> void:
 	quit.text = "退出游戏"
 	quit.pressed.connect(func() -> void: get_tree().quit())
 	box.add_child(quit)
+
+
+func _show_wardrobe() -> void:
+	_menu.visible = false
+	_wardrobe.visible = true
+
+
+func _show_menu() -> void:
+	_wardrobe.visible = false
+	_menu.visible = true
 
 
 func _on_fov_changed(value: float) -> void:

@@ -16,7 +16,13 @@ const SIZE_M := {
 	"slate_floor": 2.29, "wool_boucle": 0.35, "poly_wool_herringbone": 0.27, "pine_bark": 2.0,
 }
 
+const SNOW_OVERLAY := preload("res://shaders/snow_overlay.gdshader")
+const GLASS_SHADER := preload("res://shaders/glass.gdshader")
+
 static var _cache: Dictionary = {}
+static var _snowable: Array[BaseMaterial3D] = []
+static var _snow_pass: ShaderMaterial = null
+static var _snow_on := false
 
 
 static func texture(id: String, map: String) -> Texture2D:
@@ -53,8 +59,8 @@ static func pbr(id: String, tint := Color.WHITE, mode := "uv", roughness_offset 
 	return m
 
 
-static func flat(color: Color, roughness := 0.85, tint_by_instance := false, metallic := 0.0) -> StandardMaterial3D:
-	var key := "flat:%s:%s:%s:%s" % [color.to_html(), roughness, tint_by_instance, metallic]
+static func flat(color: Color, roughness := 0.85, tint_by_instance := false, metallic := 0.0, double_sided := false) -> StandardMaterial3D:
+	var key := "flat:%s:%s:%s:%s:%s" % [color.to_html(), roughness, tint_by_instance, metallic, double_sided]
 	if _cache.has(key):
 		return _cache[key]
 	var m := StandardMaterial3D.new()
@@ -64,9 +70,10 @@ static func flat(color: Color, roughness := 0.85, tint_by_instance := false, met
 	if tint_by_instance:
 		m.vertex_color_use_as_albedo = true
 		m.vertex_color_is_srgb = true
+	if double_sided:
+		m.cull_mode = BaseMaterial3D.CULL_DISABLED
 	_cache[key] = m
 	return m
-
 
 static func glow(color: Color, energy: float) -> StandardMaterial3D:
 	var key := "glow:%s:%s" % [color.to_html(), energy]
@@ -93,23 +100,45 @@ static func fabric(color: Color) -> StandardMaterial3D:
 	return m
 
 
-static func glass() -> StandardMaterial3D:
+## 木屋玻璃：带雨痕的透明玻璃（glass.gdshader，雨量来自全局参数 rain_amount）。
+static func glass() -> ShaderMaterial:
 	if _cache.has("glass"):
 		return _cache["glass"]
-	var m := StandardMaterial3D.new()
-	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	m.albedo_color = Color(0.62, 0.72, 0.80, 0.12)
-	m.roughness = 0.03
-	m.metallic_specular = 0.9
+	var m := ShaderMaterial.new()
+	m.shader = GLASS_SHADER
 	_cache["glass"] = m
 	return m
+
+
+## 标记为室外朝天的材质：下雪积雪时叠加 snow_overlay 覆盖层。
+static func snowable(m: Material) -> Material:
+	var base := m as BaseMaterial3D
+	if base != null and not _snowable.has(base):
+		_snowable.append(base)
+		if _snow_on:
+			base.next_pass = _snow_material()
+	return m
+
+
+## 有积雪时给所有室外材质挂上覆盖层，没有时摘掉（不白白多画一遍）。
+static func set_snow_overlay(enabled: bool) -> void:
+	_snow_on = enabled
+	for m in _snowable:
+		m.next_pass = _snow_material() if enabled else null
+
+
+static func _snow_material() -> ShaderMaterial:
+	if _snow_pass == null:
+		_snow_pass = ShaderMaterial.new()
+		_snow_pass.shader = SNOW_OVERLAY
+	return _snow_pass
 
 
 ## 自制模型（Blender 导出的木屋、门板）的材质，按材质名查找。
 static func named(name: String) -> Material:
 	match name:
 		"M_RoofSlate":
-			return pbr("roof_slates_02", Color(0.50, 0.50, 0.55))
+			return snowable(pbr("roof_slates_02", Color(0.50, 0.50, 0.55)))
 		"M_Lining":
 			return pbr("brown_planks_05", Color(1.0, 0.70, 0.44))
 		"M_Siding":
@@ -121,7 +150,7 @@ static func named(name: String) -> Material:
 		"M_Floor":
 			return pbr("wood_floor", Color(0.95, 0.85, 0.75))
 		"M_Deck":
-			return pbr("weathered_planks", Color(1.0, 0.9, 0.8))
+			return snowable(pbr("weathered_planks", Color(1.0, 0.9, 0.8)))
 		"M_Stone":
 			return pbr("rustic_stone_wall")
 		"M_Hearth":
@@ -150,11 +179,11 @@ static func for_kenney(asset: String, material: String) -> Material:
 	match material:
 		# 树冠、草叶：白色底色，实际颜色由 MultiMesh 实例颜色给出（便于季节批量换色）
 		"leafsDark", "leafsGreen":
-			return flat(Color.WHITE, 0.9, true)
+			return snowable(flat(Color.WHITE, 0.9, true))
 		"leafsFall":
 			if asset.begins_with("canoe"):
 				return flat(Color(0.55, 0.18, 0.11), 0.6)
-			return flat(Color.WHITE, 0.9, true)
+			return snowable(flat(Color.WHITE, 0.9, true))
 		"woodBark", "woodBarkDark":
 			return pbr("pine_bark", Color(0.62, 0.52, 0.46), "world")
 		"woodBirch":
@@ -162,16 +191,14 @@ static func for_kenney(asset: String, material: String) -> Material:
 		"woodInner":
 			return flat(Color(0.76, 0.60, 0.42), 0.8)
 		"grass":
-			var g := flat(Color.WHITE, 0.9, true)
-			g.cull_mode = BaseMaterial3D.CULL_DISABLED
-			return g
+			return snowable(flat(Color.WHITE, 0.91, true, 0.0, true))
 		"dirt":
-			return pbr("rock_face_03", Color(0.78, 0.75, 0.72), "world")
+			return snowable(pbr("rock_face_03", Color(0.78, 0.75, 0.72), "world"))
 		"_defaultMat":
 			if asset.begins_with("mushroom"):
 				return flat(Color(0.90, 0.87, 0.80), 0.8)
 			if asset.begins_with("rock"):
-				return pbr("rock_face_03", Color(0.62, 0.60, 0.58), "world")
+				return snowable(pbr("rock_face_03", Color(0.62, 0.60, 0.58), "world"))
 			return flat(Color(0.3, 0.26, 0.2), 0.9)
 		"colorPurple":
 			return flat(Color(0.47, 0.34, 0.64), 0.7)

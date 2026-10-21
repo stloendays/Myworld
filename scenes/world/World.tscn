@@ -1,6 +1,7 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://scripts/world/StaticDuskLighting.gd" id="1_light"]
+[ext_resource type="Script" path="res://scripts/systems/EnvironmentDirector.gd" id="1_env"]
+[ext_resource type="Script" path="res://scripts/world/Precipitation.gd" id="10_precip"]
 [ext_resource type="PackedScene" path="res://scenes/world/Terrain.tscn" id="2_terrain"]
 [ext_resource type="PackedScene" path="res://scenes/world/Lake.tscn" id="3_lake"]
 [ext_resource type="PackedScene" path="res://scenes/world/Forest.tscn" id="4_forest"]
@@ -11,8 +12,11 @@
 
 [node name="World" type="Node3D"]
 
-[node name="Lighting" type="Node3D" parent="."]
-script = ExtResource("1_light")
+[node name="Environment" type="Node3D" parent="."]
+script = ExtResource("1_env")
+
+[node name="Precipitation" type="Node3D" parent="."]
+script = ExtResource("10_precip")
 
 [node name="Terrain" parent="." instance=ExtResource("2_terrain")]
 

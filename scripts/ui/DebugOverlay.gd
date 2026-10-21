@@ -42,6 +42,9 @@ func _process(delta: float) -> void:
 	var target := player.focused_target()
 	var lines := PackedStringArray()
 	lines.append("FPS %d  ·  帧时 %.1f ms" % [Engine.get_frames_per_second(), 1000.0 / maxf(1.0, Engine.get_frames_per_second())])
+	var season := ClimateData.season_profile(WorldState.season_id)
+	lines.append("%s 第 %d 天 %s  ·  %s" % [season.get("name", ""), WorldState.world_day,
+		ClimateData.format_time(WorldState.time_minutes), ClimateData.weather_profile(WorldState.weather_id).get("name", "")])
 	lines.append("位置  X %.1f   Y %.2f   Z %.1f" % [p.x, p.y, p.z])
 	lines.append("朝向  %.0f°（%s）" % [heading, COMPASS[int(round(heading / 45.0)) % 8]])
 	lines.append("区域  %s  ·  %s" % [", ".join(PackedStringArray(zones)) if not zones.is_empty() else "—",

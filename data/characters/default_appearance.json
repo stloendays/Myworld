@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "styles": {"face": "smile", "hair": "short", "hat": "none", "top": "hoodie", "bottom": "jeans", "shoes": "sneakers", "back": "none"},
+  "colors": {
+    "skin": "#e0b494",
+    "eyes": "#3b2a1e",
+    "eye_white": "#f2efe8",
+    "mouth": "#a4685a",
+    "hair": "#3a2618",
+    "hat": "#9b3a2c",
+    "hat_accent": "#e8dcc8",
+    "top": "#5f6b46",
+    "top_accent": "#d9cfb8",
+    "bottom": "#34445f",
+    "shoes": "#ece6da",
+    "sole": "#3a3330",
+    "back": "#8a5a36",
+    "back_accent": "#4a3626"
+  }
+}

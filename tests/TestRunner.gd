@@ -3,7 +3,9 @@ extends Node
 ##   godot --headless --path . --fixed-fps 60 res://tests/TestRunner.tscn
 ## 覆盖：脚本可加载、无切场景调用、坐标边界、地形碰撞与高度函数一致、
 ## QA-01 林道 → 木屋门廊连续步行、QA-02 开门进屋 / 关门 / 再出屋、
-## 湖中涉水上限、码头栏杆、地图四边由地形自然封闭（暂时关闭树木碰撞单独验证地形）。
+## 湖中涉水上限、码头栏杆、地图四边由地形自然封闭（暂时关闭树木碰撞单独验证地形）；
+## M2：天气规则与确定性、QA-03 秋季暮色、QA-04 秋夜大雨（室内无降水）、QA-06 四季区分与“只有冬天下雪”、
+## 天气过渡、时钟速率、积雪累积；人物：部位与插槽、换装、第一/第三人称、走路摆腿。
 
 const MAIN_SCENE := "res://scenes/main/Main.tscn"
 const MAX_STEP := 0.5          ## 单个物理帧允许的最大位移（米），超过视为瞬移
@@ -18,6 +20,7 @@ var _last_pos := Vector3.ZERO
 var _max_step := 0.0
 var _min_clearance := INF
 var _path_length := 0.0
+var _max_leg_swing := 0.0
 
 
 func _ready() -> void:
@@ -43,6 +46,9 @@ func _run() -> void:
 	await _test_wade_limit()
 	await _test_dock_rails()
 	await _test_map_edges()
+	_test_climate_rules()
+	await _test_climate_runtime()
+	await _test_character()
 	_report()
 
 
@@ -180,6 +186,7 @@ func _test_qa01() -> void:
 		reached and _max_step < MAX_STEP and _min_clearance > MIN_CLEARANCE,
 		"起点 (%.0f, %.0f) → 终点 (%.1f, %.2f, %.1f)，路程 %.0f m，单帧最大位移 %.3f m，最低离地 %.2f m" %
 		[route[0].x, route[0].y, p.x, p.y, p.z, _path_length, _max_step, _min_clearance])
+	_check("人物走路时摆臂摆腿", _max_leg_swing > 15.0, "QA-01 途中腿部最大摆角 %.1f°" % _max_leg_swing)
 
 
 func _test_qa02() -> void:
@@ -283,6 +290,176 @@ func _test_map_edges() -> void:
 	_check("QA-01 地图四边由陡坡自然封闭（不靠空气墙，已临时关闭树木碰撞）", ok, "；".join(details))
 
 
+# ---------------------------------------------------------------- M2 天气与季节
+
+func _test_climate_rules() -> void:
+	var bad := PackedStringArray()
+	var missing := PackedStringArray()
+	for season in ClimateData.season_order():
+		var seen := {}
+		for i in 400:
+			var w := WeatherController.pick(StringName(season), 1234, i)
+			seen[w] = true
+			if not ClimateData.is_allowed(StringName(season), w):
+				bad.append("%s→%s" % [season, w])
+		for w in ClimateData.WEATHER_IDS:
+			if ClimateData.is_allowed(StringName(season), w) and not seen.has(w):
+				missing.append("%s 未出现 %s" % [season, w])
+	_check("自动天气只在允许的季节出现（每季抽 400 次）", bad.is_empty() and missing.is_empty(), ", ".join(bad + missing))
+	var a := PackedStringArray()
+	var b := PackedStringArray()
+	var c := PackedStringArray()
+	for i in 30:
+		a.append(String(WeatherController.pick(&"AUTUMN", 777, i)))
+		b.append(String(WeatherController.pick(&"AUTUMN", 777, i)))
+		c.append(String(WeatherController.pick(&"AUTUMN", 778, i)))
+	_check("天气序列由种子决定（读档不会变天）", a == b and a != c, "种子 777 前 6 次：" + ", ".join(a.slice(0, 6)))
+
+
+func _test_climate_runtime() -> void:
+	var climate := _main.get_node("Systems") as ClimateSystem
+	var env := _main.get_node("World/Environment") as EnvironmentDirector
+	var precip := _main.get_node("World/Precipitation") as Precipitation
+	_player.global_position = _cabin.to_global(Vector3(10.5, 0.2, 0.0))
+	await _frames(3)
+
+	climate.apply_preset("Autumn_Dusk_Clear")
+	await _frames(3)
+	_check("QA-03 秋季 17:20 晴：低角度暮光、太阳在湖对岸",
+		WorldState.season_id == &"AUTUMN" and WorldState.weather_id == &"CLEAR" and env.sun_elevation > 8.0 and env.sun_elevation < 13.0
+		and env.sun_azimuth > 55.0 and env.sun_azimuth < 70.0 and not precip.rain.emitting,
+		"太阳高度 %.1f°、方位 %.0f°，雨 %s" % [env.sun_elevation, env.sun_azimuth, precip.rain.emitting])
+
+	climate.apply_preset("Autumn_Night_HeavyRain")
+	await _frames(10)
+	var space := _main.get_world_3d().direct_space_state
+	var inside := _cabin.to_global(Vector3(1.0, 1.5, 0.0))
+	var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(inside, inside + Vector3(0.0, 30.0, 0.0), PhysicsLayers.WORLD))
+	var roofed: bool = not hit.is_empty() and _cabin.is_ancestor_of(hit["collider"])
+	_check("QA-04 秋夜大雨：降雨开启、室内被屋顶遮住、雨粒子碰到屋顶即消失",
+		env.night > 0.9 and precip.rain.emitting and precip.rain.amount_ratio > 0.95 and not precip.snow.emitting
+		and precip.heightfield.follow_camera_enabled and roofed
+		and (precip.rain.process_material as ParticleProcessMaterial).collision_mode == ParticleProcessMaterial.COLLISION_HIDE_ON_CONTACT
+		and float(WeatherController.blended()["rain"]) > 0.95 and WorldState.ground_wetness > 0.95,
+		"夜 %.2f，雨量 %.2f，室内向上射线命中 %s" % [env.night, precip.rain.amount_ratio, hit.get("collider", null)])
+
+	var forest := _main.get_node("World/Forest") as ForestBuilder
+	var pine := _first_mmi(forest, "pine")
+	var broad := _first_mmi(forest, "broadleaf")
+	var samples := {}
+	var meshes := {}
+	var rules := PackedStringArray()
+	for season in ClimateData.season_order():
+		climate.jump_to_season(StringName(season))
+		await _frames(3)
+		samples[season] = pine.multimesh.get_meta("tint_sample", Color.BLACK)
+		meshes[season] = broad.multimesh.mesh
+		var snow_ok := climate.set_weather(&"SNOW", 0.0)
+		var rain_ok := climate.set_weather(&"LIGHT_RAIN", 0.0)
+		if snow_ok != (season == "WINTER") or rain_ok == (season == "WINTER"):
+			rules.append("%s 雪=%s 雨=%s" % [season, snow_ok, rain_ok])
+	var distinct := {}
+	for s in samples.values():
+		distinct[(s as Color).to_html()] = true
+	_check("QA-06 四季植被可区分、只有冬季能下雪、冬季不下雨",
+		distinct.size() == 4 and meshes["SUMMER"] != meshes["AUTUMN"] and rules.is_empty(),
+		"针叶色 %d 种，阔叶夏/秋模型不同 = %s %s" % [distinct.size(), meshes["SUMMER"] != meshes["AUTUMN"], ", ".join(rules)])
+
+	climate.apply_preset("Winter_Morning_Snow")
+	climate.jump_to_season(&"SPRING")
+	await _frames(2)
+	_check("换季时不合法的天气自动过渡（冬雪 → 春）", ClimateData.is_allowed(&"SPRING", WorldState.weather_id),
+		"%s → %s" % [WorldState.weather_from, WorldState.weather_id])
+
+	climate.apply_preset("Autumn_Dusk_Clear")
+	var started := []
+	var changed := []
+	var on_start := func(f: StringName, t: StringName, d: float) -> void: started.append([f, t, d])
+	var on_change := func(id: StringName) -> void: changed.append(id)
+	EventBus.weather_transition_started.connect(on_start)
+	EventBus.weather_changed.connect(on_change)
+	climate.set_weather(&"LIGHT_RAIN", 1.0)
+	await _seconds(0.5)
+	var mid := WorldState.weather_progress
+	var mid_rain := float(WeatherController.blended()["rain"])
+	await _seconds(1.0)
+	EventBus.weather_transition_started.disconnect(on_start)
+	EventBus.weather_changed.disconnect(on_change)
+	_check("天气平滑过渡：先发 transition_started，进度到 1 再发 weather_changed",
+		started.size() == 1 and mid > 0.3 and mid < 0.7 and mid_rain > 0.02 and mid_rain < 0.34 and changed == [&"LIGHT_RAIN"],
+		"过渡一半时进度 %.2f、雨量 %.2f；完成后 %s" % [mid, mid_rain, changed])
+
+	var t0 := WorldState.absolute_minutes()
+	await _seconds(10.0)
+	var dt := WorldState.absolute_minutes() - t0
+	_check("世界时钟：现实 10 秒 = 游戏 5 分钟（一天 = 现实 48 分钟）", absf(dt - 5.0) < 0.2, "实测 %.2f 游戏分钟" % dt)
+
+	climate.apply_preset("Winter_Morning_Snow")
+	WorldState.ground_snow = 0.0
+	WorldState.time_scale = 60.0
+	await _seconds(2.0)
+	WorldState.time_scale = 1.0
+	var snow := WorldState.ground_snow
+	_check("下雪时地面积雪逐渐增加", snow > 0.3 and snow < 0.8, "下雪 1 游戏小时后积雪 %.2f" % snow)
+	climate.apply_preset("Autumn_Dusk_Clear")
+	await _frames(3)
+
+
+func _first_mmi(forest: ForestBuilder, kind: String) -> MultiMeshInstance3D:
+	for child in forest.get_node("Generated").get_children():
+		if child is MultiMeshInstance3D and child.get_meta("kind", "") == kind:
+			return child
+	return null
+
+
+# ---------------------------------------------------------------- 人物
+
+func _test_character() -> void:
+	var body := _player.body
+	var missing := PackedStringArray()
+	for part in CharacterModel.PART_ORDER:
+		for slot in Wardrobe.slot_order():
+			if body.slot_node(part, slot) == null:
+				missing.append("%s/%s" % [part, slot])
+	for socket_name in CharacterModel.SOCKETS:
+		if body.get_socket(socket_name) == null:
+			missing.append("socket " + socket_name)
+	_check("人物 6 个部位 × 7 个外观插槽与 4 个挂点齐全", missing.is_empty(), ", ".join(missing))
+
+	var a := PlayerProfile.appearance
+	var saved := a.to_dict()
+	a.set_style("hair", "long")
+	a.set_style("back", "backpack")
+	a.set_style("hat", "beanie")
+	await _frames(1)
+	var long_hair := _slot_mesh(body, "torso", "hair") != null
+	var backpack := _slot_mesh(body, "torso", "back") != null
+	var hat := _slot_mesh(body, "head", "hat") != null
+	a.set_style("hair", "none")
+	a.set_style("back", "none")
+	a.set_style("hat", "none")
+	await _frames(1)
+	var cleared := _slot_mesh(body, "head", "hair") == null and _slot_mesh(body, "torso", "back") == null
+	a.assign(CharacterAppearance.from_dict(saved))
+	_check("换装：发型、帽子、背包切换后对应插槽即时重建", long_hair and backpack and hat and cleared,
+		"长发 %s，背包 %s，帽子 %s，清空 %s" % [long_hair, backpack, hat, cleared])
+
+	var fp_hidden := (_player.camera.cull_mask & FirstPersonController.BODY_LAYER) == 0
+	_player.set_third_person(true)
+	await _seconds(1.0)
+	var tp_len := _player.camera_boom.get_hit_length()
+	var tp_visible := (_player.camera.cull_mask & FirstPersonController.BODY_LAYER) != 0
+	_player.set_third_person(false)
+	await _seconds(1.0)
+	_check("V 切换视角：第一人称不画自己（只投影子），第三人称相机退到身后", fp_hidden and tp_visible and tp_len > 1.0,
+		"第三人称相机距离 %.2f m" % tp_len)
+
+
+func _slot_mesh(body: CharacterModel, part: String, slot: String) -> Mesh:
+	var holder := body.slot_node(part, slot)
+	var mi := holder.get_node_or_null("Mesh") as MeshInstance3D if holder != null else null
+	return mi.mesh if mi != null else null
+
 # ---------------------------------------------------------------- 工具
 
 func _physics_process(_delta: float) -> void:
@@ -294,6 +471,7 @@ func _physics_process(_delta: float) -> void:
 	_path_length += step
 	_last_pos = p
 	_min_clearance = minf(_min_clearance, p.y - WorldTerrain.height_at(p.x, p.z))
+	_max_leg_swing = maxf(_max_leg_swing, _player.body.leg_swing_degrees())
 
 
 func _begin_track() -> void:
@@ -301,6 +479,7 @@ func _begin_track() -> void:
 	_max_step = 0.0
 	_min_clearance = INF
 	_path_length = 0.0
+	_max_leg_swing = 0.0
 	_track = true
 
 

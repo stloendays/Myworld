@@ -7,9 +7,26 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/HUD.tscn" id="5_hud"]
 [ext_resource type="PackedScene" path="res://scenes/ui/PauseMenu.tscn" id="6_pause"]
 [ext_resource type="PackedScene" path="res://scenes/ui/DebugOverlay.tscn" id="7_debug"]
+[ext_resource type="Script" path="res://scripts/systems/ClimateSystem.gd" id="8_climate"]
+[ext_resource type="Script" path="res://scripts/systems/WorldClock.gd" id="9_clock"]
+[ext_resource type="Script" path="res://scripts/systems/SeasonController.gd" id="10_season"]
+[ext_resource type="Script" path="res://scripts/systems/WeatherController.gd" id="11_weather"]
+[ext_resource type="PackedScene" path="res://scenes/ui/WeatherDebugPanel.tscn" id="12_wpanel"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_main")
+
+[node name="Systems" type="Node" parent="."]
+script = ExtResource("8_climate")
+
+[node name="WorldClock" type="Node" parent="Systems"]
+script = ExtResource("9_clock")
+
+[node name="SeasonController" type="Node" parent="Systems"]
+script = ExtResource("10_season")
+
+[node name="WeatherController" type="Node" parent="Systems"]
+script = ExtResource("11_weather")
 
 [node name="World" parent="." instance=ExtResource("2_world")]
 
@@ -22,3 +39,5 @@ script = ExtResource("1_main")
 [node name="PauseMenu" parent="." instance=ExtResource("6_pause")]
 
 [node name="DebugOverlay" parent="." instance=ExtResource("7_debug")]
+
+[node name="WeatherDebugPanel" parent="." instance=ExtResource("12_wpanel")]

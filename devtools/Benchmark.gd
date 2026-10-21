@@ -9,6 +9,8 @@ const SPOTS := [
 	{"name": "码头望木屋", "eye": [-8, 2.65, 25], "look": [-69, 4, 37], "abs": true},
 	{"name": "木屋室内", "eye": [-72.2, 4.05, 37.6], "look": [-60, 4.0, 36.5], "abs": true},
 	{"name": "北部林道", "eye": [-80, 1.65, -50], "look": [-78, 2, -28]},
+	{"name": "秋夜大雨·木屋外", "eye": [-53, 1.65, 40], "look": [-66, 4.0, 37], "preset": "Autumn_Night_HeavyRain"},
+	{"name": "冬日下雪·湖岸", "eye": [-50, 1.65, 29], "look": [35, 2, -2], "preset": "Winter_Morning_Snow"},
 ]
 
 
@@ -21,7 +23,9 @@ func _run() -> void:
 	add_child(main)
 	var player := get_tree().get_first_node_in_group("local_player") as FirstPersonController
 	player.set_physics_process(false)
+	WorldState.time_paused = true
 	var cam := Camera3D.new()
+	cam.cull_mask = 0xFFFFF & ~FirstPersonController.BODY_LAYER
 	cam.fov = 75.0
 	cam.far = 1500.0
 	add_child(cam)
@@ -29,6 +33,8 @@ func _run() -> void:
 	await _frames(120)
 	var results := []
 	for spot in SPOTS:
+		if spot.has("preset"):
+			(main.get_node("Systems") as ClimateSystem).apply_preset(str(spot["preset"]))
 		var e: Array = spot["eye"]
 		var y := float(e[1]) + (0.0 if spot.get("abs", false) else WorldTerrain.height_at(float(e[0]), float(e[2])))
 		cam.global_position = Vector3(float(e[0]), y, float(e[2]))

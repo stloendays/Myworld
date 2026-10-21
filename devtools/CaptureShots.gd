@@ -1,24 +1,51 @@
 extends Node
 ## 开发工具：在真实渲染窗口中按预设机位截图，输出到 docs/screenshots/。
-##   Godot_console.exe --path . --resolution 1600x900 res://devtools/CaptureShots.tscn
+##   Godot_console.exe --path . --resolution 1600x900 res://devtools/CaptureShots.tscn [-- 名称前缀]
 ## 机位 eye/look 为世界坐标；"ground": true 表示 eye.y 为离地高度。
+## climate：preset（weather.json 预设）或 season/hour/weather；截图期间时间暂停，光照固定。
+## character：front / back 为玩家人物特写（第三人称），lineup 为多套外观并排。
 
 const MAIN_SCENE := "res://scenes/main/Main.tscn"
 const OUT_DIR := "res://docs/screenshots"
+const DUSK := {"preset": "Autumn_Dusk_Clear"}
 
 const SHOTS := [
-	{"name": "m1_01_spawn_dusk", "eye": [-50, 1.65, 29], "ground": true, "look": [35, 2, -2]},
-	{"name": "m1_02_lake_to_cabin", "eye": [-8, 1.0 + 1.65, 25], "look": [-69, 4, 37]},
-	{"name": "m1_03_cabin_front", "eye": [-53, 1.65, 40], "ground": true, "look": [-66, 4.0, 37]},
-	{"name": "m1_04_cabin_interior", "eye": [-72.2, 2.4 + 1.65, 37.6], "look": [-60, 4.0, 36.5]},
-	{"name": "m1_05_interior_stove", "eye": [-65.6, 2.4 + 1.65, 38.2], "look": [-73, 3.0, 35.8]},
-	{"name": "m1_06_north_trail", "eye": [-80, 1.65, -50], "ground": true, "look": [-78, 2, -28]},
-	{"name": "m1_07_viewpoint", "eye": [-93, 1.8, -101], "ground": true, "look": [20, -5, 10]},
-	{"name": "m1_08_aerial", "eye": [-40, 190, 175], "look": [-10, 0, 0]},
-	{"name": "m1_09_lake_reflection", "eye": [-3, 1.0 + 1.65, 25], "look": [70, 2, -30]},
+	{"name": "m1_01_spawn_dusk", "climate": DUSK, "eye": [-50, 1.65, 29], "ground": true, "look": [35, 2, -2]},
+	{"name": "m1_02_lake_to_cabin", "climate": DUSK, "eye": [-8, 1.0 + 1.65, 25], "look": [-69, 4, 37]},
+	{"name": "m1_03_cabin_front", "climate": DUSK, "eye": [-53, 1.65, 40], "ground": true, "look": [-66, 4.0, 37]},
+	{"name": "m1_04_cabin_interior", "climate": DUSK, "eye": [-72.2, 2.4 + 1.65, 37.6], "look": [-60, 4.0, 36.5]},
+	{"name": "m1_05_interior_stove", "climate": DUSK, "eye": [-65.6, 2.4 + 1.65, 38.2], "look": [-73, 3.0, 35.8]},
+	{"name": "m1_06_north_trail", "climate": DUSK, "eye": [-80, 1.65, -50], "ground": true, "look": [-78, 2, -28]},
+	{"name": "m1_07_viewpoint", "climate": DUSK, "eye": [-93, 1.8, -101], "ground": true, "look": [20, -5, 10]},
+	{"name": "m1_08_aerial", "climate": DUSK, "eye": [-40, 190, 175], "look": [-10, 0, 0]},
+	{"name": "m1_09_lake_reflection", "climate": DUSK, "eye": [-3, 1.0 + 1.65, 25], "look": [70, 2, -30]},
+	{"name": "m2_01_night_rain_cabin", "climate": {"preset": "Autumn_Night_HeavyRain"}, "eye": [-53, 1.65, 40], "ground": true, "look": [-66, 4.0, 37]},
+	{"name": "m2_02_night_rain_interior", "climate": {"preset": "Autumn_Night_HeavyRain"}, "eye": [-72.2, 2.4 + 1.65, 37.6], "look": [-60, 4.0, 36.5]},
+	{"name": "m2_03_winter_snow", "climate": {"preset": "Winter_Morning_Snow"}, "eye": [-53, 1.65, 40], "ground": true, "look": [-66, 4.0, 37]},
+	{"name": "m2_04_winter_lake", "climate": {"preset": "Winter_Morning_Snow"}, "eye": [-8, 1.0 + 1.65, 25], "look": [-69, 4, 37]},
+	{"name": "m2_05_spring_fog", "climate": {"preset": "Spring_Fog"}, "eye": [-8, 1.0 + 1.65, 25], "look": [-69, 4, 37]},
+	{"name": "m2_06_summer_noon", "climate": {"season": "SUMMER", "hour": 12.5, "weather": "CLEAR"}, "eye": [-50, 1.65, 29], "ground": true, "look": [35, 2, -2]},
+	{"name": "m2_07_overcast_afternoon", "climate": {"season": "AUTUMN", "hour": 14.0, "weather": "OVERCAST"}, "eye": [-80, 1.65, -50], "ground": true, "look": [-78, 2, -28]},
+	{"name": "m2_08_character_front", "climate": DUSK, "character": "front"},
+	{"name": "m2_09_character_back", "climate": DUSK, "character": "back"},
+	{"name": "m2_10_outfits", "climate": {"season": "AUTUMN", "hour": 15.5, "weather": "CLEAR"}, "character": "lineup"},
+]
+
+const OUTFITS := [
+	{"styles": {"hair": "long", "hat": "none", "top": "tee", "bottom": "shorts", "shoes": "sneakers", "back": "none", "face": "smile"},
+		"colors": {"hair": "#6b3a1f", "top": "#d9c9a0", "bottom": "#55606e", "shoes": "#f0ece4"}},
+	{"styles": {"hair": "short", "hat": "beanie", "top": "jacket", "bottom": "jeans", "shoes": "boots", "back": "backpack", "face": "default"},
+		"colors": {"hair": "#1e1a18", "hat": "#3f5e7a", "hat_accent": "#e6dccb", "top": "#8e3b2e", "top_accent": "#2b2b2b", "bottom": "#3a3f4a", "shoes": "#5a3b25", "back": "#6b7a4a"}},
+	{"styles": {"hair": "ponytail", "hat": "cap", "top": "hoodie", "bottom": "jeans", "shoes": "sneakers", "back": "none", "face": "smile"},
+		"colors": {"hair": "#c9a25e", "hat": "#2f4b3a", "hat_accent": "#e8e0cc", "top": "#c8b7d8", "top_accent": "#f4efe6", "bottom": "#2c3550"}},
+	{"styles": {"hair": "bun", "hat": "none", "top": "tee", "bottom": "jeans", "shoes": "boots", "back": "backpack", "face": "default"},
+		"colors": {"hair": "#2b1810", "skin": "#8d5a3c", "top": "#3c6e71", "bottom": "#a68a64", "shoes": "#2a2420", "back": "#b35c3a"}},
 ]
 
 var _camera: Camera3D
+var _main: Node
+var _player: FirstPersonController
+var _lineup: Node3D = null
 
 
 func _ready() -> void:
@@ -26,12 +53,12 @@ func _ready() -> void:
 
 
 func _run() -> void:
-	var main := (load(MAIN_SCENE) as PackedScene).instantiate()
-	add_child(main)
+	_main = (load(MAIN_SCENE) as PackedScene).instantiate()
+	add_child(_main)
 	for layer_name in ["HUD", "DebugOverlay"]:
-		(main.get_node(layer_name) as CanvasLayer).visible = false
-	var player := get_tree().get_first_node_in_group("local_player") as FirstPersonController
-	player.set_physics_process(false)
+		(_main.get_node(layer_name) as CanvasLayer).visible = false
+	_player = get_tree().get_first_node_in_group("local_player") as FirstPersonController
+	_player.set_physics_process(false)
 	_camera = Camera3D.new()
 	_camera.fov = 75.0
 	_camera.near = 0.05
@@ -40,20 +67,92 @@ func _run() -> void:
 	_camera.current = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT_DIR))
+	var prefix := ""
+	if not OS.get_cmdline_user_args().is_empty():
+		prefix = OS.get_cmdline_user_args()[0]
 	await _wait(120)
+	var last_climate := {}
 	for shot in SHOTS:
-		var e := WorldLayout.v2([shot["eye"][0], shot["eye"][2]])
-		var y := float(shot["eye"][1])
-		if shot.get("ground", false):
-			y += WorldTerrain.height_at(e.x, e.y)
-		_camera.global_position = Vector3(e.x, y, e.y)
-		_camera.look_at(Vector3(float(shot["look"][0]), float(shot["look"][1]), float(shot["look"][2])), Vector3.UP)
-		await _wait(20)
+		if not str(shot["name"]).begins_with(prefix):
+			continue
+		var climate: Dictionary = shot.get("climate", DUSK)
+		if climate != last_climate:
+			var was_snowing := WorldState.weather_id == &"SNOW"
+			_apply_climate(climate)
+			last_climate = climate
+			await _wait(150)
+			# 雪花寿命约 11 秒：从下雪切走后等残留雪花落完再拍
+			if was_snowing and WorldState.weather_id != &"SNOW":
+				await get_tree().create_timer(12.0).timeout
+		_camera.cull_mask = 0xFFFFF if shot.has("character") else (0xFFFFF & ~FirstPersonController.BODY_LAYER)
+		if shot.has("character"):
+			_frame_character(str(shot["character"]))
+		else:
+			var e := WorldLayout.v2([shot["eye"][0], shot["eye"][2]])
+			var y := float(shot["eye"][1])
+			if shot.get("ground", false):
+				y += WorldTerrain.height_at(e.x, e.y)
+			_camera.global_position = Vector3(e.x, y, e.y)
+			_camera.look_at(Vector3(float(shot["look"][0]), float(shot["look"][1]), float(shot["look"][2])), Vector3.UP)
+		await _wait(40)
 		var img := get_viewport().get_texture().get_image()
 		var path := ProjectSettings.globalize_path("%s/%s.png" % [OUT_DIR, shot["name"]])
 		img.save_png(path)
 		print("saved ", path)
 	get_tree().quit()
+
+
+func _apply_climate(c: Dictionary) -> void:
+	var climate := _main.get_node("Systems") as ClimateSystem
+	WorldState.time_paused = false
+	if c.has("preset"):
+		climate.apply_preset(str(c["preset"]))
+	else:
+		climate.jump_to_season(StringName(c["season"]))
+		climate.set_hour(float(c["hour"]))
+		climate.set_weather(StringName(c["weather"]), 0.0)
+		WorldState.ground_snow = 0.0
+	WorldState.time_paused = true
+
+
+func _frame_character(mode: String) -> void:
+	var spot := Vector3(-46.5, 0.0, 22.0)
+	spot.y = WorldTerrain.height_at(spot.x, spot.z)
+	_player.global_position = spot
+	_player.rotation.y = deg_to_rad(-95.0)
+	_player.head.rotation.x = 0.0
+	_player.body.animate(0.016, 0.0, true, 0.0)
+	var forward := -_player.global_basis.z
+	var right := _player.global_basis.x
+	match mode:
+		"front":
+			_camera.global_position = spot + forward * 2.6 + right * 0.4 + Vector3(0.0, 1.25, 0.0)
+			_camera.look_at(spot + Vector3(0.0, 1.0, 0.0), Vector3.UP)
+		"back":
+			_camera.global_position = spot - forward * 3.2 + right * 0.45 + Vector3(0.0, 1.9, 0.0)
+			_camera.look_at(spot + forward * 6.0 + Vector3(0.0, 1.2, 0.0), Vector3.UP)
+		"lineup":
+			_player.global_position = spot + Vector3(0.0, -50.0, 0.0)
+			if _lineup == null:
+				_lineup = Node3D.new()
+				add_child(_lineup)
+				for i in OUTFITS.size():
+					var a := PlayerProfile.default_appearance()
+					var o: Dictionary = OUTFITS[i]
+					for k in o["styles"]:
+						a.styles[k] = o["styles"][k]
+					for k in o["colors"]:
+						a.colors[k] = Color.html(o["colors"][k])
+					var m := CharacterModel.new()
+					m.appearance = a
+					_lineup.add_child(m)
+					m.position = Vector3((i - 1.5) * 1.1, 0.0, 0.0)
+					m.rotation.y = deg_to_rad(18.0 * (i - 1.5))
+			_lineup.global_position = spot
+			_lineup.rotation.y = deg_to_rad(-60.0)
+			var fwd := -_lineup.global_basis.z
+			_camera.global_position = spot + fwd * 4.6 + Vector3(0.0, 1.3, 0.0)
+			_camera.look_at(spot + Vector3(0.0, 0.95, 0.0), Vector3.UP)
 
 
 func _wait(frames: int) -> void:

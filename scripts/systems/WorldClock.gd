@@ -1,16 +1,41 @@
 class_name WorldClock
 extends Node
-## 【M2 待实现 · 接口占位】世界时间：日期 / 分钟 / 速度 / 暂停。只有它推进时间。
-## 本文件在 M0/M1 中不参与运行：没有注册为 Autoload，也没有挂到任何场景。
-## 它只固定模块边界与协议，避免后续各系统各自计时、各自算天气。
-##
-## 计划接口：
-##   var world_day: int                 # 从 1 开始；季节由 world_day 与 season_days 派生
-##   var time_minutes: float            # 0..1440；初次进入 = 秋季第 1 天 17:20（1040）
-##   var minutes_per_real_second: float # 默认一天 = 现实 48 分钟 → 30
-##   func set_paused(paused: bool) -> void
-##   func set_time(day: int, minutes: float) -> void
-##   发出 EventBus.time_changed(hour_fraction)
+## 世界时间：只有它推进时间。默认游戏内一天 = 现实 48 分钟（data/seasons/seasons.json）。
+## 写入 WorldState.world_day / time_minutes，每过一个游戏分钟发一次 EventBus.time_changed。
+## WorldState.time_paused 暂停计时，time_scale 用于调试加速；暂停菜单打开时整个场景树暂停，时钟也停。
 
-const MILESTONE := "M2"
-const IMPLEMENTED := false
+var _last_minute := -1
+
+
+func _ready() -> void:
+	add_to_group("world_clock")
+
+
+func _process(delta: float) -> void:
+	if WorldState.time_paused:
+		return
+	advance(delta * ClimateData.game_minutes_per_real_second() * WorldState.time_scale)
+
+
+## 推进若干游戏分钟（可跨天）。
+func advance(game_minutes: float) -> void:
+	var t := WorldState.time_minutes + game_minutes
+	while t >= ClimateData.MINUTES_PER_DAY:
+		t -= ClimateData.MINUTES_PER_DAY
+		WorldState.world_day += 1
+	WorldState.time_minutes = t
+	_emit_if_new_minute()
+
+
+func set_time(world_day: int, minutes: float) -> void:
+	WorldState.world_day = maxi(world_day, 1)
+	WorldState.time_minutes = fposmod(minutes, ClimateData.MINUTES_PER_DAY)
+	_last_minute = -1
+	_emit_if_new_minute()
+
+
+func _emit_if_new_minute() -> void:
+	var m := int(WorldState.absolute_minutes())
+	if m != _last_minute:
+		_last_minute = m
+		EventBus.time_changed.emit(WorldState.hour_fraction())

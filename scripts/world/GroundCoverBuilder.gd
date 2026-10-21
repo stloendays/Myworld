@@ -33,7 +33,28 @@ var _collision: StaticBody3D = null
 
 
 func _ready() -> void:
+	add_to_group("seasonal")
 	rebuild()
+
+
+## 换季：草丛、灌木按季节草色重新上色（睡莲、蘑菇等不变）。
+func apply_season(season: StringName) -> void:
+	var p := ClimateData.season_profile(season)
+	var grass := ClimateData.colors(p.get("grass_colors"))
+	if grass.is_empty():
+		return
+	var bush: Array = []
+	for c in grass:
+		bush.append((c as Color).darkened(0.25))
+	var root := get_node_or_null(GENERATED)
+	if root == null:
+		return
+	for mmi in root.find_children("*", "MultiMeshInstance3D", true, false):
+		match str(mmi.get_meta("palette", "")):
+			"grass":
+				ForestBuilder.recolor((mmi as MultiMeshInstance3D).multimesh, grass)
+			"bush":
+				ForestBuilder.recolor((mmi as MultiMeshInstance3D).multimesh, bush)
 
 
 func rebuild() -> void:
@@ -119,6 +140,7 @@ func _fill_chunk(chunk: Node3D, item: Dictionary, rng: RandomNumberGenerator, re
 		var mmi := MultiMeshInstance3D.new()
 		mmi.name = asset
 		mmi.multimesh = mm
+		mmi.set_meta("palette", str(item["colors"]))
 		mmi.visibility_range_end = float(item["view"])
 		mmi.visibility_range_end_margin = 10.0
 		mmi.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
