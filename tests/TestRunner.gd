@@ -81,7 +81,109 @@ func _run() -> void:
 	await _test_canoe()
 	await _test_exploration_save()
 	await _test_performance()
+	_test_chess_rules()
+	await _test_chess_table()
 	_report()
+
+
+# ---------------------------------------------------------------- 国际象棋
+
+func _sq(name: String) -> int:
+	return ChessGame.square_from_name(name)
+
+
+func _test_chess_rules() -> void:
+	var notes := PackedStringArray()
+	# perft：标准走法计数（开局、Kiwipete、第 3 号局面），任何一个走法规则错都会对不上
+	var perft_ok := true
+	for case in [[ChessGame.START_FEN, [20, 400, 8902]],
+			["r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1", [48, 2039]],
+			["8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1", [14, 191, 2812]]]:
+		var g := ChessGame.new(case[0])
+		for d in (case[1] as Array).size():
+			var n := g.perft(d + 1)
+			if n != int(case[1][d]):
+				perft_ok = false
+				notes.append("perft %s 第 %d 层 = %d（应为 %d）" % [str(case[0]).left(12), d + 1, n, case[1][d]])
+	notes.append("perft %s" % perft_ok)
+	# 愚人杀
+	var fool := ChessGame.new()
+	for mv in [["f2", "f3"], ["e7", "e5"], ["g2", "g4"], ["d8", "h4"]]:
+		fool.play_squares(_sq(mv[0]), _sq(mv[1]))
+	var mate_ok := fool.result() == "checkmate_black" and fool.moves_san[3] == "Qh4#"
+	# 逼和
+	var stale_ok := ChessGame.new("7k/5Q2/6K1/8/8/8/8/8 b - - 0 1").result() == "stalemate"
+	# 吃过路兵：吃掉 d5 的兵
+	var ep := ChessGame.new("4k3/8/8/3pP3/8/8/8/4K3 w - d6 0 1")
+	var ep_san := ep.play_squares(_sq("e5"), _sq("d6"))
+	var ep_ok := ep_san == "exd6" and ep.board[_sq("d5")] == 0
+	# 王车易位：f1 被车控制时不能短易位，长易位可以
+	var castle := ChessGame.new("r3k3/8/8/8/8/8/5r2/R3K2R w KQq - 0 1")
+	var short_ok := castle.play_squares(_sq("e1"), _sq("g1")) == ""
+	var long_ok := castle.play_squares(_sq("e1"), _sq("c1")) == "O-O-O" and castle.board[_sq("d1")] == ChessGame.ROOK
+	# 升变成马
+	var promo := ChessGame.new("8/P7/8/8/8/8/8/k6K w - - 0 1")
+	var promo_ok := promo.play_squares(_sq("a7"), _sq("a8"), ChessGame.KNIGHT) == "a8=N" and promo.board[_sq("a8")] == ChessGame.KNIGHT
+	# 三次重复
+	var rep := ChessGame.new()
+	for i in 2:
+		for mv in [["g1", "f3"], ["g8", "f6"], ["f3", "g1"], ["f6", "g8"]]:
+			rep.play_squares(_sq(mv[0]), _sq(mv[1]))
+	var rep_ok := rep.result() == "repetition"
+	# 悔棋
+	var u := ChessGame.new()
+	u.play_squares(_sq("e2"), _sq("e4"))
+	var undo_ok := u.undo() and u.to_fen() == ChessGame.START_FEN
+	# 电脑：一步杀能找到（普通难度）
+	var ai_move := ChessAI.new(7).choose(ChessGame.new("6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1"), "normal")
+	var ai_ok := ChessGame.m_to(ai_move) == _sq("a8")
+	notes.append("将死 %s，逼和 %s，过路兵 %s，易位 %s/%s，升变 %s，三次重复 %s，悔棋 %s，电脑一步杀 %s" % [mate_ok, stale_ok, ep_ok, short_ok, long_ok, promo_ok, rep_ok, undo_ok, ai_ok])
+	_check("国际象棋规则：perft 标准计数（20/400/8902、48/2039、14/191/2812）、将死、逼和、过路兵、易位、升变、三次重复、悔棋、电脑找一步杀",
+		perft_ok and mate_ok and stale_ok and ep_ok and short_ok and long_ok and promo_ok and rep_ok and undo_ok and ai_ok, "；".join(notes))
+
+
+func _test_chess_table() -> void:
+	var life := _cabin.get_node("Generated/Life") as CabinLife
+	var table := life.chess
+	var notes := PackedStringArray()
+	# 坐在沙发上，看着棋盘按 E
+	var sofa := _cabin.get_node("Generated/Life/Seat_cabin_sofa_left") as Seat
+	_player.teleport_to(_cabin_point(Vector3(1.4, 0.05, 1.9)))
+	await _seconds(0.3)
+	_player.sit(sofa)
+	await _frames(3)
+	_player.look_at_point(table.global_position + Vector3(0.0, 0.05, 0.0))
+	await _frames(3)
+	var opened := _player.try_interact() and table.panel.is_open() and _player.input_locked and _player.seat == sofa
+	notes.append("坐着打开棋盘 %s" % opened)
+	# 人机（我执白）：e2-e4，电脑应着
+	var p := table.panel
+	p.mode = "ai_black"
+	p.level = "easy"
+	p.new_game()
+	p.click_square(_sq("e2"))
+	var moved := p.click_square(_sq("e4"))
+	await p.wait_ai()
+	await _frames(2)
+	var replied := p.game.moves_san.size() == 2 and p.game.white_to_move
+	var synced := table.piece_count() == 32
+	var e4_piece := false
+	for n: Node3D in table._pieces.get_children():
+		if n.position.distance_to(ChessTable.square_center(_sq("e4"))) < 0.01:
+			e4_piece = true
+	notes.append("走 e4 %s，电脑应着 %s（%s），3D 棋子 %d 个，e4 上有子 %s" % [moved, replied, " ".join(p.game.moves_san), table.piece_count(), e4_piece])
+	# 非法走法不动：点白方的车走斜线
+	p.click_square(_sq("a1"))
+	var illegal_blocked := not p.click_square(_sq("b2")) and p.game.moves_san.size() == 2
+	# 存档、关闭
+	var saved: Dictionary = WorldState.flags.get("chess", {})
+	p.close()
+	await _frames(2)
+	var closed_ok := not p.is_open() and not _player.input_locked
+	_player.stand_up()
+	notes.append("非法走法被拒 %s，存档 %s，关闭后解锁 %s" % [illegal_blocked, str(saved.get("moves", [])), closed_ok])
+	_check("国际象棋：坐在沙发上看着茶几上的棋盘按 E 打开 2D 棋盘，人机对弈走子与电脑应着，3D 棋盘同步，非法走法被拒，棋局存档，关闭后解锁移动",
+		opened and moved and replied and synced and e4_piece and illegal_blocked and saved.get("moves", []).size() == 2 and closed_ok, "；".join(notes))
 
 
 # ---------------------------------------------------------------- 性能

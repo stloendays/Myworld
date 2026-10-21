@@ -67,6 +67,8 @@ const SHOTS := [
 	{"name": "m2f_03_diving_reef", "climate": DUSK, "player": [1.0, 79.2], "y": -6.4, "heading": 90.0, "pitch": -6.0},
 	{"name": "m2f_04_channel", "climate": DUSK, "player": [2.2, 84.8], "y": -7.7, "heading": 0.0, "pitch": -14.0},
 	{"name": "m2f_05_tank_depth", "climate": DUSK, "house": true, "eye": [6.0, -5.0, -2.4], "look": [4.0, -9.4, -6.2]},
+	{"name": "m2g_01_chess_2d", "climate": {"season": "AUTUMN", "hour": 20.5, "weather": "CLEAR"}, "player": [-60.0, 37.0], "heading": 0.0, "seat": "Seat_cabin_sofa_left", "pitch": -30.0, "chess": ["e2e4", "e7e5", "g1f3", "b8c6", "f1c4", "g8f6"], "open_chess": true},
+	{"name": "m2g_02_chess_table", "climate": {"season": "AUTUMN", "hour": 20.5, "weather": "CLEAR"}, "eye": [-67.6, 3.45, 39.25], "look": [-67.92, 2.87, 38.3], "chess": ["e2e4", "e7e5", "g1f3", "b8c6", "f1c4", "g8f6"]},
 ]
 
 const OUTFITS := [
@@ -282,6 +284,15 @@ func _setup_player_view(shot: Dictionary) -> void:
 	if pause.is_open():
 		pause._set_open(false)
 	GameSettings.set_developer_mode(shot.get("dev", false))
+	var table := (_main.get_node("Cabin/Generated/Life") as CabinLife).chess
+	if table.panel.is_open():
+		table.panel.close()
+	if shot.has("chess"):
+		table.panel.mode = "pvp"
+		table.panel.new_game()
+		for mv: String in shot["chess"]:
+			table.panel.game.play_squares(ChessGame.square_from_name(mv.left(2)), ChessGame.square_from_name(mv.right(2)))
+		table.sync_pieces()
 	for layer_name in ["HUD", "Minimap"]:
 		(_main.get_node(layer_name) as CanvasLayer).visible = player_view
 	_player.set_physics_process(player_view)
@@ -315,5 +326,8 @@ func _setup_player_view(shot: Dictionary) -> void:
 	await _wait(30)
 	if shot.has("settings"):
 		pause.open_settings(int(shot["settings"]))
+	if shot.get("open_chess", false):
+		table.interact(_player)
+		table.panel.click_square(ChessGame.square_from_name("d2"))
 	if shot.get("dev", false):
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
