@@ -1475,6 +1475,16 @@ func _test_fullscreen_and_world_map() -> void:
 	GameSettings.set_value("fullscreen", true, false)
 	var on := GameSettings.fullscreen
 	GameSettings.set_value("fullscreen", false, false)
+	# Alt + Enter 切全屏，不打开聊天框（Enter 单独按才是聊天）
+	var alt_enter := _key(KEY_ENTER, true)
+	alt_enter.alt_pressed = true
+	Input.parse_input_event(alt_enter)
+	Input.parse_input_event(_key(KEY_ENTER, false))
+	await _frames(2)
+	var chat := get_tree().get_first_node_in_group("chat_box") as ChatBox
+	var alt_ok := GameSettings.fullscreen and (chat == null or not chat.is_open())
+	GameSettings.set_value("fullscreen", false, false)
+	on = on and alt_ok
 	var wm := _main.get_node("WorldMap") as WorldMap
 	var ev := InputEventAction.new()
 	ev.action = "world_map"
@@ -1490,7 +1500,7 @@ func _test_fullscreen_and_world_map() -> void:
 	var blocked := not WorldRegistry.enter("world_02") and not WorldRegistry.can_enter("world_02")
 	wm.toggle()
 	await _frames(2)
-	_check("F11 全屏切换；Tab 打开世界地图，世界注册表含规划中的其他世界", f11 and on and opened and not wm.open \
+	_check("F11 / Alt+Enter 全屏切换（不误开聊天）；Tab 打开世界地图，世界注册表含规划中的其他世界", f11 and on and opened and not wm.open \
 		and str(cur.get("id", "")) == "dusk_lake" and planned >= 1 and blocked,
 		"F11 %s，全屏 %s，地图打开 %s，当前 %s，规划中 %d 个，未开放世界不能进 %s" % [f11, on, opened, cur.get("name", "?"), planned, blocked])
 

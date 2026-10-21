@@ -153,7 +153,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("chat_command"):
 		open("/")
 		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("chat_open"):
+	elif event.is_action_pressed("chat_open") and not (event is InputEventWithModifiers and (event as InputEventWithModifiers).alt_pressed):
+		# Alt + Enter 留给全屏切换（GameSettings）
 		open()
 		get_viewport().set_input_as_handled()
 

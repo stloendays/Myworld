@@ -70,7 +70,7 @@ const SHOTS := [
 	{"name": "m2g_01_chess_2d", "climate": {"season": "AUTUMN", "hour": 20.5, "weather": "CLEAR"}, "player": [-60.0, 37.0], "heading": 0.0, "seat": "Seat_cabin_sofa_left", "pitch": -30.0, "chess": ["e2e4", "e7e5", "g1f3", "b8c6", "f1c4", "g8f6"], "open_chess": true},
 	{"name": "m2g_02_chess_table", "climate": {"season": "AUTUMN", "hour": 20.5, "weather": "CLEAR"}, "eye": [-67.6, 3.45, 39.25], "look": [-67.92, 2.87, 38.3], "chess": ["e2e4", "e7e5", "g1f3", "b8c6", "f1c4", "g8f6"]},
 	{"name": "m2h_01_aquarium_decor", "climate": DUSK, "house": true, "eye": [9.0, -5.3, 3.2], "look": [-6.0, -5.9, -1.6]},
-	{"name": "m2h_02_aquarium_whale", "climate": DUSK, "house": true, "eye": [-6.8, -5.4, 2.8], "look": [6.6, -4.9, 0.0]},
+	{"name": "m2h_02_aquarium_whale", "climate": DUSK, "house": true, "eye": [2.2, -5.7, 3.6], "look": [6.6, -4.75, 0.2]},
 	{"name": "m2h_03_emote_sit", "climate": {"season": "AUTUMN", "hour": 16.0, "weather": "CLEAR"}, "character": "front", "emote": "ground_sit"},
 	{"name": "m2h_04_emote_wave", "climate": {"season": "AUTUMN", "hour": 16.0, "weather": "CLEAR"}, "character": "front", "emote": "wave"},
 	{"name": "m2h_05_emote_dance", "climate": {"season": "AUTUMN", "hour": 16.0, "weather": "CLEAR"}, "character": "front", "emote": "dance"},
@@ -165,9 +165,9 @@ func _run() -> void:
 				_look_antisolar(float(shot["antisolar"]))
 			else:
 				_camera.look_at(Vector3(float(shot["look"][0]), float(shot["look"][1]), float(shot["look"][2])), Vector3.UP)
-		await _wait(40)
 		var chat := _main.get_node("ChatBox") as ChatBox
 		chat.visible = shot.has("chat")
+		await _wait(40)
 		if shot.has("chat"):
 			await _stage_chat(chat, str(shot["chat"]))
 		if shot.get("lightning", false):
