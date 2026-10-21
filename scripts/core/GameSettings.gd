@@ -19,6 +19,7 @@ const ACTIONS := {
 	"toggle_debug": [KEY_F3],
 	"toggle_weather_panel": [KEY_F4],
 	"toggle_view": [KEY_V],
+	"swim_down": [KEY_C, KEY_CTRL],
 }
 
 var fov := 75.0

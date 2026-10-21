@@ -3,6 +3,8 @@ extends CharacterBody3D
 ## 第一人称角色（CharacterBody3D）。与地图解耦：不引用场景中的任何固定路径。
 ## WASD 移动、鼠标环视、Shift 奔跑、空格跳跃、E 交互（眼睛位置的视线射线 2.5 m）、V 切换第一/第三人称。
 ## 身体是方块人物（CharacterModel，外观来自 PlayerProfile）；第一人称时身体只投影子、不进画面。
+## 游泳：身体进入 WaterVolume（泳池、玻璃水管、下潜池）后切换为游泳——WASD 朝视线方向游、空格上浮、
+## C / Ctrl 下潜；有水面的水体里自动浮起让头露出水面，在池边按空格爬上岸。湖不是 WaterVolume，只能涉水。
 ## autopilot_* 供自动化测试与以后的 NPC / 回放使用：开启后忽略键盘输入，按给定世界方向移动。
 ## 只有 is_local_controlled 的实例读取输入、拥有当前相机（为将来多人预留）。
 
@@ -18,6 +20,8 @@ extends CharacterBody3D
 @export var interact_distance := 2.5
 @export var third_person_distance := 3.2
 @export var third_person_offset := Vector3(0.45, 0.25, 0.0)
+@export var swim_speed := 2.2
+@export var swim_sprint_speed := 3.4
 
 @onready var head: Node3D = $Head
 @onready var camera_boom: SpringArm3D = $Head/CameraBoom
@@ -28,6 +32,8 @@ extends CharacterBody3D
 const BODY_LAYER := 4   ## 渲染层 3（player_body）
 
 var third_person := false
+var swimming := false
+var current_water: WaterVolume = null
 
 var autopilot_enabled := false
 var autopilot_direction := Vector3.ZERO
@@ -71,6 +77,56 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	current_water = WaterVolume.find(get_tree(), global_position + Vector3(0.0, 0.9, 0.0))
+	swimming = current_water != null
+	if swimming:
+		_swim(delta)
+	else:
+		_walk(delta)
+	move_and_slide()
+	_update_focus()
+	body.animate(delta, Vector2(velocity.x, velocity.z).length() + (absf(velocity.y) if swimming else 0.0), is_on_floor() or swimming, head.rotation.x, run_speed)
+	var boom_target := third_person_distance if third_person else 0.0
+	camera_boom.spring_length = lerpf(camera_boom.spring_length, boom_target, 1.0 - exp(-12.0 * delta))
+	camera_boom.position = camera_boom.position.lerp(third_person_offset if third_person else Vector3.ZERO, 1.0 - exp(-12.0 * delta))
+
+
+func _swim(delta: float) -> void:
+	var dir := _swim_direction()
+	var running := autopilot_run if autopilot_enabled else Input.is_action_pressed("sprint")
+	var target := dir * (swim_sprint_speed if running else swim_speed)
+	var surface := current_water.surface_y()
+	var diving := dir.y < -0.2
+	if surface < INF and not diving:
+		# 浮力：把身体推向“眼睛露出水面约 0.35 m”的漂浮高度
+		var float_y := surface - 1.3
+		target.y += clampf((float_y - global_position.y) * 2.2, -0.8, 1.4)
+	velocity = velocity.lerp(target, 1.0 - exp(-3.5 * delta))
+	var head_y := global_position.y + 1.65
+	var wants_up := (autopilot_enabled and autopilot_direction.y > 0.5) or (is_local_controlled and not autopilot_enabled and Input.is_action_just_pressed("jump"))
+	if wants_up and surface < INF and head_y > surface - 0.2 and is_on_wall():
+		# 在池边爬上岸
+		velocity.y = 5.2
+		velocity += -global_basis.z * 1.2
+
+
+func _swim_direction() -> Vector3:
+	if autopilot_enabled:
+		return autopilot_direction.normalized() if autopilot_direction.length_squared() > 1e-6 else Vector3.ZERO
+	if not is_local_controlled:
+		return Vector3.ZERO
+	var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+	var forward := -camera.global_basis.z
+	var right := camera.global_basis.x
+	var d := right * input.x - forward * input.y
+	if Input.is_action_pressed("jump"):
+		d.y += 1.0
+	if Input.is_action_pressed("swim_down"):
+		d.y -= 1.0
+	return d.normalized() if d.length_squared() > 1.0 else d
+
+
+func _walk(delta: float) -> void:
 	var wish := _wish_direction()
 	var running := autopilot_run if autopilot_enabled else Input.is_action_pressed("sprint")
 	var speed := run_speed if running else walk_speed
@@ -88,12 +144,6 @@ func _physics_process(delta: float) -> void:
 	horizontal = horizontal.lerp(wish * speed, 1.0 - exp(-rate * delta))
 	velocity.x = horizontal.x
 	velocity.z = horizontal.z
-	move_and_slide()
-	_update_focus()
-	body.animate(delta, Vector2(velocity.x, velocity.z).length(), is_on_floor(), head.rotation.x, run_speed)
-	var boom_target := third_person_distance if third_person else 0.0
-	camera_boom.spring_length = lerpf(camera_boom.spring_length, boom_target, 1.0 - exp(-12.0 * delta))
-	camera_boom.position = camera_boom.position.lerp(third_person_offset if third_person else Vector3.ZERO, 1.0 - exp(-12.0 * delta))
 
 
 ## 第一人称：相机在眼睛处，身体不进画面（仍投影子）；第三人称：相机退到肩后，身体可见。

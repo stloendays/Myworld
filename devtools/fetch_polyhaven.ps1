@@ -21,6 +21,9 @@ $ids = [ordered]@{
 	"wool_boucle"         = "沙发面料"
 	"poly_wool_herringbone" = "地毯"
 	"pine_bark"           = "针叶树树皮"
+	"concrete_floor_01"   = "水族馆地面（水磨石感）"
+	"floor_tiles_02"      = "泳池馆地面与池岸石材"
+	"damp_beach_sand"     = "水族箱底沙"
 }
 $maps = @{ "Diffuse" = "diff"; "nor_gl" = "nor_gl"; "Rough" = "rough" }
 $root = Join-Path $PSScriptRoot "..\assets\imported\textures"

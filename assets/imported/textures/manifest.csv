@@ -47,3 +47,12 @@ poly_wool_herringbone,nor_gl,textures/poly_wool_herringbone/poly_wool_herringbon
 pine_bark,diff,textures/pine_bark/pine_bark_diff_1k.jpg,7bb38cccfc647aeaf2f5b6488c815e75,837641,https://polyhaven.com/a/pine_bark,针叶树树皮
 pine_bark,rough,textures/pine_bark/pine_bark_rough_1k.jpg,f5ba950ee648056809153e0506f8a2e2,506697,https://polyhaven.com/a/pine_bark,针叶树树皮
 pine_bark,nor_gl,textures/pine_bark/pine_bark_nor_gl_1k.jpg,7b971070fc986e517b5d2795cec0f4e0,1178440,https://polyhaven.com/a/pine_bark,针叶树树皮
+concrete_floor_01,diff,textures/concrete_floor_01/concrete_floor_01_diff_1k.jpg,187065cfc20a35eb421eac6d4f38c58f,755740,https://polyhaven.com/a/concrete_floor_01,水族馆地面（水磨石感）
+concrete_floor_01,rough,textures/concrete_floor_01/concrete_floor_01_rough_1k.jpg,3d374d86d7a43b93eed95d0d8957759c,354529,https://polyhaven.com/a/concrete_floor_01,水族馆地面（水磨石感）
+concrete_floor_01,nor_gl,textures/concrete_floor_01/concrete_floor_01_nor_gl_1k.jpg,3862d48eb9495b302652cac825738876,909898,https://polyhaven.com/a/concrete_floor_01,水族馆地面（水磨石感）
+floor_tiles_02,diff,textures/floor_tiles_02/floor_tiles_02_diff_1k.jpg,32de1779b8ddba55ad62df8d014264cd,354550,https://polyhaven.com/a/floor_tiles_02,泳池馆地面与池岸石材
+floor_tiles_02,rough,textures/floor_tiles_02/floor_tiles_02_rough_1k.jpg,e32ffaaa6a49f4403af466c33f606fa2,304724,https://polyhaven.com/a/floor_tiles_02,泳池馆地面与池岸石材
+floor_tiles_02,nor_gl,textures/floor_tiles_02/floor_tiles_02_nor_gl_1k.jpg,0018f27bf5486fcf939232dff86dc68e,156697,https://polyhaven.com/a/floor_tiles_02,泳池馆地面与池岸石材
+damp_beach_sand,diff,textures/damp_beach_sand/damp_beach_sand_diff_1k.jpg,7914af7bb383c00889e0838edd85f1a0,686694,https://polyhaven.com/a/damp_beach_sand,水族箱底沙
+damp_beach_sand,rough,textures/damp_beach_sand/damp_beach_sand_rough_1k.jpg,071a074edf51f2cd9532f5ad9f838896,572464,https://polyhaven.com/a/damp_beach_sand,水族箱底沙
+damp_beach_sand,nor_gl,textures/damp_beach_sand/damp_beach_sand_nor_gl_1k.jpg,7d27a3d1448b7b407a8644b32ee19fbc,684809,https://polyhaven.com/a/damp_beach_sand,水族箱底沙

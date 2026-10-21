@@ -28,6 +28,7 @@ var weather_next_change: float = 0.0        ## 下一次可变天的绝对游戏
 # --- 地表状态（EnvironmentDirector 写入）
 var ground_snow: float = 0.0
 var ground_wetness: float = 0.0
+var rain_recent: float = 0.0              ## 1 = 刚下过雨，雨停后约 40 游戏分钟衰减到 0（彩虹用）
 
 var interactables: Dictionary = {}   ## uid -> state 字符串
 var flags: Dictionary = {}
@@ -71,6 +72,7 @@ func snapshot() -> Dictionary:
 		"weather_next_change": weather_next_change,
 		"ground_snow": ground_snow,
 		"ground_wetness": ground_wetness,
+		"rain_recent": rain_recent,
 		"interactables": interactables.duplicate(),
 		"flags": flags.duplicate(),
 	}

@@ -24,7 +24,11 @@
     ],
     "pads": [
       {"id": "cabin_pad", "center": [-66, 37], "radius": 11.5, "blend": 9.0, "height": 2.0},
-      {"id": "dock_landing", "center": [-45, 26], "radius": 3.5, "blend": 10.0, "height": 1.0}
+      {"id": "dock_landing", "center": [-45, 26], "radius": 3.5, "blend": 10.0, "height": 1.0},
+      {"id": "poolhouse_pad", "center": [4, 84], "radius": 18.0, "blend": 8.0, "height": 2.0}
+    ],
+    "pits": [
+      {"id": "poolhouse_basement", "rect": [-8.5, 75.5, 16.5, 92.5], "floor": -9.0}
     ]
   },
 
@@ -45,6 +49,13 @@
     "yaw_deg": 0.0
   },
 
+  "poolhouse": {
+    "zone_id": "poolhouse",
+    "center": [4, 84],
+    "floor_height": 2.0,
+    "yaw_deg": 0.0
+  },
+
   "dock": {
     "zone_id": "dock",
     "from": [-46, 26],
@@ -54,20 +65,27 @@
     "rail_start_x": -40.0
   },
 
+  "keepouts": [
+    {"id": "cabin", "rect": [-76.5, 31.5, -56.5, 42.5]},
+    {"id": "poolhouse", "rect": [-10.5, 73.5, 18.5, 94.5]}
+  ],
+
   "zones": [
     {"zone_id": "lake", "name": "湖泊", "center": [35, -2], "size": [156, 126]},
     {"zone_id": "dock", "name": "木质码头", "center": [-23.5, 26], "size": [46, 4]},
     {"zone_id": "cabin_grounds", "name": "木屋前院", "center": [-66, 37], "size": [28, 28]},
     {"zone_id": "north_forest", "name": "北部针叶林", "center": [-85, -70], "size": [80, 70]},
     {"zone_id": "nw_viewpoint", "name": "西北观景点", "center": [-93, -101], "size": [24, 24]},
-    {"zone_id": "south_meadow", "name": "南部林间草甸", "center": [-84, 93], "size": [60, 40]}
+    {"zone_id": "south_meadow", "name": "南部林间草甸", "center": [-84, 93], "size": [60, 40]},
+    {"zone_id": "poolhouse_grounds", "name": "泳池馆前庭", "center": [4, 84], "size": [32, 28]}
   ],
 
   "paths": [
     {"id": "trail_north", "points": [[-93, -101], [-89, -86], [-85, -70], [-80, -50], [-78, -28], [-83, -6], [-87, 12], [-84, 24], [-74, 28], [-62, 31], [-57, 36]]},
     {"id": "trail_west", "points": [[-103, 72], [-100, 52], [-94, 36], [-84, 24]]},
     {"id": "trail_meadow", "points": [[-57, 38], [-64, 52], [-74, 68], [-84, 90], [-98, 104]]},
-    {"id": "dock_walk", "points": [[-57, 37], [-51, 31], [-46, 26]]}
+    {"id": "dock_walk", "points": [[-57, 37], [-51, 31], [-46, 26]]},
+    {"id": "trail_poolhouse", "points": [[-51, 31], [-40, 44], [-25, 58], [-15, 70], [-12, 80], [-11, 84]]}
   ],
 
   "forest": {
@@ -92,7 +110,8 @@
     "clearings": [
       {"id": "cabin_clearing", "center": [-66, 37], "radius": 14},
       {"id": "lakeside_lawn", "center": [-47, 24], "radius": 11},
-      {"id": "viewpoint_top", "center": [-93, -101], "radius": 13}
+      {"id": "viewpoint_top", "center": [-93, -101], "radius": 13},
+      {"id": "poolhouse_clearing", "center": [4, 84], "radius": 21}
     ],
     "rock_count": 160,
     "rock_seed": 4411

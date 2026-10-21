@@ -6,6 +6,8 @@ shader_type spatial;
 
 render_mode diffuse_burley, specular_schlick_ggx;
 
+#include "res://shaders/include/rain_ripples.gdshaderinc"
+
 uniform sampler2DArray albedo_layers : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
 uniform sampler2DArray normal_layers : filter_linear_mipmap_anisotropic, repeat_enable;
 uniform sampler2DArray rough_layers : filter_linear_mipmap_anisotropic, repeat_enable;
@@ -16,6 +18,18 @@ uniform float blend_sharpness = 2.5;
 global uniform vec4 season_tint;
 global uniform float snow_cover;
 global uniform float wetness;
+global uniform float rain_amount;
+
+float value_noise(vec2 p) {
+	vec2 i = floor(p);
+	vec2 f = fract(p);
+	f = f * f * (3.0 - 2.0 * f);
+	float a = ripple_hash(i);
+	float b = ripple_hash(i + vec2(1.0, 0.0));
+	float c = ripple_hash(i + vec2(0.0, 1.0));
+	float d = ripple_hash(i + vec2(1.0, 1.0));
+	return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+}
 
 varying vec3 wpos;
 varying vec3 wnrm;
@@ -97,6 +111,20 @@ void fragment() {
 	alb *= mix(1.0, 0.55, wetness * (1.0 - snow));
 	rgh = mix(rgh, 0.25, wetness * (1.0 - snow));
 	rgh = mix(rgh, 0.6, snow);
+	// 水坑：平坦处、地面足够湿时出现，近乎镜面（可反射天空与树），下雨时有涟漪
+	float flat_ground = smoothstep(0.965, 0.99, wnrm.y);
+	float puddle_noise = value_noise(wpos.xz * 0.22) * 0.65 + value_noise(wpos.xz * 0.7) * 0.35;
+	float puddle = smoothstep(0.58, 0.66, puddle_noise) * flat_ground * smoothstep(0.7, 0.98, wetness) * (1.0 - snow);
+	if (puddle > 0.001) {
+		vec3 n_flat = vec3(0.0, 1.0, 0.0);
+		if (rain_amount > 0.01) {
+			vec2 r = rain_ripple(wpos.xz * 2.0, TIME, 0.6) * rain_amount * 0.35;
+			n_flat = normalize(vec3(r.x, 1.0, r.y));
+		}
+		n_world = normalize(mix(n_world, n_flat, puddle));
+		alb = mix(alb, alb * 0.3 + vec3(0.02, 0.025, 0.03), puddle);
+		rgh = mix(rgh, 0.03, puddle);
+	}
 
 	ALBEDO = alb;
 	ROUGHNESS = clamp(rgh, 0.05, 1.0);

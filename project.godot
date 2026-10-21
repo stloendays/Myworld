@@ -34,6 +34,7 @@ window/size/viewport_height=900
 3d_render/layer_1="world"
 3d_render/layer_2="water"
 3d_render/layer_3="player_body"
+3d_render/layer_4="falling_leaves"
 
 [shader_globals]
 
@@ -50,6 +51,18 @@ snow_cover={
 "value": 0.0
 }
 wetness={
+"type": "float",
+"value": 0.0
+}
+wind_strength={
+"type": "float",
+"value": 0.0
+}
+wind_direction={
+"type": "vec2",
+"value": Vector2(0.8, 0.6)
+}
+lightning_flash={
 "type": "float",
 "value": 0.0
 }

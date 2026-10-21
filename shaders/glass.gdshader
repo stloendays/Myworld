@@ -18,8 +18,8 @@ float hash(vec2 p) {
 }
 
 void fragment() {
-	// 玻璃面大致朝 ±X，用世界 (z, y) 作平面坐标
-	vec2 p = vec2(world_pos.z + world_pos.x * 0.3, world_pos.y);
+	// 竖直玻璃面：水平方向取 x + z，朝 X 或朝 Z 的玻璃都能得到竖向雨痕
+	vec2 p = vec2(world_pos.z + world_pos.x, world_pos.y);
 	vec2 g = p * vec2(7.0, 1.2);
 	float column = floor(g.x);
 	float speed = 0.25 + hash(vec2(column, 1.0)) * 0.6;

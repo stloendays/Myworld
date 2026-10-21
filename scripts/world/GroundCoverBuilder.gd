@@ -166,7 +166,7 @@ func _suitability(x: float, z: float, where: String, meadow: Dictionary) -> floa
 	var h := WorldTerrain.height_at(x, z)
 	if h < WorldLayout.water_level() + 0.35:
 		return 0.0
-	if WorldLayout.distance_to_paths(p) < 1.8 or WorldTerrain.slope_at(x, z) > 0.6:
+	if WorldLayout.distance_to_paths(p) < 1.8 or WorldTerrain.slope_at(x, z) > 0.6 or Vegetation.in_keepout(p):
 		return 0.0
 	var forest := clampf((Vegetation.base_density(x, z) - 0.3) / 0.35, 0.0, 1.0)
 	match where:

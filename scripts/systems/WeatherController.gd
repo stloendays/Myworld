@@ -7,7 +7,7 @@ extends Node
 ## - 季节不允许的天气（冬季下雨、非冬季下雪）一律拒绝；换季时若当前天气不合法，自动过渡到该季的后备天气。
 ## 只写 WorldState，不碰粒子、天空等表现节点（由 EnvironmentDirector 负责）。
 
-const BLEND_KEYS := ["cloud_coverage", "cloud_darkness", "overcast", "fog", "sun", "rain", "snow", "wetness", "wind"]
+const BLEND_KEYS := ["cloud_coverage", "cloud_darkness", "overcast", "fog", "sun", "rain", "snow", "wetness", "wind", "lightning"]
 
 
 func _ready() -> void:

@@ -16,7 +16,7 @@
       "broadleaf_colors": [[0.48, 0.66, 0.30], [0.56, 0.72, 0.34], [0.86, 0.72, 0.80]],
       "broadleaf_mesh": "summer",
       "grass_colors": [[0.46, 0.60, 0.24], [0.52, 0.64, 0.28], [0.42, 0.56, 0.22]],
-      "weather_weights": {"CLEAR": 4, "OVERCAST": 3, "LIGHT_RAIN": 3, "HEAVY_RAIN": 1, "FOG": 2, "SNOW": 0}
+      "weather_weights": {"CLEAR": 4, "OVERCAST": 3, "LIGHT_RAIN": 3, "HEAVY_RAIN": 1, "THUNDERSTORM": 1, "FOG": 2, "SNOW": 0}
     },
     "SUMMER": {
       "name": "夏",
@@ -26,7 +26,7 @@
       "broadleaf_colors": [[0.26, 0.46, 0.18], [0.30, 0.50, 0.20], [0.22, 0.42, 0.16]],
       "broadleaf_mesh": "summer",
       "grass_colors": [[0.36, 0.52, 0.18], [0.42, 0.56, 0.20], [0.32, 0.48, 0.16]],
-      "weather_weights": {"CLEAR": 6, "OVERCAST": 2, "LIGHT_RAIN": 2, "HEAVY_RAIN": 2, "FOG": 1, "SNOW": 0}
+      "weather_weights": {"CLEAR": 6, "OVERCAST": 2, "LIGHT_RAIN": 2, "HEAVY_RAIN": 1, "THUNDERSTORM": 2, "FOG": 1, "SNOW": 0}
     },
     "AUTUMN": {
       "name": "秋",
@@ -36,7 +36,7 @@
       "broadleaf_colors": [[0.76, 0.44, 0.17], [0.78, 0.60, 0.24], [0.62, 0.25, 0.14], [0.72, 0.50, 0.20]],
       "broadleaf_mesh": "fall",
       "grass_colors": [[0.50, 0.52, 0.22], [0.60, 0.55, 0.26], [0.44, 0.48, 0.20], [0.56, 0.50, 0.24]],
-      "weather_weights": {"CLEAR": 4, "OVERCAST": 3, "LIGHT_RAIN": 3, "HEAVY_RAIN": 2, "FOG": 2, "SNOW": 0}
+      "weather_weights": {"CLEAR": 4, "OVERCAST": 3, "LIGHT_RAIN": 3, "HEAVY_RAIN": 2, "THUNDERSTORM": 1, "FOG": 2, "SNOW": 0}
     },
     "WINTER": {
       "name": "冬",
@@ -46,7 +46,7 @@
       "broadleaf_colors": [[0.46, 0.40, 0.34], [0.40, 0.35, 0.30], [0.50, 0.45, 0.40]],
       "broadleaf_mesh": "fall",
       "grass_colors": [[0.48, 0.46, 0.34], [0.54, 0.50, 0.38], [0.44, 0.42, 0.32]],
-      "weather_weights": {"CLEAR": 4, "OVERCAST": 3, "LIGHT_RAIN": 0, "HEAVY_RAIN": 0, "FOG": 2, "SNOW": 4}
+      "weather_weights": {"CLEAR": 4, "OVERCAST": 3, "LIGHT_RAIN": 0, "HEAVY_RAIN": 0, "THUNDERSTORM": 0, "FOG": 2, "SNOW": 4}
     }
   }
 }

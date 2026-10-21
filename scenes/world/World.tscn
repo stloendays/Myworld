@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/systems/EnvironmentDirector.gd" id="1_env"]
 [ext_resource type="Script" path="res://scripts/world/Precipitation.gd" id="10_precip"]
+[ext_resource type="Script" path="res://scripts/animals/FaunaSpawner.gd" id="11_fauna"]
 [ext_resource type="PackedScene" path="res://scenes/world/Terrain.tscn" id="2_terrain"]
 [ext_resource type="PackedScene" path="res://scenes/world/Lake.tscn" id="3_lake"]
 [ext_resource type="PackedScene" path="res://scenes/world/Forest.tscn" id="4_forest"]
@@ -32,6 +33,9 @@ script = ExtResource("5_dock")
 
 [node name="Backdrop" type="Node3D" parent="."]
 script = ExtResource("6_backdrop")
+
+[node name="Fauna" type="Node3D" parent="."]
+script = ExtResource("11_fauna")
 
 [node name="Zones" type="Node3D" parent="."]
 script = ExtResource("7_zones")

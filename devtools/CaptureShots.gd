@@ -29,6 +29,21 @@ const SHOTS := [
 	{"name": "m2_08_character_front", "climate": DUSK, "character": "front"},
 	{"name": "m2_09_character_back", "climate": DUSK, "character": "back"},
 	{"name": "m2_10_outfits", "climate": {"season": "AUTUMN", "hour": 15.5, "weather": "CLEAR"}, "character": "lineup"},
+	{"name": "m2b_01_poolhouse_exterior", "climate": DUSK, "eye": [-7, 1.8, 69], "ground": true, "look": [4, 2.6, 84]},
+	{"name": "m2b_02_pool_hall", "climate": DUSK, "house": true, "eye": [-4.5, 1.7, -6.2], "look": [10, -0.5, 1.5]},
+	{"name": "m2b_03_underwater_pool", "climate": DUSK, "house": true, "eye": [2.0, -1.9, 1.8], "look": [-1.6, -3.4, 0.0]},
+	{"name": "m2b_04_aquarium", "climate": DUSK, "house": true, "eye": [9.0, -5.3, 1.0], "look": [-3.0, -5.6, -0.5]},
+	{"name": "m2b_05_fish_tank", "climate": DUSK, "house": true, "eye": [4.0, -5.4, -3.0], "look": [4.0, -5.4, -7.5]},
+	{"name": "m2b_06_glass_ceiling", "climate": DUSK, "house": true, "eye": [1.6, -5.6, 0.4], "look": [1.6, 0.0, -0.4]},
+	{"name": "m2b_07_night_poolhouse", "climate": {"season": "SUMMER", "hour": 22.0, "weather": "CLEAR"}, "eye": [-8, 1.7, 64], "ground": true, "look": [4, 2.0, 84]},
+	{"name": "m2b_08_thunderstorm", "climate": {"preset": "Summer_Night_Thunderstorm"}, "lightning": true, "eye": [-50, 1.65, 29], "ground": true, "look": [35, 8, -2]},
+	{"name": "m2b_09_rainbow", "climate": {"preset": "Summer_Rainbow"}, "eye": [-2, 2.65, 26], "antisolar": 16.0},
+	{"name": "m2b_10_autumn_leaves", "climate": {"season": "AUTUMN", "hour": 15.0, "weather": "OVERCAST"}, "eye": [-80, 1.65, -50], "ground": true, "look": [-78, 2.5, -28]},
+	{"name": "m2b_11_rabbit", "climate": {"season": "SUMMER", "hour": 10.0, "weather": "CLEAR"}, "animal": "rabbit"},
+	{"name": "m2b_12_duck", "climate": {"season": "SUMMER", "hour": 10.0, "weather": "CLEAR"}, "animal": "duck"},
+	{"name": "m2b_13_fox", "climate": {"season": "SUMMER", "hour": 10.0, "weather": "CLEAR"}, "animal": "fox"},
+	{"name": "m2b_14_butterfly", "climate": {"season": "SUMMER", "hour": 10.0, "weather": "CLEAR"}, "animal": "butterfly"},
+	{"name": "m2b_15_squirrel", "climate": {"season": "SUMMER", "hour": 10.0, "weather": "CLEAR"}, "animal": "squirrel"},
 ]
 
 const OUTFITS := [
@@ -85,16 +100,32 @@ func _run() -> void:
 			if was_snowing and WorldState.weather_id != &"SNOW":
 				await get_tree().create_timer(12.0).timeout
 		_camera.cull_mask = 0xFFFFF if shot.has("character") else (0xFFFFF & ~FirstPersonController.BODY_LAYER)
+		if _lineup != null:
+			_lineup.visible = shot.get("character", "") == "lineup"
 		if shot.has("character"):
 			_frame_character(str(shot["character"]))
+		elif shot.has("animal"):
+			_frame_animal(str(shot["animal"]))
+		elif shot.get("house", false):
+			var house := _main.get_node("PoolHouse") as Node3D
+			_camera.global_position = house.to_global(_vec(shot["eye"]))
+			_camera.look_at(house.to_global(_vec(shot["look"])), Vector3.UP)
 		else:
 			var e := WorldLayout.v2([shot["eye"][0], shot["eye"][2]])
 			var y := float(shot["eye"][1])
 			if shot.get("ground", false):
 				y += WorldTerrain.height_at(e.x, e.y)
 			_camera.global_position = Vector3(e.x, y, e.y)
-			_camera.look_at(Vector3(float(shot["look"][0]), float(shot["look"][1]), float(shot["look"][2])), Vector3.UP)
+			if shot.has("antisolar"):
+				await _wait(4)
+				_look_antisolar(float(shot["antisolar"]))
+			else:
+				_camera.look_at(Vector3(float(shot["look"][0]), float(shot["look"][1]), float(shot["look"][2])), Vector3.UP)
 		await _wait(40)
+		if shot.get("lightning", false):
+			var env := _main.get_node("World/Environment") as EnvironmentDirector
+			env._flash_t = 0.0
+			await _wait(2)
 		var img := get_viewport().get_texture().get_image()
 		var path := ProjectSettings.globalize_path("%s/%s.png" % [OUT_DIR, shot["name"]])
 		img.save_png(path)
@@ -112,6 +143,9 @@ func _apply_climate(c: Dictionary) -> void:
 		climate.set_hour(float(c["hour"]))
 		climate.set_weather(StringName(c["weather"]), 0.0)
 		WorldState.ground_snow = 0.0
+		# 不带预设的镜头不继承上一张的雨后湿地与彩虹
+		WorldState.ground_wetness = float(c.get("wetness", 0.0))
+		WorldState.rain_recent = 0.0
 	WorldState.time_paused = true
 
 
@@ -153,6 +187,40 @@ func _frame_character(mode: String) -> void:
 			var fwd := -_lineup.global_basis.z
 			_camera.global_position = spot + fwd * 4.6 + Vector3(0.0, 1.3, 0.0)
 			_camera.look_at(spot + Vector3(0.0, 0.95, 0.0), Vector3.UP)
+
+
+## 背对太阳取景（彩虹在对日点周围 42°）：pitch 为抬头角度。
+func _look_antisolar(pitch_deg: float) -> void:
+	var env := _main.get_node("World/Environment") as EnvironmentDirector
+	var away := -env.sun.global_basis.z
+	away.y = 0.0
+	away = away.normalized()
+	var dir := away * cos(deg_to_rad(pitch_deg)) + Vector3.UP * sin(deg_to_rad(pitch_deg))
+	_camera.look_at(_camera.global_position + dir, Vector3.UP)
+	print("rainbow=%.2f sun_el=%.1f" % [env.rainbow, env.sun_elevation])
+
+
+func _vec(a: Array) -> Vector3:
+	return Vector3(float(a[0]), float(a[1]), float(a[2]))
+
+
+## 对准某种动物中第一只可见的个体（第三人称取景：它的正前方偏侧 2–3 m）。
+func _frame_animal(species: String) -> void:
+	for a in get_tree().get_nodes_in_group("fauna"):
+		var an := a as Animal
+		if an.species_id != species or not an.visible:
+			continue
+		var p := an.global_position
+		var fwd := -an.global_basis.z
+		var dist := 2.2 if species in ["butterfly", "squirrel", "rabbit"] else 3.2
+		var eye := p + fwd * dist + an.global_basis.x * dist * 0.5 + Vector3(0.0, 0.6, 0.0)
+		eye.y = maxf(eye.y, WorldTerrain.height_at(eye.x, eye.z) + 0.4)
+		if species == "duck":
+			eye.y = maxf(eye.y, 0.6)
+		_camera.global_position = eye
+		_camera.look_at(p + Vector3(0.0, 0.15, 0.0), Vector3.UP)
+		an.set_physics_process(false)
+		return
 
 
 func _wait(frames: int) -> void:

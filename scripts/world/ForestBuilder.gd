@@ -217,7 +217,7 @@ func _place_rocks(cfg: Dictionary) -> Dictionary:
 		var tint := rng.randi()
 		var p := Vector2(x, z)
 		var h := WorldTerrain.height_at(x, z)
-		if h < -0.4 or WorldLayout.distance_to_paths(p) < 2.6 or Vegetation.in_clearing(p):
+		if h < -0.4 or WorldLayout.distance_to_paths(p) < 2.6 or Vegetation.in_clearing(p) or Vegetation.in_keepout(p):
 			continue
 		var entry := {
 			"transform": Transform3D(Basis(Vector3.UP, yaw).scaled(Vector3(s, s, s)), Vector3(x, h - 0.08 * s, z)),

@@ -17,6 +17,15 @@ static func reset_cache() -> void:
 	_cfg = {}
 
 
+## 建筑占地（含台基）：树、岩石、草、动物都不进入。
+static func in_keepout(p: Vector2) -> bool:
+	for k in WorldLayout.data().get("keepouts", []):
+		var r: Array = k["rect"]
+		if p.x >= float(r[0]) and p.x <= float(r[2]) and p.y >= float(r[1]) and p.y <= float(r[3]):
+			return true
+	return false
+
+
 static func in_clearing(p: Vector2) -> bool:
 	for c in cfg().get("clearings", []):
 		if p.distance_to(WorldLayout.v2(c["center"])) < float(c["radius"]):
@@ -50,7 +59,7 @@ static func tree_density(x: float, z: float) -> float:
 	var c := cfg()
 	var water := WorldLayout.water_level()
 	var h := WorldTerrain.height_at(x, z)
-	if h < water + 0.6 or in_clearing(p):
+	if h < water + 0.6 or in_clearing(p) or in_keepout(p):
 		return 0.0
 	if WorldLayout.distance_to_paths(p) < float(c.get("path_clearance", 3.0)):
 		return 0.0

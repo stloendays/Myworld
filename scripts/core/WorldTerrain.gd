@@ -1,7 +1,8 @@
 class_name WorldTerrain
 extends RefCounted
 ## 解析式地形高度函数 h(x, z)。网格、碰撞、树木摆放、出生点都调用它，保证彼此一致。
-## 组成：基础高度 + 低频噪声 + 细节噪声 + 山丘 → 平台压平 → 湖盆下挖 → 地图边缘陡坡（自然封闭）。
+## 组成：基础高度 + 低频噪声 + 细节噪声 + 山丘 → 平台压平 → 湖盆下挖 → 地图边缘陡坡（自然封闭）
+## → 建筑地下室基坑（pits：矩形内直接降到坑底，被建筑的首层地坪和地下室墙体完全遮住）。
 
 static var _noise: FastNoiseLite = null
 static var _detail: FastNoiseLite = null
@@ -75,6 +76,10 @@ static func height_at(x: float, z: float) -> float:
 	var tx := maxf(0.0, (absf(x) - b0) / (b1 - b0))
 	var tz := maxf(0.0, (absf(z) - b0) / (b1 - b0))
 	h += float(_cfg["boundary_height"]) * (tx * tx + tz * tz)
+	for pit in _cfg.get("pits", []):
+		var r: Array = pit["rect"]
+		if x >= float(r[0]) and x <= float(r[2]) and z >= float(r[1]) and z <= float(r[3]):
+			return float(pit["floor"])
 	return h
 
 

@@ -1,7 +1,8 @@
 shader_type sky;
 // 风格化天空：天顶—地平线渐变、太阳盘与光晕、月亮、星空、飘动的云。
 // 所有参数由 EnvironmentDirector 按时间、季节、天气每帧写入：
-//   night 0..1（星星与月光）、overcast 0..1（灰化与压暗）、cloud_coverage（越小云越多）。
+//   night 0..1（星星与月光）、overcast 0..1（灰化与压暗）、cloud_coverage（越小云越多）、
+//   rainbow 0..1（雨后、太阳较低时出现在太阳对面 42° 处）、闪电用全局参数 lightning_flash。
 
 uniform vec3 top_color : source_color = vec3(0.18, 0.21, 0.55);
 uniform vec3 horizon_color : source_color = vec3(0.93, 0.56, 0.66);
@@ -23,6 +24,8 @@ uniform float cloud_scale = 0.35;
 uniform vec2 cloud_wind = vec2(0.004, 0.0015);
 uniform vec3 cloud_lit : source_color = vec3(0.98, 0.70, 0.72);
 uniform vec3 cloud_shade : source_color = vec3(0.38, 0.33, 0.55);
+uniform float rainbow = 0.0;
+global uniform float lightning_flash;
 
 float hash(vec3 p) {
 	return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453);
@@ -75,7 +78,20 @@ void sky() {
 		cov = max(cov, overcast * 0.85);
 		cov *= smoothstep(0.0, 0.18, h);
 		vec3 cc = mix(cloud_shade, cloud_lit, clamp(sun_amount * 1.6 + 0.25, 0.0, 1.0));
+		cc += vec3(0.55, 0.6, 0.85) * lightning_flash * (0.6 + n);
 		col = mix(col, cc, cov * cloud_opacity);
 	}
+
+	// 彩虹：以太阳的对日点为中心、半径约 42° 的光谱圆环
+	if (rainbow > 0.01 && LIGHT0_ENABLED && h > -0.02 && !AT_CUBEMAP_PASS) {
+		float a = degrees(acos(clamp(dot(d, -normalize(LIGHT0_DIRECTION)), -1.0, 1.0)));
+		float t = (a - 40.5) / 3.0;
+		if (t > 0.0 && t < 1.0) {
+			vec3 spectrum = clamp(abs(fract(vec3(1.0 - t) * 0.8 + vec3(0.0, 0.66, 0.33)) * 6.0 - 3.0) - 1.0, 0.0, 1.0);
+			float band = sin(t * 3.14159);
+			col = mix(col, col + spectrum * 0.35, band * rainbow * smoothstep(-0.02, 0.15, h));
+		}
+	}
+	col += vec3(0.30, 0.32, 0.42) * lightning_flash;
 	COLOR = col;
 }
