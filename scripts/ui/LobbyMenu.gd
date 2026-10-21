@@ -60,6 +60,7 @@ func is_open() -> bool:
 func open(page := Page.HOME) -> void:
 	_open = true
 	_root.visible = true
+	_lang.select(maxi(GameSettings.LANGUAGES.find(GameSettings.language), 0))
 	_show(page)
 	PlayerHold.set_held(self, get_tree(), true)
 	if DisplayServer.get_name() != "headless":

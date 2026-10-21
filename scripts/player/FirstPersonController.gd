@@ -323,7 +323,7 @@ func _update_focus() -> void:
 				seated_target = null
 		var text := "E  下船（靠近码头或岸边）  ·  W/S 划  A/D 转向  Shift 用力划"
 		if seat != null:
-			text = seated_target.get_prompt(self) + "    ·    E 对着别处：站起来" if seated_target != null else "E  站起来（或按移动键）"
+			text = tr(seated_target.get_prompt(self)) + tr("    ·    E 对着别处：站起来") if seated_target != null else "E  站起来（或按移动键）"
 		elif emote in EMOTE_POSES:
 			text = "E  站起来（或按移动键）"
 		if text != _ride_prompt and is_local_controlled:
@@ -513,7 +513,7 @@ func do_emote(id: String) -> bool:
 		return true
 	if is_riding() or swimming or flying or not is_on_floor():
 		if is_local_controlled:
-			EventBus.toast_requested.emit("现在不能%s" % EMOTE_NAMES[id])
+			EventBus.toast_requested.emit(tr("现在不能%s") % tr(EMOTE_NAMES[id]))
 		return false
 	end_emote()
 	emote = id
@@ -548,15 +548,18 @@ func end_emote() -> void:
 		set_third_person(false)
 
 
-## 身体模型相对角色原点的摆放：坐地时臀部贴地；躺下时整个人放倒，脚朝前、头在身后。
 func _place_body() -> void:
-	match emote:
+	body.transform = emote_body_transform(emote)
+
+
+## 身体模型相对角色原点的摆放：坐地时臀部贴地；躺下时整个人放倒，脚朝前、头在身后。联机时别人那边的方块人也用它。
+static func emote_body_transform(id: String) -> Transform3D:
+	match id:
 		"ground_sit":
-			body.transform = Transform3D(Basis(), Vector3(0.0, -12.0 * Wardrobe.px(), 0.0))
+			return Transform3D(Basis(), Vector3(0.0, -12.0 * Wardrobe.px(), 0.0))
 		"lie":
-			body.transform = Transform3D(Basis(Vector3.RIGHT, PI * 0.5), Vector3(0.0, 0.2, -0.9))
-		_:
-			body.transform = Transform3D.IDENTITY
+			return Transform3D(Basis(Vector3.RIGHT, PI * 0.5), Vector3(0.0, 0.2, -0.9))
+	return Transform3D.IDENTITY
 
 
 ## 每物理帧：想走动、进了水或手势做完就结束动作。坐着 / 躺着时原地不动（仍受重力），

@@ -1353,19 +1353,26 @@ func _test_chat() -> void:
 # ---------------------------------------------------------------- 发布版：语言、房间号、联机规则
 
 func _test_release() -> void:
-	# 默认英文；中文没有翻译表，tr() 原样返回中文
-	var en_ok := GameSettings.language == "en" and tr("继续") == "Resume" and tr("E  打开木门") == "E  Open the door"
+	# 默认跟随系统语言（中文系统显示中文，其他系统英文）；选 English 后用英文翻译表，中文没有翻译表，tr() 原样返回中文
+	var auto_ok := GameSettings.language == "auto" and GameSettings.resolved_language() == ("zh" if OS.get_locale_language() == "zh" else "en")
+	GameSettings.set_value("language", "en", false)
+	var en_ok := tr("继续") == "Resume" and tr("E  打开木门") == "E  Open the door"
 	GameSettings.set_value("language", "zh", false)
 	var zh_ok := tr("继续") == "继续" and TranslationServer.get_locale().begins_with("zh")
 	GameSettings.set_value("language", "en", false)
-	_check("界面默认英文，可切换中文", en_ok and zh_ok and tr("继续") == "Resume", "en %s · zh %s" % [en_ok, zh_ok])
+	var back_en := tr("继续") == "Resume"
+	GameSettings.set_value("language", "auto", false)
+	_check("界面语言默认跟随系统，可切换英文 / 中文", auto_ok and en_ok and zh_ok and back_en, "跟随系统 %s（系统 %s）· en %s · zh %s" % [auto_ok, OS.get_locale_language(), en_ok, zh_ok])
 
 	# 界面脚本里出现的中文都有英文翻译（新增文字忘了加翻译会在这里失败）
+	GameSettings.set_value("language", "en", false)
 	var skip := ["帮助", "时间", "天气", "季节", "预设", "坐标", "传送", "名字", "清屏", "中文", "、", "：", "季", "天",
-		"%s：%s", "%s — %s", "×%d", "%d°", "—", "  ·  ", "出生点", "语言 / Language"]
+		"%s：%s", "%s — %s", "×%d", "%d°", "—", "  ·  ", "出生点", "语言 / Language",
+		"♟", "♞", "♝", "♜", "♛", "♚", "%s  ·  %s"]
 	var missing := PackedStringArray()
 	var re := RegEx.create_from_string(r'"([^"\n]*[^\x00-\x7F][^"\n]*)"')
-	for dir in ["res://scripts/ui", "res://scripts/net", "res://scripts/interactions", "res://scripts/core"]:
+	for dir in ["res://scripts/ui", "res://scripts/net", "res://scripts/interactions", "res://scripts/core", "res://scripts/games",
+			"res://scripts/player", "res://scripts/buildings", "res://scripts/world", "res://scripts/systems", "res://scripts/vehicles"]:
 		for path in _list_files(dir, ".gd"):
 			for line in FileAccess.get_file_as_string(path).split("\n"):
 				var s := line.strip_edges()
@@ -1375,7 +1382,17 @@ func _test_release() -> void:
 					var text := m.get_string(1).c_unescape()
 					if not text in skip and tr(text) == text:
 						missing.append(text)
+	# 数据文件里显示在界面上的名字：世界注册表、季节飘落物方案
+	for w in WorldRegistry.worlds():
+		for key in ["name", "summary"]:
+			if tr(str(w[key])) == str(w[key]):
+				missing.append(str(w[key]))
+	for pid in (Precipitation.fx_data()["profiles"] as Dictionary).keys():
+		var pname := str(Precipitation.fx_profile(str(pid)).get("name", pid))
+		if tr(pname) == pname:
+			missing.append(pname)
 	_check("界面文字全部有英文翻译", missing.is_empty(), ", ".join(missing))
+	GameSettings.set_value("language", "auto", false)
 
 	# 房间号：编码解码往返、抄错能发现、地址直接输入、地址分类
 	var round_ok := true

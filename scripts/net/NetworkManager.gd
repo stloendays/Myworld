@@ -20,7 +20,8 @@ enum State { OFFLINE, HOSTING, CONNECTING, CLIENT }
 
 const DEFAULT_PORT := RoomCode.DEFAULT_PORT
 const MAX_PLAYERS := 4
-const PROTOCOL := 1
+const PROTOCOL := 2   ## 2：姿态里加了身体状态（坐、躺、划船、手势）
+const BODY_STATES := ["", "sit", "paddle", "ground_sit", "lie", "wave", "dance", "clap"]
 const POSE_HZ := 20.0
 const WORLD_HZ := 4.0
 const JOIN_TIMEOUT := 10.0
@@ -435,7 +436,7 @@ func _send_pose() -> void:
 	if p == null or roster.size() < 2:
 		return
 	var horizontal := Vector2(p.velocity.x, p.velocity.z).length()
-	var pose := [p.global_position, p.rotation.y, p.head.rotation.x, horizontal, p.is_on_floor() or p.swimming]
+	var pose := [p.global_position, p.rotation.y + p.body.rotation.y, p.head.rotation.x, horizontal, p.is_on_floor() or p.swimming, _vehicle_of(p), body_state(p)]
 	if is_host():
 		_poses[1] = p.global_position
 		_pose_from.rpc(1, pose)
@@ -443,10 +444,30 @@ func _send_pose() -> void:
 		_pose.rpc_id(1, pose)
 
 
+## 身体状态：动作（ground_sit / lie / wave / dance / clap）优先，其次坐在椅子上 sit、划船 paddle，平常为空。
+## 朝向发的是身体的朝向（坐下、划船时身体转向座位或船头），别人那边的方块人按它摆。
+static func body_state(p: FirstPersonController) -> String:
+	if p.emote != "":
+		return p.emote
+	if p.seat != null:
+		return "sit"
+	if p.boat != null:
+		return "paddle"
+	return ""
+
+
+## 正在划的船：[uid, 位置, 朝向]，没在船上是空数组。船跟着划船的人走，别人那边的同一条船按这个摆放。
+func _vehicle_of(p: FirstPersonController) -> Array:
+	var boat: Variant = p.get("boat")
+	if boat is Canoe:
+		return [String((boat as Canoe).uid), (boat as Canoe).global_position, (boat as Canoe).heading]
+	return []
+
+
 @rpc("any_peer", "call_remote", "unreliable_ordered")
 func _pose(pose: Array) -> void:
 	var id := multiplayer.get_remote_sender_id()
-	if not is_host() or not roster.has(id) or pose.size() != 5 or not pose[0] is Vector3:
+	if not is_host() or not roster.has(id) or pose.size() != 7 or not pose[0] is Vector3 or not pose[5] is Array or not pose[6] is String or not str(pose[6]) in BODY_STATES:
 		return
 	_poses[id] = pose[0]
 	_remote_players_call("set_pose", [id, pose])
@@ -534,6 +555,10 @@ func _find_interactable(uid: StringName) -> Interactable:
 
 func _on_local_interactable(uid: StringName, s: String) -> void:
 	if _applying_remote or not is_online():
+		return
+	# 船不走“可交互物”同步：谁在划船，船的位置就跟着谁的姿态包走（见 _vehicle_of）
+	var target := _find_interactable(uid)
+	if target != null and target.is_in_group("vehicles"):
 		return
 	if is_host():
 		_interactable.rpc(uid, s)

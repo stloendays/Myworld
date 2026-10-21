@@ -4,7 +4,7 @@ extends Node
 ## 本进程当房主（不开 UPnP），再启动无窗口的访客进程（同一场景，参数 -- --net-client 地址）：
 ##   1. 访客加入：名单 2 人、房主看到访客的方块人，位置跟着访客走；
 ##   2. 访客在木屋门口开门 → 房主那边门也开；访客隔着 90 m 开泳池馆的门 → 房主拒绝并改回；
-##   3. 访客聊天 → 房主收到；房主改天气和时间 → 访客收到；访客 /weather 被拦下；
+##   3. 访客聊天 → 房主收到；访客划独木舟 → 房主那边的船跟着走；房主改天气和时间 → 访客收到；访客 /weather 被拦下；
 ##   4. 房主关房 → 访客收到“房主已离开”并回到单人；
 ##   5. 版本不一致的访客 → 被拒绝，提示两边的版本号。
 ## 两个进程之间的“台词”走聊天消息（CMD … / REPORT …），访客的最终结果写 user://net_test_client.json。
@@ -12,6 +12,7 @@ extends Node
 const PORT := 24611
 const RESULT_PATH := "user://net_test_client.json"
 const PORCH := Vector3(-62.4, 2.4, 37.0)
+const LAKE_POINT := Vector2(10.0, 0.0)
 
 var _results: Array[Dictionary] = []
 var _main: Node3D
@@ -72,6 +73,19 @@ func _host() -> void:
 		"木屋门 %s · 泳池馆门 %s" % [WorldState.get_interactable_state(&"cabin_front_door"), WorldState.get_interactable_state(&"poolhouse_front_door")])
 	var hello := await _until(func() -> bool: return _heard("player", "Guest", "hello from the guest"), 20.0)
 	_check("访客的聊天消息到达房主", hello)
+
+	# 访客跳舞：房主看到的方块人也在跳；然后让访客去上船
+	var dancing := await _until(func() -> bool: return p != null and p.body_state == "dance", 20.0)
+	_check("访客做动作（跳舞）：房主看到的方块人也在跳", dancing and p.model.gesture == "dance" and p.model.pose == "stand",
+		"状态 %s，手势 %s" % [p.body_state if p != null else "?", p.model.gesture if p != null else "?"])
+	_say("CMD board")
+
+	# 访客上独木舟划到湖上：房主这边的同一条船跟过去，并且被标成有人在用
+	var canoe := get_tree().get_first_node_in_group("vehicles") as Canoe
+	var boat_ok := await _until(func() -> bool: return canoe != null and canoe.world_position_2d().distance_to(LAKE_POINT) < 1.5, 30.0)
+	var paddling := await _until(func() -> bool: return p.body_state == "paddle" and p.model.pose == "paddle", 10.0)
+	_check("访客划独木舟：房主看到船跟着走，且自己上不去", boat_ok and canoe.rider is RemotePlayer and paddling and not canoe.can_interact(get_tree().get_first_node_in_group("local_player")),
+		"船在 %s，乘客 %s" % [canoe.world_position_2d() if canoe != null else "?", canoe.rider if canoe != null else null])
 
 	# 房主改天气和时间，让访客报告它看到的
 	climate.set_weather(&"OVERCAST", 0.0)
@@ -169,6 +183,13 @@ func _client() -> void:
 	if pool_door != null:
 		pool_door.interact(player)   # 离门 90 m：房主应该拒绝并改回
 	Net.send_chat("player", "hello from the guest")
+	player.do_emote("dance")
+	await _until(func() -> bool: return _heard("player", "Host", "CMD board"), 60.0)
+	player.end_emote()
+	var canoe := get_tree().get_first_node_in_group("vehicles") as Canoe
+	if canoe != null:
+		player.board(canoe)
+		canoe.place_at(LAKE_POINT, 90.0)
 	var asked := await _until(func() -> bool: return _heard("player", "Host", "CMD report"), 60.0)
 	if asked:
 		await _seconds(1.0)

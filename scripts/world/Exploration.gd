@@ -24,6 +24,9 @@ static func pois() -> Array:
 
 
 static func poi_label(poi: Dictionary) -> String:
+	# 英文界面只显示英文名；中文界面中英并列
+	if TranslationServer.get_locale().begins_with("en") and str(poi.get("name_en", "")) != "":
+		return str(poi["name_en"])
 	return "%s %s" % [poi["name"], poi.get("name_en", "")]
 
 
@@ -45,7 +48,7 @@ func check(at: Vector2) -> Array[StringName]:
 		var id := StringName(poi["id"])
 		if at.distance_to(WorldLayout.v2(poi["center"])) <= float(poi["radius"]) and WorldState.discover(id):
 			found.append(id)
-			EventBus.toast_requested.emit("发现：%s（%d / %d）" % [poi_label(poi), WorldState.discoveries.size(), list.size()])
+			EventBus.toast_requested.emit(tr("发现：%s（%d / %d）") % [poi_label(poi), WorldState.discoveries.size(), list.size()])
 	return found
 
 

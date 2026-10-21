@@ -60,7 +60,7 @@ func update_info(id: int, info: Dictionary) -> void:
 
 
 func set_pose(id: int, pose: Array) -> void:
-	if _players.has(id) and pose.size() == 5 and pose[0] is Vector3:
+	if _players.has(id) and pose.size() >= 5 and pose[0] is Vector3:
 		(_players[id] as RemotePlayer).set_pose(pose)
 
 

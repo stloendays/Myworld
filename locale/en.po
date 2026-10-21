@@ -786,3 +786,345 @@ msgstr "Sea turtle"
 msgid "水母"
 msgstr "Jellyfish"
 
+msgid "铸铁炉"
+msgstr "Stove"
+
+msgid "E  熄灭炉火"
+msgstr "E  Put out the fire"
+
+msgid "E  生火"
+msgstr "E  Light the fire"
+
+msgid "落地灯"
+msgstr "Floor lamp"
+
+msgid "台灯"
+msgstr "Table lamp"
+
+msgid "吊灯"
+msgstr "Ceiling light"
+
+msgid "门廊灯"
+msgstr "Porch light"
+
+msgid "E  关落地灯"
+msgstr "E  Turn off the floor lamp"
+
+msgid "E  开落地灯"
+msgstr "E  Turn on the floor lamp"
+
+msgid "E  关台灯"
+msgstr "E  Turn off the table lamp"
+
+msgid "E  开台灯"
+msgstr "E  Turn on the table lamp"
+
+msgid "E  关吊灯"
+msgstr "E  Turn off the ceiling light"
+
+msgid "E  开吊灯"
+msgstr "E  Turn on the ceiling light"
+
+msgid "E  关门廊灯"
+msgstr "E  Turn off the porch light"
+
+msgid "E  开门廊灯"
+msgstr "E  Turn on the porch light"
+
+msgid "沙发"
+msgstr "Sofa"
+
+msgid "扶手椅"
+msgstr "Armchair"
+
+msgid "门廊长椅"
+msgstr "Porch bench"
+
+msgid "躺椅"
+msgstr "Lounger"
+
+msgid "长椅"
+msgstr "Bench"
+
+msgid "床"
+msgstr "Bed"
+
+msgid "E  睡觉（睡到早上 7 点）"
+msgstr "E  Sleep (until 7 am)"
+
+msgid "E  小睡一会儿（1 小时）"
+msgstr "E  Take a nap (1 hour)"
+
+msgid "睡了 %.1f 小时 · 现在 %s"
+msgstr "Slept %.1f hours · it's %s"
+
+msgid "联机时只有房主能睡到早上"
+msgstr "In a shared room only the host can sleep the night away"
+
+msgid "E  坐下"
+msgstr "E  Sit down"
+
+msgid "E  站起来（或按移动键）"
+msgstr "E  Stand up (or press a movement key)"
+
+msgid "E  下船（靠近码头或岸边）  ·  W/S 划  A/D 转向  Shift 用力划"
+msgstr "E  Get out (near the dock or shore)  ·  W/S paddle  A/D steer  Shift paddle hard"
+
+msgid "离岸太远：划到岸边或码头再下船"
+msgstr "Too far from shore: paddle to the shore or dock to get out"
+
+msgid "E  上独木舟"
+msgstr "E  Board the canoe"
+
+msgid "独木舟"
+msgstr "Canoe"
+
+msgid "发现：%s（%d / %d）"
+msgstr "Discovered: %s (%d / %d)"
+
+msgid "独木舟旁（码头）"
+msgstr "By the canoe (dock)"
+
+msgid "湖心小岛"
+msgstr "Lake island"
+
+msgid "E  关%s"
+msgstr "E  Turn off %s"
+
+msgid "E  开%s"
+msgstr "E  Turn on %s"
+
+msgid "你就在「%s」"
+msgstr "You are already in %s"
+
+msgid "「%s」还在建设中，以后从传送门进入"
+msgstr "%s is still being built — you will reach it through a portal later"
+
+msgid "双人同屏"
+msgstr "Two players, one screen"
+
+msgid "人机 · 我执白"
+msgstr "Vs computer · I play White"
+
+msgid "人机 · 我执黑"
+msgstr "Vs computer · I play Black"
+
+msgid "简单"
+msgstr "Easy"
+
+msgid "普通"
+msgstr "Normal"
+
+msgid "困难"
+msgstr "Hard"
+
+msgid "国际象棋 · Chess"
+msgstr "Chess"
+
+msgid "电脑难度："
+msgstr "Computer level:"
+
+msgid "新局"
+msgstr "New game"
+
+msgid "悔棋"
+msgstr "Undo"
+
+msgid "翻转棋盘"
+msgstr "Flip board"
+
+msgid "关闭（Esc）"
+msgstr "Close (Esc)"
+
+msgid "升变为："
+msgstr "Promote to:"
+
+msgid "马"
+msgstr "Knight"
+
+msgid "象"
+msgstr "Bishop"
+
+msgid "车"
+msgstr "Rook"
+
+msgid "后"
+msgstr "Queen"
+
+msgid "着法记录"
+msgstr "Moves"
+
+msgid "白方"
+msgstr "White"
+
+msgid "黑方"
+msgstr "Black"
+
+msgid "将死！白方胜"
+msgstr "Checkmate! White wins"
+
+msgid "将死！黑方胜"
+msgstr "Checkmate! Black wins"
+
+msgid "逼和（无子可动）"
+msgstr "Stalemate (no legal moves)"
+
+msgid "和棋（50 步无吃子、无兵动）"
+msgstr "Draw (50 moves without a capture or pawn move)"
+
+msgid "和棋（同一局面出现三次）"
+msgstr "Draw (same position three times)"
+
+msgid "和棋（双方子力都不足以将死）"
+msgstr "Draw (neither side can checkmate)"
+
+msgid "%s走棋%s"
+msgstr "%s to move%s"
+
+msgid "（将军！）"
+msgstr " (check!)"
+
+msgid "电脑思考中…"
+msgstr "Computer is thinking…"
+
+msgid "轮到你"
+msgstr "Your move"
+
+msgid "国际象棋"
+msgstr "Chess"
+
+msgid "E  下国际象棋"
+msgstr "E  Play chess"
+
+msgid "坐下"
+msgstr "Sit down"
+
+msgid "躺下"
+msgstr "Lie down"
+
+msgid "挥手"
+msgstr "Wave"
+
+msgid "跳舞"
+msgstr "Dance"
+
+msgid "鼓掌"
+msgstr "Clap"
+
+msgid "起身"
+msgstr "Stand up"
+
+msgid "休息"
+msgstr "Rest"
+
+msgid "坐下 / 躺下 / 起身"
+msgstr "Sit / lie down / stand up"
+
+msgid "    ·    E 对着别处：站起来"
+msgstr "    ·    E elsewhere: stand up"
+
+msgid "现在不能%s"
+msgstr "You can't %s right now"
+
+msgid "松开 G 确认"
+msgstr "Release G to confirm"
+
+msgid "动作"
+msgstr "Actions"
+
+msgid "拍照 F12  ·  G / Esc 收起"
+msgstr "Photo F12  ·  G / Esc to close"
+
+msgid "照片没存下来"
+msgstr "The photo could not be saved"
+
+msgid "已拍照，存在图片文件夹的 %s 里"
+msgstr "Photo saved to the %s folder in Pictures"
+
+msgid "季节飘落物（data/weather/seasonal_fx.json）"
+msgstr "Seasonal particles (data/weather/seasonal_fx.json)"
+
+msgid "按季节"
+msgstr "By season"
+
+msgid "关闭"
+msgstr "Off"
+
+msgid "落叶"
+msgstr "Falling leaves"
+
+msgid "花瓣"
+msgstr "Petals"
+
+msgid "原版红点"
+msgstr "Legacy red motes"
+
+msgid "WASD 移动 · Shift 奔跑 · 空格 跳跃/上浮 · C 下潜 · E 交互 · V 视角\nG 动作轮盘（1 休息 · 2 挥手 · 3 跳舞 · 4 鼓掌）· F12 拍照 · T 聊天\nM 小地图 · Tab 世界地图 · F11 全屏 · F3 坐标 · F2 开发者模式（F 飞行 · N 穿墙 · F4 面板）"
+msgstr "WASD move · Shift run · Space jump/swim up · C dive · E interact · V view\nG action wheel (1 rest · 2 wave · 3 dance · 4 clap) · F12 photo · T chat\nM minimap · Tab world map · F11 fullscreen · F3 coordinates · F2 developer mode (F fly · N noclip · F4 panel)"
+
+msgid "全屏 / 窗口（F11）"
+msgstr "Fullscreen / window (F11)"
+
+msgid "画质"
+msgstr "Quality"
+
+msgid "低（轻薄本）"
+msgstr "Low (thin laptops)"
+
+msgid "中"
+msgstr "Medium"
+
+msgid "高（推荐）"
+msgstr "High (recommended)"
+
+msgid "极高"
+msgstr "Ultra"
+
+msgid "动态分辨率（GPU 忙时自动降低渲染比例，用 FSR 放大）"
+msgstr "Dynamic resolution (lowers render scale when the GPU is busy, upscaled with FSR)"
+
+msgid "全屏（F11 或 Alt + Enter 随时切换）"
+msgstr "Fullscreen (F11 or Alt + Enter at any time)"
+
+msgid "挥手 / 跳舞 / 鼓掌时自动切到第三人称"
+msgstr "Switch to third person while waving, dancing or clapping"
+
+msgid "世界总览"
+msgstr "Worlds"
+
+msgid "Tab / Esc 关闭"
+msgstr "Tab / Esc to close"
+
+msgid "世界地图 · %s"
+msgstr "World map · %s"
+
+msgid "当前所在"
+msgstr "You are here"
+
+msgid "可前往"
+msgstr "Open"
+
+msgid "规划中"
+msgstr "Planned"
+
+msgid "暮色湖"
+msgstr "Dusk Lake"
+
+msgid "暮色湖畔"
+msgstr "Dusk Lake"
+
+msgid "未命名世界 · 二"
+msgstr "World II"
+
+msgid "未命名世界 · 三"
+msgstr "World III"
+
+msgid "湖、森林、木屋、玻璃泳池馆与地下水族馆。"
+msgstr "A lake, forest, cabin, glass pool house and an underground aquarium."
+
+msgid "规划中：以后从暮色湖畔的传送门进入。"
+msgstr "Planned: you will enter it through a portal from Dusk Lake."
+
+msgid "规划中。"
+msgstr "Planned."
+
