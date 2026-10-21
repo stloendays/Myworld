@@ -34,6 +34,7 @@ var _zone_names := {}
 
 func _ready() -> void:
 	layer = 4
+	add_to_group("minimap")
 	var e := WorldTerrain.extent()
 	world_rect = Rect2(-e, -e, e * 2.0, e * 2.0)
 	for z in WorldLayout.zones():

@@ -42,6 +42,13 @@ var arms: FirstPersonArms = null
 var seat: Seat = null       ## 坐着时所在的座位（沙发、长椅、躺椅）
 var boat: Canoe = null      ## 在独木舟上时所乘的船
 var input_locked := false   ## 打开棋盘等全屏界面时为 true：不读移动、视角和交互键
+## 动作（动作栏 / 数字键）："ground_sit" 席地坐、"lie" 躺下、"wave" 挥手、"dance" 跳舞、"clap" 鼓掌；"" = 没有。
+## 坐、躺、跳舞一直保持，按移动键 / 空格 / E 起身；挥手、鼓掌做完自动结束。
+const EMOTES := ["ground_sit", "lie", "wave", "dance", "clap"]
+const EMOTE_NAMES := {"ground_sit": "坐下", "lie": "躺下", "wave": "挥手", "dance": "跳舞", "clap": "鼓掌"}
+const EMOTE_POSES := ["ground_sit", "lie"]
+const GESTURE_SECONDS := {"wave": 2.6, "clap": 2.8}
+var emote := ""
 
 var autopilot_enabled := false
 var autopilot_direction := Vector3.ZERO
@@ -54,6 +61,9 @@ var _bob_phase := 0.0
 var _bob_amount := 0.0
 var _head_base := Vector3.ZERO
 var _ride_prompt := ""
+var _emote_time := 0.0
+var _emote_view_forced := false
+var _pose_head := Vector3.ZERO   ## 坐地 / 躺下时眼睛相对站姿的偏移
 
 
 func _ready() -> void:
@@ -108,6 +118,7 @@ func set_noclip(enabled: bool) -> void:
 
 ## 开发者传送：直接放到某点（读档、调试用；正常游玩进屋不走这里）。
 func teleport_to(pos: Vector3, yaw_deg := INF) -> void:
+	end_emote()
 	_leave_ride()
 	global_position = pos
 	velocity = Vector3.ZERO
@@ -147,6 +158,8 @@ func _physics_process(delta: float) -> void:
 		camera_boom.spring_length = lerpf(camera_boom.spring_length, ride_boom, 1.0 - exp(-12.0 * delta))
 		_update_bob(delta, 0.0)
 		return
+	if emote != "" and _emote_tick(delta):
+		return
 	current_water = null if flying else WaterVolume.find(get_tree(), global_position + Vector3(0.0, 0.9, 0.0))
 	swimming = current_water != null
 	if flying:
@@ -161,7 +174,7 @@ func _physics_process(delta: float) -> void:
 	var grounded := is_on_floor() and not flying
 	body.animate(delta, flat_speed + (absf(velocity.y) if swimming else 0.0), grounded or swimming, head.rotation.x, run_speed)
 	if arms != null:
-		arms.visible = not third_person
+		arms.visible = not third_person and emote != "lie"
 		arms.animate(delta, flat_speed, grounded, swimming, run_speed)
 	var boom_target := third_person_distance if third_person else 0.0
 	camera_boom.spring_length = lerpf(camera_boom.spring_length, boom_target, 1.0 - exp(-12.0 * delta))
@@ -175,7 +188,13 @@ func _update_bob(delta: float, speed: float) -> void:
 	_bob_amount = lerpf(_bob_amount, target, 1.0 - exp(-8.0 * delta))
 	_bob_phase += delta * speed * 2.4
 	# 晃头节点而不是相机：相机挂在 SpringArm3D 下，位置每帧被弹簧臂改写
-	head.position = _head_base + Vector3(cos(_bob_phase) * 0.025, -absf(sin(_bob_phase)) * 0.045, 0.0) * _bob_amount
+	var pose_target := Vector3.ZERO
+	if emote == "ground_sit":
+		pose_target = Vector3(0.0, -0.72, 0.0)
+	elif emote == "lie":
+		pose_target = Vector3(0.0, 0.32 - _head_base.y, 0.78)
+	_pose_head = _pose_head.lerp(pose_target, 1.0 - exp(-6.0 * delta))
+	head.position = _head_base + _pose_head + Vector3(cos(_bob_phase) * 0.025, -absf(sin(_bob_phase)) * 0.045, 0.0) * _bob_amount
 
 
 func _fly(delta: float) -> void:
@@ -296,13 +315,17 @@ func _nearby_vehicle() -> Interactable:
 
 
 func _update_focus() -> void:
-	if is_riding():
+	if is_riding() or emote in EMOTE_POSES:
 		var seated_target: Interactable = null
 		if seat != null:
 			seated_target = _current_target()
 			if seated_target is Seat:
 				seated_target = null
-		var text := (seated_target.get_prompt(self) + "    ·    E 对着别处：站起来" if seated_target != null else "E  站起来（或按移动键）") if seat != null else "E  下船（靠近码头或岸边）  ·  W/S 划  A/D 转向  Shift 用力划"
+		var text := "E  下船（靠近码头或岸边）  ·  W/S 划  A/D 转向  Shift 用力划"
+		if seat != null:
+			text = seated_target.get_prompt(self) + "    ·    E 对着别处：站起来" if seated_target != null else "E  站起来（或按移动键）"
+		elif emote in EMOTE_POSES:
+			text = "E  站起来（或按移动键）"
 		if text != _ride_prompt and is_local_controlled:
 			_ride_prompt = text
 			EventBus.interaction_prompt_changed.emit(text)
@@ -325,6 +348,9 @@ func focused_target() -> Interactable:
 
 ## 对准星所指的对象执行交互；返回是否成功。
 func try_interact() -> bool:
+	if emote in EMOTE_POSES:
+		end_emote()
+		return true
 	if seat != null:
 		# 坐着也能用准星对着的东西（例如坐在沙发上下棋）；没对着东西就站起来
 		interact_ray.force_raycast_update()
@@ -417,6 +443,7 @@ func disembark() -> bool:
 
 
 func _enter_ride(pose: String) -> void:
+	end_emote()
 	velocity = Vector3.ZERO
 	collision_mask = 0
 	body.pose = pose
@@ -473,3 +500,91 @@ func _ride(_delta: float) -> void:
 	global_position = boat.seat_position() - Vector3(0.0, 12.0 * Wardrobe.px(), 0.0)
 	body.rotation.y = boat.heading - rotation.y
 	body.paddle_phase = boat.stroke_phase
+
+
+# ---------------------------------------------------------------- 动作（动作栏 / 数字键 1–5）
+
+## 开始一个动作；正在做同一个动作时再按一次 = 结束。返回是否有变化。
+func do_emote(id: String) -> bool:
+	if not id in EMOTES:
+		return false
+	if emote == id:
+		end_emote()
+		return true
+	if is_riding() or swimming or flying or not is_on_floor():
+		if is_local_controlled:
+			EventBus.toast_requested.emit("现在不能%s" % EMOTE_NAMES[id])
+		return false
+	end_emote()
+	emote = id
+	_emote_time = 0.0
+	velocity = Vector3.ZERO
+	if id in EMOTE_POSES:
+		body.pose = id
+		if id == "lie":
+			head.rotation.x = deg_to_rad(55.0)   # 躺下就抬眼看天
+	else:
+		body.set_gesture(id)
+		if GameSettings.emote_third_person and not third_person and is_local_controlled:
+			set_third_person(true)
+			_emote_view_forced = true
+	_place_body()
+	return true
+
+
+func end_emote() -> void:
+	if emote == "":
+		return
+	var was_lying := emote == "lie"
+	emote = ""
+	body.set_gesture("")
+	if body.pose in EMOTE_POSES:
+		body.pose = "stand"
+	_place_body()
+	if was_lying:
+		head.rotation.x = 0.0
+	if _emote_view_forced:
+		_emote_view_forced = false
+		set_third_person(false)
+
+
+## 身体模型相对角色原点的摆放：坐地时臀部贴地；躺下时整个人放倒，脚朝前、头在身后。
+func _place_body() -> void:
+	match emote:
+		"ground_sit":
+			body.transform = Transform3D(Basis(), Vector3(0.0, -12.0 * Wardrobe.px(), 0.0))
+		"lie":
+			body.transform = Transform3D(Basis(Vector3.RIGHT, PI * 0.5), Vector3(0.0, 0.2, -0.9))
+		_:
+			body.transform = Transform3D.IDENTITY
+
+
+## 每物理帧：想走动、进了水或手势做完就结束动作。坐着 / 躺着时原地不动（仍受重力），
+## 返回 true 表示本帧已处理完（不再走常规移动）。
+func _emote_tick(delta: float) -> bool:
+	_emote_time += delta
+	var wants_move := false
+	if autopilot_enabled:
+		wants_move = autopilot_direction.length_squared() > 0.01
+	elif is_local_controlled and not input_locked:
+		wants_move = Input.get_vector("move_left", "move_right", "move_forward", "move_back").length() > 0.5 \
+			or Input.is_action_just_pressed("jump")
+	var timed_out := GESTURE_SECONDS.has(emote) and _emote_time > float(GESTURE_SECONDS[emote])
+	if wants_move or timed_out or WaterVolume.find(get_tree(), global_position + Vector3(0.0, 0.9, 0.0)) != null:
+		var was_pose := emote in EMOTE_POSES
+		end_emote()
+		return was_pose   # 起身这一帧不跳
+	if not emote in EMOTE_POSES:
+		return false
+	velocity.x = 0.0
+	velocity.z = 0.0
+	velocity.y = 0.0 if is_on_floor() else velocity.y - _gravity * delta
+	move_and_slide()
+	_update_focus()
+	body.animate(delta, 0.0, true, head.rotation.x, run_speed)
+	if arms != null:
+		arms.visible = not third_person and emote != "lie"
+		arms.animate(delta, 0.0, true, false, run_speed)
+	camera_boom.spring_length = lerpf(camera_boom.spring_length, third_person_distance if third_person else 0.0, 1.0 - exp(-12.0 * delta))
+	_update_bob(delta, 0.0)
+	return true

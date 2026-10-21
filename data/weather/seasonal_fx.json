@@ -1,0 +1,40 @@
+{
+  "_doc": "季节飘落物（Precipitation.set_seasonal 读取）。active：季节 → 方案 id；profiles：每个方案的数量与外观。数量 = amount × (calm + wind × wind_gain)，雨雪天和夜里按 night_keep 减少。shape：leaf 叶形 / petal 花瓣 / square 方块。",
+  "active": {"AUTUMN": "leaves", "SPRING": "petals"},
+  "profiles": {
+    "leaves": {
+      "name": "落叶",
+      "amount": 320,
+      "calm": 0.12,
+      "wind_gain": 0.88,
+      "night_keep": 0.2,
+      "size": [0.17, 0.12],
+      "shape": "leaf",
+      "albedo": "#d8963e",
+      "ramp": ["#d99a3c", "#b9662e", "#c9a64a", "#8c5a32"]
+    },
+    "petals": {
+      "name": "花瓣",
+      "amount": 320,
+      "calm": 0.15,
+      "wind_gain": 0.85,
+      "night_keep": 0.2,
+      "size": [0.12, 0.1],
+      "shape": "petal",
+      "albedo": "#fad1e0",
+      "ramp": ["#ffdbe9", "#faf2f4", "#f5bcd6"]
+    },
+    "legacy_red_motes": {
+      "name": "原版红点",
+      "note": "2026-10-21 第一版的秋季落叶：晴天无风也满屏飘的红橙色小方块（700 个、静风 35%）。用户要求原样保留，之后写进世界观时启用（开发者面板 → 季节飘落物，或把 active 里某个季节指向它）。",
+      "amount": 700,
+      "calm": 0.35,
+      "wind_gain": 0.65,
+      "night_keep": 0.2,
+      "size": [0.14, 0.09],
+      "shape": "square",
+      "albedo": "#db8533",
+      "ramp": ["#f28c2e", "#c7471f", "#ebb847"]
+    }
+  }
+}

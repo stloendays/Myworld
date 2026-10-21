@@ -36,9 +36,13 @@ var sockets: Dictionary = {}     ## 挂点名 -> Node3D
 
 var _phase := 0.0
 var _swing := 0.0
-## 姿势："stand" 站立 / 走跑；"sit" 坐着（双腿向前平伸，手放膝上）；"paddle" 坐着划桨（双手前伸、随桨摆动）。
+## 姿势："stand" 站立 / 走跑；"sit" 坐着（双腿向前平伸，手放膝上）；"paddle" 坐着划桨（双手前伸、随桨摆动）；
+## "ground_sit" 席地而坐（腿前伸、双手撑在身后）；"lie" 躺平（四肢伸直，整体由控制器放倒）。
 var pose := "stand"
 var paddle_phase := 0.0
+## 站立时叠加的手势：""、"wave" 挥手、"clap" 鼓掌、"dance" 跳舞（走动时自动淡出）。
+var gesture := ""
+var _gesture_t := 0.0
 
 
 func _ready() -> void:
@@ -144,6 +148,9 @@ func _apply_layers() -> void:
 func animate(delta: float, speed: float, on_floor: bool, look_pitch: float, run_speed := 5.2) -> void:
 	if parts.is_empty():
 		return
+	if pose == "lie":
+		_animate_lying()
+		return
 	if pose != "stand":
 		_animate_seated(look_pitch)
 		return
@@ -159,13 +166,57 @@ func animate(delta: float, speed: float, on_floor: bool, look_pitch: float, run_
 	(parts["arm_r"] as Node3D).rotation = Vector3(-s * 0.85 + arm_lift, 0.0, deg_to_rad(3.0) + idle)
 	(parts["arm_l"] as Node3D).rotation = Vector3(s * 0.85 + arm_lift, 0.0, -deg_to_rad(3.0) - idle)
 	(parts["head"] as Node3D).rotation.x = clampf(look_pitch, deg_to_rad(-60.0), deg_to_rad(60.0))
+	(parts["head"] as Node3D).rotation.z = 0.0
+	if gesture != "":
+		_gesture_t += delta
+		_animate_gesture(1.0 - _swing)
+
+
+## 手势叠加在站姿上：weight 随走动减弱（走起来就自然放下手）。
+func _animate_gesture(weight: float) -> void:
+	var t := _gesture_t
+	var arm_r := parts["arm_r"] as Node3D
+	var arm_l := parts["arm_l"] as Node3D
+	match gesture:
+		"wave":
+			arm_r.rotation = arm_r.rotation.lerp(Vector3(0.0, 0.0, deg_to_rad(150.0 + sin(t * 9.0) * 22.0)), weight)
+		"clap":
+			var inward := deg_to_rad(16.0 + sin(t * 14.0) * 8.0)
+			arm_r.rotation = arm_r.rotation.lerp(Vector3(deg_to_rad(80.0), inward, 0.0), weight)
+			arm_l.rotation = arm_l.rotation.lerp(Vector3(deg_to_rad(80.0), -inward, 0.0), weight)
+		"dance":
+			var s := sin(t * 7.0)
+			arm_r.rotation = arm_r.rotation.lerp(Vector3(0.0, 0.0, deg_to_rad(110.0 + s * 45.0)), weight)
+			arm_l.rotation = arm_l.rotation.lerp(Vector3(0.0, 0.0, deg_to_rad(-110.0 + s * 45.0)), weight)
+			(parts["leg_r"] as Node3D).rotation.x = lerpf((parts["leg_r"] as Node3D).rotation.x, deg_to_rad(maxf(s, 0.0) * 30.0), weight)
+			(parts["leg_l"] as Node3D).rotation.x = lerpf((parts["leg_l"] as Node3D).rotation.x, deg_to_rad(maxf(-s, 0.0) * 30.0), weight)
+			(parts["head"] as Node3D).rotation.z = deg_to_rad(s * 10.0) * weight
+
+
+func set_gesture(id: String) -> void:
+	gesture = id
+	_gesture_t = 0.0
+
+
+## 躺平：四肢伸直贴身，头放正（整体放倒与抬高由控制器设置本节点的旋转和位置）。
+func _animate_lying() -> void:
+	_swing = 0.0
+	for leg in ["leg_r", "leg_l"]:
+		(parts[leg] as Node3D).rotation = Vector3.ZERO
+	(parts["arm_r"] as Node3D).rotation = Vector3(0.0, 0.0, deg_to_rad(8.0))
+	(parts["arm_l"] as Node3D).rotation = Vector3(0.0, 0.0, deg_to_rad(-8.0))
+	(parts["head"] as Node3D).rotation = Vector3.ZERO
 
 
 func _animate_seated(look_pitch: float) -> void:
 	_swing = 0.0
 	(parts["leg_r"] as Node3D).rotation = Vector3(deg_to_rad(88.0), 0.0, deg_to_rad(-4.0))
 	(parts["leg_l"] as Node3D).rotation = Vector3(deg_to_rad(88.0), 0.0, deg_to_rad(4.0))
-	if pose == "paddle":
+	if pose == "ground_sit":
+		# 双手撑在身后的地上
+		(parts["arm_r"] as Node3D).rotation = Vector3(deg_to_rad(-30.0), 0.0, deg_to_rad(12.0))
+		(parts["arm_l"] as Node3D).rotation = Vector3(deg_to_rad(-30.0), 0.0, deg_to_rad(-12.0))
+	elif pose == "paddle":
 		var s := sin(paddle_phase)
 		(parts["arm_r"] as Node3D).rotation = Vector3(deg_to_rad(62.0 + 22.0 * s), deg_to_rad(-12.0), deg_to_rad(8.0))
 		(parts["arm_l"] as Node3D).rotation = Vector3(deg_to_rad(62.0 - 22.0 * s), deg_to_rad(12.0), deg_to_rad(-8.0))

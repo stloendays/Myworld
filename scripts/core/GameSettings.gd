@@ -27,6 +27,14 @@ const ACTIONS := {
 	"toggle_minimap": [KEY_M],
 	"toggle_view": [KEY_V],
 	"swim_down": [KEY_C, KEY_CTRL],
+	"toggle_fullscreen": [KEY_F11],
+	"toggle_actions": [KEY_G],
+	"world_map": [KEY_TAB],
+	"action_1": [KEY_1],
+	"action_2": [KEY_2],
+	"action_3": [KEY_3],
+	"action_4": [KEY_4],
+	"photo": [KEY_F12],
 }
 
 ## 可保存的设置及默认值；键名即属性名。
@@ -49,6 +57,7 @@ const DEFAULTS := {
 	"graphics_quality": "high",       ## low / medium / high / ultra（PerformanceDirector）
 	"dynamic_resolution": true,       ## 按 GPU 帧时自动调 3D 渲染比例
 	"fly_speed": 10.0,
+	"emote_third_person": true,       ## 挥手 / 跳舞 / 鼓掌时自动切到第三人称看自己，做完切回
 }
 
 var fov := 75.0
@@ -69,6 +78,7 @@ var max_fps := 60
 var graphics_quality := "high"
 var dynamic_resolution := true
 var fly_speed := 10.0
+var emote_third_person := true
 
 var developer_mode := false
 var _window_user_set := false   ## 只有玩家改过（或设置文件里有）才去动垂直同步与全屏，命令行 --disable-vsync 不被覆盖
@@ -82,7 +92,17 @@ func _enter_tree() -> void:
 
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS   # 暂停菜单打开时 F11 也能切全屏
 	apply_display()
+
+
+## 全屏切换：F11 或 Alt + Enter，任何界面下都有效，并保存。
+func _unhandled_input(event: InputEvent) -> void:
+	var k := event as InputEventKey
+	var alt_enter := k != null and k.pressed and not k.echo and k.alt_pressed and (k.keycode == KEY_ENTER or k.keycode == KEY_KP_ENTER)
+	if event.is_action_pressed("toggle_fullscreen") or alt_enter:
+		set_value("fullscreen", not fullscreen)
+		get_viewport().set_input_as_handled()
 
 
 func _register_inputs() -> void:

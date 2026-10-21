@@ -16,6 +16,8 @@
 [ext_resource type="Script" path="res://scripts/ui/UnderwaterOverlay.gd" id="14_underwater"]
 [ext_resource type="Script" path="res://scripts/ui/Minimap.gd" id="15_minimap"]
 [ext_resource type="Script" path="res://scripts/systems/PerformanceDirector.gd" id="16_perf"]
+[ext_resource type="Script" path="res://scripts/ui/ActionBar.gd" id="17_actionbar"]
+[ext_resource type="Script" path="res://scripts/ui/WorldMap.gd" id="18_worldmap"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_main")
@@ -57,3 +59,9 @@ script = ExtResource("15_minimap")
 
 [node name="Performance" type="Node" parent="."]
 script = ExtResource("16_perf")
+
+[node name="ActionBar" type="CanvasLayer" parent="."]
+script = ExtResource("17_actionbar")
+
+[node name="WorldMap" type="CanvasLayer" parent="."]
+script = ExtResource("18_worldmap")

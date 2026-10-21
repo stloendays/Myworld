@@ -109,9 +109,9 @@ func _build_main_menu() -> Control:
 	title.add_theme_font_size_override("font_size", 28)
 	box.add_child(title)
 	var keys := Label.new()
-	keys.text = "WASD 移动 · Shift 奔跑 · 空格 跳跃/上浮 · C 下潜 · E 交互 · V 视角\nM 小地图 · F3 坐标 · F2 开发者模式（F 飞行 · N 穿墙 · F4 面板）"
+	keys.text = "WASD 移动 · Shift 奔跑 · 空格 跳跃/上浮 · C 下潜 · E 交互 · V 视角\nG 动作轮盘（1 休息 · 2 挥手 · 3 跳舞 · 4 鼓掌）· F12 拍照\nM 小地图 · Tab 世界地图 · F11 全屏 · F3 坐标 · F2 开发者模式（F 飞行 · N 穿墙 · F4 面板）"
 	box.add_child(keys)
-	for item in [["继续", _close], ["设置", open_settings.bind(0)], ["人物外观", _show_wardrobe], ["退出游戏", _quit]]:
+	for item in [["继续", _close], ["全屏 / 窗口（F11）", func() -> void: GameSettings.set_value("fullscreen", not GameSettings.fullscreen)], ["设置", open_settings.bind(0)], ["人物外观", _show_wardrobe], ["退出游戏", _quit]]:
 		var b := Button.new()
 		b.text = item[0]
 		b.pressed.connect(item[1])
@@ -138,7 +138,7 @@ func _build_settings() -> Control:
 	_slider(display, "render_scale", "渲染比例", 0.5, 1.0, 0.05, "%d%%", 100.0)
 	_option(display, "max_fps", "帧率上限", ["不限", "30", "60", "120", "144", "165", "240"], FPS_CHOICES)
 	_check(display, "vsync", "垂直同步")
-	_check(display, "fullscreen", "全屏")
+	_check(display, "fullscreen", "全屏（F11 或 Alt + Enter 随时切换）")
 
 	var view := _tab(tabs, "视角")
 	_option(view, "third_person_default", "启动时视角", ["第一人称", "第三人称"], [false, true])
@@ -153,6 +153,7 @@ func _build_settings() -> Control:
 	var control := _tab(tabs, "操作")
 	_slider(control, "mouse_sensitivity", "鼠标灵敏度", 0.0005, 0.008, 0.0001, "%.4f")
 	_check(control, "invert_y", "鼠标 Y 轴反转")
+	_check(control, "emote_third_person", "挥手 / 跳舞 / 鼓掌时自动切到第三人称")
 
 	var minimap := _tab(tabs, "小地图")
 	_check(minimap, "minimap_enabled", "显示小地图（M）")
