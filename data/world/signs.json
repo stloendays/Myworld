@@ -28,10 +28,16 @@
     "body_en": "Stairs down · two flights, 7 m"
   },
   "tank_north": {
-    "title_zh": "珊瑚礁鱼缸（北）",
-    "title_en": "Coral Reef Tank (North)",
-    "body_zh": "小丑鱼、蓝倒吊、黄高鳍刺尾鱼和银色小鱼成群游动，海龟贴着沙底慢慢巡游。",
-    "body_en": "Clownfish, blue tangs, yellow tangs and silver fish swim in schools while a sea turtle cruises slowly along the sand."
+    "title_zh": "海洋大缸",
+    "title_en": "Ocean Tank",
+    "body_zh": "24 米长、近 6 米深的海洋缸：礁石拱门、海带林、一艘沉没的独木舟。蝠鲼在上层滑翔，两条礁鲨在中层巡游，小丑鱼、蓝倒吊和成群的银鱼在珊瑚间穿梭。这个缸可以潜进去。",
+    "body_en": "A 24 m ocean tank, almost 6 m deep: a rock arch, a kelp forest and a sunken canoe. A manta ray glides near the top, two reef sharks patrol the middle, and clownfish, blue tangs and schools of silver fish weave through the corals. You can dive into this tank."
+  },
+  "reef_dive": {
+    "title_zh": "潜入海洋大缸",
+    "title_en": "Dive into the Ocean Tank",
+    "body_zh": "跳进下潜池，按住 C 下潜到池底，北侧有一条通道直通海洋大缸。鱼会躲开靠近的潜水员。原路游回就能上岸。",
+    "body_en": "Jump into the dive basin and hold C to sink to the bottom. A passage on the north side leads straight into the ocean tank. The fish will swim away from divers who get too close. Swim back the same way to climb out."
   },
   "tank_south": {
     "title_zh": "珊瑚礁鱼缸（南）",

@@ -4,7 +4,7 @@
 
 - 引擎：**Godot 4.7.2 Standard**（GDScript，Forward+，Jolt Physics），Windows 单机优先
 - 需求规格：[docs/DEVELOPMENT_SPEC.md](docs/DEVELOPMENT_SPEC.md)（唯一需求来源）；阶段指令：[docs/AGENT_HANDOFF.md](docs/AGENT_HANDOFF.md)
-- 当前进度：**M0、M1、第一轮正式美术、M2 天气系统、方块人物、泳池馆与地下水族馆、小动物、雷暴/彩虹/风、小地图、开发者模式、第一人称双手、木屋生活、独木舟与湖上探索、性能优化已完成**，自动检查 49/49 通过。见 [docs/QA_M0_M1.md](docs/QA_M0_M1.md)、[docs/ART_PASS.md](docs/ART_PASS.md)、[docs/M2_WEATHER_CHARACTER.md](docs/M2_WEATHER_CHARACTER.md)、[docs/POOLHOUSE_FAUNA.md](docs/POOLHOUSE_FAUNA.md)、[docs/MINIMAP_DEVMODE.md](docs/MINIMAP_DEVMODE.md)、[docs/CABIN_LIFE_CANOE.md](docs/CABIN_LIFE_CANOE.md)、[docs/PERFORMANCE.md](docs/PERFORMANCE.md)
+- 当前进度：**M0、M1、第一轮正式美术、M2 天气系统、方块人物、泳池馆与地下水族馆、小动物、雷暴/彩虹/风、小地图、开发者模式、第一人称双手、木屋生活、独木舟与湖上探索、性能优化、可潜水的海洋大缸已完成**，自动检查 49/49 通过。见 [docs/QA_M0_M1.md](docs/QA_M0_M1.md)、[docs/ART_PASS.md](docs/ART_PASS.md)、[docs/M2_WEATHER_CHARACTER.md](docs/M2_WEATHER_CHARACTER.md)、[docs/POOLHOUSE_FAUNA.md](docs/POOLHOUSE_FAUNA.md)、[docs/MINIMAP_DEVMODE.md](docs/MINIMAP_DEVMODE.md)、[docs/CABIN_LIFE_CANOE.md](docs/CABIN_LIFE_CANOE.md)、[docs/PERFORMANCE.md](docs/PERFORMANCE.md)、[docs/AQUARIUM_DIVE.md](docs/AQUARIUM_DIVE.md)
 
 ![湖岸出生点](docs/screenshots/m1_01_spawn_dusk.png)
 
@@ -133,6 +133,7 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | `scripts/core/GameSettings.gd` | 设置与按键（Autoload），保存在 `user://settings.json` |
 | `scripts/systems/AudioDirector.gd`、`SaveManager.gd` | M3/M4 的**接口占位**（未运行） |
 | `scripts/buildings/PoolHouse.gd` | 泳池馆与地下水族馆：大厅、泳池、池底洞口与玻璃水管、楼梯、鱼缸、灯光、碰撞、水体与区域（全部程序生成，坐标来自布局） |
+| `scripts/buildings/ReefTank.gd` | 地下水族馆的海洋大缸：落地玻璃、水下通道、礁石海带沉船、气泡与光束、灯光 |
 | `scripts/world/WaterVolume.gd`、`scripts/ui/UnderwaterOverlay.gd`、`shaders/underwater.gdshader` | 可游泳水体（盒形 / 圆柱）、水下滤镜 |
 | `shaders/pool_tiles.gdshader`、`pool_water.gdshader`、`caustic_sand.gdshader`、`foliage.gdshader`、`include/` | 泳池马赛克与焦散、池水、缸底沙、随风摆动的植被、雨点涟漪与焦散函数 |
 | `scripts/animals/`（FaunaData、FaunaSpawner、Animal、BlockyModel、BlockyMesh、FishSchool） | 小动物：出没规则、生成、行为、方块模型、鱼群 |
@@ -168,6 +169,7 @@ pwsh -File devtools/fetch_polyhaven.ps1
 - **木屋生活**：炉子生火 / 熄火（火光、火苗、炊烟）、四盏灯的开关、沙发扶手椅长椅可以坐、床可以睡到早上
 - **独木舟与湖上探索**：从码头上船划到湖心小岛营地，四个探索点（小地图问号 → 金色标记）
 - **性能优化**：树林分块、地形遮挡剔除、画质分级、默认 60 帧上限、动态分辨率、远处动物降频；地下水族馆每帧三角形从 630 万降到 37 万
+- **海洋大缸**：从泳池一路潜进 24 m 长的大缸，和蝠鲼、礁鲨、鱼群一起游；地下大厅换了水磨石地面、水纹光和灯带
 - 自动检查（49 项）、截图与性能测试工具
 
 ## 未实现（按里程碑）

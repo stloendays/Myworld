@@ -135,6 +135,24 @@
         "fin_br": {"pivot": [3.4, 0, 3.4], "boxes": [{"box": [0, -0.3, -0.8, 2.2, 0.3, 1.0], "color": "skin"}]}
       }
     },
+    "manta_ray": {
+      "name": "蝠鲼", "px": 0.07, "locomotion": "manta", "speed": 0.55, "school_size": 1,
+      "palette": {"top": "#2b3540", "belly": "#e8ecef", "edge": "#1c242c", "eye": "#0a0a0a"},
+      "parts": {
+        "body": {"pivot": [0, 0, 0], "boxes": [{"box": [-3, -0.6, -4, 3, 0.8, 4], "color": "top"}, {"box": [-2.8, -0.7, -3.6, 2.8, -0.5, 3.6], "color": "belly"}, {"box": [-1.6, -0.3, -5.6, -0.8, 0.5, -4], "color": "edge"}, {"box": [0.8, -0.3, -5.6, 1.6, 0.5, -4], "color": "edge"}, {"box": [-2.4, 0.2, -3.6, -1.9, 0.7, -3.0], "color": "eye"}, {"box": [1.9, 0.2, -3.6, 2.4, 0.7, -3.0], "color": "eye"}]},
+        "wing_l": {"pivot": [-3, 0, 0], "boxes": [{"box": [-5, -0.3, -3.2, 0, 0.5, 3], "color": "top"}, {"box": [-8.5, -0.2, -1.6, -5, 0.35, 2], "color": "top"}, {"box": [-8.8, -0.2, -0.4, -8.5, 0.3, 1.2], "color": "edge"}]},
+        "wing_r": {"pivot": [3, 0, 0], "boxes": [{"box": [0, -0.3, -3.2, 5, 0.5, 3], "color": "top"}, {"box": [5, -0.2, -1.6, 8.5, 0.35, 2], "color": "top"}, {"box": [8.5, -0.2, -0.4, 8.8, 0.3, 1.2], "color": "edge"}]},
+        "tail": {"pivot": [0, 0, 4], "boxes": [{"box": [-0.3, -0.2, 0, 0.3, 0.25, 9], "color": "edge"}]}
+      }
+    },
+    "reef_shark": {
+      "name": "礁鲨", "px": 0.055, "locomotion": "shark", "speed": 0.75, "school_size": 2,
+      "palette": {"main": "#7d8a96", "belly": "#e4e8ea", "fin": "#5d6a76", "tip": "#1e2328", "eye": "#0a0a0a"},
+      "parts": {
+        "body": {"pivot": [0, 0, 0], "boxes": [{"box": [-1.6, -1.6, -7, 1.6, 1.8, 6], "color": "main"}, {"box": [-1.5, -1.7, -6, 1.5, -0.6, 5], "color": "belly"}, {"box": [-1.2, -1.0, -9, 1.2, 1.2, -7], "color": "main"}, {"box": [-0.25, 1.8, -1.5, 0.25, 4.8, 1.2], "color": "fin"}, {"box": [-0.25, 4.0, -0.6, 0.25, 4.8, 0.6], "color": "tip"}, {"box": [-5, -1.2, -2.5, -1.6, -0.8, 0.5], "color": "fin"}, {"box": [1.6, -1.2, -2.5, 5, -0.8, 0.5], "color": "fin"}, {"box": [-1.25, 0.2, -8.4, -1.15, 0.8, -7.8], "color": "eye"}, {"box": [1.15, 0.2, -8.4, 1.25, 0.8, -7.8], "color": "eye"}]},
+        "tail": {"pivot": [0, 0, 6], "boxes": [{"box": [-0.6, -1.0, 0, 0.6, 1.0, 3], "color": "main"}, {"box": [-0.25, 0.8, 2.4, 0.25, 4.2, 4.6], "color": "fin"}, {"box": [-0.25, -2.6, 2.6, 0.25, -0.8, 4.0], "color": "fin"}, {"box": [-0.26, 3.4, 3.8, 0.26, 4.2, 4.6], "color": "tip"}]}
+      }
+    },
     "jellyfish": {
       "name": "水母", "px": 0.05, "locomotion": "jelly", "speed": 0.12, "school_size": 6, "material": "glow",
       "palette": {"bell": "#e89ad8", "core": "#ffd8f4", "tentacle": "#c87ae0"},
