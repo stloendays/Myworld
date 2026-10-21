@@ -1,10 +1,10 @@
 extends Node
 ## 世界状态的唯一权威（Autoload，内存版）。
 ## 已实现：世界日期与时间、季节覆盖、天气及其过渡进度、地面积雪与湿润度、可交互物状态（按 uid）、
-## 角色所在区域（按 entity_id）。M4 由 SaveManager 把 snapshot() 写成 user://saves/ 的版本化 JSON。
+## 角色所在区域（按 entity_id）、探索发现的地点、载具（独木舟）位置。M4 由 SaveManager 把 snapshot() 写成 user://saves/ 的版本化 JSON。
 ## 改动存档字段时必须同时升级 SCHEMA_VERSION 并写迁移。
 
-const SCHEMA_VERSION := 1
+const SCHEMA_VERSION := 2   ## v2：加入 discoveries 与 vehicles
 
 var world_seed: int = 0
 
@@ -32,6 +32,8 @@ var rain_recent: float = 0.0              ## 1 = 刚下过雨，雨停后约 40 
 
 var interactables: Dictionary = {}   ## uid -> state 字符串
 var flags: Dictionary = {}
+var discoveries: Array[StringName] = []   ## 已发现的探索点 id（world_layout.json → lake_pois），按发现顺序
+var vehicles: Dictionary = {}             ## 载具 id -> {"pos": [x, z], "yaw_deg": 角度}
 
 var _actor_zones: Dictionary = {}    ## actor_id -> { zone_id: is_indoor }
 
@@ -75,7 +77,33 @@ func snapshot() -> Dictionary:
 		"rain_recent": rain_recent,
 		"interactables": interactables.duplicate(),
 		"flags": flags.duplicate(),
+		"discoveries": discoveries.map(func(d: StringName) -> String: return String(d)),
+		"vehicles": vehicles.duplicate(true),
 	}
+
+
+## 旧版本存档升级到当前版本（M4 的 SaveManager 读档前调用）。
+static func migrate(data: Dictionary) -> Dictionary:
+	var d := data.duplicate(true)
+	var v := int(d.get("schema_version", 1))
+	if v < 2:
+		d["discoveries"] = []
+		d["vehicles"] = {}
+	d["schema_version"] = SCHEMA_VERSION
+	return d
+
+
+## 记一个新发现；已经发现过返回 false。
+func discover(poi_id: StringName) -> bool:
+	if poi_id in discoveries:
+		return false
+	discoveries.append(poi_id)
+	EventBus.discovered.emit(poi_id)
+	return true
+
+
+func set_vehicle(vehicle_id: StringName, pos: Vector2, yaw_deg: float) -> void:
+	vehicles[String(vehicle_id)] = {"pos": [snappedf(pos.x, 0.01), snappedf(pos.y, 0.01)], "yaw_deg": snappedf(yaw_deg, 0.1)}
 
 
 func register_interactable(uid: StringName, state: String) -> void:

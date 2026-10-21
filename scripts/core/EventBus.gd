@@ -25,3 +25,7 @@ signal zone_exited(zone_id: StringName, actor_id: StringName)
 signal interactable_state_changed(uid: StringName, state: String)
 @warning_ignore("unused_signal")
 signal interaction_prompt_changed(text: String)
+@warning_ignore("unused_signal")
+signal discovered(poi_id: StringName)           ## 探索点第一次被发现（HUD 弹出提示，小地图标记）
+@warning_ignore("unused_signal")
+signal toast_requested(text: String)            ## 屏幕中上方的短提示（几秒后消失）

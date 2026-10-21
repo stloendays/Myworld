@@ -53,6 +53,12 @@ const SHOTS := [
 	{"name": "m2c_03_dev_panel", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "pitch": -2.0, "dev": true},
 	{"name": "m2c_04_settings_view", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "settings": 1},
 	{"name": "m2c_05_hands_aquarium", "climate": DUSK, "player": [12.0, 84.0], "y": -5.0, "heading": 270.0, "pitch": -4.0},
+	{"name": "m2e_01_cabin_night_stove", "climate": {"season": "AUTUMN", "hour": 21.0, "weather": "CLEAR"}, "player": [-60.0, 37.0], "heading": 0.0, "seat": "Seat_cabin_sofa_left", "pitch": -12.0},
+	{"name": "m2e_02_chimney_smoke", "climate": DUSK, "eye": [-58, 4.5, 31], "look": [-72.9, 10.0, 36.0]},
+	{"name": "m2e_03_canoe_paddling", "climate": DUSK, "player": [-28.0, 24.0], "canoe": [10.0, 14.0, 60.0], "heading": 60.0, "pitch": -10.0, "walk": true},
+	{"name": "m2e_04_islet_camp", "climate": DUSK, "eye": [33, 2.2, 3], "look": [42, 1.6, -6]},
+	{"name": "m2e_05_minimap_lake", "climate": DUSK, "player": [-28.0, 24.0], "canoe": [-2.0, 18.0, 70.0], "heading": 70.0, "pitch": -4.0},
+	{"name": "m2e_06_cabin_bed", "climate": {"season": "AUTUMN", "hour": 21.0, "weather": "CLEAR"}, "eye": [-69.0, 4.3, 36.4], "look": [-73.0, 2.7, 39.4]},
 ]
 
 const OUTFITS := [
@@ -264,6 +270,20 @@ func _setup_player_view(shot: Dictionary) -> void:
 	_player.set_third_person(shot.get("third_person", false))
 	_player.camera.current = true
 	_player.autopilot_enabled = shot.get("walk", false)
+	if shot.has("canoe"):
+		var canoe := _main.get_node("World/Dock/Generated/Canoe") as Canoe
+		var c: Array = shot["canoe"]
+		canoe.place_at(Vector2(float(c[0]), float(c[1])), float(c[2]))
+		_player.board(canoe)
+		_player.rotation.y = deg_to_rad(-float(shot.get("heading", c[2])))
+		if shot.get("walk", false):
+			var fwd := canoe.forward()
+			_player.autopilot_direction = Vector3(fwd.x, 0.0, fwd.y)
+	if shot.has("seat"):
+		var seat := _main.find_child(str(shot["seat"]), true, false) as Seat
+		if seat != null:
+			_player.sit(seat)
+			_player.rotation.y = deg_to_rad(-float(shot.get("heading", 0.0)))
 	await _wait(30)
 	if shot.has("settings"):
 		pause.open_settings(int(shot["settings"]))

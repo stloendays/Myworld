@@ -116,15 +116,12 @@ func _shape(body: StaticBody3D, size: Vector3, pos: Vector3) -> void:
 	body.add_child(cs)
 
 
-## 岸边草坪上翻放的独木舟与船桨（Kenney Nature Kit）。
+## 停在码头南侧水面上的独木舟（可以划，见 Canoe.gd）；位置在 world_layout.json → canoe。只在运行时生成。
 func _add_canoe(root: Node3D) -> void:
-	for item in [["canoe", Vector3(-44.5, 0.0, 20.5), 32.0, 3.9], ["canoe_paddle", Vector3(-43.2, 0.0, 19.4), 70.0, 3.2]]:
-		var asset: String = item[0]
-		var path := "res://assets/imported/kenney/nature/%s.glb" % asset
-		var node := (load(path) as PackedScene).instantiate() as Node3D
-		var p: Vector3 = item[1]
-		var s: float = item[3]
-		node.transform = Transform3D(Basis(Vector3.UP, deg_to_rad(item[2])).scaled(Vector3(s, s, s)),
-			Vector3(p.x, WorldTerrain.height_at(p.x, p.z) + 0.05 * s, p.z))
-		ArtMaterials.restyle_kenney(node, asset)
-		root.add_child(node)
+	if Engine.is_editor_hint():
+		return
+	var canoe := Canoe.new()
+	canoe.name = "Canoe"
+	canoe.uid = &"lake_canoe"
+	canoe.display_name = "独木舟"
+	root.add_child(canoe)

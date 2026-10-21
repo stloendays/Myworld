@@ -63,6 +63,8 @@ Main (Main.gd)
 | `CharacterModel` / `CharacterAppearance` / `Wardrobe` | 已实现 | 方块人物、可序列化外观、衣橱目录（`data/characters/`） |
 | `PoolHouse` / `WaterVolume` / `UnderwaterOverlay` | 已实现 | 泳池馆与地下水族馆（地形 `pits` 挖坑、`keepouts` 避让植被与动物）；可游泳水体（`water_volume` 组，玩家按身体中部所在水体切换游泳）；相机在水面以下时的滤镜 |
 | `FaunaSpawner` / `Animal` / `FishSchool` / `FaunaData` | 已实现 | 小动物按 `data/animals/species.json` 生成；出没规则只读 WorldState；每只有稳定 `entity_id`；鱼群只在缸的 AABB 内游 |
+| `CabinLife` / `InteractableToggle` / `Seat` / `Bed` | 已实现 | 木屋生活交互，状态按 uid 记在 WorldState |
+| `Canoe` / `Exploration` | 已实现 | 独木舟（自算运动，位置记在 `WorldState.vehicles`）；湖上探索点（`WorldState.discoveries`，存档 v2） |
 | `AudioDirector` | M3 接口占位 | 订阅区域与天气事件做室内外混音 |
 | `SaveManager` | M4 接口占位 | `user://saves/` 版本化 JSON |
 

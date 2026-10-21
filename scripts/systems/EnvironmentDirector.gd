@@ -29,6 +29,7 @@ var sun_elevation := 0.0
 var sun_azimuth := 0.0
 var night := 0.0
 var wind_strength := 0.0
+var wind_direction := Vector2(0.8, 0.6)   ## 风吹向的方向（世界 XZ），独木舟漂流用
 var rainbow := 0.0
 var lightning_count := 0
 var flash := 0.0
@@ -225,7 +226,8 @@ func _update_wind(w: Dictionary) -> void:
 	var gust := 0.8 + 0.2 * sin(t * 0.37) * sin(t * 0.91 + 1.3)
 	wind_strength = float(w["wind"]) * gust
 	var a := 0.65 + 0.25 * sin(t * 0.021)
-	RenderingServer.global_shader_parameter_set("wind_direction", Vector2(cos(a), sin(a)))
+	wind_direction = Vector2(cos(a), sin(a))
+	RenderingServer.global_shader_parameter_set("wind_direction", wind_direction)
 
 
 ## 闪电：雷雨时每 3–12 秒一次，双闪；发出 EventBus.lightning_strike（M3 据距离延迟播放雷声）。

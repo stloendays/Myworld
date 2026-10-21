@@ -430,6 +430,19 @@ func _build_props(g: Node3D) -> void:
 	_sign(g, "tank_north", "lectern", 0.9, Vector3(-2.6, FLOOR_B, -4.55), 0.0)
 	_sign(g, "tank_south", "lectern", 0.9, Vector3(-2.6, FLOOR_B, 4.55), 180.0)
 	_sign(g, "tank_jelly", "lectern", 0.9, Vector3(8.85, FLOOR_B, 2.2), -90.0)
+	# 能坐的地方：泳池躺椅、大厅长椅、水族馆长椅（面朝鱼缸）
+	var seat_list := [
+		[&"pool_lounger_1", "躺椅", Vector3(-1.0, 0.42, -6.2), 0.0],
+		[&"pool_lounger_2", "躺椅", Vector3(2.2, 0.42, -6.2), 0.0],
+		[&"pool_lounger_3", "躺椅", Vector3(5.4, 0.42, -6.2), 0.0],
+		[&"hall_bench", "长椅", Vector3(-8.6, 0.48, -6.8), 180.0],
+		[&"aquarium_bench_1", "长椅", Vector3(1.5, FLOOR_B + 0.48, -3.7), 0.0],
+		[&"aquarium_bench_2", "长椅", Vector3(6.0, FLOOR_B + 0.48, -3.7), 0.0],
+		[&"aquarium_bench_3", "长椅", Vector3(1.5, FLOOR_B + 0.48, 3.7), 180.0],
+		[&"aquarium_bench_4", "长椅", Vector3(6.0, FLOOR_B + 0.48, 3.7), 180.0],
+	]
+	for item in seat_list:
+		g.add_child(Seat.create(item[0], item[1], item[2], item[3], 0.45, 0.9))
 
 
 func _build_door(g: Node3D) -> void:

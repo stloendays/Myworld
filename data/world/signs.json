@@ -44,5 +44,17 @@
     "title_en": "Jellyfish Tank",
     "body_zh": "水母没有大脑，也几乎不会主动游泳，靠伞盖一张一缩随水漂动。蓝紫色的灯光让半透明的身体更清楚。",
     "body_en": "Jellyfish have no brain and barely swim; they drift by pulsing their bell. The violet light shows off their translucent bodies."
+  },
+  "canoe_dock": {
+    "title_zh": "独木舟",
+    "title_en": "Canoe",
+    "body_zh": "独木舟停在码头南侧。站在码头边看着它按 E 上船；W / S 划桨，A / D 转向，Shift 用力划；靠近码头或岸边按 E 下船。湖上有四个地方等你去发现，湖心还有一座小岛。",
+    "body_en": "The canoe is moored on the south side of the dock. Look at it from the dock edge and press E to board. W / S to paddle, A / D to turn, Shift to paddle harder, and E near the dock or a shore to step out. Four places on the lake are waiting to be found, including an islet in the middle."
+  },
+  "lake_islet": {
+    "title_zh": "湖心小岛",
+    "title_en": "Lake Islet",
+    "body_zh": "只有划独木舟才能到这里。岛上有个小营地，晴朗的夜晚适合坐在营火边看星星。",
+    "body_en": "You can only get here by canoe. There is a small camp on the islet; on a clear night, sit by the campfire and watch the stars."
   }
 }

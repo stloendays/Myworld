@@ -36,6 +36,9 @@ var sockets: Dictionary = {}     ## 挂点名 -> Node3D
 
 var _phase := 0.0
 var _swing := 0.0
+## 姿势："stand" 站立 / 走跑；"sit" 坐着（双腿向前平伸，手放膝上）；"paddle" 坐着划桨（双手前伸、随桨摆动）。
+var pose := "stand"
+var paddle_phase := 0.0
 
 
 func _ready() -> void:
@@ -141,6 +144,9 @@ func _apply_layers() -> void:
 func animate(delta: float, speed: float, on_floor: bool, look_pitch: float, run_speed := 5.2) -> void:
 	if parts.is_empty():
 		return
+	if pose != "stand":
+		_animate_seated(look_pitch)
+		return
 	var target := clampf(speed / run_speed, 0.0, 1.0) if on_floor else 0.0
 	_swing = lerpf(_swing, target, 1.0 - exp(-10.0 * delta))
 	_phase += delta * speed * 2.4
@@ -152,6 +158,20 @@ func animate(delta: float, speed: float, on_floor: bool, look_pitch: float, run_
 	var idle := sin(Time.get_ticks_msec() * 0.0021) * deg_to_rad(2.0) * (1.0 - _swing)
 	(parts["arm_r"] as Node3D).rotation = Vector3(-s * 0.85 + arm_lift, 0.0, deg_to_rad(3.0) + idle)
 	(parts["arm_l"] as Node3D).rotation = Vector3(s * 0.85 + arm_lift, 0.0, -deg_to_rad(3.0) - idle)
+	(parts["head"] as Node3D).rotation.x = clampf(look_pitch, deg_to_rad(-60.0), deg_to_rad(60.0))
+
+
+func _animate_seated(look_pitch: float) -> void:
+	_swing = 0.0
+	(parts["leg_r"] as Node3D).rotation = Vector3(deg_to_rad(88.0), 0.0, deg_to_rad(-4.0))
+	(parts["leg_l"] as Node3D).rotation = Vector3(deg_to_rad(88.0), 0.0, deg_to_rad(4.0))
+	if pose == "paddle":
+		var s := sin(paddle_phase)
+		(parts["arm_r"] as Node3D).rotation = Vector3(deg_to_rad(62.0 + 22.0 * s), deg_to_rad(-12.0), deg_to_rad(8.0))
+		(parts["arm_l"] as Node3D).rotation = Vector3(deg_to_rad(62.0 - 22.0 * s), deg_to_rad(12.0), deg_to_rad(-8.0))
+	else:
+		(parts["arm_r"] as Node3D).rotation = Vector3(deg_to_rad(38.0), 0.0, deg_to_rad(4.0))
+		(parts["arm_l"] as Node3D).rotation = Vector3(deg_to_rad(38.0), 0.0, deg_to_rad(-4.0))
 	(parts["head"] as Node3D).rotation.x = clampf(look_pitch, deg_to_rad(-60.0), deg_to_rad(60.0))
 
 

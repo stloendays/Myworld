@@ -39,6 +39,8 @@ var current_water: WaterVolume = null
 var flying := false
 var noclip := false
 var arms: FirstPersonArms = null
+var seat: Seat = null       ## 坐着时所在的座位（沙发、长椅、躺椅）
+var boat: Canoe = null      ## 在独木舟上时所乘的船
 
 var autopilot_enabled := false
 var autopilot_direction := Vector3.ZERO
@@ -50,6 +52,7 @@ var _collision_mask := 0
 var _bob_phase := 0.0
 var _bob_amount := 0.0
 var _head_base := Vector3.ZERO
+var _ride_prompt := ""
 
 
 func _ready() -> void:
@@ -88,6 +91,8 @@ func _on_developer_mode(enabled: bool) -> void:
 
 ## 飞行（开发者模式）：不受重力，空格上升、C / Ctrl 下降。
 func set_flying(enabled: bool) -> void:
+	if enabled and is_riding():
+		return
 	flying = enabled
 	if not enabled:
 		set_noclip(false)
@@ -102,6 +107,7 @@ func set_noclip(enabled: bool) -> void:
 
 ## 开发者传送：直接放到某点（读档、调试用；正常游玩进屋不走这里）。
 func teleport_to(pos: Vector3, yaw_deg := INF) -> void:
+	_leave_ride()
 	global_position = pos
 	velocity = Vector3.ZERO
 	if yaw_deg < INF:
@@ -129,6 +135,17 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if is_riding():
+		_ride(delta)
+		_update_focus()
+		body.animate(delta, 0.0, true, head.rotation.x, run_speed)
+		if arms != null:
+			arms.visible = not third_person
+			arms.animate(delta, 0.0, true, boat != null and (absf(boat.throttle) > 0.05 or absf(boat.steer) > 0.05), run_speed)
+		var ride_boom := third_person_distance if third_person else 0.0
+		camera_boom.spring_length = lerpf(camera_boom.spring_length, ride_boom, 1.0 - exp(-12.0 * delta))
+		_update_bob(delta, 0.0)
+		return
 	current_water = null if flying else WaterVolume.find(get_tree(), global_position + Vector3(0.0, 0.9, 0.0))
 	swimming = current_water != null
 	if flying:
@@ -256,12 +273,39 @@ func _wish_direction() -> Vector3:
 
 
 func _current_target() -> Interactable:
-	if not interact_ray.is_colliding():
-		return null
-	return InteractionSystem.find_target(interact_ray.get_collider())
+	if interact_ray.is_colliding():
+		var hit := InteractionSystem.find_target(interact_ray.get_collider())
+		if hit != null:
+			return hit
+	return _nearby_vehicle()
+
+
+## 码头栏杆会挡住看向船的射线：离船 3.2 m 以内、视线大致朝着船（40° 以内）也算对准了它。
+func _nearby_vehicle() -> Interactable:
+	var eye := camera.global_position
+	var look := -camera.global_basis.z
+	for v in get_tree().get_nodes_in_group("vehicles"):
+		var canoe := v as Canoe
+		if canoe == null or canoe.rider != null:
+			continue
+		var to := canoe.global_position + Vector3(0.0, 0.2, 0.0) - eye
+		if to.length() < 3.2 and look.angle_to(to) < deg_to_rad(40.0):
+			return canoe
+	return null
 
 
 func _update_focus() -> void:
+	if is_riding():
+		var text := "E  站起来（或按移动键）" if seat != null else "E  下船（靠近码头或岸边）  ·  W/S 划  A/D 转向  Shift 用力划"
+		if text != _ride_prompt and is_local_controlled:
+			_ride_prompt = text
+			EventBus.interaction_prompt_changed.emit(text)
+		return
+	if _ride_prompt != "":
+		_ride_prompt = ""
+		_focused = null
+		if is_local_controlled:
+			EventBus.interaction_prompt_changed.emit("")
 	var target := _current_target()
 	if target != _focused:
 		_focused = target
@@ -275,6 +319,11 @@ func focused_target() -> Interactable:
 
 ## 对准星所指的对象执行交互；返回是否成功。
 func try_interact() -> bool:
+	if seat != null:
+		stand_up()
+		return true
+	if boat != null:
+		return disembark()
 	interact_ray.force_raycast_update()
 	var target := _current_target()
 	if not InteractionSystem.interact(self, target):
@@ -300,3 +349,116 @@ func look_at_point(point: Vector3) -> void:
 ## 水平朝向（度，0 = 北 / -Z，顺时针为正）。
 func heading_degrees() -> float:
 	return fposmod(-rad_to_deg(rotation.y), 360.0)
+
+
+# ---------------------------------------------------------------- 坐下与划船
+
+func is_riding() -> bool:
+	return seat != null or boat != null
+
+
+## 坐到座位上：关掉碰撞，定在坐垫上，腿向前伸；身体朝座位方向，头仍可自由环顾。
+func sit(target: Seat) -> void:
+	if is_riding() or target.occupant != null:
+		return
+	set_flying(false)
+	seat = target
+	target.occupant = self
+	target._publish_state()
+	_enter_ride("sit")
+	rotation.y = target.global_rotation.y
+	global_position = target.occupant_origin()
+
+
+func stand_up() -> void:
+	if seat == null:
+		return
+	var s := seat
+	var p := s.exit_point()
+	_leave_ride()
+	global_position = p
+
+
+## 上独木舟：坐到船里的座位，身体跟船走，按 W/S/A/D 划。
+func board(canoe: Canoe) -> void:
+	if is_riding() or canoe.rider != null:
+		return
+	set_flying(false)
+	boat = canoe
+	canoe.rider = self
+	canoe._publish_state()
+	_enter_ride("paddle")
+	rotation.y = canoe.heading
+	global_position = canoe.seat_position() - Vector3(0.0, 12.0 * Wardrobe.px(), 0.0)
+
+
+## 下船：落到码头或最近的岸上；离岸太远时留在船上并提示。
+func disembark() -> bool:
+	if boat == null:
+		return false
+	var exit: Variant = boat.find_exit()
+	if exit == null:
+		EventBus.toast_requested.emit("离岸太远：划到岸边或码头再下船")
+		return false
+	_leave_ride()
+	global_position = exit
+	return true
+
+
+func _enter_ride(pose: String) -> void:
+	velocity = Vector3.ZERO
+	collision_mask = 0
+	body.pose = pose
+	_focused = null
+
+
+## 离开座位或船（不移动位置），恢复碰撞与站姿。
+func _leave_ride() -> void:
+	if seat != null:
+		seat.occupant = null
+		seat._publish_state()
+		seat = null
+	if boat != null:
+		boat.rider = null
+		boat.throttle = 0.0
+		boat.steer = 0.0
+		boat._publish_state()
+		boat = null
+	if body.pose != "stand":
+		body.pose = "stand"
+		body.rotation.y = 0.0
+		collision_mask = 0 if noclip else _collision_mask
+		velocity = Vector3.ZERO
+
+
+## 坐着 / 划船时每帧：位置跟着座位或船，身体朝向座位或船头。
+func _ride(_delta: float) -> void:
+	velocity = Vector3.ZERO
+	if seat != null:
+		global_position = seat.occupant_origin()
+		body.rotation.y = seat.global_rotation.y - rotation.y
+		var moving := is_local_controlled and not autopilot_enabled and Input.get_vector("move_left", "move_right", "move_forward", "move_back").length() > 0.5
+		if moving or (autopilot_enabled and autopilot_direction.length_squared() > 0.01):
+			stand_up()
+		return
+	var throttle := 0.0
+	var steer := 0.0
+	var sprint := false
+	if autopilot_enabled:
+		var d := Vector2(autopilot_direction.x, autopilot_direction.z)
+		if d.length() > 0.01:
+			var want := atan2(-d.x, -d.y)
+			var diff := wrapf(want - boat.heading, -PI, PI)
+			steer = clampf(-diff * 2.0, -1.0, 1.0)
+			throttle = 1.0 if absf(diff) < 0.8 else 0.2
+		sprint = autopilot_run
+	elif is_local_controlled:
+		throttle = Input.get_axis("move_back", "move_forward")
+		steer = Input.get_axis("move_left", "move_right")
+		sprint = Input.is_action_pressed("sprint")
+	boat.throttle = throttle
+	boat.steer = steer
+	boat.sprint = sprint
+	global_position = boat.seat_position() - Vector3(0.0, 12.0 * Wardrobe.px(), 0.0)
+	body.rotation.y = boat.heading - rotation.y
+	body.paddle_phase = boat.stroke_phase
