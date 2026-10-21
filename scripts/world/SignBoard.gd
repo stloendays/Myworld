@@ -126,6 +126,7 @@ static func create(id: String, style: String, width: float, scale := 1.0) -> Sig
 
 static func _text(parent: Node3D, b: Dictionary, pos: Vector3, pixel: float, font: Font) -> void:
 	var l := Label3D.new()
+	l.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED   # 牌面本来就中英双语，不随界面语言替换
 	l.text = b["text"]
 	l.font = font
 	l.font_size = b["px"]

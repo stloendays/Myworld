@@ -34,5 +34,10 @@ func apply_state(_state: String) -> void:
 	pass
 
 
+## 联机时别的玩家改了这个物体（由 Net 调用）。默认同读档；有动画的子类（门）可以改成带动画。
+func apply_remote_state(state: String) -> void:
+	apply_state(state)
+
+
 func _publish_state() -> void:
 	WorldState.set_interactable_state(uid, get_state())

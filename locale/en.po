@@ -1,0 +1,788 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: en\n"
+
+msgid "  ·  穿墙"
+msgstr "  ·  noclip"
+
+msgid "%s 来到了湖畔。"
+msgstr "%s arrived at the lake."
+
+msgid "%s 的房间"
+msgstr "%s's room"
+
+msgid "%s 离开了湖畔。"
+msgstr "%s left the lake."
+
+msgid "%s 第 %d 天 %s  ·  %s"
+msgstr "%s · day %d %s  ·  %s"
+
+msgid "%s季不会出现%s。"
+msgstr "In %s there is no %s."
+
+msgid "+1 小时"
+msgstr "+1 hour"
+
+msgid "/me <动作>"
+msgstr "/me <action>"
+
+msgid "/name <名字>"
+msgstr "/name <name>"
+
+msgid "/preset [名称]"
+msgstr "/preset [name]"
+
+msgid "/season [季节]"
+msgstr "/season [season]"
+
+msgid "/time [时:分]"
+msgstr "/time [hh:mm]"
+
+msgid "/tp <x> <z> | /tp 出生点"
+msgstr "/tp <x> <z> | /tp spawn"
+
+msgid "/weather [天气]"
+msgstr "/weather [weather]"
+
+msgid "Dusk Lake · 暂停"
+msgstr "Dusk Lake · Paused"
+
+msgid "E  关上木门"
+msgstr "E  Close the door"
+
+msgid "E  打开木门"
+msgstr "E  Open the door"
+
+msgid "F 飞行"
+msgstr "F fly"
+
+msgid "FPS %d  ·  帧时 %.1f ms"
+msgstr "FPS %d  ·  frame %.1f ms"
+
+msgid "Tailscale（双方都装了 Tailscale）"
+msgstr "Tailscale (both players use Tailscale)"
+
+msgid "WASD 移动 · Shift 奔跑 · 空格 跳跃/上浮 · C 下潜 · E 交互 · V 视角\nT 聊天 · M 小地图 · F3 坐标 · F2 开发者模式（F 飞行 · N 穿墙 · F4 面板）"
+msgstr "WASD move · Shift run · Space jump/swim up · C dive · E interact · V camera\nT chat · M minimap · F3 position · F2 developer mode (F fly · N noclip · F4 panel)"
+
+msgid "\n地面湿润 %.2f  积雪 %.2f  时间流速 ×%d%s"
+msgstr "\nwetness %.2f  snow %.2f  time speed ×%d%s"
+
+msgid "\n太阳高度 %.1f°  方位 %.0f°  夜 %.2f  风 %.2f"
+msgstr "\nsun elevation %.1f°  azimuth %.0f°  night %.2f  wind %.2f"
+
+msgid "不显示"
+msgstr "Hidden"
+
+msgid "不能传送到 (%.1f, %.1f)：%s。"
+msgstr "Can't teleport to (%.1f, %.1f): %s."
+
+msgid "不限"
+msgstr "Unlimited"
+
+msgid "东"
+msgstr "E"
+
+msgid "东北"
+msgstr "NE"
+
+msgid "东南"
+msgstr "SE"
+
+msgid "人物外观"
+msgstr "Appearance"
+
+msgid "以第三人称描述动作"
+msgstr "Describe an action in the third person"
+
+msgid "传送"
+msgstr "Teleport"
+
+msgid "传送到室外地面（不能传进建筑）"
+msgstr "Teleport to outdoor ground (not into buildings)"
+
+msgid "位置  X %.1f   Y %.2f   Z %.1f"
+msgstr "Position  X %.1f   Y %.2f   Z %.1f"
+
+msgid "你的名字"
+msgstr "Your name"
+
+msgid "你的房间"
+msgstr "Your room"
+
+msgid "你的网络没有公网 IP（运营商级 NAT），其他网络的朋友连不进来。同一个 Wi-Fi 的朋友用局域网房间号；异地朋友可以双方都装 Tailscale，再用它的房间号。"
+msgstr "Your connection has no public IP (carrier-grade NAT), so friends on other networks can't reach you. Friends on the same Wi-Fi can use the LAN code; friends elsewhere can install Tailscale on both PCs and use the Tailscale code."
+
+msgid "保存"
+msgstr "Save"
+
+msgid "保存失败"
+msgstr "Save failed"
+
+msgid "修改聊天名字"
+msgstr "Change your name"
+
+msgid "全屏"
+msgstr "Fullscreen"
+
+msgid "公网（其他网络的朋友）"
+msgstr "Internet (friends on other networks)"
+
+msgid "关"
+msgstr "off"
+
+msgid "出生点"
+msgstr "Spawn point"
+
+msgid "列出命令"
+msgstr "List commands"
+
+msgid "创建房间"
+msgstr "Host a Room"
+
+msgid "加入"
+msgstr "Join"
+
+msgid "加入房间"
+msgstr "Join a Room"
+
+msgid "北"
+msgstr "N"
+
+msgid "区域  %s  ·  %s"
+msgstr "Zone  %s  ·  %s"
+
+msgid "单人游戏"
+msgstr "Single Player"
+
+msgid "南"
+msgstr "S"
+
+msgid "只显示右手"
+msgstr "Right hand only"
+
+msgid "只有房主可以改时间、天气和季节。"
+msgstr "Only the host can change the time, weather and season."
+
+msgid "右肩"
+msgstr "Right shoulder"
+
+msgid "名字需要 1–%d 个字。"
+msgstr "Names need 1–%d characters."
+
+msgid "启动时视角"
+msgstr "Starting camera"
+
+msgid "回到湖畔"
+msgstr "Back to the lake"
+
+msgid "地下水族馆"
+msgstr "Underground aquarium"
+
+msgid "坐标 x %.1f  y %.1f  z %.1f%s"
+msgstr "Position x %.1f  y %.1f  z %.1f%s"
+
+msgid "坐标信息（F3）"
+msgstr "Position info (F3)"
+
+msgid "垂直同步"
+msgstr "V-Sync"
+
+msgid "复制"
+msgstr "Copy"
+
+msgid "复制房间号"
+msgstr "Copy room code"
+
+msgid "多人房间"
+msgstr "Multiplayer"
+
+msgid "天气正在转为%s…"
+msgstr "The weather is turning to %s…"
+
+msgid "天气转为%s。"
+msgstr "The weather is now %s."
+
+msgid "天气（8 秒过渡；灰色 = 本季不出现）"
+msgstr "Weather (8 s transition; grey = not this season)"
+
+msgid "季节"
+msgstr "Seasons"
+
+msgid "室内"
+msgstr "indoors"
+
+msgid "室外"
+msgstr "outdoors"
+
+msgid "小地图"
+msgstr "Minimap"
+
+msgid "小地图（M）"
+msgstr "Minimap (M)"
+
+msgid "局域网（同一个 Wi-Fi）"
+msgstr "LAN (same Wi-Fi)"
+
+msgid "左肩"
+msgstr "Left shoulder"
+
+msgid "已传送到 (%.1f, %.1f)。"
+msgstr "Teleported to (%.1f, %.1f)."
+
+msgid "已保存（下次启动自动读取）"
+msgstr "Saved (loaded on next start)"
+
+msgid "已加入 %s 的房间。"
+msgstr "Joined %s's room."
+
+msgid "已复制"
+msgstr "Copied"
+
+msgid "已应用预设 %s。"
+msgstr "Applied preset %s."
+
+msgid "已离开房间，回到你自己的湖畔。"
+msgstr "You left the room and are back at your own lake."
+
+msgid "帧率上限"
+msgstr "Frame rate limit"
+
+msgid "应用天气预设；不带名称列出全部"
+msgstr "Apply a weather preset; list them without a name"
+
+msgid "开"
+msgstr "on"
+
+msgid "开发者"
+msgstr "Developer"
+
+msgid "开发者模式（F2 退出）"
+msgstr "Developer mode (F2 to exit)"
+
+msgid "开发者模式（F2）"
+msgstr "Developer mode (F2)"
+
+msgid "开发者模式（F4 收起面板 · F2 退出）"
+msgstr "Developer mode (F4 hide panel · F2 exit)"
+
+msgid "开发者模式：左侧出现开发者面板，可改天气、季节、时间，传送到各地点；\n按 F 飞行（空格上升、C 下降、Shift 加速），飞行时按 N 穿墙。退出开发者模式会自动落地。\n开发者模式不保存，每次启动都是普通模式。"
+msgstr "Developer mode shows a panel on the left to change weather, season and time, and to teleport;\npress F to fly (Space up, C down, Shift faster) and N while flying to pass through walls. Leaving developer mode lands you.\nDeveloper mode is not saved; every start is in normal mode."
+
+msgid "当前坐标与所在区域"
+msgstr "Show your position and zone"
+
+msgid "恢复默认"
+msgstr "Reset to defaults"
+
+msgid "房主已离开，房间关闭了。你回到了自己的湖畔。"
+msgstr "The host left and the room closed. You are back at your own lake."
+
+msgid "房主拒绝了连接"
+msgstr "The host refused the connection"
+
+msgid "房间号"
+msgstr "Room code"
+
+msgid "房间号不对，请检查有没有抄错"
+msgstr "That room code isn't valid. Please check it for typos"
+
+msgid "房间号应为 7 位或 10 位"
+msgstr "A room code has 7 or 10 characters"
+
+msgid "房间号里有无效的字符"
+msgstr "The room code contains invalid characters"
+
+msgid "房间已创建。把房间号发给朋友，他们就能加入。"
+msgstr "Room created. Send the room code to your friends so they can join."
+
+msgid "房间已满"
+msgstr "The room is full"
+
+msgid "操作"
+msgstr "Controls"
+
+msgid "旅人"
+msgstr "Traveler"
+
+msgid "无法在端口 %d 上建房（可能已被占用）"
+msgstr "Can't host on port %d (it may be in use)"
+
+msgid "无法连接到 %s"
+msgstr "Can't connect to %s"
+
+msgid "时间"
+msgstr "Time"
+
+msgid "时间设为 %s。"
+msgstr "Time set to %s."
+
+msgid "显示"
+msgstr "Display"
+
+msgid "显示双手"
+msgstr "Both hands"
+
+msgid "显示小地图（M）"
+msgstr "Show minimap (M)"
+
+msgid "显示范围（半径）"
+msgstr "Range (radius)"
+
+msgid "暂停/继续时间"
+msgstr "Pause/resume time"
+
+msgid "暮色湖畔 · 一片属于你的湖"
+msgstr "A lake of your own at dusk"
+
+msgid "朝向  %.0f°（%s）"
+msgstr "Heading  %.0f° (%s)"
+
+msgid "木屋"
+msgstr "Cabin"
+
+msgid "木屋室内"
+msgstr "Cabin interior"
+
+msgid "未知命令 /%s。输入 /help 查看命令。"
+msgstr "Unknown command /%s. Type /help for commands."
+
+msgid "查看或切换天气：晴 阴 小雨 大雨 雷雨 雾 下雪"
+msgstr "Show or change the weather: clear, overcast, light-rain, heavy-rain, thunderstorm, fog, snow"
+
+msgid "查看或设置时刻，如 /time 18:30"
+msgstr "Show or set the time, e.g. /time 18:30"
+
+msgid "查看或跳到某季：春 夏 秋 冬"
+msgstr "Show or jump to a season: spring, summer, autumn, winter"
+
+msgid "欢迎来到暮色湖畔。按 T 聊天，输入 /help 查看命令。"
+msgstr "Welcome to Dusk Lake. Press T to chat; type /help for commands."
+
+msgid "正在尝试打开路由器端口（UPnP）…"
+msgstr "Trying to open a port on your router (UPnP)…"
+
+msgid "正在连接…"
+msgstr "Connecting…"
+
+msgid "没找到支持 UPnP 的路由器，其他网络的朋友连不进来。同一个 Wi-Fi 的朋友用局域网房间号；异地朋友可以双方都装 Tailscale，再用它的房间号。"
+msgstr "No UPnP router found, so friends on other networks can't reach you. Friends on the same Wi-Fi can use the LAN code; friends elsewhere can install Tailscale on both PCs and use the Tailscale code."
+
+msgid "没有“%s”这个季节。可选：%s"
+msgstr "There is no season \"%s\". Options: %s"
+
+msgid "没有“%s”这种天气。可选：%s"
+msgstr "There is no weather \"%s\". Options: %s"
+
+msgid "没有预设“%s”。输入 /preset 列出全部。"
+msgstr "There is no preset \"%s\". Type /preset to list them."
+
+msgid "泳池馆"
+msgstr "Pool house"
+
+msgid "泳池馆大厅"
+msgstr "Pool hall"
+
+msgid "泳池馆正门"
+msgstr "Pool house door"
+
+msgid "清空聊天记录"
+msgstr "Clear the chat"
+
+msgid "渲染比例"
+msgstr "Render scale"
+
+msgid "游戏中按 V 随时切换第一 / 第三人称"
+msgstr "Press V in game to switch between first and third person"
+
+msgid "版本不一致"
+msgstr "Version mismatch"
+
+msgid "版本不一致：房主是 %s，你是 %s。请双方安装同一版本。"
+msgstr "Version mismatch: the host has %s and you have %s. Please both install the same version."
+
+msgid "玩家 %d / %d："
+msgstr "Players %d / %d:"
+
+msgid "现在是%s。可选：%s"
+msgstr "It's %s now. Options: %s"
+
+msgid "现在是%s季（第 %d 天）。"
+msgstr "It's %s (day %d)."
+
+msgid "现在是单人游戏。可以创建房间请朋友来，或加入朋友的房间。"
+msgstr "You're playing alone. Host a room to invite friends, or join a friend's room."
+
+msgid "现在是第 %d 天 %s。"
+msgstr "It's day %d, %s."
+
+msgid "用法：/me <动作>"
+msgstr "Usage: /me <action>"
+
+msgid "用法：/time 时:分，例如 /time 18:30"
+msgstr "Usage: /time hh:mm, e.g. /time 18:30"
+
+msgid "用法：/tp <x> <z> 或 /tp 出生点"
+msgstr "Usage: /tp <x> <z> or /tp spawn"
+
+msgid "画面"
+msgstr "Display"
+
+msgid "目标  %s（%s）"
+msgstr "Target  %s (%s)"
+
+msgid "离开房间"
+msgstr "Leave Room"
+
+msgid "移动"
+msgstr "Movement"
+
+msgid "空命令。输入 /help 查看命令。"
+msgstr "Empty command. Type /help for commands."
+
+msgid "穿墙（N）"
+msgstr "Noclip (N)"
+
+msgid "穿墙：%s（N）"
+msgstr "Noclip: %s (N)"
+
+msgid "端口应为 1–65535"
+msgstr "The port must be 1–65535"
+
+msgid "第一/第三人称（V）"
+msgstr "First/third person (V)"
+
+msgid "第一人称"
+msgstr "First person"
+
+msgid "第一人称的手"
+msgstr "First-person hands"
+
+msgid "第一次建房时 Windows 可能会问是否允许 Dusk Lake 访问网络，请选择“允许”。"
+msgstr "The first time you host, Windows may ask whether Dusk Lake may use the network. Choose \"Allow\"."
+
+msgid "第三人称"
+msgstr "Third person"
+
+msgid "第三人称肩位"
+msgstr "Third-person shoulder"
+
+msgid "第三人称距离"
+msgstr "Third-person distance"
+
+msgid "继续"
+msgstr "Resume"
+
+msgid "聊天名字已改为 %s。"
+msgstr "Your name is now %s."
+
+msgid "西"
+msgstr "W"
+
+msgid "西北"
+msgstr "NW"
+
+msgid "西南"
+msgstr "SW"
+
+msgid "视角"
+msgstr "View"
+
+msgid "视野 FOV"
+msgstr "Field of view"
+
+msgid "设置"
+msgstr "Settings"
+
+msgid "说点什么…（/help 查看命令，Esc 取消）"
+msgstr "Say something… (/help for commands, Esc to cancel)"
+
+msgid "请输入房间号"
+msgstr "Please enter a room code"
+
+msgid "走路时镜头晃动"
+msgstr "Head bob while walking"
+
+msgid "超出地图（|x|、|z| ≤ %d）"
+msgstr "outside the map (|x|, |z| ≤ %d)"
+
+msgid "路由器拒绝打开端口。可以在路由器里手动转发 UDP %d，或改用局域网 / Tailscale 房间号。"
+msgstr "Your router refused to open the port. Forward UDP %d on your router manually, or use the LAN / Tailscale code."
+
+msgid "路由器端口已打开：其他网络的朋友可以用公网房间号加入。"
+msgstr "Router port opened: friends on other networks can join with the Internet code."
+
+msgid "跳到%s季第一天。"
+msgstr "Jumped to the first day of %s."
+
+msgid "输入朋友发来的房间号（例如 K7Q-3MXA），也可以直接输入 IP 地址。"
+msgstr "Enter the room code your friend sent you (for example K7Q-3MXA), or an IP address."
+
+msgid "返回"
+msgstr "Back"
+
+msgid "进入%s季。"
+msgstr "The season turns to %s."
+
+msgid "连接失败：找不到这个房间（房主没开房，或网络不通）"
+msgstr "Connection failed: the room wasn't found (the host isn't hosting, or the network can't reach them)"
+
+msgid "连接超时：找不到这个房间（房主没开房，或网络不通）"
+msgstr "Connection timed out: the room wasn't found (the host isn't hosting, or the network can't reach them)"
+
+msgid "退出游戏"
+msgstr "Quit"
+
+msgid "那里是建筑（%s），请从门进去"
+msgstr "that's a building (%s); go in through the door"
+
+msgid "那里是湖面"
+msgstr "that's the lake"
+
+msgid "随朝向旋转（关闭 = 北朝上）"
+msgstr "Rotate with heading (off = north up)"
+
+msgid "随机搭配"
+msgstr "Randomize"
+
+msgid "预设"
+msgstr "Presets"
+
+msgid "预设："
+msgstr "Presets:"
+
+msgid "飞行中"
+msgstr "Flying"
+
+msgid "飞行时：WASD 平移 · 空格上升 · C / Ctrl 下降 · Shift 三倍速"
+msgstr "While flying: WASD move · Space up · C / Ctrl down · Shift 3× speed"
+
+msgid "飞行速度 %d m/s"
+msgstr "Fly speed %d m/s"
+
+msgid "飞行（F）"
+msgstr "Fly (F)"
+
+msgid "飞行：%s（F）"
+msgstr "Fly: %s (F)"
+
+msgid "鼠标 Y 轴反转"
+msgstr "Invert mouse Y"
+
+msgid "鼠标灵敏度"
+msgstr "Mouse sensitivity"
+
+msgid "（你）"
+msgstr " (you)"
+
+msgid "（房主）"
+msgstr " (host)"
+
+msgid "（暂停）"
+msgstr " (paused)"
+
+msgid "（由 %s 过渡中 %d%%）"
+msgstr " (changing from %s, %d%%)"
+
+msgid "春"
+msgstr "spring"
+
+msgid "夏"
+msgstr "summer"
+
+msgid "秋"
+msgstr "autumn"
+
+msgid "冬"
+msgstr "winter"
+
+msgid "晴"
+msgstr "clear"
+
+msgid "阴"
+msgstr "overcast"
+
+msgid "小雨"
+msgstr "light-rain"
+
+msgid "大雨"
+msgstr "heavy-rain"
+
+msgid "雷雨"
+msgstr "thunderstorm"
+
+msgid "雾"
+msgstr "fog"
+
+msgid "下雪"
+msgstr "snow"
+
+msgid "湖泊"
+msgstr "Lake"
+
+msgid "木质码头"
+msgstr "Wooden dock"
+
+msgid "木屋前院"
+msgstr "Cabin yard"
+
+msgid "北部针叶林"
+msgstr "North pine forest"
+
+msgid "西北观景点"
+msgstr "Northwest lookout"
+
+msgid "南部林间草甸"
+msgstr "South forest meadow"
+
+msgid "泳池馆前庭"
+msgstr "Pool house forecourt"
+
+msgid "木屋门廊"
+msgstr "Cabin porch"
+
+msgid "码头尽头"
+msgstr "End of the dock"
+
+msgid "泳池馆门口"
+msgstr "Pool house entrance"
+
+msgid "泳池大厅"
+msgstr "Pool hall"
+
+msgid "南部草甸"
+msgstr "South meadow"
+
+msgid "湖心上空（飞行）"
+msgstr "Above the lake (flying)"
+
+msgid "脸"
+msgstr "Face"
+
+msgid "发型"
+msgstr "Hair"
+
+msgid "帽子"
+msgstr "Hat"
+
+msgid "上衣"
+msgstr "Top"
+
+msgid "下装"
+msgstr "Bottoms"
+
+msgid "鞋"
+msgstr "Shoes"
+
+msgid "背饰"
+msgstr "Back"
+
+msgid "肤色"
+msgstr "Skin"
+
+msgid "瞳色"
+msgstr "Eyes"
+
+msgid "发色"
+msgstr "Hair colour"
+
+msgid "帽子饰色"
+msgstr "Hat accent"
+
+msgid "上衣饰色"
+msgstr "Top accent"
+
+msgid "背包"
+msgstr "Backpack"
+
+msgid "T 恤"
+msgstr "T-shirt"
+
+msgid "不戴"
+msgstr "None"
+
+msgid "丸子头"
+msgstr "Bun"
+
+msgid "光头"
+msgstr "Bald"
+
+msgid "夹克"
+msgstr "Jacket"
+
+msgid "平静"
+msgstr "Calm"
+
+msgid "微笑"
+msgstr "Smile"
+
+msgid "无"
+msgstr "None"
+
+msgid "棒球帽"
+msgstr "Cap"
+
+msgid "毛线帽"
+msgstr "Beanie"
+
+msgid "短发"
+msgstr "Short"
+
+msgid "短裤"
+msgstr "Shorts"
+
+msgid "运动鞋"
+msgstr "Sneakers"
+
+msgid "连帽卫衣"
+msgstr "Hoodie"
+
+msgid "长发"
+msgstr "Long"
+
+msgid "长裤"
+msgstr "Trousers"
+
+msgid "靴子"
+msgstr "Boots"
+
+msgid "马尾"
+msgstr "Ponytail"
+
+msgid "兔子"
+msgstr "Rabbit"
+
+msgid "狐狸"
+msgstr "Fox"
+
+msgid "松鼠"
+msgstr "Squirrel"
+
+msgid "绿头鸭"
+msgstr "Mallard"
+
+msgid "知更鸟"
+msgstr "Robin"
+
+msgid "蝴蝶"
+msgstr "Butterfly"
+
+msgid "小丑鱼"
+msgstr "Clownfish"
+
+msgid "蓝倒吊"
+msgstr "Blue tang"
+
+msgid "黄金吊"
+msgstr "Yellow tang"
+
+msgid "银鱼"
+msgstr "Silverside"
+
+msgid "海龟"
+msgstr "Sea turtle"
+
+msgid "水母"
+msgstr "Jellyfish"
+

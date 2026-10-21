@@ -67,6 +67,7 @@ func _run() -> void:
 	_house = _main.get_node("PoolHouse") as PoolHouse
 	_test_signs()
 	await _test_chat()
+	_test_release()
 	await _test_poolhouse_walk()
 	await _test_poolhouse_swim()
 	await _test_pool_climb_out()
@@ -1325,7 +1326,7 @@ func _test_chat() -> void:
 	await _seconds(10.0)
 	var notice := false
 	for i in range(count, chat.messages.size()):
-		notice = notice or (chat.messages[i]["kind"] == "system" and str(chat.messages[i]["text"]).contains("下雪"))
+		notice = notice or (chat.messages[i]["kind"] == "system" and str(chat.messages[i]["text"]).contains(tr("下雪")))
 	_check("天气过渡完成后聊天框收到系统消息", notice, "新增 %d 条" % (chat.messages.size() - count))
 
 	# 传送只到室外地面
@@ -1347,6 +1348,76 @@ func _test_chat() -> void:
 	_check("/clear 清空记录", chat.messages.is_empty())
 	climate.apply_preset("Autumn_Dusk_Clear")
 	await _seconds(0.6)
+
+
+# ---------------------------------------------------------------- 发布版：语言、房间号、联机规则
+
+func _test_release() -> void:
+	# 默认英文；中文没有翻译表，tr() 原样返回中文
+	var en_ok := GameSettings.language == "en" and tr("继续") == "Resume" and tr("E  打开木门") == "E  Open the door"
+	GameSettings.set_value("language", "zh", false)
+	var zh_ok := tr("继续") == "继续" and TranslationServer.get_locale().begins_with("zh")
+	GameSettings.set_value("language", "en", false)
+	_check("界面默认英文，可切换中文", en_ok and zh_ok and tr("继续") == "Resume", "en %s · zh %s" % [en_ok, zh_ok])
+
+	# 界面脚本里出现的中文都有英文翻译（新增文字忘了加翻译会在这里失败）
+	var skip := ["帮助", "时间", "天气", "季节", "预设", "坐标", "传送", "名字", "清屏", "中文", "、", "：", "季", "天",
+		"%s：%s", "%s — %s", "×%d", "%d°", "—", "  ·  ", "出生点", "语言 / Language"]
+	var missing := PackedStringArray()
+	var re := RegEx.create_from_string(r'"([^"\n]*[^\x00-\x7F][^"\n]*)"')
+	for dir in ["res://scripts/ui", "res://scripts/net", "res://scripts/interactions", "res://scripts/core"]:
+		for path in _list_files(dir, ".gd"):
+			for line in FileAccess.get_file_as_string(path).split("\n"):
+				var s := line.strip_edges()
+				if s.begins_with("#") or s.contains("push_error") or s.contains("push_warning") or s.begins_with("const LANGUAGE"):
+					continue
+				for m in re.search_all(line):
+					var text := m.get_string(1).c_unescape()
+					if not text in skip and tr(text) == text:
+						missing.append(text)
+	_check("界面文字全部有英文翻译", missing.is_empty(), ", ".join(missing))
+
+	# 房间号：编码解码往返、抄错能发现、地址直接输入、地址分类
+	var round_ok := true
+	for case in [["192.168.1.23", 24567], ["10.0.0.5", 24567], ["100.101.102.103", 24567], ["203.0.113.77", 30000], ["8.8.4.4", 1]]:
+		var code := RoomCode.encode(case[0], case[1])
+		var d := RoomCode.decode(code.to_lower().replace("-", " "))
+		round_ok = round_ok and d["ok"] and d["host"] == case[0] and d["port"] == case[1] \
+			and code.length() == (8 if case[1] == 24567 else 11)
+	var good := RoomCode.encode("192.168.1.23")
+	var caught := 0
+	var tried := 0
+	for i in good.length():
+		if good[i] == "-":
+			continue
+		for ch in RoomCode.ALPHABET:
+			if ch == good[i]:
+				continue
+			tried += 1
+			var typo := good.substr(0, i) + ch + good.substr(i + 1)
+			var r := RoomCode.decode(typo)
+			if not r["ok"] or r["host"] != "192.168.1.23":
+				caught += 1
+	var addr := RoomCode.decode("192.168.1.9:4000")
+	var classify_ok := RoomCode.classify("192.168.0.2") == "lan" and RoomCode.classify("100.88.1.2") == "vpn" \
+		and RoomCode.classify("203.0.113.5") == "public" and RoomCode.classify("127.0.0.1") == "loopback"
+	_check("房间号：往返无误、单字符抄错能识别、可直接输入 IP:端口、地址分类正确",
+		round_ok and float(caught) / tried > 0.8 and addr["ok"] and addr["port"] == 4000 and classify_ok,
+		"%s → 抄错识别 %d / %d" % [good, caught, tried])
+
+	# 房主接纳规则：版本一致才能进，满 4 人拒绝
+	var saved_roster := Net.roster
+	Net.roster = {1: {}, 2: {}, 3: {}}
+	var admit_ok := Net.admit_reason(Net.PROTOCOL, Net.game_version()) == "" \
+		and Net.admit_reason(Net.PROTOCOL, "0.0.1") == "版本不一致" and Net.admit_reason(Net.PROTOCOL + 1, Net.game_version()) == "版本不一致"
+	Net.roster[4] = {}
+	var full_ok := Net.admit_reason(Net.PROTOCOL, Net.game_version()) == "房间已满"
+	Net.roster = saved_roster
+	_check("联机：版本不一致拒绝、满 4 人拒绝", admit_ok and full_ok, "版本 %s · 人数 %s" % [admit_ok, full_ok])
+
+	# 大厅菜单在自动检查里不弹出；单人模式下暂停菜单仍会暂停世界
+	var lobby := _main.get_node("LobbyMenu") as LobbyMenu
+	_check("大厅菜单只在游戏主程序启动时弹出（自动检查里不弹）", lobby != null and not lobby.is_open() and not PlayerHold.is_held())
 
 
 func _key(keycode: Key, pressed: bool) -> InputEventKey:

@@ -4,7 +4,8 @@ extends CanvasLayer
 ## 普通消息以玩家名字显示；以 / 开头的是命令（ChatCommands，/help 列出）；天气、季节变化作为系统消息写进来。
 ## 打开时释放鼠标、人物原地站定（借用 autopilot：方向为零，重力照常），关闭后恢复。
 ## 关闭时只显示最近 VISIBLE_SECONDS 秒内的消息并渐隐；打开时显示全部记录（最多 MAX_MESSAGES 条，可滚动）。
-## 聊天名字存在 user://chat.json。由 Main 在启动时创建，不依赖场景里的固定路径。
+## 名字来自 PlayerProfile。联机时普通消息和 /me 经 Net 发给房间里的所有人，进出房间等通知也写进来。
+## 文字一律先 tr() 再写入（消息记录保存的是写入时的语言）。由 Main 在启动时创建，不依赖场景里的固定路径。
 
 signal message_added(entry: Dictionary)
 
@@ -14,8 +15,6 @@ const MAX_NAME_LENGTH := 16
 const VISIBLE_SECONDS := 10.0
 const FADE_SECONDS := 1.5
 const RECENT_LINES := 8
-const DEFAULT_NAME := "旅人"
-const SAVE_PATH := "user://chat.json"
 const ACTIONS := {
 	"chat_open": [KEY_T, KEY_ENTER, KEY_KP_ENTER],
 	"chat_command": [KEY_SLASH],
@@ -29,13 +28,15 @@ const COLORS := {
 const NAME_COLOR := Color(0.55, 0.85, 1.0)
 const WIDTH := 640.0
 
-var player_name := DEFAULT_NAME
+var player_name: String:
+	get:
+		return PlayerProfile.player_name()
 var messages: Array[Dictionary] = []   ## {kind, author, text, time}
 
 var _open := false
 var _history := PackedStringArray()
 var _history_index := -1
-var _held_player: FirstPersonController = null
+
 var _log: RichTextLabel
 var _log_bg: Panel
 var _field: LineEdit
@@ -55,19 +56,30 @@ func _enter_tree() -> void:
 func _ready() -> void:
 	layer = 12
 	add_to_group("chat_box")
-	_load()
+
 	_build()
 	EventBus.weather_changed.connect(_on_weather_changed)
 	EventBus.season_changed.connect(_on_season_changed)
-	post_system("欢迎来到暮色湖畔。按 T 聊天，输入 /help 查看命令。")
+	Net.notice.connect(post_system)
+	Net.chat_received.connect(post)
+	post_system(tr("欢迎来到暮色湖畔。按 T 聊天，输入 /help 查看命令。"))
 
 
 func is_open() -> bool:
 	return _open
 
 
+## 暂停菜单或大厅菜单开着时不打开聊天（联机时暂停菜单不暂停世界）。
+func _menu_open() -> bool:
+	for n in ["PauseMenu", "LobbyMenu"]:
+		var m := get_parent().get_node_or_null(n)
+		if m != null and m.has_method("is_open") and m.is_open():
+			return true
+	return false
+
+
 func open(prefix := "") -> void:
-	if _open or get_tree().paused:
+	if _open or get_tree().paused or _menu_open():
 		return
 	_open = true
 	_history_index = -1
@@ -77,7 +89,7 @@ func open(prefix := "") -> void:
 	_log.mouse_filter = Control.MOUSE_FILTER_STOP   # 打开时可用滚轮翻看记录
 	_field.grab_focus()
 	_field.caret_column = prefix.length()
-	_hold_player(true)
+	PlayerHold.set_held(self, get_tree(), true)
 	if _can_capture():
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_refresh()
@@ -91,7 +103,7 @@ func close() -> void:
 	_field.visible = false
 	_log_bg.visible = false
 	_log.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_hold_player(false)
+	PlayerHold.set_held(self, get_tree(), false)
 	if _can_capture():
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	_refresh()
@@ -108,6 +120,7 @@ func submit(text: String) -> void:
 		ChatCommands.run(self, text)
 	else:
 		post("player", player_name, text)
+		Net.send_chat("player", text)
 
 
 func post(kind: String, author: String, text: String) -> void:
@@ -133,13 +146,7 @@ func clear() -> void:
 
 
 func set_player_name(new_name: String) -> bool:
-	new_name = new_name.strip_edges()
-	if new_name.is_empty() or new_name.length() > MAX_NAME_LENGTH:
-		return false
-	player_name = new_name
-	_save()
-	return true
-
+	return PlayerProfile.set_display_name(new_name)
 
 # ---------------------------------------------------------------- 输入
 
@@ -189,20 +196,6 @@ func _recall(step: int) -> void:
 	_field.caret_column = _field.text.length()
 
 
-func _hold_player(hold: bool) -> void:
-	if hold:
-		var p := get_tree().get_first_node_in_group("local_player") as FirstPersonController
-		if p != null and not p.autopilot_enabled:
-			p.autopilot_direction = Vector3.ZERO
-			p.autopilot_run = false
-			p.autopilot_enabled = true
-			_held_player = p
-	elif _held_player != null:
-		if is_instance_valid(_held_player):
-			_held_player.autopilot_enabled = false
-		_held_player = null
-
-
 func _can_capture() -> bool:
 	return DisplayServer.get_name() != "headless"
 
@@ -210,12 +203,12 @@ func _can_capture() -> bool:
 # ---------------------------------------------------------------- 系统消息
 
 func _on_weather_changed(weather_id: StringName) -> void:
-	post_system("天气转为%s。" % ClimateData.weather_profile(weather_id).get("name", String(weather_id)))
+	post_system(tr("天气转为%s。") % tr(ClimateData.weather_profile(weather_id).get("name", String(weather_id))))
 
 
 func _on_season_changed(from_id: StringName, to_id: StringName) -> void:
 	if from_id != &"":
-		post_system("进入%s季。" % ClimateData.season_profile(to_id).get("name", String(to_id)))
+		post_system(tr("进入%s季。") % tr(ClimateData.season_profile(to_id).get("name", String(to_id))))
 
 
 # ---------------------------------------------------------------- 显示
@@ -302,7 +295,7 @@ func _build() -> void:
 
 	_field = LineEdit.new()
 	_field.max_length = MAX_LENGTH
-	_field.placeholder_text = "说点什么…（/help 查看命令，Esc 取消）"
+	_field.placeholder_text = "说点什么…（/help 查看命令，Esc 取消）"   # 占位文字由 Godot 自动翻译
 	_field.context_menu_enabled = false
 	var field := StyleBoxFlat.new()
 	field.bg_color = Color(0.03, 0.03, 0.06, 0.78)
@@ -328,19 +321,3 @@ func _anchor_bottom_left(c: Control, left: float, top: float, bottom: float) -> 
 	c.offset_bottom = bottom
 
 
-# ---------------------------------------------------------------- 存档
-
-func _load() -> void:
-	if not FileAccess.file_exists(SAVE_PATH):
-		return
-	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(SAVE_PATH))
-	if parsed is Dictionary:
-		var saved := str(parsed.get("name", "")).strip_edges()
-		if not saved.is_empty() and saved.length() <= MAX_NAME_LENGTH:
-			player_name = saved
-
-
-func _save() -> void:
-	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
-	if f != null:
-		f.store_string(JSON.stringify({"name": player_name}, "  "))

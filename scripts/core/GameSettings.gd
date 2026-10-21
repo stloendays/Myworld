@@ -9,6 +9,8 @@ signal developer_mode_changed(enabled: bool)
 const FOV_MIN := 65.0
 const FOV_MAX := 95.0
 const SETTINGS_PATH := "user://settings.json"
+const LANGUAGES := ["en", "zh"]
+const LANGUAGE_NAMES := ["English", "中文"]
 
 const ACTIONS := {
 	"move_forward": [KEY_W, KEY_UP],
@@ -58,6 +60,7 @@ const DEFAULTS := {
 	"dynamic_resolution": true,       ## 按 GPU 帧时自动调 3D 渲染比例
 	"fly_speed": 10.0,
 	"emote_third_person": true,       ## 挥手 / 跳舞 / 鼓掌时自动切到第三人称看自己，做完切回
+	"language": "en",                 ## 界面语言：en（默认）/ zh
 }
 
 var fov := 75.0
@@ -79,6 +82,7 @@ var graphics_quality := "high"
 var dynamic_resolution := true
 var fly_speed := 10.0
 var emote_third_person := true
+var language := "en"
 
 var developer_mode := false
 var _window_user_set := false   ## 只有玩家改过（或设置文件里有）才去动垂直同步与全屏，命令行 --disable-vsync 不被覆盖
@@ -89,6 +93,7 @@ var _theme: Theme = null
 func _enter_tree() -> void:
 	_register_inputs()
 	load_from(SETTINGS_PATH)
+	apply_language()
 
 
 func _ready() -> void:
@@ -137,11 +142,15 @@ func set_value(key: String, value: Variant, save := true) -> void:
 			value = value if str(value) in ["low", "medium", "high", "ultra"] else "high"
 		"first_person_arms":
 			value = value if str(value) in ["both", "right", "none"] else "both"
+		"language":
+			value = value if str(value) in LANGUAGES else "en"
 	set(key, value)
 	if key in ["vsync", "fullscreen"]:
 		_window_user_set = true
 	if key in ["render_scale", "vsync", "fullscreen", "max_fps"]:
 		apply_display()
+	if key == "language":
+		apply_language()
 	changed.emit()
 	if save:
 		save_to(SETTINGS_PATH)
@@ -176,6 +185,7 @@ func reset_defaults() -> void:
 	developer_mode = false
 	_window_user_set = false
 	apply_display()
+	apply_language()
 	changed.emit()
 
 
@@ -235,3 +245,8 @@ func ui_theme() -> Theme:
 		_theme.default_font = font
 		_theme.default_font_size = 18
 	return _theme
+
+
+## 界面语言：源文本是中文，locale/en.po 是英文翻译；选中文时没有对应翻译，tr() 原样返回中文。
+func apply_language() -> void:
+	TranslationServer.set_locale(language if language in LANGUAGES else "en")

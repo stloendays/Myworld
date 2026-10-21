@@ -9,3 +9,6 @@ builds/
 assets/references/
 assets/raw/
 *.blend1
+
+# 发布包构建输出
+dist/

@@ -6,11 +6,14 @@ config_version=5
 [application]
 
 config/name="Dusk Lake"
-config/description="3D 私人湖畔世界：250×250 m 连续地图、无缝 A 字形木屋。"
-config/version="0.1.0-m1"
+config/description="A quiet lakeside world to explore alone or with up to three friends."
+config/version="0.1.0"
 run/main_scene="res://scenes/main/Main.tscn"
 config/features=PackedStringArray("4.7", "Forward Plus")
-config/icon="res://icon.svg"
+config/icon="res://icon.png"
+config/windows_native_icon="res://installer/icon.ico"
+config/use_custom_user_dir=true
+config/custom_user_dir_name="DuskLake"
 
 [autoload]
 
@@ -18,11 +21,17 @@ GameSettings="*res://scripts/core/GameSettings.gd"
 EventBus="*res://scripts/core/EventBus.gd"
 WorldState="*res://scripts/core/WorldState.gd"
 PlayerProfile="*res://scripts/core/PlayerProfile.gd"
+Net="*res://scripts/net/NetworkManager.gd"
 
 [display]
 
 window/size/viewport_width=1600
 window/size/viewport_height=900
+
+[internationalization]
+
+locale/translations=PackedStringArray("res://locale/en.po")
+locale/fallback="zh"
 
 [layer_names]
 

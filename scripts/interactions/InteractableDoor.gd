@@ -25,7 +25,7 @@ func is_open() -> bool:
 
 
 func get_prompt(_actor: Node) -> String:
-	return "E  关上木门" if _open else "E  打开木门"
+	return tr("E  关上木门") if _open else tr("E  打开木门")
 
 
 func interact(_actor: Node) -> void:
@@ -53,3 +53,7 @@ func get_state() -> String:
 
 func apply_state(state: String) -> void:
 	set_open(state == "open", true)
+
+
+func apply_remote_state(state: String) -> void:
+	set_open(state == "open")
