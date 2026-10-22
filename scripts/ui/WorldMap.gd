@@ -38,7 +38,7 @@ func _set_open(on: bool) -> void:
 	_root.visible = on
 	if on:
 		_refresh_list()
-	if DisplayServer.get_name() != "headless":
+	if GameSettings.can_grab_mouse():
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if on else Input.MOUSE_MODE_CAPTURED
 
 

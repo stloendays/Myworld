@@ -15,7 +15,7 @@ func _ready() -> void:
 	var player := get_tree().get_first_node_in_group("local_player") as FirstPersonController
 	if player != null:
 		place_at_spawn(player)
-	if DisplayServer.get_name() != "headless":
+	if GameSettings.can_grab_mouse():
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	var remote := RemotePlayers.new()
 	remote.name = "RemotePlayers"

@@ -15,4 +15,5 @@
 - 本仓库是**公开仓库**：不要提交 `assets/references/` 下的用户参考图，不要提交许可未核验的第三方素材。每个导入的外部文件都要登记到 `assets/licenses.csv`。
 - 美术：外部模型/贴图放 `assets/imported/`，材质统一走 `scripts/art/ArtMaterials.gd`（按材质名替换），不要在各脚本里各自新建贴图材质。木屋模型改 `devtools/blender/build_cabin.py` 后重新导出，尺寸常量要与 `Cabin.gd` 碰撞保持一致。
 - 渲染相关改动后用 `devtools/Benchmark.tscn` 复测帧率与显存，并写进文档。
+- 调试不打扰用户：`res://devtools/` 场景启动后窗口自动挪到屏幕外、不拿焦点、不抓鼠标、不跟随玩家的全屏设置（`GameSettings._park_dev_window()`）。命令加 `--position 100000,100000`，让启动后挪走之前的 2–4 秒只在屏幕右下角露一角。**调试时绝不开全屏**（不加 `-f` / `--fullscreen` / `--maximized`）。改鼠标模式一律先判断 `GameSettings.can_grab_mouse()`。用户想看窗口时才设 `DUSK_SHOW_WINDOW=1`。
 - 提交信息用英文祈使句；用户沟通用中文。

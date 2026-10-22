@@ -88,11 +88,13 @@ var language := "auto"
 
 var developer_mode := false
 var _window_user_set := false   ## 只有玩家改过（或设置文件里有）才去动垂直同步与全屏，命令行 --disable-vsync 不被覆盖
+var dev_window_parked := false  ## 开发工具（res://devtools/ 场景）运行中：窗口停在屏幕外、不拿焦点、不抓鼠标
 
 var _theme: Theme = null
 
 
 func _enter_tree() -> void:
+	_park_dev_window()
 	_register_inputs()
 	load_from(SETTINGS_PATH)
 	apply_language()
@@ -101,6 +103,25 @@ func _enter_tree() -> void:
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS   # 暂停菜单打开时 F11 也能切全屏
 	apply_display()
+
+
+## 开发工具截图、测帧率时不打扰正在用电脑的人：窗口挪到所有屏幕之外、不拿键盘焦点，
+## 也不抓鼠标（抓鼠标会把系统光标锁进这个窗口）。截图取自视口纹理，不受影响。
+## 想亲眼看窗口时设环境变量 DUSK_SHOW_WINDOW=1。
+func _park_dev_window() -> void:
+	if DisplayServer.get_name() == "headless" or OS.get_environment("DUSK_SHOW_WINDOW") == "1":
+		return
+	if not Array(OS.get_cmdline_args()).any(func(a: String) -> bool: return a.begins_with("res://devtools/")):
+		return
+	dev_window_parked = true
+	var win := get_window()
+	win.set_flag(Window.FLAG_NO_FOCUS, true)
+	win.position = Vector2i(-10000, -10000)
+
+
+## 能否改鼠标模式（抓住 / 放开）：无窗口的自动检查和停在屏幕外的开发工具都不能。
+func can_grab_mouse() -> bool:
+	return DisplayServer.get_name() != "headless" and not dev_window_parked
 
 
 ## 全屏切换：F11 或 Alt + Enter，任何界面下都有效，并保存。
@@ -231,6 +252,8 @@ func apply_display() -> void:
 	if DisplayServer.get_name() == "headless" or not _window_user_set:
 		return
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if vsync else DisplayServer.VSYNC_DISABLED)
+	if dev_window_parked:   # 停在屏幕外的开发工具窗口不跟玩家的全屏设置，切全屏会盖住整个屏幕
+		return
 	var mode := DisplayServer.window_get_mode()
 	var want_full := mode == DisplayServer.WINDOW_MODE_FULLSCREEN or mode == DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN
 	if fullscreen != want_full:

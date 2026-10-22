@@ -39,7 +39,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _can_capture() -> bool:
-	return DisplayServer.get_name() != "headless"
+	return GameSettings.can_grab_mouse()
 
 
 func _dev_panel_open() -> bool:

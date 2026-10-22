@@ -67,7 +67,7 @@ func open(page := Page.HOME) -> void:
 	_lang.select(maxi(GameSettings.LANGUAGES.find(GameSettings.language), 0))
 	_show(page)
 	PlayerHold.set_held(self, get_tree(), true)
-	if DisplayServer.get_name() != "headless":
+	if GameSettings.can_grab_mouse():
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 
@@ -81,7 +81,7 @@ func close() -> void:
 	_open = false
 	_root.visible = false
 	PlayerHold.set_held(self, get_tree(), false)
-	if DisplayServer.get_name() != "headless":
+	if GameSettings.can_grab_mouse():
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
