@@ -11,10 +11,10 @@ extends Node
 ## 地形遮挡体（TerrainBuilder）也是这次优化的一部分，各在自己的脚本里。
 
 const PRESETS := {
-	"low": {"ssr": 0, "ssao": false, "ssao_half": true, "splits": 2, "shadow_dist": 60.0, "atlas": 2048, "msaa": Viewport.MSAA_DISABLED, "lod": 4.0, "cover_shadows": false},
-	"medium": {"ssr": 32, "ssao": true, "ssao_half": true, "splits": 2, "shadow_dist": 90.0, "atlas": 2048, "msaa": Viewport.MSAA_DISABLED, "lod": 2.0, "cover_shadows": false},
-	"high": {"ssr": 64, "ssao": true, "ssao_half": false, "splits": 4, "shadow_dist": 120.0, "atlas": 4096, "msaa": Viewport.MSAA_2X, "lod": 1.0, "cover_shadows": true},
-	"ultra": {"ssr": 128, "ssao": true, "ssao_half": false, "splits": 4, "shadow_dist": 160.0, "atlas": 4096, "msaa": Viewport.MSAA_2X, "lod": 0.5, "cover_shadows": true},
+	"low": {"ssr": 0, "ssao": false, "ssao_half": true, "splits": 2, "shadow_dist": 60.0, "atlas": 2048, "msaa": Viewport.MSAA_DISABLED, "ssaa": Viewport.SCREEN_SPACE_AA_FXAA, "pos_atlas": 1024, "radiance": Sky.RADIANCE_SIZE_128, "lod": 4.0, "cover_shadows": false},
+	"medium": {"ssr": 32, "ssao": true, "ssao_half": true, "splits": 2, "shadow_dist": 90.0, "atlas": 2048, "msaa": Viewport.MSAA_DISABLED, "ssaa": Viewport.SCREEN_SPACE_AA_SMAA, "pos_atlas": 2048, "radiance": Sky.RADIANCE_SIZE_128, "lod": 2.0, "cover_shadows": false},
+	"high": {"ssr": 64, "ssao": true, "ssao_half": false, "splits": 4, "shadow_dist": 120.0, "atlas": 4096, "msaa": Viewport.MSAA_DISABLED, "ssaa": Viewport.SCREEN_SPACE_AA_SMAA, "pos_atlas": 2048, "radiance": Sky.RADIANCE_SIZE_256, "lod": 1.0, "cover_shadows": true},
+	"ultra": {"ssr": 128, "ssao": true, "ssao_half": false, "splits": 4, "shadow_dist": 160.0, "atlas": 4096, "msaa": Viewport.MSAA_2X, "ssaa": Viewport.SCREEN_SPACE_AA_DISABLED, "pos_atlas": 4096, "radiance": Sky.RADIANCE_SIZE_256, "lod": 0.5, "cover_shadows": true},
 }
 const LIGHT_FADE_BEGIN := 40.0
 const LIGHT_SHADOW_FADE := 18.0
@@ -28,7 +28,6 @@ var gpu_ms := 0.0
 var applied_quality := ""
 
 var _adjust_timer := 0.0
-var _light_timer := 0.0
 var _gpu_samples: Array[float] = []
 
 
@@ -37,6 +36,8 @@ func _ready() -> void:
 	if DisplayServer.get_name() != "headless":
 		RenderingServer.viewport_set_measure_render_time(get_viewport().get_viewport_rid(), true)
 	GameSettings.changed.connect(apply_quality)
+	# 后来才加入场景的灯（仙境、换装预览等）在加入时就设好淡出，不必定时全树搜索
+	get_tree().node_added.connect(_on_node_added)
 	apply_quality.call_deferred()
 
 
@@ -54,8 +55,12 @@ func apply_quality() -> void:
 		env.sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS if int(p["splits"]) == 4 else DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
 		env.sun.directional_shadow_max_distance = p["shadow_dist"]
 		env.moon.directional_shadow_max_distance = minf(float(p["shadow_dist"]), 120.0)
+		if e.sky != null and e.sky.radiance_size != p["radiance"]:
+			e.sky.radiance_size = p["radiance"]
 	RenderingServer.directional_shadow_atlas_set_size(int(p["atlas"]), true)
 	get_viewport().msaa_3d = p["msaa"]
+	get_viewport().screen_space_aa = p["ssaa"]
+	get_viewport().positional_shadow_atlas_size = p["pos_atlas"]
 	get_viewport().mesh_lod_threshold = p["lod"]
 	var cover := get_tree().get_first_node_in_group("ground_cover")
 	if cover != null:
@@ -67,24 +72,28 @@ func apply_quality() -> void:
 	fade_lights()
 
 
-## 所有局部灯按距离淡出（新出现的灯每 5 秒补一次）。
+## 所有局部灯按距离淡出。启动时扫一遍全树，之后新加入的灯由 node_added 逐个处理。
 func fade_lights() -> void:
 	for l in get_tree().root.find_children("*", "OmniLight3D", true, false) + get_tree().root.find_children("*", "SpotLight3D", true, false):
-		var light := l as Light3D
-		if light.distance_fade_enabled:
-			continue
-		light.distance_fade_enabled = true
-		light.distance_fade_begin = LIGHT_FADE_BEGIN
-		light.distance_fade_shadow = LIGHT_SHADOW_FADE
-		light.distance_fade_length = LIGHT_FADE_LENGTH
+		_fade(l as Light3D)
+
+
+func _on_node_added(n: Node) -> void:
+	if n is OmniLight3D or n is SpotLight3D:
+		_fade(n as Light3D)
+
+
+func _fade(light: Light3D) -> void:
+	if light.distance_fade_enabled:
+		return
+	light.distance_fade_enabled = true
+	light.distance_fade_begin = LIGHT_FADE_BEGIN
+	light.distance_fade_shadow = LIGHT_SHADOW_FADE
+	light.distance_fade_length = LIGHT_FADE_LENGTH
 
 
 func _process(delta: float) -> void:
 	_update_underground()
-	_light_timer -= delta
-	if _light_timer <= 0.0:
-		_light_timer = 5.0
-		fade_lights()
 	if not GameSettings.dynamic_resolution or DisplayServer.get_name() == "headless":
 		if dynamic_scale != 1.0:
 			dynamic_scale = 1.0

@@ -3,11 +3,33 @@ extends RefCounted
 ## 解析式地形高度函数 h(x, z)。网格、碰撞、树木摆放、出生点都调用它，保证彼此一致。
 ## 组成：基础高度 + 低频噪声 + 细节噪声 + 山丘 → 平台压平 → 湖盆下挖 → 地图边缘陡坡（自然封闭）
 ## → 建筑地下室基坑（pits：矩形内直接降到坑底，被建筑的首层地坪和地下室墙体完全遮住）。
+## 布局参数在第一次调用时解析成定长数组（每次调用不再查字典、不再把 JSON 数组转 Vector2），
+## 公式和运算顺序与按字典计算完全相同，结果逐位一致；加载时地被、地形网格要调用几十万次。
 
 static var _noise: FastNoiseLite = null
 static var _detail: FastNoiseLite = null
 static var _cfg: Dictionary = {}
 static var _lake: Dictionary = {}
+
+static var _base := 0.0
+static var _noise_amp := 0.0
+static var _detail_amp := 0.0
+static var _b0 := 0.0
+static var _b1 := 0.0
+static var _boundary_h := 0.0
+static var _hill_c := PackedVector2Array()
+static var _hill: PackedFloat64Array = []          ## 每座山 [height, sigma]
+static var _pad_c := PackedVector2Array()
+static var _pad: PackedFloat64Array = []           ## 每个平台 [radius, blend, height]
+static var _isl_c := PackedVector2Array()
+static var _isl: PackedFloat64Array = []           ## 每座岛 [radius, top]
+static var _pit: PackedFloat64Array = []           ## 每个基坑 [x0, z0, x1, z1, floor]
+static var _lake_c := Vector2.ZERO
+static var _lake_r := Vector2.ONE
+static var _lake_inner := 0.0
+static var _lake_outer := 1.0
+static var _lake_bed := 0.0
+static var _water := 0.0
 
 
 static func reset_cache() -> void:
@@ -32,6 +54,37 @@ static func _ensure() -> void:
 	_detail.seed = seed_value + 1
 	_detail.frequency = float(_cfg.get("detail_frequency", 0.09))
 	_detail.fractal_type = FastNoiseLite.FRACTAL_NONE
+	_base = float(_cfg["base_height"])
+	_noise_amp = float(_cfg["noise_amplitude"])
+	_detail_amp = float(_cfg["detail_amplitude"])
+	_b0 = float(_cfg["boundary_start"])
+	_b1 = float(_cfg["boundary_end"])
+	_boundary_h = float(_cfg["boundary_height"])
+	_hill_c = PackedVector2Array()
+	_hill = PackedFloat64Array()
+	for hill in _cfg.get("hills", []):
+		_hill_c.append(WorldLayout.v2(hill["center"]))
+		_hill.append_array([float(hill["height"]), float(hill["sigma"])])
+	_pad_c = PackedVector2Array()
+	_pad = PackedFloat64Array()
+	for pad in _cfg.get("pads", []):
+		_pad_c.append(WorldLayout.v2(pad["center"]))
+		_pad.append_array([float(pad["radius"]), float(pad["blend"]), float(pad["height"])])
+	_pit = PackedFloat64Array()
+	for pit in _cfg.get("pits", []):
+		var r: Array = pit["rect"]
+		_pit.append_array([float(r[0]), float(r[1]), float(r[2]), float(r[3]), float(pit["floor"])])
+	_lake_c = WorldLayout.v2(_lake["center"])
+	_lake_r = WorldLayout.v2(_lake["radii"])
+	_lake_inner = float(_lake["inner"])
+	_lake_outer = float(_lake["outer"])
+	_lake_bed = float(_lake["bed_height"])
+	_water = WorldLayout.water_level()
+	_isl_c = PackedVector2Array()
+	_isl = PackedFloat64Array()
+	for isl in _lake.get("islands", []):
+		_isl_c.append(WorldLayout.v2(isl["center"]))
+		_isl.append_array([float(isl["radius"]), float(isl["top"])])
 
 
 ## 地形网格的半边长（米）。比可活动区 ±125 m 略大，使采样数为 2^n+1（Jolt 高度场最优）。
@@ -43,9 +96,7 @@ static func extent() -> float:
 ## 湖泊椭圆归一化半径：1.0 约为岸线。
 static func lake_radius(x: float, z: float) -> float:
 	_ensure()
-	var c := WorldLayout.v2(_lake["center"])
-	var r := WorldLayout.v2(_lake["radii"])
-	return Vector2((x - c.x) / r.x, (z - c.y) / r.y).length()
+	return Vector2((x - _lake_c.x) / _lake_r.x, (z - _lake_c.y) / _lake_r.y).length()
 
 
 ## 用于地表颜色变化的低频噪声，范围约 [-1, 1]。
@@ -56,36 +107,33 @@ static func color_variation(x: float, z: float) -> float:
 
 static func height_at(x: float, z: float) -> float:
 	_ensure()
+	for i in range(0, _pit.size(), 5):
+		if x >= _pit[i] and x <= _pit[i + 2] and z >= _pit[i + 1] and z <= _pit[i + 3]:
+			return _pit[i + 4]
 	var p := Vector2(x, z)
-	var h := float(_cfg["base_height"])
-	h += _noise.get_noise_2d(x, z) * float(_cfg["noise_amplitude"])
-	h += _detail.get_noise_2d(x, z) * float(_cfg["detail_amplitude"])
-	for hill in _cfg.get("hills", []):
-		var sigma := float(hill["sigma"])
-		var d2 := p.distance_squared_to(WorldLayout.v2(hill["center"]))
-		h += float(hill["height"]) * exp(-d2 / (2.0 * sigma * sigma))
-	for pad in _cfg.get("pads", []):
-		var radius := float(pad["radius"])
-		var d := p.distance_to(WorldLayout.v2(pad["center"]))
-		var t := 1.0 - smoothstep(radius, radius + float(pad["blend"]), d)
-		h = lerpf(h, float(pad["height"]), t)
-	var s := 1.0 - smoothstep(float(_lake["inner"]), float(_lake["outer"]), lake_radius(x, z))
-	h = lerpf(h, float(_lake["bed_height"]), s)
+	var h := _base
+	h += _noise.get_noise_2d(x, z) * _noise_amp
+	h += _detail.get_noise_2d(x, z) * _detail_amp
+	for i in _hill_c.size():
+		var sigma := _hill[i * 2 + 1]
+		var d2 := p.distance_squared_to(_hill_c[i])
+		h += _hill[i * 2] * exp(-d2 / (2.0 * sigma * sigma))
+	for i in _pad_c.size():
+		var radius := _pad[i * 3]
+		var d := p.distance_to(_pad_c[i])
+		var t := 1.0 - smoothstep(radius, radius + _pad[i * 3 + 1], d)
+		h = lerpf(h, _pad[i * 3 + 2], t)
+	var s := 1.0 - smoothstep(_lake_inner, _lake_outer, Vector2((x - _lake_c.x) / _lake_r.x, (z - _lake_c.y) / _lake_r.y).length())
+	h = lerpf(h, _lake_bed, s)
 	# 湖中小岛：在湖盆之上隆起，顶部比水面高 top 米
-	for isl in _lake.get("islands", []):
-		var radius := float(isl["radius"])
-		var t := 1.0 - smoothstep(radius * 0.45, radius, p.distance_to(WorldLayout.v2(isl["center"])))
+	for i in _isl_c.size():
+		var radius := _isl[i * 2]
+		var t := 1.0 - smoothstep(radius * 0.45, radius, p.distance_to(_isl_c[i]))
 		if t > 0.0:
-			h = lerpf(h, WorldLayout.water_level() + float(isl["top"]) + _detail.get_noise_2d(x, z) * 0.15, t)
-	var b0 := float(_cfg["boundary_start"])
-	var b1 := float(_cfg["boundary_end"])
-	var tx := maxf(0.0, (absf(x) - b0) / (b1 - b0))
-	var tz := maxf(0.0, (absf(z) - b0) / (b1 - b0))
-	h += float(_cfg["boundary_height"]) * (tx * tx + tz * tz)
-	for pit in _cfg.get("pits", []):
-		var r: Array = pit["rect"]
-		if x >= float(r[0]) and x <= float(r[2]) and z >= float(r[1]) and z <= float(r[3]):
-			return float(pit["floor"])
+			h = lerpf(h, _water + _isl[i * 2 + 1] + _detail.get_noise_2d(x, z) * 0.15, t)
+	var tx := maxf(0.0, (absf(x) - _b0) / (_b1 - _b0))
+	var tz := maxf(0.0, (absf(z) - _b0) / (_b1 - _b0))
+	h += _boundary_h * (tx * tx + tz * tz)
 	return h
 
 

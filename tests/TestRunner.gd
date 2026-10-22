@@ -82,6 +82,7 @@ func _run() -> void:
 	await _test_canoe()
 	await _test_exploration_save()
 	await _test_performance()
+	_test_memory()
 	_test_chess_rules()
 	await _test_chess_table()
 	_test_aquarium_decor()
@@ -221,11 +222,17 @@ func _test_performance() -> void:
 	GameSettings.set_value("graphics_quality", "low", false)
 	await _frames(2)
 	var low_ok := not env.environment.ssr_enabled and not env.environment.ssao_enabled and env.sun.directional_shadow_max_distance == 60.0 \
-		and env.sun.directional_shadow_mode == DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS and get_viewport().msaa_3d == Viewport.MSAA_DISABLED
+		and env.sun.directional_shadow_mode == DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS and get_viewport().msaa_3d == Viewport.MSAA_DISABLED and get_viewport().positional_shadow_atlas_size == 1024
 	GameSettings.set_value("graphics_quality", "high", false)
 	await _frames(2)
-	var high_ok := env.environment.ssr_enabled and env.sun.directional_shadow_max_distance == 120.0 and get_viewport().msaa_3d == Viewport.MSAA_2X
-	notes.append("画质 低 %s / 高 %s" % [low_ok, high_ok])
+	var high_ok := env.environment.ssr_enabled and env.sun.directional_shadow_max_distance == 120.0 and get_viewport().msaa_3d == Viewport.MSAA_DISABLED \
+		and get_viewport().screen_space_aa == Viewport.SCREEN_SPACE_AA_SMAA and get_viewport().positional_shadow_atlas_size == 2048
+	GameSettings.set_value("graphics_quality", "ultra", false)
+	await _frames(2)
+	var ultra_ok := get_viewport().msaa_3d == Viewport.MSAA_2X and get_viewport().screen_space_aa == Viewport.SCREEN_SPACE_AA_DISABLED
+	GameSettings.set_value("graphics_quality", "high", false)
+	await _frames(2)
+	notes.append("画质 低 %s / 高 %s / 极高 %s" % [low_ok, high_ok, ultra_ok])
 	# 动态分辨率：GPU 25 ms（超 60 fps 预算）一路降到下限，GPU 5 ms 一路升回 100%
 	var lowest := 1.0
 	for i in 20:
@@ -241,7 +248,12 @@ func _test_performance() -> void:
 	var cap_ok := int(GameSettings.DEFAULTS["max_fps"]) == 60 and Engine.max_fps == 0
 	# 局部灯都按距离淡出
 	await _frames(2)
-	perf.fade_lights()
+	# 后加入的灯在加入时就设好淡出（不再定时全树搜索）
+	var late := OmniLight3D.new()
+	_main.add_child(late)
+	var late_ok := late.distance_fade_enabled
+	late.free()
+	notes.append("后加的灯自动淡出 %s" % late_ok)
 	var lights := _main.find_children("*", "OmniLight3D", true, false)
 	var faded := 0
 	for l: OmniLight3D in lights:
@@ -264,7 +276,46 @@ func _test_performance() -> void:
 			break
 	var lod_ok := far_animal != null and far_animal._lod_interval() == 12
 	_check("性能：树林分块、地形遮挡剔除、画质分级、动态分辨率（FSR）、默认 60 帧上限、局部灯淡出、地下关太阳阴影、远处动物降频",
-		chunk_ok and occ_ok and low_ok and high_ok and dyn_ok and cap_ok and faded == lights.size() and under_ok and lod_ok, "；".join(notes))
+		chunk_ok and occ_ok and low_ok and high_ok and ultra_ok and dyn_ok and cap_ok and late_ok and faded == lights.size() and under_ok and lod_ok, "；".join(notes))
+
+
+# ---------------------------------------------------------------- 内存
+
+func _test_memory() -> void:
+	var notes := PackedStringArray()
+	# 外部贴图都以显存压缩格式 + mipmap 导入（无损导入时每张 1k 贴图占 4 MB 显存、没有 mipmap）
+	var total := 0
+	var compressed := 0
+	var normals_ok := true
+	for dir in DirAccess.get_directories_at("res://assets/imported/textures"):
+		var base := "res://assets/imported/textures/%s/" % dir
+		for f in DirAccess.get_files_at(base):
+			if not f.ends_with(".jpg.import") and not f.ends_with(".png.import"):
+				continue
+			total += 1
+			var text := FileAccess.get_file_as_string(base + f)
+			if text.contains("compress/mode=2") and text.contains("mipmaps/generate=true"):
+				compressed += 1
+			if f.contains("_nor_") and not text.contains("compress/normal_map=1"):
+				normals_ok = false
+	notes.append("压缩贴图 %d / %d，法线 BC5 %s" % [compressed, total, normals_ok])
+	# 树和地被：实例数组留在 CPU 侧，换季上色整块上传
+	var forest := _main.get_node("World/Forest") as ForestBuilder
+	var mmi := forest.get_node("Generated").find_children("*", "MultiMeshInstance3D", false, false)[0] as MultiMeshInstance3D
+	var mm := mmi.multimesh
+	var buf: PackedFloat32Array = mm.get_meta(ForestBuilder.BUFFER_META, PackedFloat32Array())
+	var buf_ok := buf.size() == mm.instance_count * 16
+	ForestBuilder.recolor(mm, [Color(0.25, 0.5, 0.75)])
+	var after: PackedFloat32Array = mm.get_meta(ForestBuilder.BUFFER_META, PackedFloat32Array())
+	var recolor_ok := after.size() == buf.size() and is_equal_approx(after[12], 0.25) and is_equal_approx(after[14], 0.75) \
+		and is_equal_approx(after[3], buf[3]) and is_equal_approx(after[11], buf[11])
+	forest.apply_season(WorldState.season_id)
+	notes.append("实例数组 %s，整块换色 %s" % [buf_ok, recolor_ok])
+	# 湖面反射探针重拍时不画阴影（重拍那一帧的尖峰少约三成）
+	var probe := _main.find_child("LakeReflection", true, false) as ReflectionProbe
+	var probe_ok := probe != null and not probe.enable_shadows
+	_check("内存：外部贴图显存压缩 + mipmap、法线 BC5、树木地被实例数组整块写入与换色、湖面反射重拍不画阴影",
+		compressed == total and total > 0 and normals_ok and buf_ok and recolor_ok and probe_ok, "；".join(notes))
 
 
 # ---------------------------------------------------------------- 静态检查

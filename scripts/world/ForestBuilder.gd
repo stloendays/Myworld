@@ -11,6 +11,7 @@ extends Node3D
 const GENERATED := "Generated"
 const CHUNK := 64.0   ## 分块边长（米）：太小绘制调用变多，太大剔除失效
 const NATURE := "res://assets/imported/kenney/nature/"
+const BUFFER_META := "instance_buffer"   ## MultiMesh 上 CPU 侧实例数组的 meta 名
 
 ## kind = pine / broadleaf；height 为目标树高范围（米）；summer 为 M2 换季时使用的夏季模型。
 const TREE_VARIANTS := [
@@ -47,6 +48,18 @@ const ROCK_VARIANTS := [
 const PINE_COLORS := [Color(0.16, 0.26, 0.17), Color(0.13, 0.22, 0.15), Color(0.19, 0.29, 0.18), Color(0.15, 0.25, 0.20)]
 const FALL_COLORS := [Color(0.76, 0.44, 0.17), Color(0.78, 0.60, 0.24), Color(0.62, 0.25, 0.14), Color(0.72, 0.50, 0.20)]
 const MOSS_COLORS := [Color(0.30, 0.36, 0.16), Color(0.38, 0.40, 0.18)]
+
+## 树林用到的全部模型（含夏季阔叶），给 ArtMaterials.preload_kenney 提前并行读取。
+static func asset_paths() -> PackedStringArray:
+	var out := PackedStringArray()
+	for v in TREE_VARIANTS:
+		out.append(NATURE + str(v["asset"]) + ".glb")
+		if v.has("summer"):
+			out.append(NATURE + str(v["summer"]) + ".glb")
+	for v in ROCK_VARIANTS:
+		out.append(NATURE + str(v["asset"]) + ".glb")
+	return out
+
 
 var tree_count := 0
 var rock_count := 0
@@ -125,11 +138,25 @@ func apply_season(season: StringName) -> void:
 
 
 ## 按实例序号稳定地从色板取色（同一棵树每季取同一档颜色）。
+## 改的是 fill_instances 留下的 CPU 侧实例数组里的颜色，再一次性整块上传（换季时几万个实例
+## 逐个 set_instance_color 会卡一下）；没有这份数组的 MultiMesh 才逐个设置。
 static func recolor(mm: MultiMesh, palette: Array) -> void:
 	if palette.is_empty():
 		return
-	for i in mm.instance_count:
-		mm.set_instance_color(i, palette[(i * 7919 + 13) % palette.size()])
+	if mm.has_meta(BUFFER_META):
+		var buf: PackedFloat32Array = mm.get_meta(BUFFER_META)
+		for i in mm.instance_count:
+			var c: Color = palette[(i * 7919 + 13) % palette.size()]
+			var o := i * 16 + 12
+			buf[o] = c.r
+			buf[o + 1] = c.g
+			buf[o + 2] = c.b
+			buf[o + 3] = c.a
+		mm.set_meta(BUFFER_META, buf)
+		mm.buffer = buf
+	else:
+		for i in mm.instance_count:
+			mm.set_instance_color(i, palette[(i * 7919 + 13) % palette.size()])
 	# CPU 侧记录首个实例的颜色（无头模式下渲染服务器不保存实例数据，测试与调试读这里）
 	mm.set_meta("tint_sample", palette[13 % palette.size()])
 
@@ -274,6 +301,38 @@ static func _by_cell(entries: Array) -> Dictionary:
 	return cells
 
 
+## 一次性写入 MultiMesh 的全部实例（变换 + 颜色），比逐个 set_instance_* 快得多。
+## 格式：每实例 16 个 float = 变换 3 行（basis 行 + origin 分量）+ 颜色 RGBA。
+## 这份数组留在 meta 里，换季上色时只改颜色再整块上传（见 recolor）。
+static func fill_instances(mm: MultiMesh, xforms: Array[Transform3D], colors: PackedColorArray) -> void:
+	mm.instance_count = xforms.size()
+	var buf := PackedFloat32Array()
+	buf.resize(xforms.size() * 16)
+	for i in xforms.size():
+		var t := xforms[i]
+		var b := t.basis
+		var c := colors[i]
+		var o := i * 16
+		buf[o] = b.x.x
+		buf[o + 1] = b.y.x
+		buf[o + 2] = b.z.x
+		buf[o + 3] = t.origin.x
+		buf[o + 4] = b.x.y
+		buf[o + 5] = b.y.y
+		buf[o + 6] = b.z.y
+		buf[o + 7] = t.origin.y
+		buf[o + 8] = b.x.z
+		buf[o + 9] = b.y.z
+		buf[o + 10] = b.z.z
+		buf[o + 11] = t.origin.z
+		buf[o + 12] = c.r
+		buf[o + 13] = c.g
+		buf[o + 14] = c.b
+		buf[o + 15] = c.a
+	mm.buffer = buf
+	mm.set_meta(BUFFER_META, buf)
+
+
 func _multimesh(asset: String, entries: Array, visible_to: float) -> MultiMeshInstance3D:
 	var info := ArtMaterials.kenney_mesh(NATURE + asset + ".glb")
 	var local: Transform3D = info["transform"]
@@ -281,10 +340,12 @@ func _multimesh(asset: String, entries: Array, visible_to: float) -> MultiMeshIn
 	mm.transform_format = MultiMesh.TRANSFORM_3D
 	mm.use_colors = true
 	mm.mesh = info["mesh"]
-	mm.instance_count = entries.size()
-	for i in entries.size():
-		mm.set_instance_transform(i, entries[i]["transform"] * local)
-		mm.set_instance_color(i, entries[i]["color"])
+	var xforms: Array[Transform3D] = []
+	var colors := PackedColorArray()
+	for e in entries:
+		xforms.append((e["transform"] as Transform3D) * local)
+		colors.append(e["color"])
+	fill_instances(mm, xforms, colors)
 	var mmi := MultiMeshInstance3D.new()
 	mmi.name = asset
 	mmi.multimesh = mm

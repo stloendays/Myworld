@@ -340,6 +340,14 @@ static func for_kenney(asset: String, material: String) -> Material:
 	return flat(Color(0.5, 0.5, 0.5))
 
 
+## 在后台线程里提前开始读这些 GLB（Main 进入场景树时调用）。之后 kenney_mesh 里的 load() 会等着用
+## 同一个后台任务的结果，几十个模型并行读，不再在主线程上一个接一个读。
+static func preload_kenney(paths: PackedStringArray) -> void:
+	for path in paths:
+		if not _cache.has("mesh:" + path) and ResourceLoader.exists(path):
+			ResourceLoader.load_threaded_request(path, "PackedScene", true)
+
+
 ## 读取 GLB 中的第一个网格（含节点变换），并按材质名重新上色，返回可直接用于 MultiMesh 的网格。
 static func kenney_mesh(path: String) -> Dictionary:
 	var key := "mesh:" + path

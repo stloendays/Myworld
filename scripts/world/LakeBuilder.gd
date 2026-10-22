@@ -95,7 +95,7 @@ func _make_reflection_probe() -> ReflectionProbe:
 	probe.origin_offset = Vector3(0.0, -23.0, 0.0)
 	probe.box_projection = true
 	probe.max_distance = 600.0
-	probe.enable_shadows = true
+	probe.enable_shadows = false   ## 重拍是 6 个面一次画完，带阴影那一帧要多约 7 ms；远岸倒影里看不出阴影差别
 	probe.update_mode = ReflectionProbe.UPDATE_ONCE
 	probe.cull_mask = 0xFFFFF & ~WATER_VISUAL_LAYER
 	return probe

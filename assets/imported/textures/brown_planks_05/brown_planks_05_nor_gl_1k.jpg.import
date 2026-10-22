@@ -3,27 +3,28 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bvp2qyoteg3c2"
-path="res://.godot/imported/brown_planks_05_nor_gl_1k.jpg-27b63fae566508b7b925456b65d3e5da.ctex"
+path.s3tc="res://.godot/imported/brown_planks_05_nor_gl_1k.jpg-27b63fae566508b7b925456b65d3e5da.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/imported/textures/brown_planks_05/brown_planks_05_nor_gl_1k.jpg"
-dest_files=["res://.godot/imported/brown_planks_05_nor_gl_1k.jpg-27b63fae566508b7b925456b65d3e5da.ctex"]
+dest_files=["res://.godot/imported/brown_planks_05_nor_gl_1k.jpg-27b63fae566508b7b925456b65d3e5da.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1
-compress/normal_map=0
+compress/normal_map=1
 compress/channel_pack=0
-mipmaps/generate=false
+mipmaps/generate=true
 mipmaps/limit=-1
 roughness/mode=0
 roughness/src_normal=""
