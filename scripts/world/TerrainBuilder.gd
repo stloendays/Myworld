@@ -147,19 +147,27 @@ func _make_material() -> ShaderMaterial:
 	return mat
 
 
-## 把五层同类贴图（统一为 1024² RGBA8 + mipmap）合成一个 Texture2DArray。
+## 把五层同类贴图合成一个 Texture2DArray。贴图导入时已是显存压缩格式（BC1 / BC4 / BC5）+ mipmap，
+## 五层格式一致就直接用压缩数据（每层约 0.7 MB）；不一致时才统一成 1024² RGBA8 + mipmap 再压缩成 BC。
 func _layer_array(map: String) -> Texture2DArray:
 	var images: Array[Image] = []
 	for id in LAYERS:
-		var img := ArtMaterials.texture(id, map).get_image()
-		if img.is_compressed():
-			img.decompress()
-		img.convert(Image.FORMAT_RGBA8)
-		if img.get_width() != 1024 or img.get_height() != 1024:
-			img.resize(1024, 1024, Image.INTERPOLATE_LANCZOS)
-		if not img.has_mipmaps():
+		images.append(ArtMaterials.texture(id, map).get_image())
+	var uniform := true
+	for img in images:
+		uniform = uniform and img.is_compressed() and img.has_mipmaps() and img.get_format() == images[0].get_format() \
+			and img.get_size() == images[0].get_size()
+	if not uniform:
+		for i in images.size():
+			var img := images[i].duplicate() as Image
+			if img.is_compressed():
+				img.decompress()
+			img.convert(Image.FORMAT_RGBA8)
+			if img.get_width() != 1024 or img.get_height() != 1024:
+				img.resize(1024, 1024, Image.INTERPOLATE_LANCZOS)
 			img.generate_mipmaps()
-		images.append(img)
+			img.compress(Image.COMPRESS_S3TC)
+			images[i] = img
 	var arr := Texture2DArray.new()
 	arr.create_from_images(images)
 	return arr

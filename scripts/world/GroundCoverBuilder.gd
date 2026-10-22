@@ -28,6 +28,16 @@ const ITEMS := [
 	{"assets": ["lily_large", "lily_small"], "where": "shallow", "density": 0.02, "scale": [3.0, 4.5], "colors": "lily", "view": 120.0},
 ]
 
+## 地被用到的全部模型，给 ArtMaterials.preload_kenney 提前并行读取。
+static func asset_paths() -> PackedStringArray:
+	var out := PackedStringArray()
+	for item in ITEMS:
+		for a in item["assets"]:
+			if not out.has(NATURE + str(a) + ".glb"):
+				out.append(NATURE + str(a) + ".glb")
+	return out
+
+
 var instance_count := 0
 var _collision: StaticBody3D = null
 
@@ -119,6 +129,8 @@ func _fill_chunk(chunk: Node3D, item: Dictionary, rng: RandomNumberGenerator, re
 				continue
 			y = WorldLayout.water_level() + 0.045 * s
 		else:
+			if keep > _kind_factor(x, z, where, meadow):
+				continue
 			var w := _suitability(x, z, where, meadow)
 			if keep > w:
 				continue
@@ -133,11 +145,14 @@ func _fill_chunk(chunk: Node3D, item: Dictionary, rng: RandomNumberGenerator, re
 		mm.transform_format = MultiMesh.TRANSFORM_3D
 		mm.use_colors = true
 		mm.mesh = info["mesh"]
-		mm.instance_count = entries.size()
 		var palette := _palette(str(item["colors"]))
-		for i in entries.size():
-			mm.set_instance_transform(i, entries[i]["transform"] * (info["transform"] as Transform3D))
-			mm.set_instance_color(i, palette[int(entries[i]["tint"]) % palette.size()])
+		var local: Transform3D = info["transform"]
+		var xforms: Array[Transform3D] = []
+		var colors := PackedColorArray()
+		for e in entries:
+			xforms.append((e["transform"] as Transform3D) * local)
+			colors.append(palette[int(e["tint"]) % palette.size()])
+		ForestBuilder.fill_instances(mm, xforms, colors)
 		var mmi := MultiMeshInstance3D.new()
 		mmi.name = asset
 		mmi.multimesh = mm
@@ -167,18 +182,26 @@ func _suitability(x: float, z: float, where: String, meadow: Dictionary) -> floa
 	var h := WorldTerrain.height_at(x, z)
 	if h < WorldLayout.water_level() + 0.35:
 		return 0.0
-	if WorldLayout.distance_to_paths(p) < 1.8 or WorldTerrain.slope_at(x, z) > 0.6 or Vegetation.in_keepout(p):
-		return 0.0
 	# 雪线下方 2 m 以上不长草和花
 	if h > float(WorldLayout.section("terrain").get("snowline", 9999.0)) - 2.0:
 		return 0.0
-	var forest := clampf((Vegetation.base_density(x, z) - 0.3) / 0.35, 0.0, 1.0)
+	# 便宜的判断在前（坡度要算 4 次地形高度）
+	if Vegetation.in_keepout(p) or WorldLayout.distance_to_paths(p) < 1.8 or WorldTerrain.slope_at(x, z) > 0.6:
+		return 0.0
+	return _kind_factor(x, z, where, meadow)
+
+
+## 适宜度里只和地被种类有关的那一项（林地密度、草甸距离、空地）。_suitability 的结果要么是 0、要么就是它，
+## 所以随机数大于它的点不必再算高度、坡度和步道距离（结果不变，草甸那一项的候选点大多在这里就被淘汰）。
+func _kind_factor(x: float, z: float, where: String, meadow: Dictionary) -> float:
+	var p := Vector2(x, z)
 	match where:
 		"grass":
+			var forest := clampf((Vegetation.base_density(x, z) - 0.3) / 0.35, 0.0, 1.0)
 			var clear := 0.5 if Vegetation.in_clearing(p) else 1.0
 			return (1.0 - forest) * clear
 		"forest":
-			return forest
+			return clampf((Vegetation.base_density(x, z) - 0.3) / 0.35, 0.0, 1.0)
 		"meadow":
 			var r := float(meadow["radius"])
 			return 1.0 - smoothstep(r * 0.5, r, p.distance_to(meadow["center"]))

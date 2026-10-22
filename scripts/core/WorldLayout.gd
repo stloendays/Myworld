@@ -28,6 +28,7 @@ static func reload() -> void:
 	_paths = []
 	_paths_ready = false
 	WorldTerrain.reset_cache()
+	Vegetation.reset_cache()
 
 
 static func section(key: String) -> Dictionary:

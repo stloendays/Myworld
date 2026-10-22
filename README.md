@@ -4,7 +4,7 @@
 
 - 引擎：**Godot 4.7.2 Standard**（GDScript，Forward+，Jolt Physics），Windows 单机优先
 - 需求规格：[docs/DEVELOPMENT_SPEC.md](docs/DEVELOPMENT_SPEC.md)（唯一需求来源）；阶段指令：[docs/AGENT_HANDOFF.md](docs/AGENT_HANDOFF.md)
-- 当前进度：**M0、M1、第一轮正式美术、M2 天气系统、方块人物、泳池馆与地下水族馆、小动物、雷暴/彩虹/风、聊天框、小地图、开发者模式、第一人称双手、木屋生活、独木舟与湖上探索、性能优化、可潜水的海洋大缸、木屋国际象棋、动作轮盘、世界地图与全屏、联机（最多 4 人）与中英界面、自动更新、新立牌、夜里的仙境林地、东北角雪山已完成**，自动检查 75/75、联机检查 10/10 通过。见 [docs/QA_M0_M1.md](docs/QA_M0_M1.md)、[docs/ART_PASS.md](docs/ART_PASS.md)、[docs/M2_WEATHER_CHARACTER.md](docs/M2_WEATHER_CHARACTER.md)、[docs/POOLHOUSE_FAUNA.md](docs/POOLHOUSE_FAUNA.md)、[docs/CHAT.md](docs/CHAT.md)、[docs/MINIMAP_DEVMODE.md](docs/MINIMAP_DEVMODE.md)、[docs/CABIN_LIFE_CANOE.md](docs/CABIN_LIFE_CANOE.md)、[docs/PERFORMANCE.md](docs/PERFORMANCE.md)、[docs/AQUARIUM_DIVE.md](docs/AQUARIUM_DIVE.md)、[docs/CHESS.md](docs/CHESS.md)、[docs/INTERACTIONS_WORLDMAP.md](docs/INTERACTIONS_WORLDMAP.md)、[docs/COOP.md](docs/COOP.md)、[docs/V0_3.md](docs/V0_3.md)、[docs/SNOW_PEAK.md](docs/SNOW_PEAK.md)
+- 当前进度：**M0、M1、第一轮正式美术、M2 天气系统、方块人物、泳池馆与地下水族馆、小动物、雷暴/彩虹/风、聊天框、小地图、开发者模式、第一人称双手、木屋生活、独木舟与湖上探索、性能优化、可潜水的海洋大缸、木屋国际象棋、动作轮盘、世界地图与全屏、联机（最多 4 人）与中英界面、自动更新、新立牌、夜里的仙境林地、东北角雪山、内存与卡顿优化已完成**，自动检查 76/76、联机检查 10/10 通过。见 [docs/QA_M0_M1.md](docs/QA_M0_M1.md)、[docs/ART_PASS.md](docs/ART_PASS.md)、[docs/M2_WEATHER_CHARACTER.md](docs/M2_WEATHER_CHARACTER.md)、[docs/POOLHOUSE_FAUNA.md](docs/POOLHOUSE_FAUNA.md)、[docs/CHAT.md](docs/CHAT.md)、[docs/MINIMAP_DEVMODE.md](docs/MINIMAP_DEVMODE.md)、[docs/CABIN_LIFE_CANOE.md](docs/CABIN_LIFE_CANOE.md)、[docs/PERFORMANCE.md](docs/PERFORMANCE.md)、[docs/AQUARIUM_DIVE.md](docs/AQUARIUM_DIVE.md)、[docs/CHESS.md](docs/CHESS.md)、[docs/INTERACTIONS_WORLDMAP.md](docs/INTERACTIONS_WORLDMAP.md)、[docs/COOP.md](docs/COOP.md)、[docs/V0_3.md](docs/V0_3.md)、[docs/SNOW_PEAK.md](docs/SNOW_PEAK.md)、[docs/MEMORY_STUTTER.md](docs/MEMORY_STUTTER.md)
 
 ![湖岸出生点](docs/screenshots/m1_01_spawn_dusk.png)
 
@@ -129,6 +129,7 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | `scripts/vehicles/Canoe.gd` | 独木舟：划桨、四点取水面高度的浮动、搁浅、上下船、位置存档 |
 | `scripts/systems/PerformanceDirector.gd` | 画质分级、帧率上限、动态分辨率（FSR）、局部灯距离淡出、地下关太阳阴影 |
 | `devtools/Profile.tscn` | 性能剖析：逐项关特性，看帧时、CPU / GPU、绘制调用、三角形 |
+| `devtools/MemProbe.tscn` | 内存与卡顿探针：加载计时、内存 / 显存 / 进程占用、走遍全图的帧时分布和卡顿帧 |
 | `scripts/world/Exploration.gd` | 湖上探索点（`world_layout.json → lake_pois`）：发现记录、营火帐篷芦苇睡莲摆件 |
 | `scripts/core/WorldLayout.gd`、`WorldTerrain.gd`、`PhysicsLayers.gd` | 布局数据读取、解析式地形高度函数、物理层常量 |
 | `scripts/systems/WorldClock.gd`、`SeasonController.gd`、`WeatherController.gd`、`ClimateSystem.gd` | 世界时间、季节、天气规则与过渡、预设入口（Main/Systems） |
@@ -194,6 +195,7 @@ pwsh -File devtools/fetch_polyhaven.ps1
 - **木屋生活**：炉子生火 / 熄火（火光、火苗、炊烟）、四盏灯的开关、沙发扶手椅长椅可以坐、床可以睡到早上
 - **独木舟与湖上探索**：从码头上船划到湖心小岛营地，四个探索点（小地图问号 → 金色标记）
 - **性能优化**：树林分块、地形遮挡剔除、画质分级、默认 60 帧上限、动态分辨率、远处动物降频；地下水族馆每帧三角形从 630 万降到 37 万
+- **内存与卡顿优化**：贴图显存压缩 + mipmap、高画质 SMAA 代替 MSAA、地形高度函数与植被规则缓存、MultiMesh 整块写入；进入世界 15.6 s → 7.6 s，显存 1040 → 802 MB（`devtools/MemProbe.tscn`）
 - **海洋大缸**：从泳池一路潜进 24 m 长的大缸，和蝠鲼、礁鲨、鱼群一起游；地下大厅换了水磨石地面、水纹光和灯带
 - **国际象棋**：木屋茶几上的棋盘按 E 打开 2D 对弈，双人同屏或和电脑下（三档难度），3D 棋盘同步、棋局存档
 - **动作轮盘**：G 弹出，席地坐、躺下看天、挥手、跳舞、鼓掌，F12 拍照；水族馆换成珊瑚花坛、玻璃球灯和鲸鱼吊饰
