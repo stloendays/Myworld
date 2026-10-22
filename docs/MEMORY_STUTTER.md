@@ -59,3 +59,7 @@ Godot_console.exe --path . --resolution 1600x900 res://devtools/MemProbe.tscn
 ## 4. 自动检查
 
 新增“内存”一项：57 张外部贴图都是显存压缩 + mipmap、法线是 BC5；树林实例数组存在且整块换色正确；湖面反射探针不画阴影。“性能”一项补了：极高画质用 MSAA、高画质用 SMAA 和 2048 阴影图集、后加入的灯自动淡出。自动检查 76/76。
+
+## 5. 发布 v0.3.3（2026-10-22）
+
+以上优化作为 v0.3.3 发布：https://github.com/stloendays/Myworld/releases/tag/v0.3.3 ，附件 `DuskLake.exe` + `DuskLake.exe.sha256`。游戏内容与 v0.3.2 相同，联机双方版本需同为 0.3.3。
