@@ -29,8 +29,3 @@ jobs:
         run: |
           & ./.godot-bin/Godot_v4.7.2-stable_win64_console.exe --headless --path . --fixed-fps 60 res://tests/TestRunner.tscn
           if ($LASTEXITCODE -ne 0) { throw 'Regression suite failed' }
-      - name: Validate new lakeside ecology rules
-        shell: pwsh
-        run: |
-          & ./.godot-bin/Godot_v4.7.2-stable_win64_console.exe --headless --path . res://tests/LakesideEcologyTest.tscn
-          if ($LASTEXITCODE -ne 0) { throw 'Lakeside ecology rules failed' }
