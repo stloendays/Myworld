@@ -1206,3 +1206,8 @@ msgstr "Snow Peak"
 msgid "雪山顶"
 msgstr "Snow Peak Summit"
 
+msgid "这里暂时没有鱼上钩"
+msgstr "No fish are biting here right now"
+
+msgid "钓到：%s"
+msgstr "Caught: %s"
