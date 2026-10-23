@@ -19,14 +19,13 @@ jobs:
           curl.exe --fail --location --retry 3 -o godot.zip https://github.com/godotengine/godot/releases/download/4.7.2-stable/Godot_v4.7.2-stable_win64.exe.zip
           if ($LASTEXITCODE -ne 0) { throw 'Godot download failed' }
           Expand-Archive godot.zip -DestinationPath .godot-bin
-          Copy-Item .godot-bin/Godot_v4.7.2-stable_win64_console.exe .godot-bin/godot.exe
       - name: Import resources
         shell: pwsh
         run: |
-          & ./.godot-bin/godot.exe --headless --path . --import
+          & ./.godot-bin/Godot_v4.7.2-stable_win64_console.exe --headless --path . --import
           if ($LASTEXITCODE -ne 0) { throw 'Godot import failed' }
       - name: Run existing regression suite
         shell: pwsh
         run: |
-          & ./.godot-bin/godot.exe --headless --path . --fixed-fps 60 res://tests/TestRunner.tscn
+          & ./.godot-bin/Godot_v4.7.2-stable_win64_console.exe --headless --path . --fixed-fps 60 res://tests/TestRunner.tscn
           if ($LASTEXITCODE -ne 0) { throw 'Regression suite failed' }
