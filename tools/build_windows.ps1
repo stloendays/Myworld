@@ -48,10 +48,23 @@ if (-not (Test-Path -LiteralPath $template)) {
     if (-not (Test-Path -LiteralPath $templateZip)) {
         Invoke-Download ($baseUrl + ('Godot_v' + $tag + '_export_templates.tpz')) $templateZip
     }
-    Write-Host 'Extracting only the Windows x86_64 release export template.'
-    & 7z.exe e -y ('-o' + $toolchain) $templateZip '*windows_release_x86_64.exe'
-    if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $template)) {
-        throw 'Official Windows release export template not found or extraction failed.'
+    Write-Host 'Extracting Windows x86_64 template from the official TPZ archive.'
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $tpz = [System.IO.Compression.ZipFile]::OpenRead($templateZip)
+    try {
+        $entry = $tpz.Entries |
+            Where-Object { $_.Name -eq 'windows_release_x86_64.exe' } |
+            Select-Object -First 1
+        if ($null -eq $entry) {
+            throw 'Official export archive has no windows_release_x86_64.exe.'
+        }
+        Write-Host ('Template inside archive: ' + $entry.FullName)
+        [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $template, $true)
+    } finally {
+        $tpz.Dispose()
+    }
+    if (-not (Test-Path -LiteralPath $template)) {
+        throw 'Official Windows release export template extraction failed.'
     }
 }
 $installed = Join-Path $env:APPDATA ('Godot\export_templates\' + $version + '.stable')
