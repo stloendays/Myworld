@@ -192,6 +192,9 @@ func _make_collision(h: PackedFloat32Array, n: int) -> StaticBody3D:
 func _blend_weights(p: Vector3, nrm: Vector3, path_dist: float, water: float) -> Color:
 	var rock := clampf((1.0 - nrm.y - 0.17) / 0.12, 0.0, 1.0)
 	var shore := clampf((water + 0.9 - p.y) / 0.7, 0.0, 1.0)
+	# 小溪河床铺湖岸的砂石，裂谷谷底是岩石
+	shore = maxf(shore, clampf((0.4 - WorldTerrain.channel_distance(p.x, p.z, "creek")) / 0.9, 0.0, 1.0))
+	rock = maxf(rock, clampf((0.6 - WorldTerrain.channel_distance(p.x, p.z, "gorge")) / 0.8, 0.0, 1.0))
 	var path := clampf((PATH_WIDTH - path_dist) / 0.7, 0.0, 1.0)
 	var patch := 0.5 + 0.5 * WorldTerrain.color_variation(p.x, p.z)
 	var forest := clampf((Vegetation.base_density(p.x, p.z) - 0.3) / 0.35 + (patch - 0.5) * 0.5, 0.0, 1.0)

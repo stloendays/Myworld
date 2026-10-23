@@ -23,6 +23,7 @@ var _track := false
 var _last_pos := Vector3.ZERO
 var _max_step := 0.0
 var _min_clearance := INF
+var _min_y := INF
 var _path_length := 0.0
 var _max_leg_swing := 0.0
 var _waters_seen := {}
@@ -96,6 +97,8 @@ func _run() -> void:
 	await _test_totem_quests()
 	await _test_constellations()
 	await _test_cottage()
+	await _test_nature()
+	_test_cover_fade()
 	await _test_world_travel()
 	_report()
 
@@ -268,6 +271,121 @@ func _test_cottage() -> void:
 		"提示 %s · 在屋外 %s（本地 %.1f, %.1f）· 无树 %s" % [prompt_ok, outside, local.x, local.z, no_trees])
 
 
+# ---------------------------------------------------------------- 自然景观：小溪、瀑布、裂谷、桥
+
+func _test_nature() -> void:
+	var creek: Dictionary = {}
+	var gorge: Dictionary = {}
+	for c in WorldTerrain.channels():
+		if c["id"] == "west_creek":
+			creek = c
+		elif c["id"] == "north_gorge":
+			gorge = c
+	if creek.is_empty() or gorge.is_empty():
+		_check("小溪与裂谷已生成", false)
+		return
+	# 小溪：水面沿流向只降不升、有一道约 1.8 m 的跌水、流进湖里；河床比两岸低
+	var water: PackedFloat64Array = creek["water"]
+	var mono := true
+	var biggest_drop := 0.0
+	for i in range(1, water.size()):
+		mono = mono and water[i] <= water[i - 1] + 1e-4
+		biggest_drop = maxf(biggest_drop, water[i - 1] - water[i])
+	var wet_end: int = creek["wet_end"]
+	var into_lake := water[wet_end] <= WorldLayout.water_level() + 0.06 and wet_end < water.size() - 1
+	var pts: PackedVector2Array = creek["pts"]
+	var mid := pts[pts.size() / 2]
+	var f := (pts[pts.size() / 2 + 1] - pts[pts.size() / 2 - 1]).normalized()
+	var r := Vector2(-f.y, f.x)
+	var bank := minf(WorldTerrain.height_at((mid + r * 4.5).x, (mid + r * 4.5).y), WorldTerrain.height_at((mid - r * 4.5).x, (mid - r * 4.5).y))
+	var sunk := bank - WorldTerrain.height_at(mid.x, mid.y)
+	# 裂谷：桥下最深处比两边谷沿低 6 m 以上，两头渐浅
+	var gp: PackedVector2Array = gorge["pts"]
+	var gbed: PackedFloat64Array = gorge["bed"]
+	var deepest := 0.0
+	for i in gp.size():
+		deepest = maxf(deepest, WorldTerrain._raw(gp[i].x, gp[i].y) - gbed[i])
+	var ends_shallow := WorldTerrain._raw(gp[0].x, gp[0].y) - gbed[0] < 0.5 and WorldTerrain._raw(gp[gp.size() - 1].x, gp[gp.size() - 1].y) - gbed[gbed.size() - 1] < 0.5
+	# 河床、谷底不长树不长草，动物不进去
+	var clean := true
+	for c in [creek, gorge]:
+		var cp: PackedVector2Array = c["pts"]
+		for i in range(2, cp.size() - 2, 4):
+			clean = clean and Vegetation.tree_density(cp[i].x, cp[i].y) == 0.0 and WorldTerrain.channel_distance(cp[i].x, cp[i].y) < 0.0
+	var streams := _main.get_node("Streams") as Streams
+	var built := streams.water_meshes.size() == 1 and streams.mists.size() == 1 and streams.bridges.size() == 2
+	_check("小溪：水面只降不升、有一道 %.1f m 的瀑布、流进湖里，河床比两岸低 %.1f m；裂谷最深 %.1f m、两头渐浅；河床谷底不长树" % [biggest_drop, sunk, deepest],
+		mono and biggest_drop > 1.4 and into_lake and sunk > 0.5 and deepest > 6.0 and ends_shallow and clean and built,
+		"只降不升 %s · 入湖 %s · 两头渐浅 %s · 无树 %s · 水面 / 水雾 / 桥 %d / %d / %d" % [mono, into_lake, ends_shallow, clean, streams.water_meshes.size(), streams.mists.size(), streams.bridges.size()])
+	# 林道过小溪：走过木板桥，脚一直在水面以上
+	var bridges: Array = WorldLayout.section("nature")["bridges"]
+	var b0: Dictionary = bridges[0]
+	var a0 := WorldLayout.v2(b0["from"])
+	var e0 := WorldLayout.v2(b0["to"])
+	var dir0 := (e0 - a0).normalized()
+	await _setup_at(a0 - dir0 * 2.5, 0.0)
+	_begin_track()
+	var crossed := await _walk_to(e0 + dir0 * 2.5, 20.0)
+	_track = false
+	var near_i := 0
+	for i in pts.size():
+		if pts[i].distance_to(a0.lerp(e0, 0.5)) < pts[near_i].distance_to(a0.lerp(e0, 0.5)):
+			near_i = i
+	# 桥中段的桥面比桥下的水面高（人走在桥上脚不沾水），一路连续
+	var dry := _max_step < MAX_STEP
+	for t in [0.35, 0.5, 0.65]:
+		dry = dry and Streams.deck_height(b0, t) > float(water[near_i]) + 0.15
+	# 林道过裂谷：走过原木桥，掉不下去
+	var b1: Dictionary = bridges[1]
+	var a1 := WorldLayout.v2(b1["from"])
+	var e1 := WorldLayout.v2(b1["to"])
+	var dir1 := (e1 - a1).normalized()
+	await _setup_at(a1 - dir1 * 2.0, 0.0)
+	_begin_track()
+	var crossed1 := await _walk_to(e1 + dir1 * 2.0, 25.0)
+	_track = false
+	var gorge_bed := WorldTerrain.height_at(a1.lerp(e1, 0.5).x, a1.lerp(e1, 0.5).y)
+	var not_fallen := _min_y > gorge_bed + 2.0 and _max_step < MAX_STEP
+	# 桥上往侧面走：被栏杆挡住
+	var mid1 := a1.lerp(e1, 0.5)
+	_player.teleport_to(Vector3(mid1.x, Streams.deck_height(b1, 0.5) + 0.3, mid1.y))
+	await _seconds(0.5)
+	var side := Vector2(-dir1.y, dir1.x)
+	await _walk_for(Vector3(side.x, 0.0, side.y), 3.0)
+	var railed := _player.global_position.y > Streams.deck_height(b1, 0.5) - 0.5
+	# 从东头走下裂谷谷底，再走回去
+	await _setup_at(gp[gp.size() - 1] + Vector2(2.0, -1.0), 0.0)
+	_begin_track()
+	var down := true
+	for i in [gp.size() - 6, gp.size() - 12, gp.size() / 2 + 6]:
+		down = await _walk_to(gp[i], 25.0) and down
+	var floor_y := _player.global_position.y
+	var bed_here := WorldTerrain.height_at(_player.global_position.x, _player.global_position.z)
+	var out := await _walk_to(gp[gp.size() - 1] + Vector2(2.0, -1.0), 30.0)
+	_track = false
+	var in_gorge := WorldTerrain._raw(gp[gp.size() / 2 + 6].x, gp[gp.size() / 2 + 6].y) - bed_here > 4.0
+	_check("桥：走过木板桥过溪（脚不沾水）、走过原木桥过裂谷（掉不下去，侧面有栏杆）；裂谷能从东头走到谷底再走出来",
+		crossed and dry and crossed1 and not_fallen and railed and down and in_gorge and out and floor_y - bed_here < 0.6,
+		"过溪 %s（最低 %.2f m，脚不沾水 %s）· 过裂谷 %s · 没掉下去 %s · 栏杆 %s · 下到谷底 %s（离两侧谷沿 %.1f m 深）· 走出来 %s · 离谷底 %.2f m · 最大单步 %.2f m" % [
+			crossed, _min_y, dry, crossed1, not_fallen, railed, down, WorldTerrain._raw(gp[gp.size() / 2 + 6].x, gp[gp.size() / 2 + 6].y) - bed_here, out, floor_y - bed_here, _max_step])
+
+
+## 草、花、蘑菇：远处逐株缩小（着色器参数），整块要等全部缩没才剔除（不再整块抖动淡出）。
+func _test_cover_fade() -> void:
+	var cover := get_tree().get_first_node_in_group("ground_cover")
+	var fading := 0
+	var ok := true
+	for mmi: MultiMeshInstance3D in cover.find_children("*", "MultiMeshInstance3D", true, false):
+		var m := mmi.multimesh.mesh
+		var mat := m.surface_get_material(0)
+		var far_v: Variant = (mat as ShaderMaterial).get_shader_parameter("fade_far") if mat is ShaderMaterial else null
+		if far_v != null and float(far_v) > 0.0:
+			fading += 1
+			var far := float(far_v)
+			ok = ok and mmi.visibility_range_fade_mode == GeometryInstance3D.VISIBILITY_RANGE_FADE_DISABLED 				and mmi.visibility_range_end >= far + GroundCoverBuilder.CHUNK * 0.7
+	_check("地被：草、花、蘑菇远处逐株缩小消失，整块只在全部缩没后才剔除（走动时不再成块闪现）", fading > 50 and ok, "逐株缩小的块 %d 个，设置正确 %s" % [fading, ok])
+
+
 ## 最后一项：去第二个世界再回来（会换掉 _main），检查不同时加载、内存降下来、回来站在光门前。
 func _test_world_travel() -> void:
 	var nodes_lake := Performance.get_monitor(Performance.OBJECT_NODE_COUNT)
@@ -432,23 +550,30 @@ func _test_performance() -> void:
 	GameSettings.set_value("graphics_quality", "high", false)
 	await _frames(2)
 	var high_ok := env.environment.ssr_enabled and env.sun.directional_shadow_max_distance == 120.0 and get_viewport().msaa_3d == Viewport.MSAA_DISABLED \
-		and get_viewport().screen_space_aa == Viewport.SCREEN_SPACE_AA_SMAA and get_viewport().positional_shadow_atlas_size == 2048
+		and get_viewport().screen_space_aa == Viewport.SCREEN_SPACE_AA_DISABLED and get_viewport().use_taa and get_viewport().positional_shadow_atlas_size == 2048
 	GameSettings.set_value("graphics_quality", "ultra", false)
 	await _frames(2)
-	var ultra_ok := get_viewport().msaa_3d == Viewport.MSAA_2X and get_viewport().screen_space_aa == Viewport.SCREEN_SPACE_AA_DISABLED
+	var ultra_ok := get_viewport().msaa_3d == Viewport.MSAA_2X and get_viewport().screen_space_aa == Viewport.SCREEN_SPACE_AA_DISABLED and get_viewport().use_taa
+	GameSettings.set_value("graphics_quality", "medium", false)
+	await _frames(2)
+	var medium_ok := not get_viewport().use_taa and get_viewport().screen_space_aa == Viewport.SCREEN_SPACE_AA_SMAA
 	GameSettings.set_value("graphics_quality", "high", false)
 	await _frames(2)
-	notes.append("画质 低 %s / 高 %s / 极高 %s" % [low_ok, high_ok, ultra_ok])
+	notes.append("画质 低 %s / 中 %s / 高 %s（TAA）/ 极高 %s" % [low_ok, medium_ok, high_ok, ultra_ok])
+	# 动态分辨率防抖：只超预算一次不降
+	var once := perf.update_dynamic_scale(25.0)
+	perf.update_dynamic_scale(10.0)
+	var debounce_ok := absf(once - 1.0) < 0.001
 	# 动态分辨率：GPU 25 ms（超 60 fps 预算）一路降到下限，GPU 5 ms 一路升回 100%
 	var lowest := 1.0
-	for i in 20:
+	for i in 40:
 		lowest = minf(lowest, perf.update_dynamic_scale(25.0))
 	var fsr := get_viewport().scaling_3d_mode == Viewport.SCALING_3D_MODE_FSR
 	var floor_ok := absf(perf.effective_scale() - PerformanceDirector.MIN_SCALE) < 0.01
 	var back := 0.0
-	for i in 20:
+	for i in 40:
 		back = perf.update_dynamic_scale(5.0)
-	var dyn_ok := floor_ok and fsr and absf(back - 1.0) < 0.001 and get_viewport().scaling_3d_mode == Viewport.SCALING_3D_MODE_BILINEAR
+	var dyn_ok := debounce_ok and floor_ok and fsr and absf(back - 1.0) < 0.001 and get_viewport().scaling_3d_mode == Viewport.SCALING_3D_MODE_BILINEAR
 	notes.append("动态分辨率 最低 %.0f%%（FSR %s），恢复 %.0f%%" % [perf.effective_scale() * 100.0 if not dyn_ok else PerformanceDirector.MIN_SCALE * 100.0, fsr, back * 100.0])
 	# 帧率上限：默认 60；无窗口的自动检查不限
 	var cap_ok := int(GameSettings.DEFAULTS["max_fps"]) == 60 and Engine.max_fps == 0
@@ -482,7 +607,7 @@ func _test_performance() -> void:
 			break
 	var lod_ok := far_animal != null and far_animal._lod_interval() == 12
 	_check("性能：树林分块、地形遮挡剔除、画质分级、动态分辨率（FSR）、默认 60 帧上限、局部灯淡出、地下关太阳阴影、远处动物降频",
-		chunk_ok and occ_ok and low_ok and high_ok and ultra_ok and dyn_ok and cap_ok and late_ok and faded == lights.size() and under_ok and lod_ok, "；".join(notes))
+		chunk_ok and occ_ok and low_ok and medium_ok and high_ok and ultra_ok and dyn_ok and cap_ok and late_ok and faded == lights.size() and under_ok and lod_ok, "；".join(notes))
 
 
 # ---------------------------------------------------------------- 内存
@@ -1865,6 +1990,7 @@ func _physics_process(_delta: float) -> void:
 	_path_length += step
 	_last_pos = p
 	_min_clearance = minf(_min_clearance, p.y - WorldTerrain.height_at(p.x, p.z))
+	_min_y = minf(_min_y, p.y)
 	_max_leg_swing = maxf(_max_leg_swing, _player.body.leg_swing_degrees())
 	if _player.current_water != null:
 		_waters_seen[_player.current_water.volume_id] = true
@@ -1874,6 +2000,7 @@ func _begin_track() -> void:
 	_last_pos = _player.global_position
 	_max_step = 0.0
 	_min_clearance = INF
+	_min_y = INF
 	_path_length = 0.0
 	_max_leg_swing = 0.0
 	_track = true
@@ -1960,6 +2087,12 @@ func _ray_info() -> String:
 
 
 func _near_pit_edge(x: float, z: float) -> bool:
+	# 裂谷、河床的陡壁上 1 m 网格的三角面插值和解析高度本来就不同（谷底和谷沿上仍然逐点比较）
+	for c in WorldTerrain.channels():
+		if c["kind"] == "gorge":
+			var d := WorldTerrain.channel_distance(x, z, "gorge") + float(c["inner"])
+			if d > float(c["inner"]) - 1.0 and d < float(c["outer"]) + 1.0:
+				return true
 	for pit in WorldLayout.section("terrain").get("pits", []):
 		var r: Array = pit["rect"]
 		var outer := Rect2(float(r[0]) - 1.5, float(r[1]) - 1.5, float(r[2]) - float(r[0]) + 3.0, float(r[3]) - float(r[1]) + 3.0)

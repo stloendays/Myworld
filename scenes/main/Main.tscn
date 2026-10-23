@@ -23,6 +23,7 @@
 [ext_resource type="Script" path="res://scripts/world/Cave.gd" id="21_cave"]
 [ext_resource type="Script" path="res://scripts/buildings/StoneCottage.gd" id="22_cottage"]
 [ext_resource type="Script" path="res://scripts/world/StarField.gd" id="23_stars"]
+[ext_resource type="Script" path="res://scripts/world/Streams.gd" id="24_streams"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_main")
@@ -85,3 +86,6 @@ script = ExtResource("22_cottage")
 
 [node name="StarField" type="Node3D" parent="."]
 script = ExtResource("23_stars")
+
+[node name="Streams" type="Node3D" parent="."]
+script = ExtResource("24_streams")

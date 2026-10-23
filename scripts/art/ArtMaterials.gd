@@ -20,6 +20,8 @@ const SIZE_M := {
 const SNOW_OVERLAY := preload("res://shaders/snow_overlay.gdshader")
 const GLASS_SHADER := preload("res://shaders/glass.gdshader")
 const FOLIAGE_SHADER := preload("res://shaders/foliage.gdshader")
+const COVER_FLAT_SHADER := preload("res://shaders/cover_flat.gdshader")
+const STREAM_SHADER := preload("res://shaders/stream_water.gdshader")
 
 static var _cache: Dictionary = {}
 static var _snowable: Array[BaseMaterial3D] = []
@@ -378,7 +380,19 @@ static func restyle_kenney(node: Node, asset: String) -> void:
 		var mesh := (mi as MeshInstance3D).mesh
 		for s in mesh.get_surface_count():
 			var old := mesh.surface_get_material(s)
-			(mi as MeshInstance3D).set_surface_override_material(s, for_kenney(asset, old.resource_name if old != null else ""))
+			(mi as MeshInstance3D).set_surface_override_material(s, _solo(for_kenney(asset, old.resource_name if old != null else "")))
+
+
+## 单独摆放的模型没有 MultiMesh 实例颜色：植被材质换成带固定苔绿色的版本（否则石头顶上的苔藓、叶子是白的，像积雪）。
+static func _solo(m: Material) -> Material:
+	if not (m is ShaderMaterial and (m as ShaderMaterial).shader == FOLIAGE_SHADER):
+		return m
+	var key := "solo:%d" % m.get_instance_id()
+	if not _cache.has(key):
+		var d := m.duplicate() as ShaderMaterial
+		d.set_shader_parameter("base_tint", Color(0.40, 0.50, 0.28))
+		_cache[key] = d
+	return _cache[key]
 
 
 ## 把自制 GLB 中的表面按材质名换成材质库里的材质。
@@ -397,3 +411,40 @@ static func clear_cache() -> void:
 	_snowable.clear()
 	_snow_pass = null
 	_snow_on = false
+
+
+## 地被用的材质变体：远处逐株缩小消失（fade_near → fade_far 米）。植被着色器复制一份设参数；
+## 纯色 StandardMaterial3D 换成同色的 cover_flat 着色器；带贴图的材质原样返回（由可见距离裁掉）。
+static func cover_fade(m: Material, fade_near: float, fade_far: float) -> Material:
+	if m == null:
+		return m
+	var key := "cover:%d:%s:%s" % [m.get_instance_id(), fade_near, fade_far]
+	if _cache.has(key):
+		return _cache[key]
+	var out: Material = m
+	if m is ShaderMaterial and (m as ShaderMaterial).shader == FOLIAGE_SHADER:
+		out = m.duplicate()
+		(out as ShaderMaterial).set_shader_parameter("fade_near", fade_near)
+		(out as ShaderMaterial).set_shader_parameter("fade_far", fade_far)
+	elif m is StandardMaterial3D and (m as StandardMaterial3D).albedo_texture == null:
+		var sm := m as StandardMaterial3D
+		var c := ShaderMaterial.new()
+		c.shader = COVER_FLAT_SHADER
+		c.set_shader_parameter("albedo", sm.albedo_color)
+		c.set_shader_parameter("roughness_value", sm.roughness)
+		c.set_shader_parameter("metallic_value", sm.metallic)
+		c.set_shader_parameter("fade_near", fade_near)
+		c.set_shader_parameter("fade_far", fade_far)
+		out = c
+	_cache[key] = out
+	return out
+
+
+## 小溪水面（stream_water.gdshader）。
+static func stream_water() -> ShaderMaterial:
+	if _cache.has("stream_water"):
+		return _cache["stream_water"]
+	var m := ShaderMaterial.new()
+	m.shader = STREAM_SHADER
+	_cache["stream_water"] = m
+	return m

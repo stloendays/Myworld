@@ -102,6 +102,14 @@ const SHOTS := [
 	{"name": "m2k_05_totem", "climate": {"season": "SUMMER", "hour": 16.0, "weather": "CLEAR"}, "eye": [8.6, 4.0, -100.6], "look": [8.0, 4.1, -105.6]},
 	{"name": "m2k_06_cave_portal", "climate": {"season": "SUMMER", "hour": 16.0, "weather": "CLEAR"}, "eye": [21.5, 3.8, -102.4], "look": [29.3, 3.95, -103.2]},
 	{"name": "m2k_07_cottage", "climate": {"season": "SUMMER", "hour": 16.0, "weather": "CLEAR"}, "eye": [-83, 1.7, 91], "ground": true, "look": [-70, 3.0, 96]},
+	{"name": "m2l_01_creek_falls", "climate": {"season": "SUMMER", "hour": 16.0, "weather": "CLEAR"}, "eye": [-93.2, 1.25, 2.2], "ground": true, "look": [-99.6, 4.4, 2.8]},
+	{"name": "m2l_02_creek_bridge", "climate": {"season": "SUMMER", "hour": 16.0, "weather": "CLEAR"}, "eye": [-77.5, 1.7, -8.5], "ground": true, "look": [-84.0, 2.6, -1.5]},
+	{"name": "m2l_03_creek_mouth", "climate": DUSK, "eye": [-47.0, 1.7, 10.5], "ground": true, "look": [-62.0, 1.6, 0.5]},
+	{"name": "m2l_04_gorge_floor", "climate": {"season": "SUMMER", "hour": 15.0, "weather": "CLEAR"}, "eye": [-79.0, 1.7, -92.0], "ground": true, "look": [-90.0, 11.0, -89.2]},
+	{"name": "m2l_05_gorge_rim", "climate": {"season": "SUMMER", "hour": 15.0, "weather": "CLEAR"}, "eye": [-103.0, 1.7, -86.0], "ground": true, "look": [-88.0, 8.0, -90.5]},
+	{"name": "m2l_08_gorge_bridge", "climate": {"season": "SUMMER", "hour": 15.0, "weather": "CLEAR"}, "eye": [-83.5, 15.5, -93.5], "look": [-89.8, 11.5, -89.0]},
+	{"name": "m2l_06_gorge_aerial", "climate": {"season": "SUMMER", "hour": 15.0, "weather": "CLEAR"}, "eye": [-66.0, 38.0, -72.0], "look": [-90.0, 8.0, -91.0]},
+	{"name": "m2l_07_creek_aerial", "climate": {"season": "SUMMER", "hour": 16.0, "weather": "CLEAR"}, "eye": [-70.0, 30.0, 22.0], "look": [-84.0, 2.0, 0.0]},
 	{"name": "m2k_08_constellations", "climate": {"season": "SUMMER", "hour": 23.0, "weather": "CLEAR"}, "state": {"constellations": ["pinecone", "canoe"]}, "eye": [-2, 2.65, 26], "look": [47.7, 52.65, -44.9]},
 	{"name": "m2k_09_totem_dialogue", "climate": {"season": "SUMMER", "hour": 16.0, "weather": "CLEAR"}, "state": {}, "player": [8.0, -102.2], "heading": 0.0, "pitch": 9.0, "dialogue": true},
 	{"name": "m2k_10_journal_quests", "climate": {"season": "SUMMER", "hour": 16.0, "weather": "CLEAR"}, "state": {"quests": {"fireside": "done", "lake_survey": "active", "summit": "active"}, "species": ["rabbit", "fox", "duck", "bird", "clownfish"], "constellations": ["canoe", "fox"]}, "player": [-49.0, 27.0], "heading": 75.0, "pitch": -4.0, "journal": 0},
@@ -185,6 +193,13 @@ func _run() -> void:
 			_frame_character(str(shot["character"]))
 		elif shot.has("animal"):
 			_frame_animal(str(shot["animal"]))
+		elif shot.has("bridge_eye"):
+			# 站在某座桥的正中间（桥面高度按 Streams.deck_height 算）
+			for b: Dictionary in WorldLayout.section("nature").get("bridges", []):
+				if str(b["id"]) == str(shot["bridge_eye"]):
+					var mid := WorldLayout.v2(b["from"]).lerp(WorldLayout.v2(b["to"]), 0.5)
+					_camera.global_position = Vector3(mid.x, Streams.deck_height(b, 0.5) + 2.0, mid.y)
+			_camera.look_at(_vec(shot["look"]), Vector3.UP)
 		elif shot.get("house", false):
 			var house := _main.get_node("PoolHouse") as Node3D
 			_camera.global_position = house.to_global(_vec(shot["eye"]))

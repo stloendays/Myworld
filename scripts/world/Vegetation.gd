@@ -110,6 +110,9 @@ static func tree_density(x: float, z: float) -> float:
 	var h := WorldTerrain.height_at(x, z)
 	if h < water + 0.6 or in_clearing(p) or in_keepout(p):
 		return 0.0
+	# 小溪两岸、裂谷里不长树
+	if WorldTerrain.channel_distance(x, z) < 1.8:
+		return 0.0
 	if WorldLayout.distance_to_paths(p) < float(c.get("path_clearance", 3.0)):
 		return 0.0
 	var mx := WorldLayout.world_max()
