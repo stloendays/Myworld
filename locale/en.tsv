@@ -399,3 +399,41 @@ E  走进传送门	E  Step through the portal
 东南方的林子里亮起了奇异的光……仙境林地出现了	A strange light glows in the woods to the southeast… the Fairy Glade has appeared
 雪山	Snow Peak
 雪山顶	Snow Peak Summit
+接到任务：%s	New quest: %s
+任务完成：%s	Quest complete: %s
+图鉴新增：%s	New journal entry: %s
+认出了星座：%s	Constellation found: %s
+正在前往别的世界	Already travelling to another world
+你就在这里	You are already here
+那个世界还在建设中	That world is still being built
+联机时暂时不能去别的世界	You cannot travel to another world while in a co-op room
+正在前往「%s」……	Travelling to "%s"...
+老图腾	Old Totem
+E  和老图腾说话	E  Talk to the Old Totem
+锁着的门	Locked door
+门锁着	The door is locked
+门锁着，屋里暂时进不去。	The door is locked. You cannot go inside yet.
+好，我这就去。	All right, I'm on my way.
+等会儿再说。	Maybe later.
+再见。	Goodbye.
+先把手上的事做完吧：%s。按 J 看任务日志。	Finish what you have in hand first: %s. Press J for your journal.
+好。	All right.
+E / 空格  继续        Esc  离开	E / Space  continue        Esc  leave
+还没有任务。去北边山洞里找老图腾说说话。	No quests yet. Go and talk to the Old Totem in the cave to the north.
+还有 %d 个任务，老图腾会一个一个告诉你。	%d more quests to come. The Old Totem will tell you one at a time.
+动物  %d / %d	Animals  %d / %d
+？？？	???
+星座  %d / %d	Constellations  %d / %d
+旅行日志	Travel journal
+J / Esc  关闭	J / Esc  close
+任务	Quests
+图鉴	Journal
+篝火	Campfire
+E  熄灭篝火	E  Put out the campfire
+E  点燃篝火	E  Light the campfire
+原木	Log
+建设中：从图腾山洞尽头的光门进去，目前只有一座雾中的浮岛。	Under construction: go through the gate of light at the back of the Totem Cave. For now there is only a floating island in the mist.
+图腾山洞	Totem Cave
+石头小屋	Stone Cottage
+山洞口	Cave mouth
+图腾石厅	Totem hall

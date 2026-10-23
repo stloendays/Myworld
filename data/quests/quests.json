@@ -1,0 +1,77 @@
+{
+  "_doc": "图腾山洞的任务（QuestLog 读取）。图腾按顺序一次给一个新任务（同时最多 3 个进行中）。objectives 的 type：sit（坐到 uid 以 prefix 开头的座位上）、discover（湖边探索点，ids 全部找到）、reach（走到 pos 半径 radius 米内）、zone_event（在仙境出现时进入 zone）、rainbow（在室外看见彩虹）、constellations（发现 count 个星座）、species（图鉴记下 count 种动物）、swim（在 volume 水里游过）、emote_at（在 pos 附近做动作 id）。文字都有中英两份。",
+  "giver": {"name": "老图腾", "name_en": "Old Totem"},
+  "greeting": {
+    "zh": "……火还旺着。旅人，你走进我的山洞了。我守在这里很久了，湖边的事，我都想听你讲讲。",
+    "en": "...The fire still burns. Traveller, you have walked into my cave. I have kept watch here a long time, and I would hear what you find by the lake."
+  },
+  "all_done": {
+    "zh": "你替我走遍了这片湖。洞的尽头那道光门已经醒了——下一个世界还在长，等它长好，我会第一个告诉你。",
+    "en": "You have walked the whole lake for me. The gate of light at the end of the cave is awake. The next world is still growing; when it is ready, you will be the first to know."
+  },
+  "quests": [
+    {
+      "id": "fireside",
+      "title": "篝火边的老朋友", "title_en": "An Old Friend by the Fire",
+      "offer": "先坐下吧。在篝火边的原木上坐一会儿，听听火的声音。", "offer_en": "Sit first. Rest on a log by the fire for a while and listen to it.",
+      "done": "嗯，你懂得停下来。好，这就够了。", "done_en": "Good. You know how to stop. That is enough.",
+      "objectives": [{"type": "sit", "prefix": "cave_log", "text": "坐到篝火旁的原木上", "text_en": "Sit on a log by the fire"}]
+    },
+    {
+      "id": "lake_survey",
+      "title": "巡湖", "title_en": "Around the Lake",
+      "offer": "湖上有三处我惦记的地方：湖心小岛、北岸的芦苇湾、东岸的睡莲湾。划船去看看它们还好不好。", "offer_en": "There are three places on the lake I think of: the islet, the reed bay in the north and the lily cove in the east. Paddle out and see that they are well.",
+      "done": "芦苇还在，睡莲也开着。谢谢你替我看了一眼。", "done_en": "The reeds stand and the lilies bloom. Thank you for looking for me.",
+      "objectives": [{"type": "discover", "ids": ["lake_islet", "north_reed_bay", "east_lily_cove"], "text": "找到湖心小岛、北岸芦苇湾、东岸睡莲湾", "text_en": "Find the islet, North Reed Bay and East Lily Cove"}]
+    },
+    {
+      "id": "summit",
+      "title": "登高", "title_en": "Up High",
+      "offer": "东北角那座雪山，山顶有一堆石头。爬上去，替我看看整片湖。", "offer_en": "The snow peak in the north-east has a cairn on its top. Climb it and look at the whole lake for me.",
+      "done": "从那上面看，湖像一只眼睛，对吧？", "done_en": "From up there the lake looks like an eye, does it not?",
+      "objectives": [{"type": "reach", "pos": [102, -108], "radius": 7.0, "text": "登上雪山顶", "text_en": "Reach the snow peak summit"}]
+    },
+    {
+      "id": "naturalist",
+      "title": "林间的邻居", "title_en": "Neighbours in the Woods",
+      "offer": "这片林子里住着不少小家伙。走近一点，把它们记进你的图鉴（按 J 打开）。记下五种就好。", "offer_en": "Many small folk live in these woods. Get close and write them into your journal (press J). Five kinds will do.",
+      "done": "兔子、狐狸、鸟……它们也认得你了。", "done_en": "Rabbits, foxes, birds... they know you now too.",
+      "objectives": [{"type": "species", "count": 5, "text": "图鉴里记下 5 种动物", "text_en": "Record 5 kinds of animals in the journal"}]
+    },
+    {
+      "id": "deep_dive",
+      "title": "深潜", "title_en": "The Deep",
+      "offer": "南边那座玻璃房子底下藏着一片海。从泳池底的洞潜下去，游进那口大缸里。", "offer_en": "Under the glass house in the south a sea is hidden. Dive through the hole in the pool floor and swim into the great tank.",
+      "done": "你见到那只像斗篷一样的鱼了吗？它比我还老。", "done_en": "Did you see the fish that moves like a cloak? It is older than I am.",
+      "objectives": [{"type": "swim", "volume": "reef", "text": "游进海洋大缸", "text_en": "Swim into the ocean tank"}]
+    },
+    {
+      "id": "dock_dance",
+      "title": "码头上的舞", "title_en": "A Dance on the Dock",
+      "offer": "老规矩：天气好的时候，要在码头尽头跳一支舞。按 G 打开动作轮盘。", "offer_en": "An old custom: in good weather, dance at the end of the dock. Press G for the action wheel.",
+      "done": "哈！湖面都在笑。", "done_en": "Ha! Even the lake is smiling.",
+      "objectives": [{"type": "emote_at", "id": "dance", "pos": [-2, 26], "radius": 6.0, "text": "在码头尽头跳一支舞", "text_en": "Dance at the end of the dock"}]
+    },
+    {
+      "id": "after_rain",
+      "title": "雨后", "title_en": "After the Rain",
+      "offer": "雨停的时候，背对太阳看。能看见彩虹的人，运气不会差。", "offer_en": "When the rain stops, turn your back to the sun. Whoever sees a rainbow will have good luck.",
+      "done": "七种颜色，一样不少。", "done_en": "Seven colours, every one of them.",
+      "objectives": [{"type": "rainbow", "text": "在室外看见一道彩虹", "text_en": "See a rainbow outdoors"}]
+    },
+    {
+      "id": "stargazer",
+      "title": "观星人", "title_en": "Stargazer",
+      "offer": "晴朗的夜里抬头看。天上有我们这里的星座：独木舟、狐狸、灯塔……盯着它们看一会儿，就能连成形。找到三个。", "offer_en": "Look up on a clear night. Our sky has its own constellations: the Canoe, the Fox, the Lighthouse... Gaze at one a while and it joins into a shape. Find three.",
+      "done": "你也会认星星了。以后迷路，抬头就好。", "done_en": "Now you can read the stars. If you are ever lost, look up.",
+      "objectives": [{"type": "constellations", "count": 3, "text": "夜里找到 3 个星座", "text_en": "Find 3 constellations at night"}]
+    },
+    {
+      "id": "fairy_night",
+      "title": "夜访仙境", "title_en": "A Night in the Glade",
+      "offer": "湖东南的林子，晴朗的夜里会长出一片仙境。等它出现的时候走进去。", "offer_en": "The woods south-east of the lake grow a fairy glade on clear nights. Walk in while it is there.",
+      "done": "那棵发光的树，是我年轻时种下的。", "done_en": "That glowing tree — I planted it when I was young.",
+      "objectives": [{"type": "zone_event", "zone": "fairy_glade", "text": "在仙境出现时走进仙境林地", "text_en": "Enter the Fairy Glade while it is there"}]
+    }
+  ]
+}

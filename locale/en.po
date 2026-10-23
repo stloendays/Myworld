@@ -1206,3 +1206,117 @@ msgstr "Snow Peak"
 msgid "雪山顶"
 msgstr "Snow Peak Summit"
 
+msgid "接到任务：%s"
+msgstr "New quest: %s"
+
+msgid "任务完成：%s"
+msgstr "Quest complete: %s"
+
+msgid "图鉴新增：%s"
+msgstr "New journal entry: %s"
+
+msgid "认出了星座：%s"
+msgstr "Constellation found: %s"
+
+msgid "正在前往别的世界"
+msgstr "Already travelling to another world"
+
+msgid "你就在这里"
+msgstr "You are already here"
+
+msgid "那个世界还在建设中"
+msgstr "That world is still being built"
+
+msgid "联机时暂时不能去别的世界"
+msgstr "You cannot travel to another world while in a co-op room"
+
+msgid "正在前往「%s」……"
+msgstr "Travelling to \"%s\"..."
+
+msgid "老图腾"
+msgstr "Old Totem"
+
+msgid "E  和老图腾说话"
+msgstr "E  Talk to the Old Totem"
+
+msgid "锁着的门"
+msgstr "Locked door"
+
+msgid "门锁着"
+msgstr "The door is locked"
+
+msgid "门锁着，屋里暂时进不去。"
+msgstr "The door is locked. You cannot go inside yet."
+
+msgid "好，我这就去。"
+msgstr "All right, I'm on my way."
+
+msgid "等会儿再说。"
+msgstr "Maybe later."
+
+msgid "再见。"
+msgstr "Goodbye."
+
+msgid "先把手上的事做完吧：%s。按 J 看任务日志。"
+msgstr "Finish what you have in hand first: %s. Press J for your journal."
+
+msgid "好。"
+msgstr "All right."
+
+msgid "E / 空格  继续        Esc  离开"
+msgstr "E / Space  continue        Esc  leave"
+
+msgid "还没有任务。去北边山洞里找老图腾说说话。"
+msgstr "No quests yet. Go and talk to the Old Totem in the cave to the north."
+
+msgid "还有 %d 个任务，老图腾会一个一个告诉你。"
+msgstr "%d more quests to come. The Old Totem will tell you one at a time."
+
+msgid "动物  %d / %d"
+msgstr "Animals  %d / %d"
+
+msgid "？？？"
+msgstr "???"
+
+msgid "星座  %d / %d"
+msgstr "Constellations  %d / %d"
+
+msgid "旅行日志"
+msgstr "Travel journal"
+
+msgid "J / Esc  关闭"
+msgstr "J / Esc  close"
+
+msgid "任务"
+msgstr "Quests"
+
+msgid "图鉴"
+msgstr "Journal"
+
+msgid "篝火"
+msgstr "Campfire"
+
+msgid "E  熄灭篝火"
+msgstr "E  Put out the campfire"
+
+msgid "E  点燃篝火"
+msgstr "E  Light the campfire"
+
+msgid "原木"
+msgstr "Log"
+
+msgid "建设中：从图腾山洞尽头的光门进去，目前只有一座雾中的浮岛。"
+msgstr "Under construction: go through the gate of light at the back of the Totem Cave. For now there is only a floating island in the mist."
+
+msgid "图腾山洞"
+msgstr "Totem Cave"
+
+msgid "石头小屋"
+msgstr "Stone Cottage"
+
+msgid "山洞口"
+msgstr "Cave mouth"
+
+msgid "图腾石厅"
+msgstr "Totem hall"
+

@@ -8,6 +8,7 @@ extends Node3D
 
 ## 子节点（地形、树林、地被）开始建造之前，先在后台并行读取它们要用的几十个 Kenney 模型。
 func _enter_tree() -> void:
+	add_to_group("world_root")
 	ArtMaterials.preload_kenney(ForestBuilder.asset_paths() + GroundCoverBuilder.asset_paths())
 
 
@@ -15,6 +16,10 @@ func _ready() -> void:
 	var player := get_tree().get_first_node_in_group("local_player") as FirstPersonController
 	if player != null:
 		place_at_spawn(player)
+		# 从别的世界回来：站在来时那道门前（worlds.json → arrivals）
+		var a := WorldTravel.arrival()
+		if not a.is_empty():
+			player.teleport_to(Vector3(float(a["pos"][0]), float(a["pos"][1]), float(a["pos"][2])), float(a.get("heading", 0.0)))
 	if GameSettings.can_grab_mouse():
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	var remote := RemotePlayers.new()
@@ -26,6 +31,12 @@ func _ready() -> void:
 	var lobby := LobbyMenu.new()
 	lobby.name = "LobbyMenu"
 	add_child(lobby)
+	var dialogue := DialoguePanel.new()
+	dialogue.name = "DialoguePanel"
+	add_child(dialogue)
+	var journal := JournalPanel.new()
+	journal.name = "JournalPanel"
+	add_child(journal)
 
 
 static func place_at_spawn(player: FirstPersonController) -> void:

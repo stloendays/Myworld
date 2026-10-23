@@ -161,6 +161,15 @@ func _draw_map() -> void:
 		_map.draw_line(WorldLayout.v2(dock["from"]), WorldLayout.v2(dock["to"]), Minimap.DOCK_COLOR, float(dock.get("width", 2.6)))
 	_building(WorldLayout.section("cabin"), Vector2(Cabin.LENGTH + Cabin.DECK_DEPTH, Cabin.HALF_SPAN * 2.0), Vector2(Cabin.DECK_DEPTH * 0.5, 0.0), Color(0.62, 0.33, 0.22))
 	_building(WorldLayout.section("poolhouse"), Vector2(PoolHouse.HX * 2.0, PoolHouse.HZ * 2.0), Vector2.ZERO, Color(0.55, 0.74, 0.84))
+	_building(WorldLayout.section("cottage"), Vector2(StoneCottage.SIZE.x, StoneCottage.SIZE.z), Vector2.ZERO, Color(0.6, 0.58, 0.55))
+	# 图腾山洞：沿洞道画一条粗的岩石色带
+	var cave := WorldLayout.section("cave")
+	if not cave.is_empty():
+		var line := PackedVector2Array()
+		for p: Array in cave["centerline"]:
+			line.append(Vector2(float(p[0]), float(p[1])))
+		_map.draw_polyline(line, Color(0.42, 0.38, 0.34), 7.0, true)
+		_map.draw_polyline(line, Color(0.16, 0.13, 0.11), 2.4, true)
 	var glade := get_tree().get_first_node_in_group("fairy_glade") as FairyGlade
 	if glade != null and glade.active:
 		_map.draw_circle(Vector2(glade.position.x, glade.position.z), glade.radius, Color(0.86, 0.66, 1.0, 0.6))
@@ -170,7 +179,7 @@ func _draw_map() -> void:
 	var lake := WorldLayout.section("lake")
 	if not lake.is_empty():
 		_label(font, t * WorldLayout.v2(lake["center"]) + Vector2(0.0, 40.0), tr("暮色湖"), 20, Color(0.9, 0.96, 1.0))
-	for item in [["cabin", "木屋"], ["poolhouse", "泳池馆"], ["fairy_glade", "仙境林地"], ["snow_peak", "雪山"]]:
+	for item in [["cabin", "木屋"], ["poolhouse", "泳池馆"], ["fairy_glade", "仙境林地"], ["snow_peak", "雪山"], ["cave", "图腾山洞"], ["cottage", "石头小屋"]]:
 		var cfg := WorldLayout.section(item[0])
 		if item[0] == "fairy_glade" and (glade == null or not glade.active):
 			continue

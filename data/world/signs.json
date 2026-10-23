@@ -80,5 +80,23 @@
     "title_en": "Fairy Glade",
     "body_zh": "白天这里只是一片安静的林间空地。到了晴朗的夜里（20:00 到凌晨 4:30），仙境会从地里长出来：发光的仙树、蘑菇圈、漂浮的小岛和小瀑布，还有成群的小仙子。林地尽头的月光石门通往别的世界——那些世界还在建造中。",
     "body_en": "By day this is just a quiet clearing. On clear nights (20:00 to 4:30) a fairy glade grows out of the ground: a luminous tree, a ring of glowing mushrooms, floating islets with little waterfalls, and flocks of tiny fairies. The moonstone gate at the far end leads to other worlds, which are still being built."
+  },
+  "cave_mouth": {
+    "title_zh": "图腾山洞",
+    "title_en": "Totem Cave",
+    "body_zh": "洞里有一尊会说话的老图腾，篝火常年不灭。图腾会托你去湖边各处做点小事。山洞最深处有一道发光的门，通往下一个世界。",
+    "body_en": "An old talking totem lives inside, beside a fire that never goes out. It will ask you to run small errands around the lake. At the very back of the cave a glowing gate leads to the next world."
+  },
+  "stone_cottage": {
+    "title_zh": "石头小屋",
+    "title_en": "Stone Cottage",
+    "body_zh": "门锁着，屋里暂时进不去。窗台上落了一层灰，好像很久没人回来过。",
+    "body_en": "The door is locked, so you cannot go in yet. Dust lies on the windowsill, as if no one has been back for a long time."
+  },
+  "world_02_wip": {
+    "title_zh": "第二个世界 · 建设中",
+    "title_en": "World II · Under Construction",
+    "body_zh": "这里以后会是一整片新的世界，现在只长出了这座浮岛。身后的光门通回暮色湖畔。",
+    "body_en": "A whole new world will grow here. For now there is only this floating island. The gate behind you leads back to Dusk Lake."
   }
 }

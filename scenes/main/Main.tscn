@@ -20,6 +20,9 @@
 [ext_resource type="Script" path="res://scripts/ui/WorldMap.gd" id="18_worldmap"]
 [ext_resource type="Script" path="res://scripts/world/FairyGlade.gd" id="19_fairy"]
 [ext_resource type="Script" path="res://scripts/world/SnowPeak.gd" id="20_snowpeak"]
+[ext_resource type="Script" path="res://scripts/world/Cave.gd" id="21_cave"]
+[ext_resource type="Script" path="res://scripts/buildings/StoneCottage.gd" id="22_cottage"]
+[ext_resource type="Script" path="res://scripts/world/StarField.gd" id="23_stars"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_main")
@@ -73,3 +76,12 @@ script = ExtResource("19_fairy")
 
 [node name="SnowPeak" type="Node3D" parent="."]
 script = ExtResource("20_snowpeak")
+
+[node name="Cave" type="Node3D" parent="."]
+script = ExtResource("21_cave")
+
+[node name="StoneCottage" type="Node3D" parent="."]
+script = ExtResource("22_cottage")
+
+[node name="StarField" type="Node3D" parent="."]
+script = ExtResource("23_stars")

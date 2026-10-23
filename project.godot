@@ -23,6 +23,8 @@ WorldState="*res://scripts/core/WorldState.gd"
 PlayerProfile="*res://scripts/core/PlayerProfile.gd"
 Net="*res://scripts/net/NetworkManager.gd"
 Updater="*res://scripts/core/Updater.gd"
+QuestLog="*res://scripts/core/QuestLog.gd"
+WorldTravel="*res://scripts/core/WorldTravel.gd"
 
 [display]
 

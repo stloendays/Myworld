@@ -4,7 +4,7 @@ extends Node
 ## 角色所在区域（按 entity_id）、探索发现的地点、载具（独木舟）位置。M4 由 SaveManager 把 snapshot() 写成 user://saves/ 的版本化 JSON。
 ## 改动存档字段时必须同时升级 SCHEMA_VERSION 并写迁移。
 
-const SCHEMA_VERSION := 2   ## v2：加入 discoveries 与 vehicles
+const SCHEMA_VERSION := 3   ## v2：加入 discoveries 与 vehicles；v3：加入 quests（图腾任务）与 journal（图鉴）
 
 var world_seed: int = 0
 
@@ -34,6 +34,8 @@ var interactables: Dictionary = {}   ## uid -> state 字符串
 var flags: Dictionary = {}
 var discoveries: Array[StringName] = []   ## 已发现的探索点 id（world_layout.json → lake_pois），按发现顺序
 var vehicles: Dictionary = {}             ## 载具 id -> {"pos": [x, z], "yaw_deg": 角度}
+var quests: Dictionary = {}               ## 任务 id -> {state: active / done, progress: 已完成目标数, thanked: 图腾说过谢谢}
+var journal: Dictionary = {}              ## 图鉴：kind（species / constellations）-> 按记录顺序的 id 列表
 
 var _actor_zones: Dictionary = {}    ## actor_id -> { zone_id: is_indoor }
 
@@ -79,6 +81,8 @@ func snapshot() -> Dictionary:
 		"flags": flags.duplicate(),
 		"discoveries": discoveries.map(func(d: StringName) -> String: return String(d)),
 		"vehicles": vehicles.duplicate(true),
+		"quests": quests.duplicate(true),
+		"journal": journal.duplicate(true),
 	}
 
 
@@ -89,6 +93,9 @@ static func migrate(data: Dictionary) -> Dictionary:
 	if v < 2:
 		d["discoveries"] = []
 		d["vehicles"] = {}
+	if v < 3:
+		d["quests"] = {}
+		d["journal"] = {}
 	d["schema_version"] = SCHEMA_VERSION
 	return d
 
@@ -148,3 +155,17 @@ func is_indoors(actor_id: StringName) -> bool:
 		if indoor:
 			return true
 	return false
+
+
+## 图鉴加一条（kind：species / constellations）；已经有了返回 false。
+func journal_add(kind: String, id: String) -> bool:
+	var list: Array = journal.get(kind, [])
+	if id in list:
+		return false
+	list.append(id)
+	journal[kind] = list
+	return true
+
+
+func journal_list(kind: String) -> Array:
+	return journal.get(kind, [])

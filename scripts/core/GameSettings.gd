@@ -37,6 +37,7 @@ const ACTIONS := {
 	"action_3": [KEY_3],
 	"action_4": [KEY_4],
 	"photo": [KEY_F12],
+	"journal": [KEY_J],
 }
 
 ## 可保存的设置及默认值；键名即属性名。

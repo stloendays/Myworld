@@ -33,9 +33,15 @@ Main (Main.gd)
 ├── HUD / PauseMenu（含人物外观面板）/ DebugOverlay / DevPanel（F2 开发者模式）/ Minimap（M）
 ├── ChatBox（Main 启动时创建）           左下角聊天框与 / 命令
 ├── ActionBar（G 动作轮盘，快捷键 1–4，F12 拍照）/ WorldMap（Tab 世界地图）
+├── Cave (Cave.gd)                       北缘岩脊里的图腾山洞：洞道与岩丘、石厅、老图腾 CaveTotem、篝火、尽头光门
+├── StoneCottage (StoneCottage.gd)       南部草地的石头小屋（LockedDoor，进不去）
+├── StarField (StarField.gd)             夜空里的五个星座，跟着相机走
+├── DialoguePanel / JournalPanel（Main 启动时创建）  图腾对话框；J 旅行日志与左上角任务追踪
 ```
 
 木屋是主场景里常驻的真实子场景；进屋只是角色走进一个 `Area3D`。工程中没有任何场景切换调用（自动检查会扫描 `scripts/`）。
+
+换世界（`WorldTravel`）也不调用切场景函数：当前世界的根节点（`world_root` 组：`Main` 或 `World02`）在原父节点下被整个释放，清掉 `ArtMaterials` 缓存后，再在后台线程读下一个世界并放回同一个父节点。两个世界任何时候都不同时在内存里；Autoload（WorldState、QuestLog 等）跨世界保留。
 
 `World` 下的生成器都是 `@tool` 脚本：在编辑器里打开场景也能看到地形、树木和木屋；生成的节点放在各自的 `Generated` 子节点下，不写入 `.tscn`。碰撞只在运行时生成。
 
@@ -55,7 +61,7 @@ Main (Main.gd)
 
 | 模块 | 状态 | 职责 |
 |---|---|---|
-| `WorldState`（Autoload） | 已实现 | 日期时间、季节覆盖、天气与过渡进度、种子、地面积雪/湿润、可交互物状态、角色区域；`snapshot()` 给 M4 存档 |
+| `WorldState`（Autoload） | 已实现 | 日期时间、季节覆盖、天气与过渡进度、种子、地面积雪/湿润、可交互物状态、角色区域、探索发现、载具、任务与图鉴；`snapshot()` 给 M4 存档（版本 3） |
 | `EventBus`（Autoload） | 已实现 | 只发通知不存状态 |
 | `GameSettings`（Autoload） | 已实现 | FOV、灵敏度、按键表、UI 中文字体主题 |
 | `PlayerProfile`（Autoload） | 已实现 | 本地玩家外观，存 `user://appearance.json` |
@@ -71,7 +77,10 @@ Main (Main.gd)
 | `CabinLife` / `InteractableToggle` / `Seat` / `Bed` | 已实现 | 木屋生活交互，状态按 uid 记在 WorldState |
 | `Canoe` / `Exploration` | 已实现 | 独木舟（自算运动，位置记在 `WorldState.vehicles`）；湖上探索点（`WorldState.discoveries`，存档 v2） |
 | `ActionBar`（动作轮盘）/ 控制器 `do_emote()` / `CharacterModel` 姿势与手势 | 已实现 | 动作：`ground_sit`、`lie` 是姿势（身体放低或放倒，眼睛跟着移动），`wave`、`dance`、`clap` 是叠加在站姿上的手势；状态在 `FirstPersonController.emote` |
-| `WorldRegistry` / `WorldMap` | 已实现（跨世界进入为接口占位） | `data/worlds/worlds.json` 列出所有世界；地图读注册表与布局绘制；`WorldRegistry.enter()` 目前只提示“还在建设中” |
+| `WorldRegistry` / `WorldMap` | 已实现 | `data/worlds/worlds.json` 列出所有世界（status：open / preview / planned、根场景、到达位置）；地图读注册表与布局绘制；`WorldRegistry.enter()` 把能去的世界交给 WorldTravel |
+| `WorldTravel`（Autoload） | M2 扩展已实现 | 跨世界旅行：渐黑 → 卸载当前世界 → 清缓存 → 后台线程加载 → 实例化 → 渐亮；记录当前世界与来时的世界；联机时不能离开 |
+| `QuestLog`（Autoload）/ `CaveTotem` / `DialoguePanel` / `JournalPanel` | M2 扩展已实现 | 任务内容在 `data/quests/quests.json`；状态在 `WorldState.quests`、图鉴在 `WorldState.journal`（存档 v3）；每 0.4 秒只读世界状态检查目标；进度另写 `user://journal.json` |
+| `Cave` / `StoneCottage` / `StarField` | M2 扩展已实现 | 图腾山洞（世界坐标生成的洞道网格与双面三角网碰撞，室内区域 `cave`）；锁着门的石头小屋；星座（`data/sky/constellations.json`） |
 | `Precipitation` 季节飘落物 | 已实现 | 方案在 `data/weather/seasonal_fx.json`（落叶、花瓣、保留的原版红点）；`profile_override` 供开发者面板临时切换 |
 | `AudioDirector` | M3 接口占位 | 订阅区域与天气事件做室内外混音 |
 | `SaveManager` | M4 接口占位 | `user://saves/` 版本化 JSON |

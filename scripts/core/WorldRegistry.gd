@@ -1,8 +1,8 @@
 class_name WorldRegistry
 extends RefCounted
 ## 世界注册表：读取 data/worlds/worlds.json，提供世界列表、当前世界和它们之间的连线（世界地图使用）。
-## 跨世界进入（enter）是为以后的“传送门进入其他世界”预留的接口：第二个世界做出来之前，
-## 规划中的世界一律返回 false 并提示“还在建设中”。真正切换世界时再接入场景加载与存档（不属于本次改动）。
+## 跨世界进入（enter）：已开放或“建设中可进入”（preview）的世界交给 WorldTravel 切换；规划中的世界只提示“还在建设中”。
+## 当前所在的世界由 WorldTravel.current_world 记录（worlds.json 里的 current 只是启动时的世界）。
 
 const PATH := "res://data/worlds/worlds.json"
 
@@ -25,7 +25,7 @@ static func links() -> Array:
 
 
 static func current_id() -> String:
-	return str(data()["current"])
+	return WorldTravel.current_world
 
 
 static func get_world(id: String) -> Dictionary:
@@ -39,8 +39,9 @@ static func current() -> Dictionary:
 	return get_world(current_id())
 
 
+## open = 已开放；preview = 建设中但可以进去看看（有一个占位场景）。
 static func is_open(id: String) -> bool:
-	return str(get_world(id).get("status", "")) == "open"
+	return str(get_world(id).get("status", "")) in ["open", "preview"]
 
 
 ## 能否从当前世界前往 id（已开放、不是当前世界）。
@@ -48,11 +49,13 @@ static func can_enter(id: String) -> bool:
 	return is_open(id) and id != current_id()
 
 
-## 预留：前往另一个世界。目前没有第二个已开放的世界，所以只给出提示并返回 false。
+## 前往另一个世界：能去就交给 WorldTravel（先卸载本世界再加载目标世界），否则给出提示并返回 false。
 static func enter(id: String) -> bool:
 	var w := get_world(id)
 	if w.is_empty():
 		return false
+	if can_enter(id):
+		return WorldTravel.travel(id)
 	if id == current_id():
 		EventBus.toast_requested.emit(TranslationServer.translate("你就在「%s」") % TranslationServer.translate(str(w["name"])))
 	else:

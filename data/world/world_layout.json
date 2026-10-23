@@ -29,7 +29,9 @@
       {"id": "dock_landing", "center": [-45, 26], "radius": 3.5, "blend": 10.0, "height": 1.0},
       {"id": "poolhouse_pad", "center": [4, 84], "radius": 18.0, "blend": 8.0, "height": 2.0},
       {"id": "fairy_glade_pad", "center": [76, 88], "radius": 15.0, "blend": 10.0, "height": 6.6},
-      {"id": "snow_peak_summit", "center": [102, -108], "radius": 4.0, "blend": 6.0, "height": 39.4}
+      {"id": "snow_peak_summit", "center": [102, -108], "radius": 4.0, "blend": 6.0, "height": 39.4},
+      {"id": "cave_pad", "center": [8, -99], "radius": 25.0, "blend": 8.0, "height": 2.2},
+      {"id": "cottage_pad", "center": [-70, 96], "radius": 7.5, "blend": 6.0, "height": 2.0}
     ],
     "pits": [
       {"id": "poolhouse_basement", "rect": [-8.5, 75.5, 16.5, 92.5], "floor": -10.6}
@@ -92,6 +94,25 @@
     "portal": {"offset": [10.0, 0.0], "yaw_deg": -90.0, "world": "world_02"}
   },
 
+  "cave": {
+    "_doc": "北缘岩脊里的山洞：洞口朝南对着雪山步道，进洞向东拐进图腾石厅，尽头是通往下一个世界的传送门。centerline 为洞道中线（xz，从洞口到尽头），profile 为每个中线点的半宽与拱高（米）。",
+    "zone_id": "cave",
+    "center": [10, -100],
+    "centerline": [[-8, -89.5], [-8, -94], [-6.5, -98.5], [-2, -101.2], [3, -101.5], [8, -101], [13, -101.2], [18, -102.2], [23, -103], [27.5, -103.2], [30, -103.2]],
+    "profile": [[2.8, 3.8], [2.3, 3.3], [2.3, 3.3], [2.6, 3.5], [5.8, 5.6], [6.6, 6.2], [5.8, 5.6], [2.4, 3.3], [2.4, 3.3], [3.4, 4.4], [3.2, 4.2]],
+    "chamber": [8, -101],
+    "totem": [8, -105.6],
+    "bonfire": [8.4, -100.2],
+    "portal": {"pos": [29.3, -103.2], "yaw_deg": -90.0, "world": "world_02"}
+  },
+
+  "cottage": {
+    "_doc": "南部草地上的石头小屋：门锁着，暂时进不去。yaw_deg 让门（本地 +Z）朝向西边的草地步道。",
+    "zone_id": "cottage",
+    "center": [-70, 96],
+    "yaw_deg": -90.0
+  },
+
   "lake_pois": [
     {"id": "dock_end", "name": "码头尽头", "name_en": "Dock End", "center": [-2, 26], "radius": 5},
     {"id": "lake_islet", "name": "湖心小岛", "name_en": "Lake Islet", "center": [42, -6], "radius": 16,
@@ -113,7 +134,9 @@
     {"id": "sign_islet", "text": "lake_islet", "pos": [37.6, -3.2], "yaw_deg": -70.0, "style": "stand", "width": 1.4, "scale": 1.4},
     {"id": "sign_fairy_glade", "text": "fairy_glade", "pos": [62.5, 90.6], "yaw_deg": -115.0, "style": "stand", "width": 1.5, "scale": 1.45},
     {"id": "sign_snow_trail", "text": "snow_peak_trail", "pos": [-76.5, -51.5], "yaw_deg": -90.0, "style": "stand", "width": 1.5, "scale": 1.45},
-    {"id": "sign_snow_summit", "text": "snow_peak_summit", "pos": [99.0, -105.5], "yaw_deg": -78.0, "style": "stand", "width": 1.5, "scale": 1.45}
+    {"id": "sign_snow_summit", "text": "snow_peak_summit", "pos": [99.0, -105.5], "yaw_deg": -78.0, "style": "stand", "width": 1.5, "scale": 1.45},
+    {"id": "sign_cave", "text": "cave_mouth", "pos": [-12.2, -89.2], "yaw_deg": 20.0, "style": "stand", "width": 1.5, "scale": 1.45},
+    {"id": "sign_cottage", "text": "stone_cottage", "pos": [-76.6, 92.4], "yaw_deg": -70.0, "style": "stand", "width": 1.4, "scale": 1.4}
   ],
 
   "dev_spots": [
@@ -128,6 +151,9 @@
     {"name": "海洋大缸（潜水）", "pos": [4.0, -5.6, 78.4], "heading": 90.0},
     {"name": "仙境林地", "pos": [62.0, 88.0], "ground": true, "heading": 90.0},
     {"name": "雪山顶", "pos": [99.5, -106.5], "ground": true, "heading": 240.0},
+    {"name": "山洞口", "pos": [-8.0, -86.5], "ground": true, "heading": 0.0},
+    {"name": "图腾石厅", "pos": [5.0, -99.0], "ground": true, "heading": 160.0},
+    {"name": "石头小屋", "pos": [-79.0, 95.0], "ground": true, "heading": 90.0},
     {"name": "南部草甸", "pos": [-84.0, 93.0], "ground": true, "heading": 0.0},
     {"name": "西北观景点", "pos": [-93.0, -101.0], "ground": true, "heading": 135.0},
     {"name": "湖心上空（飞行）", "pos": [35.0, 30.0, -2.0], "heading": 250.0, "fly": true}
@@ -135,7 +161,9 @@
 
   "keepouts": [
     {"id": "cabin", "rect": [-76.5, 31.5, -56.5, 42.5]},
-    {"id": "poolhouse", "rect": [-10.5, 73.5, 18.5, 94.5]}
+    {"id": "poolhouse", "rect": [-10.5, 73.5, 18.5, 94.5]},
+    {"id": "cave", "rect": [-15.0, -113.0, 36.0, -86.5]},
+    {"id": "cottage", "rect": [-76.0, 90.5, -64.0, 101.5]}
   ],
 
   "zones": [
@@ -147,7 +175,9 @@
     {"zone_id": "south_meadow", "name": "南部林间草甸", "center": [-84, 93], "size": [60, 40]},
     {"zone_id": "poolhouse_grounds", "name": "泳池馆前庭", "center": [4, 84], "size": [32, 28]},
     {"zone_id": "fairy_glade", "name": "仙境林地", "center": [76, 88], "size": [32, 32]},
-    {"zone_id": "snow_peak", "name": "雪山", "center": [92, -98], "size": [40, 40]}
+    {"zone_id": "snow_peak", "name": "雪山", "center": [92, -98], "size": [40, 40]},
+    {"zone_id": "cave_mouth", "name": "山洞口", "center": [-8, -88], "size": [14, 8]},
+    {"zone_id": "cottage_grounds", "name": "石头小屋", "center": [-72, 96], "size": [18, 16]}
   ],
 
   "paths": [
@@ -181,6 +211,8 @@
     ],
     "clearings": [
       {"id": "cabin_clearing", "center": [-66, 37], "radius": 14},
+      {"id": "cave_clearing", "center": [-8, -88], "radius": 9},
+      {"id": "cottage_clearing", "center": [-72, 96], "radius": 11},
       {"id": "lakeside_lawn", "center": [-47, 24], "radius": 11},
       {"id": "viewpoint_top", "center": [-93, -101], "radius": 13},
       {"id": "poolhouse_clearing", "center": [4, 84], "radius": 21},
