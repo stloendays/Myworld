@@ -1,0 +1,71 @@
+name: Build Windows compatibility prerelease
+
+on:
+  push:
+    branches:
+      - fix/windows-startup-diagnostics-20261023
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  export-windows:
+    name: Test, export and package Dusk Lake
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Godot editor and Windows export template
+        uses: actions/cache@v4
+        with:
+          path: .godot-toolchain
+          key: dusk-lake-godot-4.7.2-windows-release-v1
+
+      - name: Validate included Windows PowerShell scripts
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $files = @('tools/build_windows.ps1', 'support/Launch-DuskLake.ps1', 'support/Collect-DuskLakeCrash.ps1')
+          foreach ($file in $files) {
+            $tokens = $null
+            $parseErrors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $file).Path, [ref]$tokens, [ref]$parseErrors)
+            if ($parseErrors.Count -gt 0) {
+              foreach ($err in $parseErrors) { Write-Error "$file : $err" }
+              throw "PowerShell parsing failed: $file"
+            }
+          }
+
+      - name: Import, test, compile and smoke-test Windows executable
+        shell: pwsh
+        run: ./tools/build_windows.ps1
+
+      - name: Upload verified portable package and EXE
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuskLake-v0.3.4-rc.1-Windows
+          path: |
+            dist/DuskLake-Portable-v0.3.4-rc.1.zip
+            dist/DuskLake.exe
+            dist/DuskLake.exe.sha256
+            dist/export-smoke.log
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish prerelease after checks
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $tag = 'v0.3.4-rc.1'
+          $assets = @('dist/DuskLake-Portable-v0.3.4-rc.1.zip', 'dist/DuskLake.exe', 'dist/DuskLake.exe.sha256')
+          & gh release view $tag 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            & gh release upload $tag $assets --clobber
+          } else {
+            & gh release create $tag $assets --target $env:GITHUB_SHA --prerelease --title 'Dusk Lake v0.3.4 RC1 - Windows crash recovery' --notes 'Pre-release for Windows crash recovery testing. Download the PORTABLE ZIP and run Play-DuskLake.cmd for auto fallback to OpenGL. Diagnostics stay local. Untested on the originally failing PC.'
+          }
+          if ($LASTEXITCODE -ne 0) { throw 'Publishing prerelease failed.' }

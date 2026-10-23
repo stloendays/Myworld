@@ -7,7 +7,7 @@ config_version=5
 
 config/name="Dusk Lake"
 config/description="A quiet lakeside world to explore alone or with up to three friends."
-config/version="0.3.3"
+config/version="0.3.4-rc.1"
 run/main_scene="res://scenes/main/Main.tscn"
 config/features=PackedStringArray("4.7", "Forward Plus")
 config/icon="res://icon.png"
@@ -18,6 +18,7 @@ config/custom_user_dir_name="DuskLake"
 [autoload]
 
 GameSettings="*res://scripts/core/GameSettings.gd"
+StartupDiagnostics="*res://scripts/core/StartupDiagnostics.gd"
 EventBus="*res://scripts/core/EventBus.gd"
 WorldState="*res://scripts/core/WorldState.gd"
 PlayerProfile="*res://scripts/core/PlayerProfile.gd"

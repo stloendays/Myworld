@@ -56,9 +56,14 @@ func can_self_update() -> bool:
 ## "v0.3.1" / "0.3.1" → [0, 3, 1]；比较时缺的位当 0。
 static func parse_version(v: String) -> Array[int]:
 	var out: Array[int] = []
-	for part in v.strip_edges().trim_prefix("v").trim_prefix("V").split("."):
+	var numeric := v.strip_edges().trim_prefix("v").trim_prefix("V").split("-", false, 1)[0]
+	for part in numeric.split("."):
 		out.append(int(part.to_int()) if part.is_valid_int() else 0)
 	return out
+
+
+static func _is_prerelease(v: String) -> bool:
+	return v.strip_edges().contains("-")
 
 
 ## a 比 b 新返回 1，相同 0，旧 -1。
@@ -70,6 +75,8 @@ static func compare_versions(a: String, b: String) -> int:
 		var y := pb[i] if i < pb.size() else 0
 		if x != y:
 			return 1 if x > y else -1
+	if _is_prerelease(a) != _is_prerelease(b):
+		return -1 if _is_prerelease(a) else 1
 	return 0
 
 
