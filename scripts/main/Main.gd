@@ -31,6 +31,7 @@ func _ready() -> void:
 	var lobby := LobbyMenu.new()
 	lobby.name = "LobbyMenu"
 	add_child(lobby)
+	StartupDiagnostics.mark_world_ready.call_deferred()
 
 
 static func place_at_spawn(player: FirstPersonController) -> void:
