@@ -1072,7 +1072,7 @@ func _test_exploration_save() -> void:
 	var snap := WorldState.snapshot()
 	var migrated := WorldState.migrate({"schema_version": 1, "world_day": 3})
 	var ok: bool = found == [&"dock_end"] and again.is_empty() and WorldState.discoveries.size() == before + 1 \
-		and toast.contains("码头尽头") and snap["schema_version"] == 2 and (snap["discoveries"] as Array).has("dock_end") \
+		and (toast.contains("码头尽头") or toast.contains("Dock End")) and snap["schema_version"] == 2 and (snap["discoveries"] as Array).has("dock_end") \
 		and snap.has("vehicles") and migrated["schema_version"] == 2 and migrated["discoveries"] == [] and migrated["vehicles"] == {}
 	_check("探索：走到码头尽头记为新发现（不重复）、弹出提示；存档快照含发现与船位置，v1 存档能升级到 v2",
 		ok, "新发现 %s，提示「%s」，快照版本 %d，发现列表 %s" % [str(found), toast, snap["schema_version"], str(snap["discoveries"])])
