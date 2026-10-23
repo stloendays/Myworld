@@ -95,7 +95,24 @@ var _theme: Theme = null
 func _enter_tree() -> void:
 	_register_inputs()
 	load_from(SETTINGS_PATH)
+	_apply_startup_options()
 	apply_language()
+
+
+## A non-persistent recovery profile for PCs that cannot run the default
+## settings. Use: DuskLake.exe -- --safe-mode
+## Choose the rendering backend separately with engine flags before --.
+func _apply_startup_options() -> void:
+	if not OS.get_cmdline_user_args().has("--safe-mode"):
+		return
+	graphics_quality = "low"
+	render_scale = 0.6
+	dynamic_resolution = false
+	fullscreen = false
+	max_fps = 30
+	auto_update_check = false
+	_window_user_set = true
+	print("Dusk Lake: safe mode enabled (low, 60% scale, 30 FPS, windowed, no auto-update)")
 
 
 func _ready() -> void:

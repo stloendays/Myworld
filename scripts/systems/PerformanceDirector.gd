@@ -45,13 +45,17 @@ func _ready() -> void:
 func apply_quality() -> void:
 	var q := String(GameSettings.graphics_quality)
 	var p: Dictionary = PRESETS.get(q, PRESETS["high"])
+	# A Windows machine can fall back from Vulkan to Compatibility/OpenGL.
+	# SSR is unavailable outside Forward+; keep recovery mode lightweight.
+	var forward_plus := RenderingServer.get_current_rendering_method() == "forward_plus"
 	var env := get_tree().get_first_node_in_group("environment_director") as EnvironmentDirector
 	if env != null and env.environment != null:
 		var e := env.environment
-		e.ssr_enabled = int(p["ssr"]) > 0
+		e.ssr_enabled = forward_plus and int(p["ssr"]) > 0
 		e.ssr_max_steps = maxi(int(p["ssr"]), 8)
-		e.ssao_enabled = p["ssao"]
-		RenderingServer.environment_set_ssao_quality(RenderingServer.ENV_SSAO_QUALITY_MEDIUM, p["ssao_half"], 0.5, 2, 50.0, 300.0)
+		e.ssao_enabled = forward_plus and bool(p["ssao"])
+		if forward_plus:
+			RenderingServer.environment_set_ssao_quality(RenderingServer.ENV_SSAO_QUALITY_MEDIUM, p["ssao_half"], 0.5, 2, 50.0, 300.0)
 		env.sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS if int(p["splits"]) == 4 else DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
 		env.sun.directional_shadow_max_distance = p["shadow_dist"]
 		env.moon.directional_shadow_max_distance = minf(float(p["shadow_dist"]), 120.0)
@@ -132,7 +136,8 @@ func _apply_scale() -> void:
 	var s := effective_scale()
 	var vp := get_viewport()
 	vp.scaling_3d_scale = s
-	vp.scaling_3d_mode = Viewport.SCALING_3D_MODE_FSR if s < 0.99 else Viewport.SCALING_3D_MODE_BILINEAR
+	# FSR 1.0 is Forward+-only; Compatibility/Mobile use bilinear.
+	vp.scaling_3d_mode = Viewport.SCALING_3D_MODE_FSR if s < 0.99 and RenderingServer.get_current_rendering_method() == "forward_plus" else Viewport.SCALING_3D_MODE_BILINEAR
 
 
 func _update_underground() -> void:

@@ -8,6 +8,11 @@ extends Node3D
 
 ## 子节点（地形、树林、地被）开始建造之前，先在后台并行读取它们要用的几十个 Kenney 模型。
 func _enter_tree() -> void:
+	print("Dusk Lake v%s: renderer=%s driver=%s" % [
+		ProjectSettings.get_setting("application/config/version", "unknown"),
+		RenderingServer.get_current_rendering_method(),
+		RenderingServer.get_current_rendering_driver_name(),
+	])
 	ArtMaterials.preload_kenney(ForestBuilder.asset_paths() + GroundCoverBuilder.asset_paths())
 
 
