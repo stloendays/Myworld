@@ -26,6 +26,9 @@ func _ready() -> void:
 	var lobby := LobbyMenu.new()
 	lobby.name = "LobbyMenu"
 	add_child(lobby)
+	var life := LakesideLife.new()
+	life.name = "LakesideLife"
+	add_child(life)
 
 
 static func place_at_spawn(player: FirstPersonController) -> void:

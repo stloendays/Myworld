@@ -1,0 +1,176 @@
+{
+  "schema_version": 1,
+  "fishing_spots": [
+    {
+      "id": "dock",
+      "center": [
+        -4,
+        26
+      ],
+      "radius": 7,
+      "name": "码头",
+      "name_en": "Dock"
+    },
+    {
+      "id": "islet",
+      "center": [
+        42,
+        -6
+      ],
+      "radius": 13,
+      "name": "湖心岛",
+      "name_en": "Lake Islet"
+    },
+    {
+      "id": "north_bay",
+      "center": [
+        35,
+        -65
+      ],
+      "radius": 14,
+      "name": "芦苇湾",
+      "name_en": "Reed Bay"
+    }
+  ],
+  "fish": [
+    {
+      "id": "perch",
+      "name": "河鲈",
+      "name_en": "Perch",
+      "weight": 8,
+      "spots": [
+        "dock",
+        "islet",
+        "north_bay"
+      ],
+      "seasons": [
+        "SPRING",
+        "SUMMER",
+        "AUTUMN",
+        "WINTER"
+      ],
+      "start": 0,
+      "end": 1440
+    },
+    {
+      "id": "silver_carp",
+      "name": "银鲤",
+      "name_en": "Silver Carp",
+      "weight": 5,
+      "spots": [
+        "dock",
+        "islet"
+      ],
+      "seasons": [
+        "SPRING",
+        "SUMMER",
+        "AUTUMN"
+      ],
+      "start": 360,
+      "end": 1200
+    },
+    {
+      "id": "moon_trout",
+      "name": "月光鳟",
+      "name_en": "Moon Trout",
+      "weight": 2,
+      "spots": [
+        "islet",
+        "north_bay"
+      ],
+      "seasons": [
+        "AUTUMN",
+        "WINTER"
+      ],
+      "start": 1140,
+      "end": 300,
+      "weather": [
+        "CLEAR",
+        "OVERCAST"
+      ]
+    }
+  ],
+  "cat": {
+    "id": "cabin_cat",
+    "sleep": [
+      -67,
+      37
+    ],
+    "shelter": [
+      -67,
+      37
+    ],
+    "patrol": [
+      -60,
+      39
+    ],
+    "porch": [
+      -63,
+      37
+    ],
+    "rain_threshold": 0.12,
+    "sleep_from": 1200,
+    "sleep_to": 420
+  },
+  "events": [
+    {
+      "id": "rain_lantern",
+      "interval_days": 3,
+      "offset": 0,
+      "start": 1140,
+      "end": 270,
+      "min_rain_recent": 0.18,
+      "weather": [
+        "CLEAR",
+        "OVERCAST"
+      ],
+      "position": [
+        7,
+        24
+      ],
+      "repeatable": true
+    },
+    {
+      "id": "meteor_shower",
+      "interval_days": 5,
+      "offset": 2,
+      "start": 1260,
+      "end": 150,
+      "weather": [
+        "CLEAR"
+      ],
+      "repeatable": true
+    },
+    {
+      "id": "meteor_stardust",
+      "source": "meteor_shower",
+      "start": 420,
+      "end": 1140,
+      "position": [
+        99,
+        -106
+      ],
+      "repeatable": true
+    },
+    {
+      "id": "guide_fox",
+      "interval_days": 4,
+      "offset": 1,
+      "start": 960,
+      "end": 1320,
+      "weather": [
+        "CLEAR",
+        "OVERCAST"
+      ],
+      "position": [
+        -80,
+        -52
+      ],
+      "destination": [
+        -93,
+        -101
+      ],
+      "repeatable": true
+    }
+  ]
+}
