@@ -11,15 +11,18 @@ extends Node
 ## 地形遮挡体（TerrainBuilder）也是这次优化的一部分，各在自己的脚本里。
 
 const PRESETS := {
-	"low": {"ssr": 0, "ssao": false, "ssao_half": true, "splits": 2, "shadow_dist": 60.0, "atlas": 2048, "msaa": Viewport.MSAA_DISABLED, "ssaa": Viewport.SCREEN_SPACE_AA_FXAA, "pos_atlas": 1024, "radiance": Sky.RADIANCE_SIZE_128, "lod": 4.0, "cover_shadows": false},
-	"medium": {"ssr": 32, "ssao": true, "ssao_half": true, "splits": 2, "shadow_dist": 90.0, "atlas": 2048, "msaa": Viewport.MSAA_DISABLED, "ssaa": Viewport.SCREEN_SPACE_AA_SMAA, "pos_atlas": 2048, "radiance": Sky.RADIANCE_SIZE_128, "lod": 2.0, "cover_shadows": false},
-	"high": {"ssr": 64, "ssao": true, "ssao_half": false, "splits": 4, "shadow_dist": 120.0, "atlas": 4096, "msaa": Viewport.MSAA_DISABLED, "ssaa": Viewport.SCREEN_SPACE_AA_SMAA, "pos_atlas": 2048, "radiance": Sky.RADIANCE_SIZE_256, "lod": 1.0, "cover_shadows": true},
-	"ultra": {"ssr": 128, "ssao": true, "ssao_half": false, "splits": 4, "shadow_dist": 160.0, "atlas": 4096, "msaa": Viewport.MSAA_2X, "ssaa": Viewport.SCREEN_SPACE_AA_DISABLED, "pos_atlas": 4096, "radiance": Sky.RADIANCE_SIZE_256, "lod": 0.5, "cover_shadows": true},
+	"low": {"ssr": 0, "ssao": false, "ssao_half": true, "splits": 2, "shadow_dist": 60.0, "atlas": 2048, "msaa": Viewport.MSAA_DISABLED, "ssaa": Viewport.SCREEN_SPACE_AA_FXAA, "pos_atlas": 1024, "radiance": Sky.RADIANCE_SIZE_128, "lod": 4.0, "cover_shadows": false, "taa": false},
+	"medium": {"ssr": 32, "ssao": true, "ssao_half": true, "splits": 2, "shadow_dist": 90.0, "atlas": 2048, "msaa": Viewport.MSAA_DISABLED, "ssaa": Viewport.SCREEN_SPACE_AA_SMAA, "pos_atlas": 2048, "radiance": Sky.RADIANCE_SIZE_128, "lod": 2.0, "cover_shadows": false, "taa": false},
+	"high": {"ssr": 64, "ssao": true, "ssao_half": false, "splits": 4, "shadow_dist": 120.0, "atlas": 4096, "msaa": Viewport.MSAA_DISABLED, "ssaa": Viewport.SCREEN_SPACE_AA_DISABLED, "pos_atlas": 2048, "radiance": Sky.RADIANCE_SIZE_256, "lod": 1.0, "cover_shadows": true, "taa": true},
+	"ultra": {"ssr": 128, "ssao": true, "ssao_half": false, "splits": 4, "shadow_dist": 160.0, "atlas": 4096, "msaa": Viewport.MSAA_2X, "ssaa": Viewport.SCREEN_SPACE_AA_DISABLED, "pos_atlas": 4096, "radiance": Sky.RADIANCE_SIZE_256, "lod": 0.5, "cover_shadows": true, "taa": true},
 }
 const LIGHT_FADE_BEGIN := 40.0
 const LIGHT_SHADOW_FADE := 18.0
 const LIGHT_FADE_LENGTH := 10.0
 const MIN_SCALE := 0.6
+## 动态分辨率防抖：连续 DOWN_AFTER 次（每次 0.5 s）超预算才降一档，连续 UP_AFTER 次富余才升一档
+const DOWN_AFTER := 2
+const UP_AFTER := 4
 ## 完全封闭、照不到阳光的区域：人在这里时关掉太阳阴影（太阳阴影要把地面上整片树林画进阴影贴图）
 const UNDERGROUND_ZONES := [&"aquarium"]
 
@@ -28,6 +31,8 @@ var gpu_ms := 0.0
 var applied_quality := ""
 
 var _adjust_timer := 0.0
+var _over := 0
+var _under := 0
 var _gpu_samples: Array[float] = []
 
 
@@ -62,6 +67,8 @@ func apply_quality() -> void:
 	get_viewport().screen_space_aa = p["ssaa"]
 	get_viewport().positional_shadow_atlas_size = p["pos_atlas"]
 	get_viewport().mesh_lod_threshold = p["lod"]
+	# 高 / 极高画质用时间抗锯齿（TAA）：走动时细草、栏杆、木板缝、阴影边的锯齿闪烁约减半（devtools/FlickerProbe 的 jiggle 测试）
+	get_viewport().use_taa = bool(p.get("taa", false))
 	var cover := get_tree().get_first_node_in_group("ground_cover")
 	if cover != null:
 		for mmi: MultiMeshInstance3D in cover.find_children("*", "MultiMeshInstance3D", true, false):
@@ -116,11 +123,17 @@ func _process(delta: float) -> void:
 func update_dynamic_scale(measured_gpu_ms: float) -> float:
 	var target_fps := GameSettings.max_fps if GameSettings.max_fps > 0 else 60
 	var budget := 1000.0 / float(target_fps)
-	if measured_gpu_ms > budget * 0.9:
+	_over = _over + 1 if measured_gpu_ms > budget * 0.9 else 0
+	_under = _under + 1 if measured_gpu_ms < budget * 0.6 else 0
+	var before := dynamic_scale
+	if _over >= DOWN_AFTER:
 		dynamic_scale = maxf(MIN_SCALE / maxf(GameSettings.render_scale, 0.01), dynamic_scale - 0.05)
-	elif measured_gpu_ms < budget * 0.6:
+		_over = 0
+	elif _under >= UP_AFTER:
 		dynamic_scale = minf(1.0, dynamic_scale + 0.05)
-	_apply_scale()
+		_under = 0
+	if dynamic_scale != before:
+		_apply_scale()
 	return dynamic_scale
 
 
@@ -132,7 +145,9 @@ func _apply_scale() -> void:
 	var s := effective_scale()
 	var vp := get_viewport()
 	vp.scaling_3d_scale = s
-	vp.scaling_3d_mode = Viewport.SCALING_3D_MODE_FSR if s < 0.99 else Viewport.SCALING_3D_MODE_BILINEAR
+	# 开着动态分辨率就一直用 FSR（100% 时只做锐化）：比例在 100% 上下变动时不在两种缩放之间来回切，画面不跳
+	var fsr := s < 0.99 or (GameSettings.dynamic_resolution and DisplayServer.get_name() != "headless")
+	vp.scaling_3d_mode = Viewport.SCALING_3D_MODE_FSR if fsr else Viewport.SCALING_3D_MODE_BILINEAR
 
 
 func _update_underground() -> void:

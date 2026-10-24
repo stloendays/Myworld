@@ -98,5 +98,17 @@
     "title_en": "World II · Under Construction",
     "body_zh": "这里以后会是一整片新的世界，现在只长出了这座浮岛。身后的光门通回暮色湖畔。",
     "body_en": "A whole new world will grow here. For now there is only this floating island. The gate behind you leads back to Dusk Lake."
+  },
+  "west_falls": {
+    "title_zh": "西岭小瀑布",
+    "title_en": "West Falls",
+    "body_zh": "西边山坡上的泉水汇成一条小溪，在这里跌下两米多高的石坎，再穿过林子流进湖里。溪水很浅，可以踩着走过去；林道上有一座木板桥。",
+    "body_en": "Springs on the western slope gather into a creek that drops over a two-metre ledge here, then winds through the woods into the lake. The water is shallow enough to wade; the forest trail crosses it on a plank bridge."
+  },
+  "north_gorge": {
+    "title_zh": "北岭裂谷",
+    "title_en": "North Gorge",
+    "body_zh": "观景小山被一道七米多深的裂缝劈开，林道从原木桥上跨过去。裂谷两头渐渐变浅，可以从东西两端走下谷底。",
+    "body_en": "A crack more than seven metres deep splits the lookout hill, and the forest trail crosses it on a log bridge. The gorge grows shallow at both ends, so you can walk down to its floor from the east or the west."
   }
 }

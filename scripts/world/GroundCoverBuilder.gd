@@ -2,7 +2,8 @@
 class_name GroundCoverBuilder
 extends Node3D
 ## 地被层：草丛、灌木、野花、蘑菇、树桩倒木、小石块、湖边睡莲（Kenney Nature Kit，CC0）。
-## 按 40 m 区块生成 MultiMesh，并设置可见距离，远处自动不画。
+## 按 40 m 区块生成 MultiMesh，并设置可见距离，远处自动不画。草、花、蘑菇在着色器里按每一株离相机的距离慢慢缩小到 0
+## （fade），整块只在全部缩没之后才剔除，走动时不会一整块冒出来或抖动淡出；其余地被（灌木、石块、树桩）按可见距离抖动淡出。
 ## 分布与地形材质一致：草地上长草和花，林下有蘑菇、树桩，步道和空地中心保持干净。
 ## 只有树桩和倒木有碰撞。
 
@@ -16,15 +17,15 @@ const LILY_COLORS := [Color(0.25, 0.38, 0.18), Color(0.30, 0.42, 0.20)]
 
 ## where：grass 草地 / forest 林下 / any 任意陆地 / meadow 南部草甸 / shallow 浅水；density 为每平方米个数。
 const ITEMS := [
-	{"assets": ["grass", "grass_large"], "where": "grass", "density": 0.32, "scale": [2.2, 3.6], "colors": "grass", "view": 70.0},
-	{"assets": ["grass_leafs", "grass"], "where": "forest", "density": 0.03, "scale": [2.0, 3.0], "colors": "grass", "view": 60.0},
+	{"assets": ["grass", "grass_large"], "where": "grass", "density": 0.32, "scale": [2.2, 3.6], "colors": "grass", "view": 68.0, "fade": [52.0, 68.0]},
+	{"assets": ["grass_leafs", "grass"], "where": "forest", "density": 0.03, "scale": [2.0, 3.0], "colors": "grass", "view": 60.0, "fade": [45.0, 60.0]},
 	{"assets": ["plant_bush", "plant_bushDetailed", "plant_bushLarge", "plant_bushSmall"], "where": "any", "density": 0.008, "scale": [2.5, 4.0], "colors": "bush", "view": 140.0},
-	{"assets": ["flower_purpleA", "flower_purpleB", "flower_redA", "flower_redB", "flower_yellowA", "flower_yellowB"], "where": "meadow", "density": 0.35, "scale": [2.6, 3.6], "colors": "grass", "view": 70.0},
-	{"assets": ["flower_yellowA", "flower_purpleA"], "where": "grass", "density": 0.006, "scale": [2.6, 3.4], "colors": "grass", "view": 60.0},
-	{"assets": ["mushroom_red", "mushroom_redGroup", "mushroom_tan", "mushroom_tanGroup"], "where": "forest", "density": 0.004, "scale": [2.0, 3.0], "colors": "white", "view": 40.0},
+	{"assets": ["flower_purpleA", "flower_purpleB", "flower_redA", "flower_redB", "flower_yellowA", "flower_yellowB"], "where": "meadow", "density": 0.35, "scale": [2.6, 3.6], "colors": "grass", "view": 68.0, "fade": [52.0, 68.0]},
+	{"assets": ["flower_yellowA", "flower_purpleA"], "where": "grass", "density": 0.006, "scale": [2.6, 3.4], "colors": "grass", "view": 60.0, "fade": [45.0, 60.0]},
+	{"assets": ["mushroom_red", "mushroom_redGroup", "mushroom_tan", "mushroom_tanGroup"], "where": "forest", "density": 0.004, "scale": [2.0, 3.0], "colors": "white", "view": 40.0, "fade": [30.0, 40.0]},
 	{"assets": ["stump_old", "stump_roundDetailed"], "where": "forest", "density": 0.0012, "scale": [3.0, 4.2], "colors": "white", "view": 160.0, "collide": true},
 	{"assets": ["log", "log_large"], "where": "forest", "density": 0.0008, "scale": [3.0, 4.5], "colors": "white", "view": 160.0, "collide": true},
-	{"assets": ["rock_smallA", "rock_smallC", "rock_smallE", "rock_smallFlatA", "rock_smallFlatB"], "where": "any", "density": 0.006, "scale": [2.0, 4.0], "colors": "grass", "view": 90.0},
+	{"assets": ["rock_smallA", "rock_smallC", "rock_smallE", "rock_smallFlatA", "rock_smallFlatB"], "where": "any", "density": 0.006, "scale": [2.0, 4.0], "colors": "grass", "view": 130.0},
 	{"assets": ["lily_large", "lily_small"], "where": "shallow", "density": 0.02, "scale": [3.0, 4.5], "colors": "lily", "view": 120.0},
 ]
 
@@ -141,10 +142,11 @@ func _fill_chunk(chunk: Node3D, item: Dictionary, rng: RandomNumberGenerator, re
 		if entries.is_empty():
 			continue
 		var info := ArtMaterials.kenney_mesh(NATURE + asset + ".glb")
+		var fade: Array = item.get("fade", [])
 		var mm := MultiMesh.new()
 		mm.transform_format = MultiMesh.TRANSFORM_3D
 		mm.use_colors = true
-		mm.mesh = info["mesh"]
+		mm.mesh = info["mesh"] if fade.is_empty() else _fading_mesh(asset, info["mesh"], fade)
 		var palette := _palette(str(item["colors"]))
 		var local: Transform3D = info["transform"]
 		var xforms: Array[Transform3D] = []
@@ -157,9 +159,13 @@ func _fill_chunk(chunk: Node3D, item: Dictionary, rng: RandomNumberGenerator, re
 		mmi.name = asset
 		mmi.multimesh = mm
 		mmi.set_meta("palette", str(item["colors"]))
-		mmi.visibility_range_end = float(item["view"])
-		mmi.visibility_range_end_margin = 10.0
-		mmi.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
+		if fade.is_empty():
+			mmi.visibility_range_end = float(item["view"])
+			mmi.visibility_range_end_margin = 15.0
+			mmi.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
+		else:
+			# 草和花在着色器里逐株缩小到 0；整块只在最远一株也缩没之后才剔除（可见距离按块中心算，加半条对角线）
+			mmi.visibility_range_end = float(fade[1]) + CHUNK * 0.75
 		if float(item["view"]) < 100.0:
 			mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		chunk.add_child(mmi)
@@ -187,6 +193,9 @@ func _suitability(x: float, z: float, where: String, meadow: Dictionary) -> floa
 		return 0.0
 	# 便宜的判断在前（坡度要算 4 次地形高度）
 	if Vegetation.in_keepout(p) or WorldLayout.distance_to_paths(p) < 1.8 or WorldTerrain.slope_at(x, z) > 0.6:
+		return 0.0
+	# 小溪河床、裂谷谷底不长草
+	if WorldTerrain.channel_distance(x, z) < 0.6:
 		return 0.0
 	return _kind_factor(x, z, where, meadow)
 
@@ -218,3 +227,23 @@ func _palette(name: String) -> Array:
 		"lily":
 			return LILY_COLORS
 	return [Color.WHITE]
+
+
+## 地被网格的“远处逐株缩小”版本：同一个模型、材质换成 ArtMaterials.cover_fade 的变体（按资源和距离缓存）。
+static var _fading: Dictionary = {}
+
+
+static func _fading_mesh(asset: String, mesh: Mesh, fade: Array) -> Mesh:
+	var key := "%s:%s:%s" % [asset, fade[0], fade[1]]
+	if _fading.has(key) and is_instance_valid(_fading[key]):
+		return _fading[key]
+	var m := mesh.duplicate() as Mesh
+	for i in m.get_surface_count():
+		m.surface_set_material(i, ArtMaterials.cover_fade(m.surface_get_material(i), float(fade[0]), float(fade[1])))
+	_fading[key] = m
+	return m
+
+
+## 离开这个世界时清掉（WorldTravel 调用）。
+static func clear_cache() -> void:
+	_fading.clear()

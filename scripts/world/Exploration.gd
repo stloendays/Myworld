@@ -1,6 +1,6 @@
 class_name Exploration
 extends Node3D
-## 湖上探索：world_layout.json → lake_pois 列出的地点（湖心小岛、码头尽头、北岸芦苇湾、东岸睡莲湾）。
+## 探索点：world_layout.json → lake_pois 列出的地点（湖心小岛、码头尽头、北岸芦苇湾、东岸睡莲湾，以及西岭小瀑布、北岭裂谷）。
 ## 玩家（走路或划独木舟）进入某点的半径就算“发现”：记进 WorldState.discoveries，屏幕上弹出提示，
 ## 小地图上该点由问号变成金色标记。每个点的摆件（营火、帐篷、芦苇、睡莲）也在这里按布局生成。
 

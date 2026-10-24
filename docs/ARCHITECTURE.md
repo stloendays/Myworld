@@ -36,6 +36,7 @@ Main (Main.gd)
 ├── Cave (Cave.gd)                       北缘岩脊里的图腾山洞：洞道与岩丘、石厅、老图腾 CaveTotem、篝火、尽头光门
 ├── StoneCottage (StoneCottage.gd)       南部草地的石头小屋（LockedDoor，进不去）
 ├── StarField (StarField.gd)             夜空里的五个星座，跟着相机走
+├── Streams (Streams.gd)                 小溪水面、瀑布水雾、溪边石头芦苇、木板桥与原木桥（河床、裂谷本身是地形沟槽）
 ├── DialoguePanel / JournalPanel（Main 启动时创建）  图腾对话框；J 旅行日志与左上角任务追踪
 ```
 
@@ -80,6 +81,7 @@ Main (Main.gd)
 | `WorldRegistry` / `WorldMap` | 已实现 | `data/worlds/worlds.json` 列出所有世界（status：open / preview / planned、根场景、到达位置）；地图读注册表与布局绘制；`WorldRegistry.enter()` 把能去的世界交给 WorldTravel |
 | `WorldTravel`（Autoload） | M2 扩展已实现 | 跨世界旅行：渐黑 → 卸载当前世界 → 清缓存 → 后台线程加载 → 实例化 → 渐亮；记录当前世界与来时的世界；联机时不能离开 |
 | `QuestLog`（Autoload）/ `CaveTotem` / `DialoguePanel` / `JournalPanel` | M2 扩展已实现 | 任务内容在 `data/quests/quests.json`；状态在 `WorldState.quests`、图鉴在 `WorldState.journal`（存档 v3）；每 0.4 秒只读世界状态检查目标；进度另写 `user://journal.json` |
+| `WorldTerrain` 沟槽 / `Streams` | M2 扩展已实现 | `terrain.channels`：小溪（沟底只降不升、跌水成瀑布）与裂谷（陡壁窄底、两头渐浅）；沟底高度首次调用时按原地形算好，碰撞、网格、植被共用；`Streams` 画水面、水雾、桥（桥头引坡贴地） |
 | `Cave` / `StoneCottage` / `StarField` | M2 扩展已实现 | 图腾山洞（世界坐标生成的洞道网格与双面三角网碰撞，室内区域 `cave`）；锁着门的石头小屋；星座（`data/sky/constellations.json`） |
 | `Precipitation` 季节飘落物 | 已实现 | 方案在 `data/weather/seasonal_fx.json`（落叶、花瓣、保留的原版红点）；`profile_override` 供开发者面板临时切换 |
 | `AudioDirector` | M3 接口占位 | 订阅区域与天气事件做室内外混音 |

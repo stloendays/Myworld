@@ -116,6 +116,7 @@ func arrival() -> Dictionary:
 ## 只属于上一个世界的静态缓存（贴图材质、Kenney 模型）。下一个世界用到时会重新读。
 func _release_caches() -> void:
 	ArtMaterials.clear_cache()
+	GroundCoverBuilder.clear_cache()
 
 
 func _fade_to(alpha: float) -> void:

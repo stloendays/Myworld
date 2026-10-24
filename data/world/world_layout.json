@@ -35,6 +35,13 @@
     ],
     "pits": [
       {"id": "poolhouse_basement", "rect": [-8.5, 75.5, 16.5, 92.5], "floor": -10.6}
+    ],
+    "_channels_doc": "沟槽：creek 小溪（沟底沿流向只降不升；depth 河床比原地面低多少，water_depth 水深，falls [离源头的距离, 落差] 是瀑布），gorge 裂谷（depth 最深处，taper 两端渐浅的长度）。inner 沟底半宽，outer 沟顶半宽。points 从源头到出口。",
+    "channels": [
+      {"id": "west_creek", "kind": "creek", "points": [[-114, -4], [-108, -1], [-101, 3], [-94, 2], [-88, -1], [-80, -3], [-72, -1], [-64, 1], [-56, 3], [-48, 4], [-40, 4], [-33, 4]],
+       "depth": 0.75, "water_depth": 0.32, "inner": 1.6, "outer": 3.8, "falls": [[17.0, 1.8]]},
+      {"id": "north_gorge", "kind": "gorge", "points": [[-111, -95], [-100, -91], [-91, -89], [-82, -91], [-71, -96]],
+       "depth": 7.5, "inner": 2.0, "outer": 4.2, "taper": 15.0}
     ]
   },
 
@@ -106,6 +113,14 @@
     "portal": {"pos": [29.3, -103.2], "yaw_deg": -90.0, "world": "world_02"}
   },
 
+  "nature": {
+    "_doc": "自然景观上的人造物（StreamBuilder 读取）：bridges 两端坐标（xz），桥面按两端地面高度自动定；kind：plank 木板桥 / log 原木桥。",
+    "bridges": [
+      {"id": "creek_bridge", "kind": "plank", "from": [-83.0, -5.9], "to": [-84.8, 1.9], "width": 1.8},
+      {"id": "gorge_bridge", "kind": "log", "from": [-91.15, -94.1], "to": [-88.45, -84.0], "width": 1.6}
+    ]
+  },
+
   "cottage": {
     "_doc": "南部草地上的石头小屋：门锁着，暂时进不去。yaw_deg 让门（本地 +Z）朝向西边的草地步道。",
     "zone_id": "cottage",
@@ -124,6 +139,8 @@
      ]},
     {"id": "north_reed_bay", "name": "北岸芦苇湾", "name_en": "North Reed Bay", "center": [35, -65], "radius": 13,
      "scatter": {"assets": ["plant_flatTall"], "count": 70, "depth": [-0.35, 0.45], "scale": [3.2, 4.6]}},
+    {"id": "west_falls", "name": "西岭小瀑布", "name_en": "West Falls", "center": [-97, 3], "radius": 7},
+    {"id": "north_gorge", "name": "北岭裂谷", "name_en": "North Gorge", "center": [-89, -89], "radius": 7},
     {"id": "east_lily_cove", "name": "东岸睡莲湾", "name_en": "East Lily Cove", "center": [108, -2], "radius": 13,
      "scatter": {"assets": ["lily_large", "lily_small"], "count": 55, "depth": [0.3, 1.8], "scale": [3.0, 4.6], "float": true}}
   ],
@@ -135,6 +152,8 @@
     {"id": "sign_fairy_glade", "text": "fairy_glade", "pos": [62.5, 90.6], "yaw_deg": -115.0, "style": "stand", "width": 1.5, "scale": 1.45},
     {"id": "sign_snow_trail", "text": "snow_peak_trail", "pos": [-76.5, -51.5], "yaw_deg": -90.0, "style": "stand", "width": 1.5, "scale": 1.45},
     {"id": "sign_snow_summit", "text": "snow_peak_summit", "pos": [99.0, -105.5], "yaw_deg": -78.0, "style": "stand", "width": 1.5, "scale": 1.45},
+    {"id": "sign_falls", "text": "west_falls", "pos": [-93.0, 6.4], "yaw_deg": 150.0, "style": "stand", "width": 1.4, "scale": 1.4},
+    {"id": "sign_gorge", "text": "north_gorge", "pos": [-86.6, -81.6], "yaw_deg": 170.0, "style": "stand", "width": 1.4, "scale": 1.4},
     {"id": "sign_cave", "text": "cave_mouth", "pos": [-12.2, -89.2], "yaw_deg": 20.0, "style": "stand", "width": 1.5, "scale": 1.45},
     {"id": "sign_cottage", "text": "stone_cottage", "pos": [-76.6, 92.4], "yaw_deg": -70.0, "style": "stand", "width": 1.4, "scale": 1.4}
   ],
@@ -152,6 +171,8 @@
     {"name": "仙境林地", "pos": [62.0, 88.0], "ground": true, "heading": 90.0},
     {"name": "雪山顶", "pos": [99.5, -106.5], "ground": true, "heading": 240.0},
     {"name": "山洞口", "pos": [-8.0, -86.5], "ground": true, "heading": 0.0},
+    {"name": "西岭小瀑布", "pos": [-92.0, 6.0], "ground": true, "heading": 290.0},
+    {"name": "北岭裂谷", "pos": [-88.2, -82.0], "ground": true, "heading": 195.0},
     {"name": "图腾石厅", "pos": [5.0, -99.0], "ground": true, "heading": 160.0},
     {"name": "石头小屋", "pos": [-79.0, 95.0], "ground": true, "heading": 90.0},
     {"name": "南部草甸", "pos": [-84.0, 93.0], "ground": true, "heading": 0.0},

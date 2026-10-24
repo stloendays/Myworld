@@ -4,7 +4,7 @@
 
 - 引擎：**Godot 4.7.2 Standard**（GDScript，Forward+，Jolt Physics），Windows 单机优先
 - 需求规格：[docs/DEVELOPMENT_SPEC.md](docs/DEVELOPMENT_SPEC.md)（唯一需求来源）；阶段指令：[docs/AGENT_HANDOFF.md](docs/AGENT_HANDOFF.md)
-- 当前进度：**M0、M1、第一轮正式美术、M2 天气系统、方块人物、泳池馆与地下水族馆、小动物、雷暴/彩虹/风、聊天框、小地图、开发者模式、第一人称双手、木屋生活、独木舟与湖上探索、性能优化、可潜水的海洋大缸、木屋国际象棋、动作轮盘、世界地图与全屏、联机（最多 4 人）与中英界面、自动更新、新立牌、夜里的仙境林地、东北角雪山、内存与卡顿优化、图腾山洞与任务、星座与图鉴、石头小屋、跨世界旅行已完成**，自动检查 85/85、联机检查 10/10 通过。见 [docs/QA_M0_M1.md](docs/QA_M0_M1.md)、[docs/ART_PASS.md](docs/ART_PASS.md)、[docs/M2_WEATHER_CHARACTER.md](docs/M2_WEATHER_CHARACTER.md)、[docs/POOLHOUSE_FAUNA.md](docs/POOLHOUSE_FAUNA.md)、[docs/CHAT.md](docs/CHAT.md)、[docs/MINIMAP_DEVMODE.md](docs/MINIMAP_DEVMODE.md)、[docs/CABIN_LIFE_CANOE.md](docs/CABIN_LIFE_CANOE.md)、[docs/PERFORMANCE.md](docs/PERFORMANCE.md)、[docs/AQUARIUM_DIVE.md](docs/AQUARIUM_DIVE.md)、[docs/CHESS.md](docs/CHESS.md)、[docs/INTERACTIONS_WORLDMAP.md](docs/INTERACTIONS_WORLDMAP.md)、[docs/COOP.md](docs/COOP.md)、[docs/V0_3.md](docs/V0_3.md)、[docs/SNOW_PEAK.md](docs/SNOW_PEAK.md)、[docs/MEMORY_STUTTER.md](docs/MEMORY_STUTTER.md)、[docs/CAVE_QUESTS.md](docs/CAVE_QUESTS.md)
+- 当前进度：**M0、M1、第一轮正式美术、M2 天气系统、方块人物、泳池馆与地下水族馆、小动物、雷暴/彩虹/风、聊天框、小地图、开发者模式、第一人称双手、木屋生活、独木舟与湖上探索、性能优化、可潜水的海洋大缸、木屋国际象棋、动作轮盘、世界地图与全屏、联机（最多 4 人）与中英界面、自动更新、新立牌、夜里的仙境林地、东北角雪山、内存与卡顿优化、图腾山洞与任务、星座与图鉴、石头小屋、跨世界旅行、画面闪动优化、小溪瀑布与裂谷已完成**，自动检查 88/88、联机检查 10/10 通过。见 [docs/QA_M0_M1.md](docs/QA_M0_M1.md)、[docs/ART_PASS.md](docs/ART_PASS.md)、[docs/M2_WEATHER_CHARACTER.md](docs/M2_WEATHER_CHARACTER.md)、[docs/POOLHOUSE_FAUNA.md](docs/POOLHOUSE_FAUNA.md)、[docs/CHAT.md](docs/CHAT.md)、[docs/MINIMAP_DEVMODE.md](docs/MINIMAP_DEVMODE.md)、[docs/CABIN_LIFE_CANOE.md](docs/CABIN_LIFE_CANOE.md)、[docs/PERFORMANCE.md](docs/PERFORMANCE.md)、[docs/AQUARIUM_DIVE.md](docs/AQUARIUM_DIVE.md)、[docs/CHESS.md](docs/CHESS.md)、[docs/INTERACTIONS_WORLDMAP.md](docs/INTERACTIONS_WORLDMAP.md)、[docs/COOP.md](docs/COOP.md)、[docs/V0_3.md](docs/V0_3.md)、[docs/SNOW_PEAK.md](docs/SNOW_PEAK.md)、[docs/MEMORY_STUTTER.md](docs/MEMORY_STUTTER.md)、[docs/CAVE_QUESTS.md](docs/CAVE_QUESTS.md)、[docs/NATURE_FLICKER.md](docs/NATURE_FLICKER.md)
 
 ![湖岸出生点](docs/screenshots/m1_01_spawn_dusk.png)
 
@@ -163,8 +163,11 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | `scripts/core/QuestLog.gd`、`data/quests/quests.json`、`scripts/ui/DialoguePanel.gd`、`scripts/ui/JournalPanel.gd` | 任务与图鉴（Autoload）：任务目标检查、图鉴记录、`user://journal.json`；图腾对话框；J 旅行日志与左上角任务追踪 |
 | `scripts/world/StarField.gd`、`data/sky/constellations.json` | 夜空里的五个原创星座，盯着看就认出 |
 | `scripts/buildings/StoneCottage.gd`、`scripts/interactions/LockedDoor.gd` | 南部草地的石头小屋（门锁着，暂时进不去） |
+| `scripts/world/Streams.gd`、`shaders/stream_water.gdshader`、布局 `terrain.channels` 与 `nature.bridges` | 西岭小溪（河床是地形沟槽）、小瀑布与水雾、溪边石头芦苇；北岭裂谷；木板桥和原木桥 |
+| `shaders/cover_flat.gdshader`、`foliage.gdshader` 的 fade 参数 | 草、花、蘑菇远处逐株缩小消失（不再整块抖动淡出） |
+| `devtools/FlickerProbe.tscn`、`devtools/flicker_report.py` | 画面闪动探针：固定机位连续渲染，逐像素统计闪烁、画热力图；jiggle 模式比较抗锯齿方案 |
 | `data/weather/seasonal_fx.json` | 季节飘落物方案：落叶、花瓣，以及保留的“原版红点”（`legacy_red_motes`） |
-| `tests/TestRunner.tscn` | 自动检查（85 项：QA-01、QA-02、QA-10、天气、人物、泳池馆、游泳、动物、聊天框、小地图、开发者模式、设置、国际象棋、动作轮盘、世界地图等；`DUSK_TEST_ONLY=_test_xxx` 只跑某几项） |
+| `tests/TestRunner.tscn` | 自动检查（88 项：QA-01、QA-02、QA-10、天气、人物、泳池馆、游泳、动物、聊天框、小地图、开发者模式、设置、国际象棋、动作轮盘、世界地图等；`DUSK_TEST_ONLY=_test_xxx` 只跑某几项） |
 | `scripts/core/Updater.gd` | 自动更新（Autoload）：查 GitHub Releases、下载核对、退出后替换 exe 并重启 |
 | `scripts/world/FairyGlade.gd`、`scripts/interactions/FairyPortal.gd`、`shaders/fairy_portal.gdshader` | 仙境林地：只在晴朗夜里出现的特殊事件（仙树、蘑菇圈、水晶、漂浮小岛、月光石门） |
 | `scripts/world/SnowPeak.gd` | 雪山顶：石堆、旗杆、面朝湖的长椅、常年小雪（山体是地形 hills 里的 snow_peak，雪线、林线在布局文件里；远处主峰在 `DistantBackdrop`） |
@@ -212,7 +215,8 @@ pwsh -File devtools/fetch_polyhaven.ps1
 - **雪山**：东北角能爬上去的雪山（山顶 39 m，27 m 以上终年积雪，林线以上无树），山顶有石堆、旗杆和看湖的长椅，背后是雪顶主峰远景；远处的山重做成约 16 座形状各异、分远近两层的山
 - **图腾山洞与任务**：北边岩脊里的山洞，石厅里有会说话的老图腾和不灭的篝火，九个任务一个一个接；洞的尽头一道光门通往第二个世界（先卸载湖畔再加载，不同时占内存；世界二目前是雾中浮岛）
 - **旅行日志、图鉴、星座**：J 查看任务进度和图鉴（14 种动物、5 个原创星座），晴朗的夜里盯着星座看就能认出；南部草地多了一座锁着门的石头小屋
-- 自动检查（85 项）与联机检查（10 项）、截图与性能测试工具
+- **画面闪动优化与自然景观**：高画质改用 TAA（走动时锯齿闪烁约减半）、草花远处逐株缩小不再成块闪现、动态分辨率防抖；西边一条从山坡流进湖的小溪，中途一道小瀑布，林道上一座木板桥；西北小山被一道 7.5 m 深的裂谷劈开，林道上架着原木桥，两头能走下谷底
+- 自动检查（88 项）与联机检查（10 项）、截图与性能测试工具
 
 ## 未实现（按里程碑）
 

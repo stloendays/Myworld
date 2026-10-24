@@ -205,7 +205,7 @@ func _valid(p: Vector2) -> bool:
 		return h < WorldLayout.water_level() - 0.5 and p.distance_to(center) < radius * 1.2
 	if loco == "fly":
 		return true
-	if h < WorldLayout.water_level() + 0.4 or Vegetation.in_keepout(p):
+	if h < WorldLayout.water_level() + 0.4 or Vegetation.in_keepout(p) or WorldTerrain.channel_distance(p.x, p.y) < 0.5:
 		return false
 	var mx := WorldLayout.world_max() - 18.0
 	return absf(p.x) < mx and absf(p.y) < mx and p.distance_to(center) < radius * 1.3
