@@ -40,7 +40,7 @@ func _on_developer_mode(enabled: bool) -> void:
 func set_open(open: bool) -> void:
 	_open = open and GameSettings.developer_mode
 	_panel.visible = _open
-	if DisplayServer.get_name() != "headless":
+	if GameSettings.can_grab_mouse():
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if _open else Input.MOUSE_MODE_CAPTURED
 
 

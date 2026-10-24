@@ -56,7 +56,7 @@ func interact(actor: Node) -> void:
 	_player = actor as FirstPersonController
 	if _player != null:
 		_player.input_locked = true
-	if DisplayServer.get_name() != "headless":
+	if GameSettings.can_grab_mouse():
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	panel.open()
 
@@ -65,7 +65,7 @@ func _on_closed() -> void:
 	if _player != null:
 		_player.input_locked = false
 		_player = null
-	if DisplayServer.get_name() != "headless":
+	if GameSettings.can_grab_mouse():
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	_publish_state()
 

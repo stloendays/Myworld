@@ -102,7 +102,7 @@ func _set_wheel(on: bool) -> void:
 	_root.mouse_filter = Control.MOUSE_FILTER_STOP if on else Control.MOUSE_FILTER_IGNORE
 	if on:
 		_opened_at = Time.get_ticks_msec() / 1000.0
-	if DisplayServer.get_name() != "headless":
+	if GameSettings.can_grab_mouse():
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if on else Input.MOUSE_MODE_CAPTURED
 		if on:
 			Input.warp_mouse(_root.get_viewport_rect().size * 0.5)
@@ -143,7 +143,7 @@ func _process(_delta: float) -> void:
 	if not wheel_open:
 		return
 	# 打开暂停菜单或点了别处、鼠标被收回：轮盘也收起
-	if DisplayServer.get_name() != "headless" and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+	if GameSettings.can_grab_mouse() and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		_set_wheel(false)
 		return
 	var center := _root.get_viewport_rect().size * 0.5

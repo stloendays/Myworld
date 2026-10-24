@@ -197,7 +197,7 @@ func _recall(step: int) -> void:
 
 
 func _can_capture() -> bool:
-	return DisplayServer.get_name() != "headless"
+	return GameSettings.can_grab_mouse()
 
 
 # ---------------------------------------------------------------- 系统消息
