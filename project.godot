@@ -7,7 +7,7 @@ config_version=5
 
 config/name="Dusk Lake"
 config/description="A quiet lakeside world to explore alone or with up to three friends."
-config/version="0.3.3"
+config/version="0.4.0"
 run/main_scene="res://scenes/main/Main.tscn"
 config/features=PackedStringArray("4.7", "Forward Plus")
 config/icon="res://icon.png"
