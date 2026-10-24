@@ -55,6 +55,7 @@ func _run() -> void:
 		_report()
 		return
 	_test_structure()
+	_test_world_anchor()
 	_test_heightmap_alignment()
 	await _test_spawn_settles()
 	await _test_qa01()
@@ -2100,6 +2101,38 @@ func _near_pit_edge(x: float, z: float) -> bool:
 		if outer.has_point(Vector2(x, z)) and not inner.has_point(Vector2(x, z)):
 			return true
 	return false
+
+
+# ---------------------------------------------------------------- 世界根节点不带位移旋转
+
+## 编辑器里误拖根节点再保存会让整个世界倾斜（立牌飘在天上、船埋进地里、桥闪烁）：
+## 场景文件里 Main 下的节点都不该写 transform，根节点和地形在编辑器里锁定；运行时也会放回原点。
+func _test_world_anchor() -> void:
+	var st := (load(MAIN_SCENE) as PackedScene).get_state()
+	var with_transform := PackedStringArray()
+	var locked := PackedStringArray()
+	for i in st.get_node_count():
+		for j in st.get_node_property_count(i):
+			var prop := st.get_node_property_name(i, j)
+			if prop == "transform" or prop == "position" or prop == "rotation":
+				with_transform.append(str(st.get_node_path(i)))
+			if prop == "metadata/_edit_lock_" and st.get_node_property_value(i, j) == true:
+				locked.append(str(st.get_node_path(i)))
+	# 运行时放回原点：拿一棵倾斜的假场景树试
+	var root := Node3D.new()
+	root.name = "TiltedRoot"
+	root.transform = Transform3D(Basis(Vector3.RIGHT, deg_to_rad(37.6)), Vector3(0.0, 1.0, 0.0))
+	var child := Node3D.new()
+	child.name = "MovedChild"
+	child.position = Vector3(3.0, 0.0, 0.0)
+	root.add_child(child)
+	var moved := Main.anchor_to_origin(root)
+	var reset_ok := moved.size() == 2 and root.transform == Transform3D.IDENTITY and child.transform == Transform3D.IDENTITY
+	root.free()
+	_check("世界根节点在原点：Main.tscn 里不写位移旋转、根节点和地形在编辑器里锁定、运行时误存的倾斜会放回原点",
+		with_transform.is_empty() and locked.has(".") and locked.has("./World") and reset_ok \
+			and _main.transform.is_equal_approx(Transform3D.IDENTITY),
+		"带 transform 的节点：%s · 锁定：%s · 放回 %s" % [", ".join(with_transform) if not with_transform.is_empty() else "无", ", ".join(locked), ", ".join(moved)])
 
 
 func _cabin_xz(local_x: float, local_z: float) -> Vector2:
