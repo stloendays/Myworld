@@ -35,6 +35,8 @@ var _room_offline: Control
 var _room_online: Control
 
 
+var _last_state := 0
+
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	layer = 25
@@ -164,6 +166,12 @@ func _on_language(index: int) -> void:
 
 
 func _on_net_state(s: int) -> void:
+	# 进出别人的房间时世界（时间、天气、门）会一下子跳变：用黑幕盖住这一下
+	if s == Net.State.CLIENT and _last_state != Net.State.CLIENT:
+		Fade.flash(tr("来到 %s 的湖畔") % Net.roster.get(1, {}).get("name", "?"))
+	elif s == Net.State.OFFLINE and _last_state == Net.State.CLIENT:
+		Fade.flash(tr("回到你自己的湖畔"))
+	_last_state = s
 	if s == Net.State.CLIENT and _open and _page == Page.JOIN:
 		close()
 	elif s == Net.State.OFFLINE and _open and _page == Page.JOIN:

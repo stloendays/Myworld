@@ -170,6 +170,7 @@ static func _tp(chat: ChatBox, args: Array) -> void:
 		return
 	p.global_position = Vector3(target.x, WorldTerrain.height_at(target.x, target.y) + 0.2, target.y)
 	p.velocity = Vector3.ZERO
+	Fade.flash("", 0.6)
 	chat.post_system(chat.tr("已传送到 (%.1f, %.1f)。") % [target.x, target.y])
 
 

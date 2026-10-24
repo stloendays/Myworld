@@ -40,6 +40,11 @@ const ACTIONS := {
 	"journal": [KEY_J],
 }
 
+## 鼠标按键：右键 = 用手（对着东西就用，没对着就挥手）
+const MOUSE_ACTIONS := {
+	"use_hand": [MOUSE_BUTTON_RIGHT],
+}
+
 ## 可保存的设置及默认值；键名即属性名。
 const DEFAULTS := {
 	"fov": 75.0,
@@ -49,6 +54,8 @@ const DEFAULTS := {
 	"third_person_distance": 3.2,
 	"shoulder_left": false,           ## 第三人称相机在左肩
 	"first_person_arms": "both",      ## both / right / none
+	"hand_size": 0.5,                 ## 第一人称手在画面上的大小（0.4–1.0）
+	"play_intro": true,               ## 启动时播放开场过场
 	"view_bob": true,                 ## 走路时镜头轻微晃动
 	"minimap_enabled": true,
 	"minimap_rotate": true,           ## true = 随朝向旋转；false = 北朝上
@@ -72,6 +79,8 @@ var third_person_default := false
 var third_person_distance := 3.2
 var shoulder_left := false
 var first_person_arms := "both"
+var hand_size := 0.5
+var play_intro := true
 var view_bob := true
 var minimap_enabled := true
 var minimap_rotate := true
@@ -135,6 +144,13 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _register_inputs() -> void:
+	for action in MOUSE_ACTIONS:
+		if not InputMap.has_action(action):
+			InputMap.add_action(action)
+		for button in MOUSE_ACTIONS[action]:
+			var mb := InputEventMouseButton.new()
+			mb.button_index = button
+			InputMap.action_add_event(action, mb)
 	for action in ACTIONS:
 		if not InputMap.has_action(action):
 			InputMap.add_action(action)
@@ -166,6 +182,8 @@ func set_value(key: String, value: Variant, save := true) -> void:
 			value = value if str(value) in ["low", "medium", "high", "ultra"] else "high"
 		"first_person_arms":
 			value = value if str(value) in ["both", "right", "none"] else "both"
+		"hand_size":
+			value = clampf(float(value), 0.4, 1.0)
 		"language":
 			value = value if str(value) in LANGUAGES else "auto"
 	set(key, value)

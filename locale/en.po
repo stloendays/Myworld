@@ -1059,8 +1059,8 @@ msgstr "Petals"
 msgid "原版红点"
 msgstr "Legacy red motes"
 
-msgid "WASD 移动 · Shift 奔跑 · 空格 跳跃/上浮 · C 下潜 · E 交互 · V 视角\nG 动作轮盘（1 休息 · 2 挥手 · 3 跳舞 · 4 鼓掌）· F12 拍照 · T 聊天\nM 小地图 · Tab 世界地图 · F11 全屏 · F3 坐标 · F2 开发者模式（F 飞行 · N 穿墙 · F4 面板）"
-msgstr "WASD move · Shift run · Space jump/swim up · C dive · E interact · V view\nG action wheel (1 rest · 2 wave · 3 dance · 4 clap) · F12 photo · T chat\nM minimap · Tab world map · F11 fullscreen · F3 coordinates · F2 developer mode (F fly · N noclip · F4 panel)"
+msgid "WASD 移动 · Shift 奔跑 · 空格 跳跃/上浮 · C 下潜 · E 或右键 交互 · V 视角\nG 动作轮盘（1 休息 · 2 挥手 · 3 跳舞 · 4 鼓掌）· F12 拍照 · T 聊天\nM 小地图 · Tab 世界地图 · F11 全屏 · F3 坐标 · F2 开发者模式（F 飞行 · N 穿墙 · F4 面板）"
+msgstr "WASD move · Shift run · Space jump/swim up · C dive · E or right-click interact · V view\nG action wheel (1 rest · 2 wave · 3 dance · 4 clap) · F12 photo · T chat\nM minimap · Tab world map · F11 fullscreen · F3 coordinates · F2 developer mode (F fly · N noclip · F4 panel)"
 
 msgid "全屏 / 窗口（F11）"
 msgstr "Fullscreen / window (F11)"
@@ -1206,6 +1206,69 @@ msgstr "Snow Peak"
 msgid "雪山顶"
 msgstr "Snow Peak Summit"
 
+msgid "按 T 打开聊天，输入 /help 看看能做什么。"
+msgstr "Press T to chat, then type /help to see what you can do."
+
+msgid "右键：准星对着的东西直接就能用；什么都没对着时会挥挥手。"
+msgstr "Right-click uses whatever the crosshair is on; with nothing there, you wave."
+
+msgid "按 G 打开动作轮盘：坐下、躺下、挥手、跳舞、鼓掌。"
+msgstr "Press G for the action wheel: sit, lie down, wave, dance, clap."
+
+msgid "独木舟停在码头南侧，湖上有四个地方等你去发现。"
+msgstr "The canoe waits south of the dock, and four places on the lake are waiting to be found."
+
+msgid "晴朗的夜里，湖东南的林子里会出现仙境。"
+msgstr "On clear nights a fairy glade appears in the woods south-east of the lake."
+
+msgid "从泳池深水区的池底潜下去，可以一路游进地下水族馆。"
+msgstr "Dive through the floor of the pool's deep end and you can swim all the way into the aquarium."
+
+msgid "木屋茶几上的棋盘可以下国际象棋。"
+msgstr "The board on the cabin's coffee table plays real chess."
+
+msgid "在“多人房间”里建房，把房间号发给朋友就能一起玩（最多 4 人）。"
+msgstr "Host a room under Multiplayer and send the room code to friends (up to 4 players)."
+
+msgid "东北角的雪山可以一直爬到山顶。"
+msgstr "You can climb the snow peak in the north-east all the way to the top."
+
+msgid "按 Tab 打开世界地图，按 M 开关小地图。"
+msgstr "Press Tab for the world map and M to toggle the minimap."
+
+msgid "按 F12 拍照，照片存在“图片\Dusk Lake”文件夹。"
+msgstr "Press F12 to take a photo; photos go to \"Pictures\Dusk Lake\"."
+
+msgid "正在加载湖畔…"
+msgstr "Loading the lake…"
+
+msgid "正在搭建世界…"
+msgstr "Building the world…"
+
+msgid "正在点亮暮色…"
+msgstr "Lighting up the dusk…"
+
+msgid "准备好了"
+msgstr "Ready"
+
+msgid "加载失败"
+msgstr "Loading failed"
+
+msgid "按任意键跳过"
+msgstr "Press any key to skip"
+
+msgid "来到 %s 的湖畔"
+msgstr "Arrived at %s's lake"
+
+msgid "回到你自己的湖畔"
+msgstr "Back at your own lake"
+
+msgid "手的大小"
+msgstr "Hand size"
+
+msgid "启动时播放开场动画"
+msgstr "Play the opening scene at start"
+
 msgid "接到任务：%s"
 msgstr "New quest: %s"
 
@@ -1319,4 +1382,10 @@ msgstr "Cave mouth"
 
 msgid "图腾石厅"
 msgstr "Totem hall"
+
+msgid "正在收拾行囊…"
+msgstr "Packing up…"
+
+msgid "正在读取新世界…"
+msgstr "Reading the new world…"
 
