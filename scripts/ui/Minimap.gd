@@ -165,6 +165,15 @@ func _draw_map() -> void:
 		_canvas.draw_line(WorldLayout.v2(dock["from"]), WorldLayout.v2(dock["to"]), DOCK_COLOR, float(dock.get("width", 2.6)))
 	_draw_building(WorldLayout.section("cabin"), Vector2(Cabin.LENGTH + Cabin.DECK_DEPTH, Cabin.HALF_SPAN * 2.0), Vector2(Cabin.DECK_DEPTH * 0.5, 0.0), Color(0.62, 0.33, 0.22))
 	_draw_building(WorldLayout.section("poolhouse"), Vector2(PoolHouse.HX * 2.0, PoolHouse.HZ * 2.0), Vector2.ZERO, Color(0.55, 0.74, 0.84))
+	_draw_building(WorldLayout.section("cottage"), Vector2(StoneCottage.SIZE.x, StoneCottage.SIZE.z), Vector2.ZERO, Color(0.6, 0.58, 0.55))
+	# 图腾山洞：沿洞道画一条粗的岩石色带
+	var cave := WorldLayout.section("cave")
+	if not cave.is_empty():
+		var line := PackedVector2Array()
+		for p: Array in cave["centerline"]:
+			line.append(Vector2(float(p[0]), float(p[1])))
+		_canvas.draw_polyline(line, Color(0.42, 0.38, 0.34), 7.0, true)
+		_canvas.draw_polyline(line, Color(0.16, 0.13, 0.11), 2.4, true)
 	# 仙境只在出现的夜里画出来
 	var glade := get_tree().get_first_node_in_group("fairy_glade") as FairyGlade
 	if glade != null and glade.active:

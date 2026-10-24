@@ -92,7 +92,213 @@ func _run() -> void:
 	_test_updater()
 	await _test_fairy_glade()
 	await _test_snow_peak()
+	await _test_cave()
+	await _test_totem_quests()
+	await _test_constellations()
+	await _test_cottage()
+	await _test_world_travel()
 	_report()
+
+
+# ---------------------------------------------------------------- 图腾山洞、任务、星座、石头小屋、跨世界
+
+func _test_cave() -> void:
+	var cave := get_tree().get_first_node_in_group("cave") as Cave
+	if cave == null:
+		_check("图腾山洞已生成", false)
+		return
+	# 步行路线 = 洞道中线，只是在石厅里从篝火南边绕过去
+	var centers := []
+	for p: Vector2 in cave.centerline:
+		centers.append(p + Vector2(0.0, 2.8) if p.distance_to(cave.chamber) < 0.5 else p)
+	# 从洞外步道沿中线走进石厅，再走到传送门前：一路连续、没被岩壁挡住，进洞后属于室内区域 cave
+	await _setup_at(Vector2(-8.0, -84.0), 0.0)
+	_begin_track()
+	var ok := true
+	for p: Vector2 in centers.slice(0, centers.size() - 1):
+		ok = await _walk_to(p, 25.0) and ok
+	_track = false
+	var inside := WorldState.zones_of(_player.entity_id).has(&"cave") and WorldState.is_indoors(_player.entity_id)
+	var end_xz := Vector2(_player.global_position.x, _player.global_position.z)
+	var near_portal := end_xz.distance_to(WorldLayout.v2(WorldLayout.section("cave")["portal"]["pos"])) < 4.5
+	# 岩壁挡人：从石厅中心往北直走 8 秒也出不了山洞
+	await _setup_at(cave.chamber, 0.0)
+	await _walk_for(Vector3(0.0, 0.0, -1.0), 8.0)
+	var blocked := WorldState.zones_of(_player.entity_id).has(&"cave") and _player.global_position.z > cave.chamber.y - 7.0
+	# 洞里不下雨：雨天里站在石厅，降水粒子被挡（室内）
+	var no_trees := Vegetation.tree_density(cave.chamber.x, cave.chamber.y) == 0.0 and Vegetation.tree_density(-8.0, -95.0) == 0.0
+	_check("图腾山洞：从步道走进洞口、穿过石厅走到光门前（连续、无穿墙），洞内是室内区域，岩壁挡人，洞里没有树",
+		ok and inside and near_portal and blocked and no_trees and _max_step < MAX_STEP,
+		"走完 %s · 室内 %s · 到光门 %s · 撞墙停住 %s（z = %.1f）· 无树 %s · 最大单步 %.2f m · 路程 %.0f m" % [ok, inside, near_portal, blocked, _player.global_position.z, no_trees, _max_step, _path_length])
+	# 篝火：按 E 熄灭 / 点燃，原木可以坐
+	var fire := cave.bonfire
+	await _setup_at(cave.chamber + Vector2(-1.8, 1.8), 0.0)
+	_player.look_at_point(fire.global_position + Vector3(0.0, 0.4, 0.0))
+	await _frames(2)
+	var off := _player.try_interact() and WorldState.get_interactable_state(&"cave_bonfire") == "off"
+	var on := _player.try_interact() and WorldState.get_interactable_state(&"cave_bonfire") == "on"
+	_check("篝火按 E 熄灭再点燃（状态按 uid 登记），三根原木都是座位", off and on and cave.seats.size() == 3,
+		"熄灭 %s · 点燃 %s · 座位 %d" % [off, on, cave.seats.size()])
+
+
+func _test_totem_quests() -> void:
+	var cave := get_tree().get_first_node_in_group("cave") as Cave
+	var panel := _main.get_node("DialoguePanel") as DialoguePanel
+	QuestLog.reset()
+	WorldState.flags.erase("met_totem")
+	# 走到图腾前，看着它按 E：对话框打开、玩家不能动；第一页是打招呼，第二页给第一个任务
+	var t := cave.totem.global_position
+	await _setup_at(Vector2(t.x, t.z) + Vector2(0.0, 2.6), 0.0)
+	_player.look_at_point(t + Vector3(0.0, 2.0, 0.0))
+	await _frames(2)
+	var opened := _player.try_interact() and panel.is_open() and _player.input_locked
+	var greet := panel.pages.size() == 2 and str(panel.pages[0]["text"]) == QuestLog.line("greeting")
+	panel.advance()     # 先把这页的字打完
+	panel.advance()     # 翻到下一页
+	var offer_ok := panel.page_index == 1 and (panel.pages[1]["choices"] as Array).size() == 2
+	panel.choose(0)
+	var accepted := QuestLog.state_of("fireside") == "active" and not panel.is_open() and not _player.input_locked
+	_check("老图腾：看着它按 E 打开对话（锁住移动）→ 打招呼 → 给任务 → 选“好”接下任务并关掉对话",
+		opened and greet and offer_ok and accepted, "打开 %s · 招呼 %s · 选项 %s · 接下 %s" % [opened, greet, offer_ok, accepted])
+	# 任务目标：坐到篝火边的原木上 → 自动完成；再和图腾说话先道谢、再给下一个任务（巡湖）
+	var seat := cave.seats[0]
+	_player.look_at_point(seat.global_position + Vector3(0.0, 0.2, 0.0))
+	seat.interact(_player)
+	await _frames(2)
+	var done := QuestLog.evaluate(_player)
+	_player.stand_up()
+	await _seconds(0.5)
+	var fire_done := done == ["fireside"] and QuestLog.state_of("fireside") == "done" and (_main.get_node("HUD").toast_text() as String).contains("篝火边的老朋友")
+	panel.open_totem(cave.totem, _player)
+	var thanks := str(panel.pages[0]["text"]) == QuestLog.text(QuestLog.get_quest("fireside"), "done") and panel.pages.size() == 2
+	panel.advance()
+	panel.advance()
+	panel.choose(0)
+	var survey := QuestLog.state_of("lake_survey") == "active"
+	_check("任务：坐到原木上自动完成并提示；再对话先道谢，再接下一个任务（巡湖）", fire_done and thanks and survey,
+		"完成 %s · 道谢 %s · 巡湖 %s" % [fire_done, thanks, survey])
+	# 各类目标的进度
+	for id in ["lake_islet", "north_reed_bay"]:
+		WorldState.discoveries.erase(StringName(id))
+	WorldState.discover(&"lake_islet")
+	QuestLog.evaluate(_player)
+	var partial: int = WorldState.quests["lake_survey"]["progress"]
+	WorldState.discover(&"north_reed_bay")
+	WorldState.discover(&"east_lily_cove")
+	var survey_done := QuestLog.evaluate(_player) == ["lake_survey"]
+	var reach := {"type": "reach", "pos": [102, -108], "radius": 7.0}
+	var far_p := QuestLog.objective_progress(reach, _player)
+	var species := {"type": "species", "count": 2}
+	QuestLog.record("species", "rabbit", "兔子")
+	var dup := QuestLog.record("species", "rabbit", "兔子")
+	QuestLog.record("species", "fox", "狐狸")
+	var sp := QuestLog.objective_progress(species, _player)
+	var dance := {"type": "emote_at", "id": "dance", "pos": [-2, 26], "radius": 6.0}
+	await _setup_at(Vector2(-6.0, 26.0), 0.0)
+	var before_dance := QuestLog.objective_progress(dance, _player)
+	_player.do_emote("dance")
+	await _frames(2)
+	var after_dance := QuestLog.objective_progress(dance, _player)
+	_player.end_emote()
+	_check("任务目标：探索点逐个计数（1/3 → 完成）、走到远处才算到达、图鉴记动物不重复、在码头尽头跳舞",
+		partial == 1 and survey_done and far_p == Vector2i(0, 1) and not dup and sp == Vector2i(2, 2) and before_dance.x == 0 and after_dance.x == 1,
+		"巡湖进度 %d → 完成 %s · 远处到达 %s · 重复记录 %s · 图鉴 %s · 跳舞 %s → %s" % [partial, survey_done, far_p, dup, sp, before_dance, after_dance])
+	# 进行中最多 3 个；全部完成后图腾说结束语；存档快照里有任务与图鉴
+	QuestLog.reset()
+	for id in ["summit", "naturalist", "deep_dive"]:
+		QuestLog.accept(id)
+	var capped := QuestLog.next_offer().is_empty()
+	for q: Dictionary in QuestLog.quests():
+		WorldState.quests[str(q["id"])] = {"state": "done", "progress": 1, "thanked": true}
+	var final_pages := panel.build_pages()
+	var final_ok := str(final_pages[-1]["text"]) == QuestLog.line("all_done")
+	var snap := WorldState.snapshot()
+	var snap_ok := (snap["quests"] as Dictionary).size() == QuestLog.quests().size() and (snap["journal"] as Dictionary).has("species") == false
+	_check("进行中的任务最多 3 个；全部完成后老图腾说结束语；任务进度写进存档快照（v3）", capped and final_ok and snap_ok,
+		"满 3 个不再给 %s · 结束语 %s · 快照 %s" % [capped, final_ok, snap_ok])
+	panel.close()
+	QuestLog.reset()
+
+
+func _test_constellations() -> void:
+	var stars := _main.get_node("StarField") as StarField
+	var climate := _main.get_node("Systems") as ClimateSystem
+	QuestLog.reset()
+	climate.jump_to_season(&"SUMMER")
+	climate.set_hour(23.0)
+	climate.set_weather(&"CLEAR", 0.0)
+	await _setup_at(Vector2(-2.0, 30.0), 0.0)
+	await _seconds(3.0)
+	var night_vis := stars.visibility
+	# 抬头盯着独木舟座看 2 秒：连线亮起、记进图鉴
+	var c: Dictionary = StarField.constellations()[0]
+	var dir := StarField.direction(float(c["az"]), float(c["el"]))
+	_player.look_at_point(_player.head.global_position + dir * 50.0)
+	await _seconds(2.2)
+	var found := str(c["id"]) in WorldState.journal_list("constellations")
+	# 白天看不见
+	climate.set_hour(13.0)
+	await _seconds(3.0)
+	var day_vis := stars.visibility
+	_check("星座：晴朗夜里在室外盯着看 1.5 秒就认出（记进图鉴），白天看不见",
+		night_vis > 0.9 and found and day_vis < 0.1 and StarField.constellations().size() == 5,
+		"夜里可见度 %.2f · 认出 %s · 白天可见度 %.2f" % [night_vis, found, day_vis])
+	QuestLog.reset()
+
+
+func _test_cottage() -> void:
+	var cottage := get_tree().get_first_node_in_group("stone_cottage") as StoneCottage
+	if cottage == null:
+		_check("石头小屋已生成", false)
+		return
+	var door := cottage.door
+	var front := door.global_position + door.global_basis.z * 1.6
+	await _setup_at(Vector2(front.x, front.z), 0.0)
+	_player.look_at_point(door.global_position)
+	await _frames(2)
+	var prompt_ok := _player.try_interact() and (_main.get_node("HUD").toast_text() as String).contains("门锁着")
+	# 朝门直走 4 秒：被墙挡在外面
+	var inward := -door.global_basis.z
+	await _walk_for(Vector3(inward.x, 0.0, inward.z), 4.0)
+	var c := cottage.global_position
+	var local := cottage.to_local(_player.global_position)
+	var outside := absf(local.x) > StoneCottage.SIZE.x * 0.5 or absf(local.z) > StoneCottage.SIZE.z * 0.5
+	var no_trees := Vegetation.tree_density(c.x, c.z) == 0.0
+	_check("石头小屋：门锁着（按 E 只提示），走不进去，屋旁没有树", prompt_ok and outside and no_trees and WorldState.get_interactable_state(&"cottage_door") == "locked",
+		"提示 %s · 在屋外 %s（本地 %.1f, %.1f）· 无树 %s" % [prompt_ok, outside, local.x, local.z, no_trees])
+
+
+## 最后一项：去第二个世界再回来（会换掉 _main），检查不同时加载、内存降下来、回来站在光门前。
+func _test_world_travel() -> void:
+	var nodes_lake := Performance.get_monitor(Performance.OBJECT_NODE_COUNT)
+	var mem_lake := Performance.get_monitor(Performance.MEMORY_STATIC)
+	var blocked_here := WorldTravel.blocked_reason("dusk_lake") != ""
+	var blocked_planned := WorldTravel.blocked_reason("world_03") != ""
+	var ok_go := WorldRegistry.enter("world_02")
+	await WorldTravel.travel_finished
+	var w2 := get_tree().get_first_node_in_group("world_root")
+	var only_one := get_tree().get_nodes_in_group("world_root").size() == 1 and w2 is World02 and not is_instance_valid(_main) \
+		and get_tree().get_first_node_in_group("cave") == null
+	var r: Dictionary = WorldTravel.last_report
+	var nodes_w2 := Performance.get_monitor(Performance.OBJECT_NODE_COUNT)
+	var mem_w2 := Performance.get_monitor(Performance.MEMORY_STATIC)
+	var lighter := nodes_w2 < nodes_lake * 0.2 and mem_w2 < mem_lake * 0.85
+	var current_ok := WorldRegistry.current_id() == "world_02"
+	# 回去：光门对面站着
+	var back := WorldRegistry.enter("dusk_lake")
+	await WorldTravel.travel_finished
+	_main = get_tree().get_first_node_in_group("world_root") as Node3D
+	_player = get_tree().get_first_node_in_group("local_player") as FirstPersonController
+	await _seconds(1.0)
+	var arrive: Dictionary = (WorldRegistry.get_world("dusk_lake")["arrivals"] as Dictionary)["world_02"]
+	var at_gate := Vector2(_player.global_position.x, _player.global_position.z).distance_to(Vector2(float(arrive["pos"][0]), float(arrive["pos"][2]))) < 1.0
+	var mem_back := Performance.get_monitor(Performance.MEMORY_STATIC)
+	var no_leak := mem_back < mem_lake * 1.15
+	var lobby := _main.get_node_or_null("LobbyMenu") as LobbyMenu
+	_check("跨世界：图腾山洞的光门通往第二个世界，先卸载湖畔再加载（不同时存在），世界二节点数和内存大降；回来站在光门前，内存不涨",
+		ok_go and blocked_here and blocked_planned and only_one and lighter and current_ok and back and at_gate and no_leak and (lobby == null or not lobby.is_open()),
+		"节点 %d → %d（卸载后 %d）· 静态内存 %.0f → %.0f MB → 回来 %.0f MB · 只有一个世界 %s · 到光门前 %s · 用时 %d ms" % [
+			nodes_lake, nodes_w2, int(r.get("nodes_unloaded", 0)), mem_lake / 1048576.0, mem_w2 / 1048576.0, mem_back / 1048576.0, only_one, at_gate, int(r.get("ms", 0))])
 
 
 # ---------------------------------------------------------------- 国际象棋
@@ -1072,9 +1278,10 @@ func _test_exploration_save() -> void:
 	var snap := WorldState.snapshot()
 	var migrated := WorldState.migrate({"schema_version": 1, "world_day": 3})
 	var ok: bool = found == [&"dock_end"] and again.is_empty() and WorldState.discoveries.size() == before + 1 \
-		and toast.contains("码头尽头") and snap["schema_version"] == 2 and (snap["discoveries"] as Array).has("dock_end") \
-		and snap.has("vehicles") and migrated["schema_version"] == 2 and migrated["discoveries"] == [] and migrated["vehicles"] == {}
-	_check("探索：走到码头尽头记为新发现（不重复）、弹出提示；存档快照含发现与船位置，v1 存档能升级到 v2",
+		and toast.contains("码头尽头") and snap["schema_version"] == 3 and (snap["discoveries"] as Array).has("dock_end") \
+		and snap.has("vehicles") and snap.has("quests") and snap.has("journal") and migrated["schema_version"] == 3 \
+		and migrated["discoveries"] == [] and migrated["vehicles"] == {} and migrated["quests"] == {} and migrated["journal"] == {}
+	_check("探索：走到码头尽头记为新发现（不重复）、弹出提示；存档快照含发现、船位置、任务与图鉴，v1 存档能升级到 v3",
 		ok, "新发现 %s，提示「%s」，快照版本 %d，发现列表 %s" % [str(found), toast, snap["schema_version"], str(snap["discoveries"])])
 
 
@@ -1422,11 +1629,11 @@ func _test_release() -> void:
 	GameSettings.set_value("language", "en", false)
 	var skip := ["帮助", "时间", "天气", "季节", "预设", "坐标", "传送", "名字", "清屏", "中文", "、", "：", "季", "天",
 		"%s：%s", "%s — %s", "×%d", "%d°", "—", "  ·  ", "出生点", "语言 / Language",
-		"♟", "♞", "♝", "♜", "♛", "♚", "%s  ·  %s", "  ·  "]
+		"♟", "♞", "♝", "♜", "♛", "♚", "%s  ·  %s", "  ·  ", "✓  ", "◆  "]
 	var missing := PackedStringArray()
 	var re := RegEx.create_from_string(r'"([^"\n]*[^\x00-\x7F][^"\n]*)"')
 	for dir in ["res://scripts/ui", "res://scripts/net", "res://scripts/interactions", "res://scripts/core", "res://scripts/games",
-			"res://scripts/player", "res://scripts/buildings", "res://scripts/world", "res://scripts/systems", "res://scripts/vehicles"]:
+			"res://scripts/player", "res://scripts/buildings", "res://scripts/world", "res://scripts/systems", "res://scripts/vehicles", "res://scripts/worlds"]:
 		for path in _list_files(dir, ".gd"):
 			for line in FileAccess.get_file_as_string(path).split("\n"):
 				var s := line.strip_edges()
@@ -1639,12 +1846,13 @@ func _test_fullscreen_and_world_map() -> void:
 	for w in WorldRegistry.worlds():
 		if not WorldRegistry.is_open(str(w["id"])):
 			planned += 1
-	var blocked := not WorldRegistry.enter("world_02") and not WorldRegistry.can_enter("world_02")
+	# 世界三还在规划中：进不去、只提示；世界二是“建设中可进入”（真正的往返在 _test_world_travel 里测）
+	var blocked := not WorldRegistry.enter("world_03") and not WorldRegistry.can_enter("world_03") and WorldRegistry.can_enter("world_02")
 	wm.toggle()
 	await _frames(2)
 	_check("F11 / Alt+Enter 全屏切换（不误开聊天）；Tab 打开世界地图，世界注册表含规划中的其他世界", f11 and on and opened and not wm.open \
 		and str(cur.get("id", "")) == "dusk_lake" and planned >= 1 and blocked,
-		"F11 %s，全屏 %s，地图打开 %s，当前 %s，规划中 %d 个，未开放世界不能进 %s" % [f11, on, opened, cur.get("name", "?"), planned, blocked])
+		"F11 %s，全屏 %s，地图打开 %s，当前 %s，规划中 %d 个，规划中的世界不能进、建设中的能进 %s" % [f11, on, opened, cur.get("name", "?"), planned, blocked])
 
 # ---------------------------------------------------------------- 工具
 
@@ -1884,7 +2092,7 @@ func _test_fairy_glade() -> void:
 	var inside := WorldState.zones_of(_player.entity_id).has(&"fairy_glade")
 	_check("沿仙境步道走进林地（区域 fairy_glade），连续步行", ok and inside and _max_step < MAX_STEP,
 		"到达 %s，区域 %s，单帧最大位移 %.3f m" % [ok, inside, _max_step])
-	# 看着传送门按 E：其他世界还在建设中，只提示
+	# 看着传送门：对得准，门通往世界二且现在能去（真正按 E 会换世界，往返放在最后一项 _test_world_travel 里测）
 	var gate := glade.portal.global_position
 	_player.global_position = gate + Vector3(-2.2, -2.5, 0.0)
 	_player.velocity = Vector3.ZERO
@@ -1892,15 +2100,14 @@ func _test_fairy_glade() -> void:
 	_player.look_at_point(gate)
 	await _frames(3)
 	var focused := _player.focused_target() == glade.portal
-	var used := _player.try_interact()
-	await _frames(2)
-	var portal_toast: String = hud.toast_text()
+	var used := glade.portal.target_world == "world_02" and WorldTravel.blocked_reason("world_02") == ""
+	var portal_toast: String = glade.portal.get_prompt(_player)
 	# 天亮：缩回去，碰撞关掉
 	climate.set_hour(6.0)
 	await _seconds(FairyGlade.GROW_SECONDS + 1.0)
 	var gone := not glade.active and not magic.visible and (glade.get_node("Magic/Collision") as StaticBody3D).collision_layer == 0
-	_check("传送门按 E 提示目标世界还在建设中；天亮后仙境消失", focused and used and portal_toast != "" and gone,
-		"对准 %s，交互 %s，提示「%s」，天亮消失 %s" % [focused, used, portal_toast, gone])
+	_check("月光石门对得准、通往世界二（现在可以进去）；天亮后仙境消失", focused and used and portal_toast != "" and gone,
+		"对准 %s，能去世界二 %s，提示「%s」，天亮消失 %s" % [focused, used, portal_toast, gone])
 	climate.apply_preset("Autumn_Dusk_Clear")
 	await _setup_at(Vector2(-50.0, 29.0), 0.0)
 

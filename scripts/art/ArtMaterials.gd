@@ -389,3 +389,11 @@ static func restyle_named(node: Node) -> void:
 			var old := mesh.surface_get_material(s)
 			if old != null:
 				(mi as MeshInstance3D).set_surface_override_material(s, named(old.resource_name))
+
+
+## 离开这个世界时清掉材质、贴图和 Kenney 模型缓存（WorldTravel 调用；下一个世界用到时再读）。
+static func clear_cache() -> void:
+	_cache.clear()
+	_snowable.clear()
+	_snow_pass = null
+	_snow_on = false

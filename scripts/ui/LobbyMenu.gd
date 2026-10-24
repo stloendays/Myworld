@@ -46,7 +46,7 @@ func _ready() -> void:
 	Net.room_codes_changed.connect(_refresh_room)
 	Net.notice.connect(_on_notice)
 	var args := OS.get_cmdline_user_args()
-	var auto := get_tree().current_scene == get_parent() and not args.has("--skip-menu")
+	var auto := get_tree().current_scene == get_parent() and not args.has("--skip-menu") and WorldTravel.arriving_from == ""
 	if args.has("--host"):
 		_host()
 	elif args.has("--join") and args.find("--join") + 1 < args.size():

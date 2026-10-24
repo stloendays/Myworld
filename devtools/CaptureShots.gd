@@ -95,6 +95,18 @@ const SHOTS := [
 	{"name": "m2j_03_summit_view", "climate": DUSK, "eye": [100.5, 1.7, -105.0], "ground": true, "look": [35, 4.0, -2]},
 	{"name": "m2j_04_summit_cairn", "climate": {"season": "SUMMER", "hour": 14.0, "weather": "CLEAR"}, "eye": [97.5, 1.8, -103.0], "ground": true, "look": [103.6, 40.5, -107.4]},
 	{"name": "m2j_05_ridge_trail", "climate": {"season": "SUMMER", "hour": 15.0, "weather": "CLEAR"}, "eye": [62, 1.7, -96], "ground": true, "look": [86, 33.0, -106]},
+	{"name": "m2k_01_cave_mouth", "climate": {"season": "SUMMER", "hour": 16.0, "weather": "CLEAR"}, "eye": [-5.5, 1.7, -80.5], "ground": true, "look": [-7.5, 4.0, -96]},
+	{"name": "m2k_02_cave_aerial", "climate": {"season": "SUMMER", "hour": 16.0, "weather": "CLEAR"}, "eye": [-24, 26, -66], "look": [8, 4, -100]},
+	{"name": "m2k_03_cave_tunnel", "climate": {"season": "SUMMER", "hour": 16.0, "weather": "CLEAR"}, "eye": [-8.0, 3.85, -92.0], "look": [-5.0, 3.4, -101.0]},
+	{"name": "m2k_04_cave_chamber", "climate": {"season": "SUMMER", "hour": 16.0, "weather": "CLEAR"}, "eye": [-0.5, 3.9, -100.6], "look": [8.0, 3.2, -103.0]},
+	{"name": "m2k_05_totem", "climate": {"season": "SUMMER", "hour": 16.0, "weather": "CLEAR"}, "eye": [8.6, 4.0, -100.6], "look": [8.0, 4.1, -105.6]},
+	{"name": "m2k_06_cave_portal", "climate": {"season": "SUMMER", "hour": 16.0, "weather": "CLEAR"}, "eye": [21.5, 3.8, -102.4], "look": [29.3, 3.95, -103.2]},
+	{"name": "m2k_07_cottage", "climate": {"season": "SUMMER", "hour": 16.0, "weather": "CLEAR"}, "eye": [-83, 1.7, 91], "ground": true, "look": [-70, 3.0, 96]},
+	{"name": "m2k_08_constellations", "climate": {"season": "SUMMER", "hour": 23.0, "weather": "CLEAR"}, "state": {"constellations": ["pinecone", "canoe"]}, "eye": [-2, 2.65, 26], "look": [47.7, 52.65, -44.9]},
+	{"name": "m2k_09_totem_dialogue", "climate": {"season": "SUMMER", "hour": 16.0, "weather": "CLEAR"}, "state": {}, "player": [8.0, -102.2], "heading": 0.0, "pitch": 9.0, "dialogue": true},
+	{"name": "m2k_10_journal_quests", "climate": {"season": "SUMMER", "hour": 16.0, "weather": "CLEAR"}, "state": {"quests": {"fireside": "done", "lake_survey": "active", "summit": "active"}, "species": ["rabbit", "fox", "duck", "bird", "clownfish"], "constellations": ["canoe", "fox"]}, "player": [-49.0, 27.0], "heading": 75.0, "pitch": -4.0, "journal": 0},
+	{"name": "m2k_12_journal_dex", "climate": {"season": "SUMMER", "hour": 16.0, "weather": "CLEAR"}, "state": {"quests": {"fireside": "done", "lake_survey": "active", "summit": "active"}, "species": ["rabbit", "fox", "duck", "bird", "clownfish"], "constellations": ["canoe", "fox"]}, "player": [-49.0, 27.0], "heading": 75.0, "pitch": -4.0, "journal": 1},
+	{"name": "m2k_13_quest_tracker", "climate": {"season": "SUMMER", "hour": 16.0, "weather": "CLEAR"}, "state": {"quests": {"fireside": "done", "lake_survey": "active", "summit": "active"}}, "player": [-49.0, 27.0], "heading": 75.0, "pitch": -4.0},
 ]
 
 const OUTFITS := [
@@ -193,6 +205,15 @@ func _run() -> void:
 		await _wait(40)
 		if shot.has("chat"):
 			await _stage_chat(chat, str(shot["chat"]))
+		if shot.has("state"):
+			_apply_quest_state(shot["state"])
+			await _wait(5)
+		if shot.get("dialogue", false):
+			(_main.find_child("Totem", true, false) as CaveTotem).interact(_player)
+			await _wait(150)
+		if shot.has("journal"):
+			(_main.get_node("JournalPanel") as JournalPanel).open(int(shot["journal"]))
+			await _wait(5)
 		if shot.get("lightning", false):
 			var env := _main.get_node("World/Environment") as EnvironmentDirector
 			env._flash_t = 0.0
@@ -203,7 +224,56 @@ func _run() -> void:
 		print("saved ", path)
 		if shot.has("chat"):
 			chat.close()
+		(_main.get_node("DialoguePanel") as DialoguePanel).close()
+		var journal := _main.get_node("JournalPanel") as JournalPanel
+		if journal.is_open():
+			journal.close()
+	await _shoot_worlds(prefix)
 	get_tree().quit()
+
+
+## 任务与图鉴的示例状态："state": {"quests": {id: state}, "species": [...], "constellations": [...]}。
+func _apply_quest_state(d: Dictionary) -> void:
+	QuestLog.reset()
+	for id: String in d.get("quests", {}):
+		WorldState.quests[id] = {"state": str(d["quests"][id]), "progress": 0, "thanked": str(d["quests"][id]) == "done"}
+	for kind in ["species", "constellations"]:
+		for id: String in d.get(kind, []):
+			WorldState.journal_add(kind, id)
+	var stars := _main.get_node("StarField") as StarField
+	for id: String in stars._line_alpha:
+		stars._line_alpha[id] = 1.0 if id in WorldState.journal_list("constellations") else 0.0
+	QuestLog.changed.emit()
+
+
+## 第二个世界（占位浮岛）：先把湖畔整个移出场景树，单独放进世界二拍一张，再放回来。
+const WORLD_SHOTS := [
+	{"name": "m2k_11_world02", "eye": [9.0, 3.2, 13.0], "look": [-1.0, 1.0, 1.0]},
+]
+
+
+func _shoot_worlds(prefix: String) -> void:
+	for shot: Dictionary in WORLD_SHOTS:
+		if not str(shot["name"]).begins_with(prefix):
+			continue
+		remove_child(_main)
+		var world := (load("res://scenes/worlds/World02.tscn") as PackedScene).instantiate()
+		add_child(world)
+		await _wait(60)
+		(world.get_node("HUD") as CanvasLayer).visible = false
+		var cam := Camera3D.new()
+		cam.fov = 70.0
+		world.add_child(cam)
+		cam.global_position = _vec(shot["eye"])
+		cam.look_at(_vec(shot["look"]), Vector3.UP)
+		cam.current = true
+		await _wait(20)
+		var path := ProjectSettings.globalize_path("%s/%s.png" % [OUT_DIR, shot["name"]])
+		get_viewport().get_texture().get_image().save_png(path)
+		print("saved ", path)
+		world.queue_free()
+		await _wait(2)
+		add_child(_main)
 
 
 func _apply_climate(c: Dictionary) -> void:

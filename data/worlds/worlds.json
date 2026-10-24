@@ -1,5 +1,5 @@
 {
-  "_doc": "世界注册表（WorldRegistry 读取）：世界地图右侧的世界列表与以后的跨世界传送都以这里为准。status：open = 可以进入 / planned = 规划中（地图上显示为未开放）。atlas 为世界地图里“世界总览”小图上的相对位置（0–1）。",
+  "_doc": "世界注册表（WorldRegistry、WorldTravel 读取）：世界地图右侧的世界列表与跨世界传送都以这里为准。status：open = 可以进入 / preview = 建设中但能进去（占位场景）/ planned = 规划中（地图上显示为未开放）。scene：世界的根场景；arrivals：从某个世界过来时玩家站的位置（世界坐标）和朝向。atlas 为世界地图里“世界总览”小图上的相对位置（0–1）。",
   "current": "dusk_lake",
   "worlds": [
     {
@@ -8,6 +8,7 @@
       "name_en": "Dusk Lake",
       "status": "open",
       "scene": "res://scenes/main/Main.tscn",
+      "arrivals": {"world_02": {"pos": [25.6, 2.25, -103.2], "heading": 270.0}},
       "size_m": 250,
       "summary": "湖、森林、木屋、玻璃泳池馆与地下水族馆。",
       "atlas": [0.5, 0.55],
@@ -17,8 +18,10 @@
       "id": "world_02",
       "name": "未命名世界 · 二",
       "name_en": "World II",
-      "status": "planned",
-      "summary": "规划中：以后从暮色湖畔的传送门进入。",
+      "status": "preview",
+      "scene": "res://scenes/worlds/World02.tscn",
+      "arrivals": {"dusk_lake": {"pos": [0.0, 0.2, 7.0], "heading": 0.0}},
+      "summary": "建设中：从图腾山洞尽头的光门进去，目前只有一座雾中的浮岛。",
       "atlas": [0.18, 0.25],
       "color": "#7fa6c9"
     },
