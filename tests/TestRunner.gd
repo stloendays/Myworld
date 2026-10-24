@@ -75,6 +75,7 @@ func _run() -> void:
 	await _test_fauna()
 	await _test_storm_rainbow_leaves()
 	await _test_first_person_arms()
+	await _test_hands_and_right_click()
 	await _test_settings()
 	await _test_minimap()
 	await _test_developer_mode()
@@ -2100,6 +2101,100 @@ func _near_pit_edge(x: float, z: float) -> bool:
 		if outer.has_point(Vector2(x, z)) and not inner.has_point(Vector2(x, z)):
 			return true
 	return false
+
+
+# ---------------------------------------------------------------- 第一人称双手的大小与右键
+
+## 世界坐标 → 16:9 画面上的位置（0–1，左上为原点），按相机的竖直 FOV 自己算：无窗口时视口只有 64×64，不能用 unproject。
+func _screen_frac(point: Vector3) -> Vector2:
+	var cam := _player.camera
+	var p := cam.global_transform.affine_inverse() * point
+	var t := tan(deg_to_rad(cam.fov) * 0.5)
+	var depth := maxf(-p.z, 0.001)
+	return Vector2(0.5 + 0.5 * p.x / (depth * t * 16.0 / 9.0), 0.5 - 0.5 * p.y / (depth * t))
+
+
+## 一只手臂（含拳头）在 16:9 画面上的包围盒（0–1）：网格包围盒的 8 个角投影。
+func _arm_screen_rect(part: Node3D) -> Rect2:
+	var r := Rect2()
+	var first := true
+	for mi: MeshInstance3D in part.find_children("*", "MeshInstance3D", true, false):
+		var box := mi.get_aabb()
+		for i in 8:
+			var p := _screen_frac(mi.global_transform * box.get_endpoint(i))
+			if first:
+				r = Rect2(p, Vector2.ZERO)
+				first = false
+			else:
+				r = r.expand(p)
+	return r
+
+
+func _test_hands_and_right_click() -> void:
+	await _setup_at(Vector2(-50.0, 29.0), deg_to_rad(-70.0))
+	_player.set_third_person(false)
+	_player.head.rotation.x = 0.0
+	var arms := _player.arms
+	var view := Vector2.ONE
+	arms.set_size(1.0)
+	await _frames(4)
+	var big_r := _arm_screen_rect(arms.model.parts["arm_r"]).intersection(Rect2(Vector2.ZERO, view))
+	arms.set_size(GameSettings.hand_size)
+	await _frames(4)
+	var r := _arm_screen_rect(arms.model.parts["arm_r"]).intersection(Rect2(Vector2.ZERO, view))
+	var l := _arm_screen_rect(arms.model.parts["arm_l"]).intersection(Rect2(Vector2.ZERO, view))
+	var area := (r.get_area() + l.get_area()) / (view.x * view.y)
+	var ratio := r.get_area() / maxf(big_r.get_area(), 1.0)
+	var fist_r := _screen_frac((arms.model.parts["arm_r"].get_node("Fist") as Node3D).global_position)
+	var fist_l := _screen_frac((arms.model.parts["arm_l"].get_node("Fist") as Node3D).global_position)
+	var placed := fist_r.x > view.x * 0.62 and fist_l.x < view.x * 0.38 and fist_r.y > view.y * 0.6 and fist_l.y > view.y * 0.6 \
+		and fist_r.y < view.y and fist_l.y < view.y
+	# 包围盒（手臂斜着伸进来，盒子比手大）：都在画面下方 45% 以内，分别在左右两侧 40% 以内，中间一条不挡
+	var center_clear := r.position.y > 0.55 and l.position.y > 0.55 and r.position.x > 0.6 and l.end.x < 0.4
+	_check("第一人称双手默认缩小到一半：两只拳头分在左右下角，画面中央空出来", GameSettings.hand_size == 0.5 and area < 0.25 \
+		and ratio < 0.4 and placed and center_clear,
+		"双手包围盒共占画面 %.1f%%，右手是原大小的 %.0f%%，右手盒左边 %.0f%%、左手盒右边 %.0f%%、上沿 %.0f%%，右拳 (%.0f%%, %.0f%%) 左拳 (%.0f%%, %.0f%%)" % [area * 100.0, ratio * 100.0, r.position.x * 100.0, l.end.x * 100.0, minf(r.position.y, l.position.y) * 100.0,
+			fist_r.x / view.x * 100.0, fist_r.y / view.y * 100.0, fist_l.x / view.x * 100.0, fist_l.y / view.y * 100.0])
+
+	# 右键对着门 = 开门（和 E 一样），手往前一伸
+	var door := _cabin.get_node("FrontDoor") as InteractableDoor
+	door.set_open(false, true)
+	var porch := Vector3.ZERO
+	for s in WorldLayout.data().get("dev_spots", []):
+		if str(s["name"]) == "木屋门廊":
+			porch = Vector3(float(s["pos"][0]), float(s["pos"][1]), float(s["pos"][2]))
+	_player.teleport_to(porch + Vector3(0.0, 0.05, 0.0), 270.0)
+	await _seconds(0.5)
+	_player.look_at_point(_cabin.to_global(Vector3(5.0, 1.3, 0.0)))
+	await _frames(3)
+	Input.parse_input_event(_mouse_button(MOUSE_BUTTON_RIGHT, true))
+	Input.parse_input_event(_mouse_button(MOUSE_BUTTON_RIGHT, false))
+	await _seconds(0.3)
+	var door_ok := door.get_state() == "open"
+	door.set_open(false, true)
+
+	# 右键对着空处 = 挥右手（第一人称看得到，方块人也挥手），不切到第三人称；走动就停
+	await _setup_at(Vector2(-50.0, 29.0), deg_to_rad(-70.0))
+	_player.head.rotation.x = deg_to_rad(25.0)
+	await _frames(3)
+	var third_before := _player.third_person
+	Input.parse_input_event(_mouse_button(MOUSE_BUTTON_RIGHT, true))
+	Input.parse_input_event(_mouse_button(MOUSE_BUTTON_RIGHT, false))
+	await _frames(6)
+	var waving := arms.is_waving() and _player.emote == "wave" and _player.third_person == third_before
+	await _seconds(3.0)
+	var stopped := _player.emote == "" and not arms.is_waving()
+	_player.head.rotation.x = 0.0
+	_check("右键：对着门就开门，对着空处就挥右手（不切视角，挥完自己停）", door_ok and waving and stopped,
+		"开门 %s · 挥手 %s · 挥完停下 %s" % [door_ok, waving, stopped])
+
+
+func _mouse_button(button: MouseButton, pressed: bool) -> InputEventMouseButton:
+	var ev := InputEventMouseButton.new()
+	ev.button_index = button
+	ev.pressed = pressed
+	ev.position = get_viewport().get_visible_rect().size * 0.5
+	return ev
 
 
 func _cabin_xz(local_x: float, local_z: float) -> Vector2:

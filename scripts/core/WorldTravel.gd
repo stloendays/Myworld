@@ -1,6 +1,6 @@
 extends Node
 ## 跨世界旅行（Autoload）。世界之间不同时加载：先把当前世界整个卸掉、清掉只有它用的材质与模型缓存，
-## 再在后台线程读下一个世界的场景，读完才实例化。中间一层渐黑的加载画面（不随世界卸载）。
+## 再在后台线程读下一个世界的场景，读完才实例化。中间是和启动时同一套的加载画面（LoadingScreen，不随世界卸载）。
 ## 世界在 data/worlds/worlds.json 里登记（scene、status、arrivals）；“当前世界”记在这里，WorldRegistry 读它。
 ## 不调用引擎的切场景函数：当前世界根节点（group "world_root"）在原父节点下被换掉，
 ## 所以在自动检查里（世界挂在 TestRunner 下）和游戏里（世界是主场景）走的是同一条路。
@@ -17,10 +17,7 @@ var busy := false
 var progress := 0.0
 var last_report: Dictionary = {}  ## 最近一次旅行的内存与时间记录（自动检查读）
 
-var _overlay: CanvasLayer
-var _fade: ColorRect
-var _label: Label
-var _bar: ProgressBar
+var _screen: LoadingScreen
 
 
 func _ready() -> void:
@@ -56,9 +53,10 @@ func _do_travel(id: String) -> void:
 	travel_started.emit(id)
 	var w := WorldRegistry.get_world(id)
 	var path := str(w["scene"])
-	_label.text = tr("正在前往「%s」……") % TranslationServer.translate(str(w["name"]))
-	_overlay.visible = true
-	await _fade_to(1.0)
+	_screen.reset()
+	_screen.set_title(tr("正在前往「%s」……") % TranslationServer.translate(str(w["name"])))
+	_screen.set_stage("正在收拾行囊…")
+	await _screen.appear(FADE_SECONDS)
 	var t0 := Time.get_ticks_msec()
 	var report := {"from": current_world, "to": id, "static_before": Performance.get_monitor(Performance.MEMORY_STATIC),
 		"objects_before": Performance.get_monitor(Performance.OBJECT_COUNT), "nodes_before": Performance.get_monitor(Performance.OBJECT_NODE_COUNT)}
@@ -75,32 +73,34 @@ func _do_travel(id: String) -> void:
 	report["static_unloaded"] = Performance.get_monitor(Performance.MEMORY_STATIC)
 	report["nodes_unloaded"] = Performance.get_monitor(Performance.OBJECT_NODE_COUNT)
 	# 2. 后台线程读新世界
+	_screen.set_stage("正在读取新世界…")
 	ResourceLoader.load_threaded_request(path, "PackedScene", true)
 	var prog: Array = [0.0]
 	while true:
 		var st := ResourceLoader.load_threaded_get_status(path, prog)
 		progress = float(prog[0]) * 0.8
-		_bar.value = progress * 100.0
+		_screen.set_progress(progress)
 		if st != ResourceLoader.THREAD_LOAD_IN_PROGRESS:
 			break
 		await get_tree().process_frame
 	var packed := ResourceLoader.load_threaded_get(path) as PackedScene
 	arriving_from = current_world
 	current_world = id
+	_screen.set_stage("正在搭建世界…")
+	await get_tree().process_frame
 	var inst := packed.instantiate()
 	parent.add_child(inst)
 	if was_current:
 		get_tree().current_scene = inst
 	progress = 1.0
-	_bar.value = 100.0
+	_screen.set_progress(1.0)
 	await get_tree().process_frame
 	await get_tree().process_frame
 	report["static_after"] = Performance.get_monitor(Performance.MEMORY_STATIC)
 	report["nodes_after"] = Performance.get_monitor(Performance.OBJECT_NODE_COUNT)
 	report["ms"] = Time.get_ticks_msec() - t0
 	last_report = report
-	await _fade_to(0.0)
-	_overlay.visible = false
+	await _screen.vanish(FADE_SECONDS)
 	busy = false
 	travel_finished.emit(id)
 
@@ -119,36 +119,9 @@ func _release_caches() -> void:
 	GroundCoverBuilder.clear_cache()
 
 
-func _fade_to(alpha: float) -> void:
-	var tw := create_tween()
-	tw.tween_property(_fade, "color:a", alpha, FADE_SECONDS)
-	_label.modulate.a = alpha
-	_bar.modulate.a = alpha
-	await tw.finished
-
-
 func _build_overlay() -> void:
-	_overlay = CanvasLayer.new()
-	_overlay.layer = 100
-	_overlay.visible = false
-	add_child(_overlay)
-	_fade = ColorRect.new()
-	_fade.color = Color(0.02, 0.02, 0.03, 0.0)
-	_fade.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_fade.mouse_filter = Control.MOUSE_FILTER_STOP
-	_overlay.add_child(_fade)
-	var box := VBoxContainer.new()
-	box.set_anchors_preset(Control.PRESET_CENTER)
-	box.custom_minimum_size = Vector2(520.0, 0.0)
-	box.position = Vector2(-260.0, -30.0)
-	box.add_theme_constant_override("separation", 14)
-	_fade.add_child(box)
-	_label = Label.new()
-	_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_label.add_theme_font_size_override("font_size", 26)
-	_label.add_theme_color_override("font_color", Color(0.95, 0.92, 0.85))
-	box.add_child(_label)
-	_bar = ProgressBar.new()
-	_bar.custom_minimum_size = Vector2(520.0, 10.0)
-	_bar.show_percentage = false
-	box.add_child(_bar)
+	_screen = LoadingScreen.new()
+	_screen.name = "TravelLoading"
+	_screen.layer = 100
+	_screen.visible = false
+	add_child(_screen)

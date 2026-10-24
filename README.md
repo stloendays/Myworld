@@ -71,6 +71,7 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | 跳跃 | 空格（水中：上浮；靠池壁按空格爬上岸） |
 | 下潜 | C 或 Ctrl（水中） |
 | 交互 | E（准星中心射线 2.5 m）：开关门、生火 / 熄火、开关灯、坐下 / 站起、睡觉、上 / 下独木舟 |
+| 右键 | 用手：准星对着东西就和 E 一样去用；什么都没对着就挥挥右手（联机时别人看得到） |
 | 划独木舟 | W / S 划、A / D 转向、Shift 用力划、E 下船（靠码头或岸边） |
 | 国际象棋 | 看着木屋茶几上的棋盘按 E；鼠标点子再点格子；Esc 关闭 |
 | 动作轮盘 | G（按住往方向推、松开选中；或轻点后用鼠标点）：休息（坐下 → 躺下 → 起身）、挥手、跳舞、鼓掌；快捷键 1–4 |
@@ -81,7 +82,7 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | 全屏 | F11 或 Alt + Enter |
 | 联机 | 启动时的大厅里“创建房间 / 加入房间”（输入房间号）；游戏中 Esc →“多人房间” |
 | 界面语言 | 默认跟随系统（中文系统显示中文）；大厅或 设置 → 操作 里可改 English / 中文 |
-| 第一 / 第三人称 | V（第一人称能看到自己的双手） |
+| 第一 / 第三人称 | V（第一人称能看到自己的双手，大小在 设置 → 视角 → 手的大小 里调） |
 | 小地图 | M（右上角圆形小地图，随朝向旋转，下方显示区域名） |
 | 暂停 / 释放鼠标 | Esc（“设置”：画面、视角、操作、小地图、开发者，自动保存；“人物外观”换发型和衣服） |
 | 坐标信息 | F3（日期时间天气、帧率、世界坐标、朝向、所在区域、室内/室外） |
@@ -159,6 +160,7 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | `scripts/ui/ActionBar.gd` | G 动作轮盘（平时不显示）：休息、挥手、跳舞、鼓掌，F12 拍照（动作本身在 `FirstPersonController.do_emote()` 与 `CharacterModel` 的姿势和手势里） |
 | `scripts/ui/WorldMap.gd`、`scripts/core/WorldRegistry.gd`、`data/worlds/worlds.json` | Tab 世界地图；世界注册表（世界列表、状态、根场景、到达位置） |
 | `scripts/core/WorldTravel.gd`、`scenes/worlds/World02.tscn`、`scripts/worlds/World02.gd` | 跨世界旅行（Autoload）：先卸载当前世界、清缓存，再在后台线程加载下一个世界；世界二的占位浮岛 |
+| `scenes/boot/Boot.tscn`、`scripts/ui/BootLoader.gd`、`LoadingScreen.gd`、`IntroCutscene.gd`、`ScreenFade.gd` | 启动流程（工程主场景）：加载画面 → 开场过场 → 主菜单；加载画面跨世界旅行也用；`Fade` 转场黑幕（Autoload） |
 | `scripts/world/Cave.gd`、`scripts/interactions/CaveTotem.gd` | 图腾山洞：沿中线生成的洞道与岩丘、石厅、篝火、水晶、尽头光门；会说话的老图腾 |
 | `scripts/core/QuestLog.gd`、`data/quests/quests.json`、`scripts/ui/DialoguePanel.gd`、`scripts/ui/JournalPanel.gd` | 任务与图鉴（Autoload）：任务目标检查、图鉴记录、`user://journal.json`；图腾对话框；J 旅行日志与左上角任务追踪 |
 | `scripts/world/StarField.gd`、`data/sky/constellations.json` | 夜空里的五个原创星座，盯着看就认出 |
@@ -216,7 +218,8 @@ pwsh -File devtools/fetch_polyhaven.ps1
 - **图腾山洞与任务**：北边岩脊里的山洞，石厅里有会说话的老图腾和不灭的篝火，九个任务一个一个接；洞的尽头一道光门通往第二个世界（先卸载湖畔再加载，不同时占内存；世界二目前是雾中浮岛）
 - **旅行日志、图鉴、星座**：J 查看任务进度和图鉴（14 种动物、5 个原创星座），晴朗的夜里盯着星座看就能认出；南部草地多了一座锁着门的石头小屋
 - **画面闪动优化与自然景观**：高画质改用 TAA（走动时锯齿闪烁约减半）、草花远处逐株缩小不再成块闪现、动态分辨率防抖；西边一条从山坡流进湖的小溪，中途一道小瀑布，林道上一座木板桥；西北小山被一道 7.5 m 深的裂谷劈开，林道上架着原木桥，两头能走下谷底
-- 自动检查（88 项）与联机检查（10 项）、截图与性能测试工具
+- **启动与过场、双手**：启动图 → 加载画面（进度、阶段、小提示）→ 三段镜头的开场过场（可跳过、可在设置里关）→ 主菜单；进出房间、传送时黑幕转场；第一人称双手缩小一半、分在左右下角并露出拳头；右键用手或挥手（见 `docs/BOOT_INTRO_HANDS.md`）
+- 自动检查（90 项）、启动流程检查（6 项）与联机检查（10 项）、截图与性能测试工具
 
 ## 未实现（按里程碑）
 

@@ -111,7 +111,7 @@ func _build_main_menu() -> Control:
 	title.add_theme_font_size_override("font_size", 28)
 	box.add_child(title)
 	var keys := Label.new()
-	keys.text = "WASD 移动 · Shift 奔跑 · 空格 跳跃/上浮 · C 下潜 · E 交互 · V 视角\nG 动作轮盘（1 休息 · 2 挥手 · 3 跳舞 · 4 鼓掌）· F12 拍照 · T 聊天\nM 小地图 · Tab 世界地图 · F11 全屏 · F3 坐标 · F2 开发者模式（F 飞行 · N 穿墙 · F4 面板）"
+	keys.text = "WASD 移动 · Shift 奔跑 · 空格 跳跃/上浮 · C 下潜 · E 或右键 交互 · V 视角\nG 动作轮盘（1 休息 · 2 挥手 · 3 跳舞 · 4 鼓掌）· F12 拍照 · T 聊天\nM 小地图 · Tab 世界地图 · F11 全屏 · F3 坐标 · F2 开发者模式（F 飞行 · N 穿墙 · F4 面板）"
 	box.add_child(keys)
 	for item in [["继续", _close], ["多人房间", _open_room], ["全屏 / 窗口（F11）", func() -> void: GameSettings.set_value("fullscreen", not GameSettings.fullscreen)], ["设置", open_settings.bind(0)], ["人物外观", _show_wardrobe], ["退出游戏", _quit]]:
 		var b := Button.new()
@@ -145,6 +145,8 @@ func _build_settings() -> Control:
 	var view := _tab(tabs, "视角")
 	_option(view, "third_person_default", "启动时视角", ["第一人称", "第三人称"], [false, true])
 	_option(view, "first_person_arms", "第一人称的手", ["显示双手", "只显示右手", "不显示"], ARMS_CHOICES)
+	_slider(view, "hand_size", "手的大小", 0.4, 1.0, 0.05, "%d%%", 100.0)
+	_check(view, "play_intro", "启动时播放开场动画")
 	_check(view, "view_bob", "走路时镜头晃动")
 	_slider(view, "third_person_distance", "第三人称距离", 1.5, 8.0, 0.1, "%.1f m")
 	_option(view, "shoulder_left", "第三人称肩位", ["右肩", "左肩"], [false, true])

@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://devtools/BootShots.gd" id="1_bs"]
+
+[node name="BootShots" type="Node"]
+script = ExtResource("1_bs")

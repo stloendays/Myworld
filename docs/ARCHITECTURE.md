@@ -8,6 +8,8 @@
 
 ## 场景组成
 
+启动时的主场景是 `scenes/boot/Boot.tscn`（`BootLoader`）：显示加载画面（`LoadingScreen`），后台线程读当前世界的场景（`worlds.json → current`），实例化后加到根节点下并设为 `current_scene`，在加载画面后面渲染 40 帧编译着色器，再交给开场过场（`IntroCutscene`，镜头在 `world_layout.json → intro`）和大厅菜单，自己释放。直接运行 `Main.tscn`（编辑器、自动检查、截图工具）时不经过这一步，大厅菜单照旧自己弹出。
+
 ```
 Main (Main.gd)
 ├── Systems (ClimateSystem)              预设 / 跳季 / 改时刻 / 改天气的统一入口
@@ -80,6 +82,8 @@ Main (Main.gd)
 | `ActionBar`（动作轮盘）/ 控制器 `do_emote()` / `CharacterModel` 姿势与手势 | 已实现 | 动作：`ground_sit`、`lie` 是姿势（身体放低或放倒，眼睛跟着移动），`wave`、`dance`、`clap` 是叠加在站姿上的手势；状态在 `FirstPersonController.emote` |
 | `WorldRegistry` / `WorldMap` | 已实现 | `data/worlds/worlds.json` 列出所有世界（status：open / preview / planned、根场景、到达位置）；地图读注册表与布局绘制；`WorldRegistry.enter()` 把能去的世界交给 WorldTravel |
 | `WorldTravel`（Autoload） | M2 扩展已实现 | 跨世界旅行：渐黑 → 卸载当前世界 → 清缓存 → 后台线程加载 → 实例化 → 渐亮；记录当前世界与来时的世界；联机时不能离开 |
+| `BootLoader` / `LoadingScreen` / `IntroCutscene` | 已实现 | 启动流程、共用的加载画面（启动与跨世界旅行）、开场过场；`BootLoader.active` 期间大厅菜单不自己弹出 |
+| `Fade`（Autoload） | 已实现 | 盖在所有界面上的转场黑幕：`fade_out` / `fade_in` / `flash`；启动交接、进出房间、传送时用 |
 | `QuestLog`（Autoload）/ `CaveTotem` / `DialoguePanel` / `JournalPanel` | M2 扩展已实现 | 任务内容在 `data/quests/quests.json`；状态在 `WorldState.quests`、图鉴在 `WorldState.journal`（存档 v3）；每 0.4 秒只读世界状态检查目标；进度另写 `user://journal.json` |
 | `WorldTerrain` 沟槽 / `Streams` | M2 扩展已实现 | `terrain.channels`：小溪（沟底只降不升、跌水成瀑布）与裂谷（陡壁窄底、两头渐浅）；沟底高度首次调用时按原地形算好，碰撞、网格、植被共用；`Streams` 画水面、水雾、桥（桥头引坡贴地） |
 | `Cave` / `StoneCottage` / `StarField` | M2 扩展已实现 | 图腾山洞（世界坐标生成的洞道网格与双面三角网碰撞，室内区域 `cave`）；锁着门的石头小屋；星座（`data/sky/constellations.json`） |
