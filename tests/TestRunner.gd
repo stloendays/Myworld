@@ -1932,7 +1932,8 @@ func _test_release() -> void:
 	GameSettings.set_value("language", "en", false)
 	var skip := ["帮助", "时间", "天气", "季节", "预设", "坐标", "传送", "名字", "清屏", "中文", "、", "：", "季", "天",
 		"%s：%s", "%s — %s", "×%d", "%d°", "—", "  ·  ", "出生点", "语言 / Language",
-		"♟", "♞", "♝", "♜", "♛", "♚", "%s  ·  %s", "  ·  ", "✓  ", "◆  "]
+		"♟", "♞", "♝", "♜", "♛", "♚", "%s  ·  %s", "  ·  ", "✓  ", "◆  ",
+		"%s ×%d", "%d  %s   ·   %s   ·   %s：%s", "%s   %.1f s   ·   %d / %d", "%s · %s  ", "      %s：%s%s", "  —  ", "·  "]
 	var missing := PackedStringArray()
 	var re := RegEx.create_from_string(r'"([^"\n]*[^\x00-\x7F][^"\n]*)"')
 	for dir in ["res://scripts/ui", "res://scripts/net", "res://scripts/interactions", "res://scripts/core", "res://scripts/games",

@@ -1,5 +1,5 @@
 {
-  "_doc": "图腾山洞的任务（QuestLog 读取）。图腾按顺序一次给一个新任务（同时最多 3 个进行中）。objectives 的 type：sit（坐到 uid 以 prefix 开头的座位上）、discover（湖边探索点，ids 全部找到）、reach（走到 pos 半径 radius 米内）、zone_event（在仙境出现时进入 zone）、rainbow（在室外看见彩虹）、constellations（发现 count 个星座）、species（图鉴记下 count 种动物）、swim（在 volume 水里游过）、emote_at（在 pos 附近做动作 id）。文字都有中英两份。",
+  "_doc": "图腾山洞的任务（QuestLog 读取）。图腾按顺序一次给一个新任务（同时最多 3 个进行中）。objectives 的 type：sit（坐到 uid 以 prefix 开头的座位上）、discover（湖边探索点，ids 全部找到）、reach（走到 pos 半径 radius 米内）、zone_event（在仙境出现时进入 zone）、rainbow（在室外看见彩虹）、constellations（发现 count 个星座）、species（图鉴记下 count 种动物）、swim（在 volume 水里游过）、emote_at（在 pos 附近做动作 id）、flag（WorldState.flags 里 key 为真，例如点亮亚特兰蒂斯的尖塔）。文字都有中英两份。",
   "giver": {"name": "老图腾", "name_en": "Old Totem"},
   "greeting": {
     "zh": "……火还旺着。旅人，你走进我的山洞了。我守在这里很久了，湖边的事，我都想听你讲讲。",
@@ -72,6 +72,20 @@
       "offer": "湖东南的林子，晴朗的夜里会长出一片仙境。等它出现的时候走进去。", "offer_en": "The woods south-east of the lake grow a fairy glade on clear nights. Walk in while it is there.",
       "done": "那棵发光的树，是我年轻时种下的。", "done_en": "That glowing tree — I planted it when I was young.",
       "objectives": [{"type": "zone_event", "zone": "fairy_glade", "text": "在仙境出现时走进仙境林地", "text_en": "Enter the Fairy Glade while it is there"}]
+    },
+    {
+      "id": "sunken_city",
+      "title": "沉没之城", "title_en": "The Sunken City",
+      "offer": "泳池馆地下那口大鱼缸，缸底有一圈很老的石环。潜下去从环里游过去，你会到一座沉在海底的城。替我去看看它的神殿、广场和水渠。", "offer_en": "In the great tank under the pool house there is a very old ring of stones. Dive down and swim through it, and you will reach a city under the sea. Go and see its temple, its plaza and its aqueduct for me.",
+      "done": "城还在，水渠还在流……那就好。", "done_en": "The city still stands and the aqueduct still flows. Good.",
+      "objectives": [{"type": "discover", "ids": ["at_temple", "at_plaza", "at_aqueduct"], "text": "在亚特兰蒂斯找到山铜神殿、台阶广场和洋流水渠", "text_en": "Find the Orichalcum Temple, the Stepped Plaza and the Current Aqueduct in Atlantis"}]
+    },
+    {
+      "id": "orichalcum_light",
+      "title": "山铜之光", "title_en": "Orichalcum Light",
+      "offer": "那座城的尖塔暗了很久了。五尊捧镜的雕像还在，转动它们，把光一尊一尊传到尖塔上。", "offer_en": "The spire of that city has been dark a long time. The five statues with mirrors still stand; turn them and pass the light, one to the next, up to the spire.",
+      "done": "我在这儿都看见了，海底亮了一下。", "done_en": "I saw it even from here: the sea floor flashed with light.",
+      "objectives": [{"type": "flag", "key": "atlantis_spire", "text": "让光照到亚特兰蒂斯的山铜尖塔", "text_en": "Bring the light to the orichalcum spire of Atlantis"}]
     }
   ]
 }

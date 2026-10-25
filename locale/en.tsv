@@ -595,3 +595,118 @@ E  点亮风灯	E  Light the wind beacon
 已传送到光门前。	Teleported to the gate.
 那里没有地面	there is no ground there
 接着 v0.4 的任务和图鉴，从秋天黄昏的湖畔开始	Picks up your v0.4 quests and field guide, starting at the lake on an autumn evening
+%.1f 秒 · %s	%.1f s · %s
+%d 条鱼	%d fish
+%s 还有 %d 秒	%s: %d s left
+%s：%.1f 秒 · %s%s	%s: %.1f s · %s%s
+1 / 2 / 3 做菜   ·   E / Esc 关闭	1 / 2 / 3 cook   ·   E / Esc close
+E  做饭（用钓到的鱼）	E  Cook (with the fish you caught)
+E  抓住蝠鲼的背	E  Hold on to the manta
+E  松手（骑着蝠鲼时不耗氧气）	E  Let go (no air is used while riding the manta)
+E  转动雕像（45°）	E  Turn the statue (45°)
+不够	Not enough
+亚特兰蒂斯	Atlantis
+亚特兰蒂斯氧气	Air in Atlantis
+亚特兰蒂斯的石板  %d / %d	Tablets of Atlantis  %d / %d
+亚特兰蒂斯：珍珠 %d / %d · 贝壳 %d / %d · 石板 %d / %d · 尖塔 %s	Atlantis: pearls %d / %d · shells %d / %d · tablets %d / %d · spire %s
+传说	Legends
+做	Cook
+做好了%s，吃得很香——%s：%s（%d 分钟）	%s is ready, and delicious. %s: %s (%d min)
+先把炉火生起来（看着铸铁炉按 E）	Light the fire first (look at the stove and press E)
+先把炉火生起来，才能做饭	Light the fire first to cook
+光照到了山铜尖塔——尖塔亮了，神殿的大门开了！	The light reached the orichalcum spire. The spire is lit and the temple doors have opened!
+前面不是水面：走到湖边，对着湖扔	There is no water ahead: go to the lake shore and throw towards the lake
+前面没有能钓鱼的水，走到水边对着水面再甩竿	No fishing water ahead. Go to the water's edge and cast towards it
+古代石板	ancient tablet
+咬钩了！快按 R 收竿！	A bite! Press R to reel in!
+哗——被水流一路冲到了城东头	Whoosh! The current carried you all the way to the east of the city
+大蝠鲼	Great manta
+奔跑和游泳都要体力，海底氧气更少，没有小地图和问号，跳台、绳桥、潜水环都计时。	Running and swimming cost stamina, there is less air under the sea, no minimap or question marks, and the sky steps, rope bridges and dive rings are timed.
+完成	finished
+宝箱	Treasure chest
+寻宝	treasure hunting
+寻宝线索（B 挖）	Treasure clues (B to dig)
+寻宝（B 挖）	Treasure hunting (B to dig)
+小图腾	Little totem
+山铜晶	Orichalcum crystal
+已点亮	lit
+弹了 %d 下！	%d skips!
+弹了 %d 下，落到岸上了	%d skips, and it landed on the shore
+成就	Achievements
+成就  %d / %d	Achievements  %d / %d
+成就解锁：%s——%s	Achievement unlocked: %s. %s
+扑通——一下就沉了，扔平一点、用力一点	Plop. It sank at once. Throw flatter and harder
+打水漂	stone skipping
+打水漂最多弹 %d 下（Q 按住蓄力）	Best stone skip: %d (hold Q to charge)
+打水漂（Q）	Stone skipping (Q)
+抓住了！蝠鲼带着你游起来了	Got it! The manta carries you away
+挑战中断了	Challenge abandoned
+挑战开始：%s——按顺序经过 %d 个环	Challenge started: %s. Pass the %d rings in order
+挖到宝箱了！里面是一枚刻着「%s」的金币	You dug up a treasure chest! Inside is a gold coin stamped "%s"
+捧镜雕像	Mirror statue
+收竿了，还没有鱼咬钩	Reeled in. Nothing had bitten yet
+收集品（云珠、碎片、珍珠、贝壳、石板）	Collectibles (cloud pearls, shards, pearls, shells, tablets)
+星盘	Star globe
+未点亮	dark
+正在生效：	Active:
+气泡泉：氧气补满了	Bubble spring: air refilled
+氧气	Air
+氧气用完了……气泡把你托回了泉边	Out of air... the bubbles carried you back to the spring
+水柱把你托了起来！	The water spout lifts you up!
+水漂石	Skipping stone
+没有任务、体力和计时挑战，海底不用氧气，小动物不怕人，适合散步、看风景。	No tasks, stamina or timed challenges, no air needed under the sea, and animals are not shy. Good for walking and enjoying the views.
+活动	Activities
+深海遗城	Sunken City
+炉火烹饪	Fireside Cooking
+烹饪	cooking
+玩法活动	Activities
+珍珠	pearl
+石板上刻着「%s」，记进了旅行日志的传说页	The tablet reads "%s". It is now in the Legends page of your journal
+空的	empty
+空的（按 R 去钓几条）	empty (press R to catch a few)
+站在地上（或贴着海底）才能挖	Stand on the ground (or on the seabed) to dig
+站在岸边、码头上才能钓鱼	Stand on the shore or a dock to fish
+站在湖边或码头上才能打水漂	Stand on the lake shore or the dock to skip stones
+等鱼咬钩……（鱼漂沉下去时按 R 收竿）	Waiting for a bite... (press R when the float goes under)
+纪录	Records
+联机做客时不能%s（这是房主的世界，记录不会保存）	You can't do %s as a guest (this is the host's world and your records would not be saved)
+蝠鲼驮着你绕古城游了一圈，又回到了礁石上	The manta carried you once around the city and back to its reef
+被水流冲着走……	Carried by the current...
+要 %d 种不同的鱼，鱼篓里只有 %d 种	Needs %d different kinds of fish; your basket has %d
+计时挑战	timed challenges
+贝壳	shell
+走开了，收起鱼竿	You walked away and put the rod away
+还没跑过（金牌 %.0f 秒内）	not run yet (gold under %.0f s)
+这一局没有开启%s（新建游戏页的「玩法活动」）	%s is off in this game (see Activities on the New Game page)
+这个世界没有埋宝藏	There is no treasure buried in this world
+这个世界的宝箱已经挖到了	You already dug up this world's chest
+这里什么也没有……不过就在附近了！	Nothing here... but it's very close!
+这里什么也没有。线索说的地方不太远了	Nothing here. The place in the clue is not far now
+这里什么也没有。线索说的地方还远着呢（旅行日志 → 活动）	Nothing here. The place in the clue is still far away (Journal → Activities)
+金牌	Gold
+钓到了%s，%.1f 厘米！	You caught a %s, %.1f cm!
+钓鱼	fishing
+钓鱼（R）	Fishing (R)
+铁锅	Cooking pot
+铜牌	Bronze
+银牌	Silver
+鱼  %d / %d（R 钓鱼）	Fish  %d / %d (R to fish)
+鱼不够：要 %d 条，鱼篓里有 %d 条	Not enough fish: needs %d, your basket has %d
+鱼标本	Mounted fish
+鱼篓：	Fish basket:
+鱼跑了……再甩一竿试试	It got away... cast again
+（%d 种不同的）	 (%d different kinds)
+（图鉴新增）	 (new in the field guide)
+（已挖到）	 (dug up)
+（新纪录！）	 (new record!)
+（最好 %.1f 秒）	 (best %.1f s)
+（最好 %d 下）	 (best %d)
+（这一局关掉了成就）	 (achievements are off in this game)
+？？？（还没找到这块石板）	??? (you haven't found this tablet yet)
+海底沉没的古城：三圈水环、两圈陆环，气泡穹顶下的神殿与山铜尖塔。从水族馆海洋大缸底部的石环潜进去。	An ancient city sunk under the sea: three rings of water and two of land, with a temple and an orichalcum spire under a bubble dome. Dive in through the stone ring at the bottom of the aquarium's great ocean tank.
+山铜神殿	Orichalcum Temple
+台阶广场	Stepped Plaza
+洋流水渠	Current Aqueduct
+沉船	Sunken Ship
+海带林	Kelp Forest
+蝠鲼礁	Manta Reef

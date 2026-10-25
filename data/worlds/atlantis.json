@@ -29,7 +29,7 @@
   ],
   "canal": {"surface": -0.3, "floor": -2.8},
   "causeway": {"half_width": 2.25},
-  "seafloor": {"base": -3.0, "boundary_start": 108.0, "boundary_end": 128.0, "boundary_height": 40.0},
+  "seafloor": {"base": -3.0, "boundary_start": 96.0, "boundary_end": 130.0, "boundary_height": 26.0},
   "sea": {"top": 36.0, "bottom": -9.0, "speed": 1.7},
   "temple": {"rect": [-4.5, -9.5, 9.0, 7.0], "door_width": 2.4, "height": 5.2},
   "spire": {"pos": [0.0, 1.5], "height": 16.0},

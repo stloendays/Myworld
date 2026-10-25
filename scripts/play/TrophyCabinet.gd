@@ -49,6 +49,13 @@ func _build() -> void:
 	cs.position = Vector3(0.0, H * 0.5, 0.0)
 	body.add_child(cs)
 	add_child(body)
+	# 柜里一盏暖色小灯，晚上也看得清摆的东西
+	var lamp := OmniLight3D.new()
+	lamp.light_color = Color(1.0, 0.85, 0.6)
+	lamp.light_energy = 0.9
+	lamp.omni_range = 1.8
+	lamp.position = Vector3(0.0, H - 0.2, 0.15)
+	add_child(lamp)
 	for i in SLOTS.size():
 		var id: String = SLOTS[i][0]
 		var row := i / 4

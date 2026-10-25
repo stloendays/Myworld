@@ -244,12 +244,11 @@ func _build_water() -> void:
 	var pm := PlaneMesh.new()
 	pm.size = Vector2(m.size.x + 200.0, m.size.y + 200.0)
 	surf.mesh = pm
-	var sm := ShaderMaterial.new()
-	sm.shader = FLOW_SHADER
-	sm.set_shader_parameter("deep", Color(0.3, 0.75, 0.85))
-	sm.set_shader_parameter("foam", Color(0.85, 1.0, 1.0))
-	sm.set_shader_parameter("stripes", 60.0)
-	sm.set_shader_parameter("speed", 0.08)
+	var sm := StandardMaterial3D.new()
+	sm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	sm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	sm.cull_mode = BaseMaterial3D.CULL_DISABLED
+	sm.albedo_color = Color(0.55, 0.85, 0.9, 0.35)
 	surf.material_override = sm
 	surf.position = Vector3(0.0, top, 0.0)
 	surf.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -344,7 +343,7 @@ func _build_ring_lines() -> void:
 
 ## 石堤过水的那一段两边的矮石栏（有碰撞，人掉不进水里），两头各一盏山铜灯柱。
 func _build_causeway_rails() -> void:
-	var stone := ArtMaterials.pbr("rustic_stone_wall", Color(0.86, 0.86, 0.8), "world")
+	var stone := ArtMaterials.flat(Color(0.86, 0.86, 0.8), 0.6)
 	for i in rings.size():
 		var ring: Dictionary = rings[i]
 		if not ring["water"]:
@@ -389,7 +388,7 @@ func _build_temple() -> void:
 	var hgt := float(t["height"])
 	var dw := float(t["door_width"])
 	var y := height_at(x0 + w * 0.5, z0 + d * 0.5)
-	var marble := ArtMaterials.pbr("rustic_stone_wall", Color(0.95, 0.93, 0.88), "world")
+	var marble := ArtMaterials.flat(Color(0.95, 0.93, 0.88), 0.6)
 	var g := Node3D.new()
 	g.name = "Temple"
 	add_child(g)
@@ -477,7 +476,7 @@ func _build_spire() -> void:
 	var p := MiniWorld.v2(data["spire"]["pos"])
 	var h := float(data["spire"]["height"])
 	var y := height_at(p.x, p.y)
-	var marble := ArtMaterials.pbr("rustic_stone_wall", Color(0.9, 0.88, 0.84), "world")
+	var marble := ArtMaterials.flat(Color(0.9, 0.88, 0.84), 0.6)
 	solid_box(self, Vector3(2.2, 0.6, 2.2), Transform3D(Basis(), Vector3(p.x, y + 0.3, p.y)), marble)
 	_spire_mat = StandardMaterial3D.new()
 	_spire_mat.albedo_color = Color(0.75, 0.42, 0.25)
@@ -542,7 +541,7 @@ func _build_spire() -> void:
 func _build_light_source() -> void:
 	var p := MiniWorld.v2(data["light_source"]["pos"])
 	var y := height_at(p.x, p.y)
-	var stone := ArtMaterials.pbr("rustic_stone_wall", Color(0.85, 0.86, 0.82), "world")
+	var stone := ArtMaterials.flat(Color(0.85, 0.86, 0.82), 0.6)
 	solid_box(self, Vector3(1.4, 2.0, 1.4), Transform3D(Basis(), Vector3(p.x, y + 1.0, p.y)), stone)
 	var crystal := MeshInstance3D.new()
 	var pm := PrismMesh.new()
@@ -684,7 +683,7 @@ func set_doors(open: bool, instant: bool) -> void:
 func _build_plaza() -> void:
 	var c := MiniWorld.v2(data["plaza"]["center"])
 	var y := height_at(c.x, c.y)
-	var marble := ArtMaterials.pbr("rustic_stone_wall", Color(0.94, 0.92, 0.86), "world")
+	var marble := ArtMaterials.flat(Color(0.94, 0.92, 0.86), 0.6)
 	var radii := [3.2, 2.4, 1.6]
 	for i in 3:
 		var mi := MeshInstance3D.new()
@@ -723,7 +722,7 @@ func _build_plaza() -> void:
 	water.position = Vector3(c.x, y + 0.96 + 1.2, c.y)
 	add_child(water)
 	# 广场四周一圈石柱
-	var stone := ArtMaterials.pbr("rustic_stone_wall", Color(0.9, 0.88, 0.82), "world")
+	var stone := ArtMaterials.flat(Color(0.9, 0.88, 0.82), 0.6)
 	for k in 8:
 		var a := float(k) / 8.0 * TAU + 0.2
 		var p := c + Vector2(cos(a), sin(a)) * (float(data["plaza"]["radius"]) + 1.2)
@@ -754,7 +753,7 @@ func _build_aqueduct() -> void:
 	current_ride.prompt_text = "被水流冲着走……"
 	current_ride.rider_offset = Vector3(0.0, -0.35, 0.0)
 	current_ride.finished.connect(_on_current_done)
-	var stone := ArtMaterials.pbr("rustic_stone_wall", Color(0.82, 0.84, 0.8), "world")
+	var stone := ArtMaterials.flat(Color(0.82, 0.84, 0.8), 0.6)
 	var flow := ShaderMaterial.new()
 	flow.shader = FLOW_SHADER
 	flow.set_shader_parameter("speed", 2.4)
@@ -880,7 +879,7 @@ func _on_current_done(_rider: Node, completed: bool) -> void:
 
 ## 两圈陆环上的柱廊：陆环一外沿、陆环二内沿每隔一段一根石柱，避开石堤、光路和水渠。
 func _build_colonnades() -> void:
-	var stone := ArtMaterials.pbr("rustic_stone_wall", Color(0.93, 0.91, 0.86), "world")
+	var stone := ArtMaterials.flat(Color(0.93, 0.91, 0.86), 0.6)
 	var bases: Array[Vector3] = []
 	for spec: Array in [[27.6, 0.6, 36], [36.4, 0.4, 44]]:
 		var r := float(spec[0])
@@ -949,7 +948,7 @@ func _build_houses() -> void:
 
 
 func _house(p: Vector2, y: float, size: Vector2, h: float, yaw: float, col: Color) -> void:
-	var mat := ArtMaterials.pbr("rustic_stone_wall", col, "world")
+	var mat := ArtMaterials.flat(col, 0.6)
 	var basis := Basis(Vector3.UP, yaw)
 	var c := Vector3(p.x, y, p.y)
 	solid_box(self, Vector3(size.x, h, size.y), Transform3D(basis, c + Vector3(0.0, h * 0.5, 0.0)), mat)
@@ -1260,7 +1259,7 @@ func _process(delta: float) -> void:
 	var cam := get_viewport().get_camera_3d()
 	if cam != null and _env != null:
 		var inside := inside_dome(cam.global_position)
-		_env.fog_density = lerpf(_env.fog_density, 0.004 if inside else 0.016, 1.0 - exp(-3.0 * delta))
+		_env.fog_density = lerpf(_env.fog_density, 0.009 if inside else 0.028, 1.0 - exp(-3.0 * delta))
 
 
 ## 白天的程度：6 点后亮起来，18 点半后暗下去（湖畔的时刻）。

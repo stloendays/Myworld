@@ -72,7 +72,7 @@ func _refresh() -> void:
 		_box.add_child(row)
 		var b: Dictionary = (Play.fish_data.get("buffs", {}) as Dictionary).get(str(r["buff"]), {})
 		var need := tr("%d 条鱼") % int(r["fish"]) + (tr("（%d 种不同的）") % int(r["kinds"]) if int(r["kinds"]) > 1 else "")
-		var l := _label("%d  %s   ·   %s   ·   %s：%s" % [i, Play.text(r, "name"), need, Play.text(b, "name"), Play.text(b, "desc")], 20, Color(1.0, 0.88, 0.6))
+		var l := _label("%d  %s   ·   %s   ·   %s：%s" % [i, Play.text(r, "name"), need, Play.text(b, "name"), Play.text(b, "desc")], 20, Color(1.0, 0.88, 0.6), true)
 		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.add_child(l)
 		var btn := Button.new()
@@ -90,12 +90,13 @@ func _refresh() -> void:
 		_box.add_child(_label(tr("正在生效：") + "、".join(parts), 18, Color(0.75, 0.95, 0.7)))
 
 
-func _label(text: String, size: int, color: Color) -> Label:
+func _label(text: String, size: int, color: Color, wrap := false) -> Label:
 	var l := Label.new()
 	l.text = text
 	l.add_theme_font_size_override("font_size", size)
 	l.add_theme_color_override("font_color", color)
-	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	if wrap:
+		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	return l
 
 

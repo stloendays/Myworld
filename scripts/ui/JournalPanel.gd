@@ -78,7 +78,8 @@ func _unhandled_input(event: InputEvent) -> void:
 # ---------------------------------------------------------------- 内容
 
 func _refresh() -> void:
-	if _quest_box == null:
+	# 世界被移出场景树时（例如截图工具把湖畔先摘下来拍别的世界）不刷新
+	if _quest_box == null or not is_inside_tree():
 		return
 	for c in _quest_box.get_children():
 		c.queue_free()

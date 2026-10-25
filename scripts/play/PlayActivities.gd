@@ -348,10 +348,10 @@ func _launch_stone(sim: Dictionary) -> void:
 	_stone = MeshInstance3D.new()
 	_stone.name = "SkipStone"
 	var sm := SphereMesh.new()
-	sm.radius = 0.07
-	sm.height = 0.05
+	sm.radius = 0.1
+	sm.height = 0.06
 	_stone.mesh = sm
-	_stone.material_override = ArtMaterials.flat(Color(0.55, 0.55, 0.58), 0.7)
+	_stone.material_override = ArtMaterials.flat(Color(0.72, 0.72, 0.75), 0.6)
 	add_child(_stone)
 	_stone_path = sim["path"]
 	_stone_bounces = sim["splashes"]
@@ -386,22 +386,24 @@ func _splash(at: Vector3) -> void:
 	var p := CPUParticles3D.new()
 	p.one_shot = true
 	p.emitting = false
-	p.amount = 14
-	p.lifetime = 0.6
+	p.amount = 26
+	p.lifetime = 0.8
 	p.explosiveness = 0.95
 	p.direction = Vector3.UP
-	p.spread = 35.0
-	p.initial_velocity_min = 1.2
-	p.initial_velocity_max = 2.2
+	p.spread = 30.0
+	p.initial_velocity_min = 1.6
+	p.initial_velocity_max = 3.0
 	p.gravity = Vector3(0.0, -6.0, 0.0)
 	var sm := SphereMesh.new()
-	sm.radius = 0.035
-	sm.height = 0.07
+	sm.radius = 0.06
+	sm.height = 0.12
 	sm.radial_segments = 6
 	sm.rings = 3
 	var m := StandardMaterial3D.new()
-	m.albedo_color = Color(0.85, 0.95, 1.0, 0.8)
+	m.albedo_color = Color(0.9, 0.97, 1.0, 0.9)
 	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.emission_enabled = true
+	m.emission = Color(0.6, 0.75, 0.8)
 	sm.material = m
 	p.mesh = sm
 	add_child(p)

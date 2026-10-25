@@ -135,6 +135,17 @@ const SHOTS := [
 	{"name": "v05_11_new_game_en", "lang": "en", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "lobby": true, "newgame": "hardcore"},
 	{"name": "v05_12_compass_stamina", "climate": DUSK, "player": [-60.0, 10.0], "heading": 20.0, "pitch": -3.0, "stamina": 0.45},
 	{"name": "v05_13_journal_collection", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "journal": 2},
+	# 亚特兰蒂斯入口与更多玩法（atl_00、play_）
+	{"name": "atl_00_ring", "climate": DUSK, "house": true, "eye": [2.6, -7.4, -4.0], "look": [-2.0, -8.05, -5.6]},
+	{"name": "play_01_fishing", "climate": DUSK, "player": [-3.0, 26.0], "y": 1.0, "heading": 80.0, "pitch": -2.0, "fish": true},
+	{"name": "play_02_skipping", "climate": {"season": "SUMMER", "hour": 17.0, "weather": "CLEAR"}, "eye": [4.0, 2.4, 31.5], "look": [16.0, 0.3, 25.0], "skip": [-2.0, 1.0, 26.0, 90.0], "skip_frames": 26},
+	{"name": "play_03_treasure", "climate": DUSK, "eye": [-44.6, 1.5, 35.8], "ground": true, "look": [-47.0, 0.4, 33.0], "look_ground": true, "chest": [-47.0, 33.0]},
+	{"name": "play_04_cabinet", "climate": DUSK, "trophies": true, "eye": [-67.4, 2.4 + 1.25, 36.2], "look": [-67.75, 2.4 + 0.95, 34.0]},
+	{"name": "play_05_achievements", "climate": DUSK, "trophies": true, "player": [-49.0, 27.0], "heading": 75.0, "journal": 5},
+	{"name": "play_06_challenge", "climate": DUSK, "player": [-80.5, -48.0], "heading": 5.0, "pitch": -3.0, "course": "lake_trail"},
+	{"name": "play_07_cooking", "climate": DUSK, "trophies": true, "player": [-71.6, 36.4], "y": 2.4, "heading": 290.0, "pitch": -12.0, "cooking": true},
+	{"name": "play_08_journal_activities", "climate": DUSK, "trophies": true, "player": [-49.0, 27.0], "heading": 75.0, "journal": 3},
+	{"name": "play_09_journal_lore", "climate": DUSK, "trophies": true, "player": [-49.0, 27.0], "heading": 75.0, "journal": 4},
 ]
 
 const OUTFITS := [
@@ -234,12 +245,16 @@ func _run() -> void:
 				await _wait(4)
 				_look_antisolar(float(shot["antisolar"]))
 			else:
-				_camera.look_at(Vector3(float(shot["look"][0]), float(shot["look"][1]), float(shot["look"][2])), Vector3.UP)
+				var look := Vector3(float(shot["look"][0]), float(shot["look"][1]), float(shot["look"][2]))
+				if shot.get("look_ground", false):
+					look.y += WorldTerrain.height_at(look.x, look.z)
+				_camera.look_at(look, Vector3.UP)
 		var chat := _main.get_node("ChatBox") as ChatBox
 		chat.visible = shot.has("chat")
 		await _wait(40)
 		if shot.has("chat"):
 			await _stage_chat(chat, str(shot["chat"]))
+		await _stage_play(shot)
 		if shot.has("state"):
 			_apply_quest_state(shot["state"])
 			await _wait(5)
@@ -260,6 +275,7 @@ func _run() -> void:
 		var path := ProjectSettings.globalize_path("%s/%s.png" % [OUT_DIR, shot["name"]])
 		img.save_png(path)
 		print("saved ", path)
+		_unstage_play()
 		if shot.has("chat"):
 			chat.close()
 		(_main.get_node("DialoguePanel") as DialoguePanel).close()
@@ -305,6 +321,21 @@ const WORLD_SHOTS := [
 	{"name": "v05_w3_06_altar_beam", "world": "world_03", "altar": true, "eye": [-6.0, 14.0, -28.0], "look": [-30.0, 22.0, -68.0]},
 	{"name": "v05_w3_07_hud", "world": "world_03", "player": [0.0, 66.0], "heading": 10.0, "pitch": -2.0},
 	{"name": "v05_w3_08_world_map", "world": "world_03", "player": [0.0, 66.0], "heading": 0.0, "world_map": true},
+	{"name": "play_11_oasis_fishing", "world": "world_03", "player": [7.0, 27.5], "heading": 92.0, "pitch": -12.0, "fish": true},
+	{"name": "atl_01_overview", "world": "world_04", "eye": [38.0, 26.0, 36.0], "look": [-4.0, 0.0, -6.0]},
+	{"name": "atl_02_street", "world": "world_04", "eye": [16.0, 1.75, 15.0], "ground": true, "look": [0.0, 4.0, -2.0]},
+	{"name": "atl_03_temple_before", "world": "world_04", "unsolve": true, "eye": [5.0, 1.8, 19.5], "ground": true, "look": [0.0, 4.0, -4.0]},
+	{"name": "atl_05_temple_after", "world": "world_04", "solve": true, "eye": [5.0, 1.8, 19.5], "ground": true, "look": [0.0, 6.0, -4.0]},
+	{"name": "atl_12_beam", "world": "world_04", "solve": true, "eye": [-30.0, 6.0, -26.0], "look": [10.0, 2.0, -12.0]},
+	{"name": "atl_04_outside", "world": "world_04", "eye": [16.0, 7.0, 98.0], "look": [0.0, 16.0, 30.0]},
+	{"name": "atl_13_seabed", "world": "world_04", "eye": [-48.0, 3.0, 66.0], "look": [-64.0, 2.0, 80.0]},
+	{"name": "atl_06_current", "world": "world_04", "player": [-57.0, 18.0], "heading": 90.0, "pitch": -8.0, "rail": "current", "progress": 48.0},
+	{"name": "atl_07_manta", "world": "world_04", "player": [-78.0, -12.0], "heading": 0.0, "pitch": -10.0, "rail": "manta", "progress": 160.0, "third_person": true},
+	{"name": "atl_10_oxygen_hud", "world": "world_04", "player": [6.0, 76.0], "y": 3.0, "heading": 0.0, "pitch": 8.0, "oxygen": 0.55},
+	{"name": "atl_11_tablet", "world": "world_04", "player": [12.0, 23.0], "heading": 180.0, "pitch": -25.0},
+	{"name": "atl_14_dive_rings", "world": "world_04", "player": [28.0, 60.0], "y": 2.0, "heading": 132.0, "pitch": 2.0, "course": "dive_rings"},
+	{"name": "atl_08_world_map", "world": "world_04", "player": [0.0, 10.4], "heading": 0.0, "world_map": true},
+	{"name": "atl_09_night", "world": "world_04", "solve": true, "hour": 22.0, "eye": [36.0, 18.0, 44.0], "look": [0.0, 4.0, 0.0]},
 ]
 
 
@@ -338,12 +369,21 @@ func _shoot_worlds(prefix: String) -> void:
 			(world as World02).whale_pivot.rotation.y = deg_to_rad(-40.0)
 		if shot.get("altar", false) and world is World03:
 			(world as World03).altar.apply_state("placed:6")
+		if world is World04:
+			await _stage_atlantis(world as World04, shot)
 		if player_view:
 			var a: Array = shot["player"]
-			world.player.teleport_to(Vector3(float(a[0]), world.height_at(float(a[0]), float(a[1])) + 0.1, float(a[1])), float(shot.get("heading", 0.0)))
+			var py := float(shot["y"]) if shot.has("y") else world.height_at(float(a[0]), float(a[1])) + 0.1
+			world.player.teleport_to(Vector3(float(a[0]), py, float(a[1])), float(shot.get("heading", 0.0)))
 			world.player.head.rotation.x = deg_to_rad(float(shot.get("pitch", 0.0)))
+			world.player.set_third_person(shot.get("third_person", false))
 			world.player.camera.current = true
-			await _wait(60)
+			await _wait(30)
+			if world is World04:
+				await _stage_rail(world as World04, shot)
+			_player = world.player
+			await _stage_play(shot)
+			await _wait(30)
 		else:
 			var cam := Camera3D.new()
 			cam.fov = 70.0
@@ -361,6 +401,10 @@ func _shoot_worlds(prefix: String) -> void:
 		var path := ProjectSettings.globalize_path("%s/%s.png" % [OUT_DIR, shot["name"]])
 		get_viewport().get_texture().get_image().save_png(path)
 		print("saved ", path)
+		_unstage_play()
+		if world is World04 and world.player.rail != null:
+			world.player.rail.try_release(world.player)
+			world.player.end_rail(world.player.global_position)
 	if world != null:
 		world.queue_free()
 		await _wait(2)
@@ -466,7 +510,7 @@ func _wait(frames: int) -> void:
 ## 聊天框机位："chat": "open" 为正在输入（显示全部记录与输入行），"recent" 为关闭后左下角浮现的最近消息。
 func _stage_chat(chat: ChatBox, mode: String) -> void:
 	chat.clear()
-	chat.post_system("欢迎来到暮色湖畔。按 T 聊天，输入 /help 查看命令。")
+	chat.post_system(tr("欢迎来到%s。按 T 聊天，输入 /help 查看命令。") % tr(str(WorldRegistry.current().get("name", ""))))
 	chat.submit("今天的晚霞真好看")
 	chat.submit("/time")
 	chat.submit("/weather")
@@ -589,3 +633,114 @@ func _force_emote(id: String) -> void:
 		_player.body.set_gesture(id)
 		_player.body._gesture_t = 0.35
 	_player._place_body()
+
+
+## 小玩法机位："fish" 甩竿（鱼漂在水上等着）、"skip": [x, y, z, 朝向] 从那里打一个水漂（拍石头弹在水面上）、
+## "chest": [x, z] 摆一只开着的宝箱、"course": id 开始一项计时挑战（看得到计时条）、"cooking" 打开烹饪面板、
+## "trophies" 先填一份“玩了一阵子”的存档状态（收藏柜、成就、日志都有东西）。
+func _stage_play(shot: Dictionary) -> void:
+	var play := get_tree().get_first_node_in_group("play_activities") as PlayActivities
+	if shot.get("trophies", false):
+		_fill_trophies()
+	if play == null:
+		return
+	if shot.get("fish", false):
+		play.bite_wait = 1000.0
+		play.cast()
+		await _wait(30)
+	if shot.has("skip"):
+		var s: Array = shot["skip"]
+		_player.teleport_to(Vector3(float(s[0]), float(s[1]), float(s[2])), float(s[3]))
+		play.throw_stone(1.0, 0.0)
+		await _wait(int(shot.get("skip_frames", 48)))
+	if shot.has("chest"):
+		var c: Array = shot["chest"]
+		play._open_chest(Vector3(float(c[0]), play.ground_at(float(c[0]), float(c[1])), float(c[1])), false)
+	if shot.has("course"):
+		play.start_course(str(shot["course"]))
+		await _wait(20)
+		play.course_time = float(shot.get("course_time", 12.4))
+		await _wait(2)
+	if shot.get("cooking", false):
+		var panel := get_tree().get_first_node_in_group("cooking_panel") as CookingPanel
+		if panel != null:
+			panel.open(_player if _player.is_inside_tree() else get_tree().get_first_node_in_group("local_player") as FirstPersonController)
+		await _wait(5)
+	await _wait(4)
+
+
+func _unstage_play() -> void:
+	var play := get_tree().get_first_node_in_group("play_activities") as PlayActivities
+	if play != null:
+		if play.fish_state != "":
+			play._end_fishing()
+		play.cancel_course()
+		if play.chest != null:
+			play.chest.queue_free()
+			play.chest = null
+		play.bite_wait = -1.0
+	var panel := get_tree().get_first_node_in_group("cooking_panel") as CookingPanel
+	if panel != null and panel.is_open():
+		panel.close()
+
+
+## 一份“玩了一阵子”的状态：各世界捡了些东西、钓了几种鱼、挖到宝箱、拿了奖牌、读了石板、点亮尖塔。
+func _fill_trophies() -> void:
+	WorldState.collections["world_02"] = ["pearl_01", "pearl_04"]
+	WorldState.collections["world_03"] = ["shard_01"]
+	WorldState.collections["world_04"] = ["pearl_01", "pearl_02", "shell_01", "tablet_01", "tablet_02", "tablet_06"]
+	for l in ["lore_1", "lore_2", "lore_6"]:
+		WorldState.journal_add("lore", l)
+	for c in ["canoe", "fox", "lighthouse"]:
+		WorldState.journal_add("constellations", c)
+	WorldState.flags["atlantis_spire"] = true
+	WorldState.flags["visited_world_04"] = true
+	WorldState.treasures["dusk_lake"] = 3
+	WorldState.records["skip_best"] = 7
+	WorldState.records["course:lake_trail"] = 26.4
+	WorldState.records["course:dive_rings"] = 51.2
+	WorldState.records["dishes"] = 2
+	WorldState.catches.clear()
+	for f: Array in [["perch", 3, 27.5], ["trout", 2, 41.0], ["carp", 1, 63.5], ["bream", 2, 33.0], ["lanternfish", 1, 11.5]]:
+		WorldState.catches[f[0]] = {"count": f[1], "best_cm": f[2]}
+	WorldState.pantry = {"fish:perch": 2, "fish:trout": 1, "fish:bream": 1}
+	Play.check_achievements()
+	for c in get_tree().get_nodes_in_group("trophy_cabinet"):
+		(c as TrophyCabinet).refresh()
+
+
+## 亚特兰蒂斯机位："solve" 五尊雕像转到位（尖塔亮、门开），"unsolve" 回到开局朝向（门关），"hour" 设时刻（白天 / 夜里的光），
+## "oxygen" 氧气条的量。
+func _stage_atlantis(w: World04, shot: Dictionary) -> void:
+	if shot.get("solve", false):
+		for st in w.statues:
+			st.set_dir(st.correct)
+		w.set_doors(true, true)
+	if shot.get("unsolve", false):
+		WorldState.flags.erase("atlantis_spire")
+		for s: Dictionary in w.data["statues"]:
+			for st in w.statues:
+				if st.uid == StringName(s["id"]):
+					st.set_dir(int(s["start"]))
+		w.set_doors(false, true)
+	if shot.has("hour"):
+		WorldState.time_minutes = float(shot["hour"]) * 60.0
+	else:
+		WorldState.time_minutes = 13.0 * 60.0
+	w._update_lighting(true)
+	if shot.has("oxygen"):
+		w.oxygen = float(shot["oxygen"])
+	await _wait(10)
+
+
+## "rail": "current" / "manta" 让玩家坐上洋流或蝠鲼，"progress" 走到路线的第几米。
+func _stage_rail(w: World04, shot: Dictionary) -> void:
+	if not shot.has("rail"):
+		return
+	var r := w.current_ride if str(shot["rail"]) == "current" else w.manta_ride
+	r.begin(w.player)
+	r.progress = float(shot.get("progress", 0.0))
+	r._entry_t = 1.0
+	await _wait(6)
+	w.player.head.rotation.x = deg_to_rad(float(shot.get("pitch", 0.0)))
+	w.player.rotation.y = r.rider_yaw()
