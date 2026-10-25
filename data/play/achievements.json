@@ -1,0 +1,29 @@
+{
+  "_doc": "成就（Play 每秒按存档状态检查一次，满足就解锁并提示）。type：visit（去过 count 个世界）、discoveries（发现 count 个探索点；count 为 0 = 全部）、collect_kind（world 里 kind 类收集品集齐）、lore（读过 count 块石板）、flag（WorldState.flags 里 key 为真）、fish_total、fish_species、fish_size（钓到 min 厘米以上的鱼）、record（records[key] ≥ min）、treasures（挖到 count 只宝箱）、medal（任意挑战拿到金牌）、courses（完成 count 条挑战）、dishes（做过 count 道菜）、photos（摄影清单 count 样）、quests（完成 count 个图腾任务；0 = 全部）。",
+  "achievements": [
+    {"id": "wanderer", "name": "四方旅人", "name_en": "Four Worlds", "desc": "去过全部四个世界", "desc_en": "Visit all four worlds", "type": "visit", "count": 4},
+    {"id": "explorer", "name": "探路的人", "name_en": "Pathfinder", "desc": "发现 10 个探索点", "desc_en": "Discover 10 places", "type": "discoveries", "count": 10},
+    {"id": "cartographer", "name": "绘图师", "name_en": "Cartographer", "desc": "发现全部探索点", "desc_en": "Discover every place", "type": "discoveries", "count": 0},
+    {"id": "light_bringer", "name": "送光的人", "name_en": "Lightbringer", "desc": "点亮亚特兰蒂斯的山铜尖塔", "desc_en": "Light the orichalcum spire of Atlantis", "type": "flag", "key": "atlantis_spire"},
+    {"id": "pearl_diver", "name": "采珠人", "name_en": "Pearl Diver", "desc": "找齐亚特兰蒂斯的 8 颗珍珠", "desc_en": "Find all 8 pearls of Atlantis", "type": "collect_kind", "world": "world_04", "kind": "pearl"},
+    {"id": "shell_seeker", "name": "拾贝", "name_en": "Shell Seeker", "desc": "找齐亚特兰蒂斯的 8 枚贝壳", "desc_en": "Find all 8 shells of Atlantis", "type": "collect_kind", "world": "world_04", "kind": "shell"},
+    {"id": "lore_keeper", "name": "记得誓言的人", "name_en": "Keeper of the Oath", "desc": "读完 6 块古代石板", "desc_en": "Read all 6 ancient tablets", "type": "lore", "count": 6},
+    {"id": "manta_rider", "name": "骑蝠鲼", "name_en": "Manta Rider", "desc": "骑着蝠鲼绕古城游完一圈", "desc_en": "Ride the manta once around the city", "type": "flag", "key": "manta_ride"},
+    {"id": "water_slide", "name": "顺流而下", "name_en": "Down the Current", "desc": "坐一次洋流水渠", "desc_en": "Ride the current aqueduct", "type": "flag", "key": "current_ride"},
+    {"id": "beacons", "name": "唤鲸", "name_en": "Whale Caller", "desc": "点亮云海浮岛的四座风灯", "desc_en": "Light the four wind beacons in the Cloudsea Isles", "type": "flag", "key": "cloudsea_beacons"},
+    {"id": "altar", "name": "物归原处", "name_en": "Back Where They Belong", "desc": "把古代碎片嵌回琥珀沙丘的祭坛", "desc_en": "Return the ancient shards to the altar in the Amber Dunes", "type": "flag", "key": "dunes_altar"},
+    {"id": "first_catch", "name": "第一条鱼", "name_en": "First Catch", "desc": "钓到第一条鱼", "desc_en": "Catch your first fish", "type": "fish_total", "count": 1},
+    {"id": "angler", "name": "钓鱼达人", "name_en": "Angler", "desc": "钓到 8 种不同的鱼", "desc_en": "Catch 8 different kinds of fish", "type": "fish_species", "count": 8},
+    {"id": "big_one", "name": "大家伙", "name_en": "The Big One", "desc": "钓到一条 60 厘米以上的鱼", "desc_en": "Catch a fish over 60 cm", "type": "fish_size", "min": 60},
+    {"id": "skipper", "name": "打水漂", "name_en": "Stone Skipper", "desc": "一块石头在湖面上弹 5 下", "desc_en": "Skip a stone 5 times on the lake", "type": "record", "key": "skip_best", "min": 5},
+    {"id": "skip_master", "name": "水漂高手", "name_en": "Skipping Master", "desc": "一块石头弹 9 下", "desc_en": "Skip a stone 9 times", "type": "record", "key": "skip_best", "min": 9},
+    {"id": "treasure_1", "name": "第一只宝箱", "name_en": "First Treasure", "desc": "按线索挖到一只宝箱", "desc_en": "Dig up a treasure chest from its clue", "type": "treasures", "count": 1},
+    {"id": "treasure_all", "name": "藏宝图大师", "name_en": "Map Master", "desc": "挖到四个世界的宝箱", "desc_en": "Dig up the chests in all four worlds", "type": "treasures", "count": 4},
+    {"id": "gold_medal", "name": "金牌", "name_en": "Gold Medal", "desc": "在任意一项计时挑战拿到金牌", "desc_en": "Win gold in any timed challenge", "type": "medal"},
+    {"id": "all_courses", "name": "全能选手", "name_en": "All-Rounder", "desc": "完成全部 5 项计时挑战", "desc_en": "Finish all 5 timed challenges", "type": "courses", "count": 5},
+    {"id": "chef", "name": "小厨师", "name_en": "Little Chef", "desc": "在炉火边做 3 道菜", "desc_en": "Cook 3 dishes by the fire", "type": "dishes", "count": 3},
+    {"id": "feast", "name": "海鲜大餐", "name_en": "Seafood Feast", "desc": "做一盘海鲜拼盘", "desc_en": "Cook a seafood platter", "type": "flag", "key": "cooked_seafood_platter"},
+    {"id": "photographer", "name": "随手拍", "name_en": "Snapshot", "desc": "摄影清单拍到 10 样", "desc_en": "Photograph 10 things on the photo list", "type": "photos", "count": 10},
+    {"id": "totem_friend", "name": "图腾的朋友", "name_en": "Friend of the Totem", "desc": "完成老图腾的全部任务", "desc_en": "Finish every task from the Old Totem", "type": "quests", "count": 0}
+  ]
+}

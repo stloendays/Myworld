@@ -101,6 +101,10 @@ func rebuild() -> void:
 	var leaf_bottom := BASIN_FLOOR - 0.5
 	g.add_child(Precipitation.leaf_blocker(Vector3(HX * 2.0 + 1.2, leaf_top - leaf_bottom, HZ * 2.0 + 1.2), Transform3D(Basis(), Vector3(0.0, (leaf_top + leaf_bottom) * 0.5, 0.0))))
 	_populate_tanks(g)
+	# 海洋大缸底部的古老石环：潜下去穿过它去亚特兰蒂斯（world_layout.json → atlantis_ring，局部坐标）
+	var ring_cfg := WorldLayout.section("atlantis_ring")
+	if not ring_cfg.is_empty():
+		g.add_child(AtlantisRing.create(ring_cfg, REEF_SAND))
 
 
 func _materials() -> void:
@@ -581,7 +585,7 @@ func _kelp_mesh(rng: RandomNumberGenerator) -> ArrayMesh:
 
 
 ## 一个花坛里的珊瑚：几丛分枝珊瑚、一片扇珊瑚、两只海星、几块卵石（方块像素，5 cm 一格）。
-func _coral_mesh(rng: RandomNumberGenerator) -> ArrayMesh:
+static func _coral_mesh(rng: RandomNumberGenerator) -> ArrayMesh:
 	var pieces := []
 	var colors := {}
 	var pick := func() -> String:

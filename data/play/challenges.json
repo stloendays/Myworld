@@ -1,0 +1,19 @@
+{
+  "_doc": "计时挑战（PlayActivities、Play 读取）。走（游）进起点金环开始计时，按顺序经过检查点（radius 米内），过了最后一个停表。points 为 [x, z]（贴地）或 [x, y, z]（水中）。medals：金 / 银 / 铜的时间上限（秒）。sky_steps 是云海浮岛原有的跳台计时，成绩也记在这里。",
+  "courses": [
+    {"id": "lake_trail", "world": "dusk_lake", "name": "林道奔跑", "name_en": "Forest Trail Run", "radius": 3.0,
+      "start": [-85.0, -70.0], "points": [[-80.0, -50.0], [-78.0, -28.0], [-83.0, -6.0], [-87.0, 12.0], [-84.0, 24.0], [-74.0, 28.0], [-62.0, 31.0]],
+      "medals": [32.0, 40.0, 55.0]},
+    {"id": "cloud_bridges", "world": "world_02", "name": "绳桥穿越", "name_en": "Rope Bridge Run", "radius": 3.0,
+      "start": [-18.0, -2.0], "points": [[-50.0, -5.5], [-18.0, -2.0], [2.6, -24.0], [6.0, -48.0]],
+      "medals": [40.0, 55.0, 75.0]},
+    {"id": "sky_steps", "world": "world_02", "name": "云海跳台", "name_en": "Sky Steps", "radius": 0.0, "start": [], "points": [],
+      "medals": [35.0, 50.0, 70.0]},
+    {"id": "dune_dash", "world": "world_03", "name": "沙丘冲刺", "name_en": "Dune Dash", "radius": 3.0,
+      "start": [0.0, 64.0], "points": [[8.0, 40.0], [-6.0, 8.0], [-20.0, -24.0], [-30.0, -50.0]],
+      "medals": [30.0, 38.0, 50.0]},
+    {"id": "dive_rings", "world": "world_04", "name": "潜水环", "name_en": "Dive Rings", "radius": 2.4,
+      "start": [36.0, 3.0, 56.0], "points": [[48.0, 5.0, 74.0], [70.0, 7.0, 68.0], [86.0, 9.0, 44.0], [90.0, 8.0, 14.0], [82.0, 6.0, -14.0], [70.0, 5.0, -40.0], [52.0, 4.0, -64.0]],
+      "medals": [45.0, 60.0, 80.0]}
+  ]
+}

@@ -11,6 +11,9 @@ var _tabs: TabContainer
 var _quest_box: VBoxContainer
 var _dex_box: VBoxContainer
 var _collect_box: VBoxContainer
+var _play_box: VBoxContainer
+var _lore_box: VBoxContainer
+var _ach_box: VBoxContainer
 var _tracker: VBoxContainer
 var _tracker_panel: PanelContainer
 var _player: FirstPersonController = null
@@ -23,6 +26,7 @@ func _ready() -> void:
 	_build_tracker()
 	_root.visible = false
 	QuestLog.changed.connect(_refresh)
+	Play.changed.connect(_refresh)
 	GameRules.changed.connect(_refresh)
 	_refresh()
 
@@ -115,6 +119,9 @@ func _refresh() -> void:
 	_dex_box.add_child(_label(tr("星座  %d / %d") % [stars.size(), all_stars.size()], 22, Color(1.0, 0.85, 0.5)))
 	_dex_box.add_child(_grid(all_stars.map(func(c: Dictionary) -> String: return QuestLog.text(c, "name") if str(c["id"]) in stars else "？？？")))
 	_refresh_collection()
+	_refresh_play()
+	_refresh_lore()
+	_refresh_achievements()
 	_refresh_tracker(player)
 
 
@@ -199,6 +206,9 @@ func _build() -> void:
 	_quest_box = _page(tr("任务"))
 	_dex_box = _page(tr("图鉴"))
 	_collect_box = _page(tr("收藏"))
+	_play_box = _page(tr("活动"))
+	_lore_box = _page(tr("传说"))
+	_ach_box = _page(tr("成就"))
 
 
 func _page(tab_name: String) -> VBoxContainer:
@@ -248,7 +258,7 @@ func _refresh_collection() -> void:
 		if StringName(poi["id"]) in WorldState.discoveries:
 			lake_found += 1
 	var lines := ["%s  %d / %d" % [tr("暮色湖畔"), lake_found, Exploration.pois().size()]]
-	for wid in ["world_02", "world_03"]:
+	for wid in ["world_02", "world_03", "world_04"]:
 		var pois: Array = MiniWorld.data_for(wid).get("pois", [])
 		var found := pois.filter(func(p: Dictionary) -> bool: return StringName(p["id"]) in WorldState.discoveries).size()
 		lines.append("%s  %d / %d" % [tr(str(WorldRegistry.get_world(wid).get("name", wid))), found, pois.size()])
@@ -264,7 +274,103 @@ func _refresh_collection() -> void:
 	var du: Dictionary = MiniWorld.data_for("world_03")
 	_collect_box.add_child(_label("      " + tr("云海浮岛：云珠 %d / %d · 风灯 %d / %d") % [WorldState.collected("world_02").size(), (cs.get("items", []) as Array).size(), lit, (cs.get("beacons", []) as Array).size()], 18, body))
 	_collect_box.add_child(_label("      " + tr("琥珀沙丘：古代碎片 %d / %d · 祭坛 %d / %d") % [WorldState.collected("world_03").size(), (du.get("items", []) as Array).size(), placed, (du.get("items", []) as Array).size()], 18, body))
+	_collect_box.add_child(_label("      " + tr("亚特兰蒂斯：珍珠 %d / %d · 贝壳 %d / %d · 石板 %d / %d · 尖塔 %s") % [_kind_count("pearl").x, _kind_count("pearl").y,
+		_kind_count("shell").x, _kind_count("shell").y, _kind_count("tablet").x, _kind_count("tablet").y, tr("已点亮") if WorldState.flags.get("atlantis_spire", false) else tr("未点亮")], 18, body))
 	var shots: Array = WorldState.journal_list("photos")
 	var all := PhotoList.subjects()
 	_collect_box.add_child(_label(tr("摄影清单  %d / %d（F12 拍照时画面中央的东西）") % [shots.size(), all.size()], 22, head))
 	_collect_box.add_child(_grid(all.map(func(s: Dictionary) -> String: return PhotoList.label(s) if str(s["id"]) in shots else "？？？")))
+
+
+## 亚特兰蒂斯某一类收集品：已捡 / 一共。
+static func _kind_count(kind: String) -> Vector2i:
+	var items: Array = MiniWorld.data_for("world_04").get("items", [])
+	var got := WorldState.collected("world_04")
+	var out := Vector2i.ZERO
+	for it: Dictionary in items:
+		if str(it.get("kind", "")) == kind:
+			out.y += 1
+			if str(it["id"]) in got:
+				out.x += 1
+	return out
+
+
+## 活动页：钓鱼图鉴、鱼篓、打水漂和计时挑战的纪录、各世界的宝藏线索、正在生效的菜。
+func _refresh_play() -> void:
+	for c in _play_box.get_children():
+		c.queue_free()
+	var head := Color(1.0, 0.85, 0.5)
+	var body := Color(0.92, 0.9, 0.86)
+	var fl := Play.fish_list()
+	_play_box.add_child(_label(tr("鱼  %d / %d（R 钓鱼）") % [WorldState.catches.size(), fl.size()], 22, head))
+	_play_box.add_child(_grid(fl.map(_fish_cell)))
+	var have := Play.fish_in_pantry()
+	var basket := PackedStringArray()
+	for id: String in have:
+		basket.append("%s ×%d" % [Play.text(Play.fish(id), "name"), int(have[id])])
+	_play_box.add_child(_label("      " + tr("鱼篓：") + ("、".join(basket) if not basket.is_empty() else tr("空的")), 18, body))
+	_play_box.add_child(_label(tr("纪录"), 22, head))
+	_play_box.add_child(_label("      " + tr("打水漂最多弹 %d 下（Q 按住蓄力）") % int(WorldState.records.get("skip_best", 0)), 18, body))
+	for c: Dictionary in Play.courses():
+		var best := Play.course_best(str(c["id"]))
+		var w := tr(str(WorldRegistry.get_world(str(c["world"])).get("name", "")))
+		var line := "%s · %s  " % [w, Play.text(c, "name")]
+		if best > 0.0:
+			line += tr("%.1f 秒 · %s") % [best, tr(str(Play.MEDAL_NAMES[Play.medal_for(str(c["id"]), best)]))]
+		else:
+			line += tr("还没跑过（金牌 %.0f 秒内）") % float((c["medals"] as Array)[0])
+		_play_box.add_child(_label("      " + line, 18, body))
+	_play_box.add_child(_label(tr("寻宝线索（B 挖）"), 22, head))
+	for wd in WorldRegistry.worlds():
+		var wid := str(wd["id"])
+		var spot := Play.treasure_spot(wid)
+		if spot.is_empty():
+			continue
+		var state := tr("（已挖到）") if Play.treasure_found(wid) else ""
+		_play_box.add_child(_label("      %s：%s%s" % [tr(str(wd["name"])), str(spot["hint"]), state], 18, body))
+	var active := Play.active_buffs()
+	if not active.is_empty():
+		var parts := PackedStringArray()
+		for a: Dictionary in active:
+			parts.append(tr("%s 还有 %d 秒") % [a["name"], int(a["seconds_left"])])
+		_play_box.add_child(_label(tr("正在生效：") + "、".join(parts), 18, Color(0.75, 0.95, 0.7)))
+
+
+## 传说页：亚特兰蒂斯的六块古代石板（捡到的才显示全文）。
+func _refresh_lore() -> void:
+	for c in _lore_box.get_children():
+		c.queue_free()
+	var lore: Dictionary = MiniWorld.data_for("world_04").get("lore", {})
+	var read: Array = WorldState.journal_list("lore")
+	_lore_box.add_child(_label(tr("亚特兰蒂斯的石板  %d / %d") % [read.size(), lore.size()], 22, Color(1.0, 0.85, 0.5)))
+	var keys := lore.keys()
+	keys.sort()
+	for k: String in keys:
+		var e: Dictionary = lore[k]
+		if k in read:
+			_lore_box.add_child(_label(QuestLog.text(e, "title"), 20, Color(1.0, 0.75, 0.5)))
+			var t := _label(QuestLog.text(e, "text"), 18, Color(0.92, 0.9, 0.86))
+			t.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			t.custom_minimum_size = Vector2(820.0, 0.0)
+			_lore_box.add_child(t)
+		else:
+			_lore_box.add_child(_label(tr("？？？（还没找到这块石板）"), 18, Color(0.6, 0.58, 0.56)))
+
+
+## 成就页。
+func _refresh_achievements() -> void:
+	for c in _ach_box.get_children():
+		c.queue_free()
+	var list := Play.achievements()
+	var got := WorldState.achievements
+	_ach_box.add_child(_label(tr("成就  %d / %d") % [got.size(), list.size()] + ("" if GameRules.flag("achievements") else tr("（这一局关掉了成就）")), 22, Color(1.0, 0.85, 0.5)))
+	for a: Dictionary in list:
+		var done := str(a["id"]) in got
+		_ach_box.add_child(_label(("✓  " if done else "·  ") + Play.text(a, "name") + "  —  " + Play.text(a, "desc"), 18,
+			Color(0.75, 0.95, 0.7) if done else Color(0.7, 0.68, 0.66)))
+
+
+static func _fish_cell(f: Dictionary) -> String:
+	if not WorldState.catches.has(f["id"]):
+		return "？？？"
+	return "%s %.0fcm" % [Play.text(f, "name"), float(WorldState.catches[f["id"]]["best_cm"])]

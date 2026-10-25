@@ -9,6 +9,8 @@ extends Node3D
 ## 子节点（地形、树林、地被）开始建造之前，先在后台并行读取它们要用的几十个 Kenney 模型。
 func _enter_tree() -> void:
 	add_to_group("world_root")
+	WorldTravel.current_world = "dusk_lake"
+	WorldState.flags["visited_dusk_lake"] = true
 	var moved := anchor_to_origin(self)
 	if not moved.is_empty():
 		push_warning("Main: 场景文件里这些节点带了位移或旋转，已放回原点：%s（多半是在编辑器里误拖后保存了）" % ", ".join(moved))
@@ -49,6 +51,12 @@ func _ready() -> void:
 	var compass := CompassBar.new()
 	compass.name = "CompassBar"
 	add_child(compass)
+	var play := PlayActivities.new()
+	play.name = "PlayActivities"
+	add_child(play)
+	var cooking := CookingPanel.new()
+	cooking.name = "CookingPanel"
+	add_child(cooking)
 
 
 ## 世界坐标就是 Main 的坐标：Main 自己和它下面的 3D 节点在场景文件里都不该带位移或旋转——
@@ -91,3 +99,11 @@ func map_markers() -> Array:
 	if not dune.is_empty():
 		out.append({"pos": WorldLayout.v2(dune["center"]), "kind": "gate", "done": false, "label": "沙之门"})
 	return out
+
+
+## 钓鱼、打水漂用：湖面（离岸线不远、水深超过 35 cm 的地方）。其他世界见 MiniWorld.water_at。
+func water_at(x: float, z: float) -> Dictionary:
+	var water := WorldLayout.water_level()
+	if WorldTerrain.lake_radius(x, z) < 1.2 and WorldTerrain.height_at(x, z) < water - 0.35:
+		return {"id": "lake", "y": water, "fish": "lake"}
+	return {}

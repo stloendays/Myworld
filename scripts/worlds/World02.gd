@@ -731,9 +731,9 @@ func _process(delta: float) -> void:
 	_update_parkour()
 
 
-## 跳台计时（挑战模式）：踩上第一块石头开始计时，走上灯塔岛停表，记最好成绩。
+## 跳台计时（计时挑战之一，规则“计时挑战”打开时）：踩上第一块石头开始计时，走上灯塔岛停表，成绩记进 Play（奖牌、最好成绩）。
 func _update_parkour() -> void:
-	if player == null or stones.is_empty() or GameRules.mode() != "challenge":
+	if player == null or stones.is_empty() or not GameRules.flag("challenges") or Net.is_client():
 		return
 	var p := player.global_position
 	var first := stones[0]
@@ -746,7 +746,7 @@ func _update_parkour() -> void:
 			var t := Time.get_ticks_msec() * 0.001 - _parkour_start
 			_parkour_start = -1.0
 			parkour_best = t if parkour_best <= 0.0 else minf(parkour_best, t)
-			EventBus.toast_requested.emit(tr("登上灯塔岛：%.1f 秒（最好 %.1f 秒）") % [t, parkour_best])
+			Play.finish_course("sky_steps", t)
 		elif p.y < first.y - 6.0:
 			_parkour_start = -1.0
 
@@ -798,3 +798,12 @@ func _landing(isl: Dictionary, head: Vector3) -> void:
 	var basis := Basis.from_euler(Vector3(pitch, yaw, 0.0), EULER_ORDER_YXZ)
 	solid_box(self, Vector3(1.7, 0.08, seg.length()), Transform3D(basis, mid - basis.y * 0.04),
 		ArtMaterials.pbr("weathered_planks", Color(0.92, 0.8, 0.66), "world"))
+
+
+## 钓鱼：主岛的小池塘。
+func water_at(x: float, z: float) -> Dictionary:
+	var main := _island("main")
+	var pond: Array = main["pond"]
+	if Vector2(x, z).distance_to(Vector2(float(pond[0]), float(pond[1]))) < float(pond[2]) * 0.85:
+		return {"id": "pond", "y": float(main["top"]) - 0.35, "fish": "pond"}
+	return {}

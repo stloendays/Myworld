@@ -16,7 +16,7 @@ const OPTIONS := [
 	{"key": "mode", "group": "玩法", "label": "玩法模式", "kind": "choice", "default": "explore",
 		"choices": [["stroll", "悠闲漫步"], ["explore", "探索收集"], ["adventure", "任务冒险"], ["photo", "摄影"], ["challenge", "挑战"]]},
 	{"key": "spawn_world", "group": "世界与出生", "label": "出生世界", "kind": "choice", "default": "dusk_lake",
-		"choices": [["dusk_lake", "暮色湖畔"], ["world_02", "云海浮岛"], ["world_03", "琥珀沙丘"]]},
+		"choices": [["dusk_lake", "暮色湖畔"], ["world_02", "云海浮岛"], ["world_03", "琥珀沙丘"], ["world_04", "亚特兰蒂斯"]]},
 	{"key": "spawn_point", "group": "世界与出生", "label": "出生点", "kind": "spawn", "default": "default"},
 	{"key": "seed", "group": "世界与出生", "label": "世界种子", "kind": "seed", "default": 0},
 	{"key": "start_season", "group": "时间与天气", "label": "起始季节", "kind": "choice", "default": "AUTUMN",
@@ -38,7 +38,7 @@ const OPTIONS := [
 		"choices": [["never", "从不"], ["clear", "晴朗的夜晚"], ["every", "每个夜晚"]]},
 	{"key": "quests", "group": "生物与事件", "label": "图腾任务", "kind": "toggle", "default": true},
 	{"key": "journal", "group": "生物与事件", "label": "图鉴记录", "kind": "toggle", "default": true},
-	{"key": "collectibles", "group": "生物与事件", "label": "收集品（云珠、古代碎片）", "kind": "toggle", "default": true},
+	{"key": "collectibles", "group": "生物与事件", "label": "收集品（云珠、碎片、珍珠、贝壳、石板）", "kind": "toggle", "default": true},
 	{"key": "hud_minimap", "group": "界面与难度", "label": "小地图", "kind": "toggle", "default": true},
 	{"key": "hud_compass", "group": "界面与难度", "label": "罗盘条", "kind": "toggle", "default": true},
 	{"key": "hud_tracker", "group": "界面与难度", "label": "任务追踪", "kind": "toggle", "default": true},
@@ -46,31 +46,38 @@ const OPTIONS := [
 	{"key": "stamina", "group": "界面与难度", "label": "奔跑体力", "kind": "toggle", "default": false},
 	{"key": "swim_stamina", "group": "界面与难度", "label": "游泳体力", "kind": "toggle", "default": false},
 	{"key": "bright_nights", "group": "界面与难度", "label": "夜晚更亮", "kind": "toggle", "default": false},
+	{"key": "fishing", "group": "玩法活动", "label": "钓鱼（R）", "kind": "toggle", "default": true},
+	{"key": "skipping", "group": "玩法活动", "label": "打水漂（Q）", "kind": "toggle", "default": true},
+	{"key": "treasure", "group": "玩法活动", "label": "寻宝（B 挖）", "kind": "toggle", "default": true},
+	{"key": "cooking", "group": "玩法活动", "label": "炉火烹饪", "kind": "toggle", "default": true},
+	{"key": "challenges", "group": "玩法活动", "label": "计时挑战", "kind": "toggle", "default": true},
+	{"key": "achievements", "group": "玩法活动", "label": "成就", "kind": "toggle", "default": true},
+	{"key": "oxygen", "group": "玩法活动", "label": "亚特兰蒂斯氧气", "kind": "toggle", "default": true},
 ]
 
-const GROUPS := ["玩法", "世界与出生", "时间与天气", "生物与事件", "界面与难度"]
+const GROUPS := ["玩法", "世界与出生", "时间与天气", "生物与事件", "界面与难度", "玩法活动"]
 
 ## 选了某种玩法模式后，这些选项跟着变（之后仍可单独改）。
 const MODE_RULES := {
 	"stroll": {"quests": false, "hud_tracker": false, "poi_markers": false, "hud_compass": false, "stamina": false, "swim_stamina": false,
-		"friendly_animals": true, "collectibles": true, "hud_minimap": true},
+		"friendly_animals": true, "collectibles": true, "hud_minimap": true, "challenges": false, "oxygen": false},
 	"explore": {"quests": true, "hud_tracker": true, "poi_markers": true, "hud_compass": true, "stamina": false, "swim_stamina": false,
-		"friendly_animals": false, "collectibles": true, "hud_minimap": true},
+		"friendly_animals": false, "collectibles": true, "hud_minimap": true, "challenges": true, "oxygen": true},
 	"adventure": {"quests": true, "hud_tracker": true, "poi_markers": true, "hud_compass": true, "stamina": false, "swim_stamina": false,
-		"friendly_animals": false, "collectibles": true, "hud_minimap": true},
+		"friendly_animals": false, "collectibles": true, "hud_minimap": true, "challenges": true, "oxygen": true},
 	"photo": {"quests": false, "hud_tracker": false, "poi_markers": false, "hud_compass": false, "hud_minimap": false, "stamina": false,
-		"swim_stamina": false, "friendly_animals": true, "day_length": 96, "weather_change": "rare"},
+		"swim_stamina": false, "friendly_animals": true, "day_length": 96, "weather_change": "rare", "challenges": false, "oxygen": false},
 	"challenge": {"quests": true, "hud_tracker": true, "poi_markers": false, "hud_compass": true, "hud_minimap": false, "stamina": true,
-		"swim_stamina": true, "friendly_animals": false, "weather_change": "frequent", "animals": "few"},
+		"swim_stamina": true, "friendly_animals": false, "weather_change": "frequent", "animals": "few", "challenges": true, "oxygen": true},
 }
 
 ## 每种模式在设定页上的一句说明。
 const MODE_HINTS := {
-	"stroll": "没有任务和体力，小动物不怕人，适合散步、看风景。",
+	"stroll": "没有任务、体力和计时挑战，海底不用氧气，小动物不怕人，适合散步、看风景。",
 	"explore": "罗盘和问号指路，找齐每个世界的探索点和收集品。",
 	"adventure": "图腾的任务、风灯和古代碎片一个接一个，任务追踪一直开着。",
 	"photo": "界面最简，时间走得慢；按 F12 拍下摄影清单上的东西。",
-	"challenge": "奔跑和游泳都要体力，没有小地图和问号，浮岛跳台计时。",
+	"challenge": "奔跑和游泳都要体力，海底氧气更少，没有小地图和问号，跳台、绳桥、潜水环都计时。",
 }
 
 ## 一键预设：在默认值上覆盖这些（先套模式，再套其余）。
@@ -87,6 +94,7 @@ const PRESETS := [
 	{"id": "photographer", "name": "摄影师", "rules": {"mode": "photo", "start_season": "AUTUMN", "start_time": "dusk", "start_weather": "CLEAR"}},
 	{"id": "cloud", "name": "云端旅人", "rules": {"mode": "explore", "spawn_world": "world_02", "start_time": "dusk"}},
 	{"id": "dunes", "name": "沙海寻宝", "rules": {"mode": "adventure", "spawn_world": "world_03", "start_season": "SUMMER", "start_time": "noon"}},
+	{"id": "atlantis", "name": "深海遗城", "rules": {"mode": "adventure", "spawn_world": "world_04", "start_season": "SUMMER", "start_time": "noon"}},
 	{"id": "hardcore", "name": "硬核挑战", "rules": {"mode": "challenge", "start_season": "AUTUMN", "start_time": "dusk", "start_weather": "random"}},
 ]
 

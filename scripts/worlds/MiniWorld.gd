@@ -30,6 +30,7 @@ var _poi_timer := 0.0
 var _safe_timer := 0.0
 var _respawning := false
 var _sun: DirectionalLight3D = null
+var _looks: Dictionary = {}
 
 static var _data_cache: Dictionary = {}
 
@@ -58,6 +59,9 @@ static func v2(a: Array) -> Vector2:
 
 func _enter_tree() -> void:
 	add_to_group("world_root")
+	# 世界根节点自己声明“现在在哪个世界”：聊天框欢迎语、罗盘、存档都按它（截图工具直接实例化世界时也对）
+	WorldTravel.current_world = world_id
+	WorldState.flags["visited_" + world_id] = true
 	Main.anchor_to_origin(self)
 	data = data_for(world_id)
 
@@ -94,6 +98,11 @@ func map_color(_x: float, _z: float, h: float) -> Color:
 ## 在小地图 / 世界地图上画桥、建筑等（canvas 已经设好世界 → 像素的变换，单位是米）。
 func draw_map(_canvas: CanvasItem) -> void:
 	pass
+
+
+## 钓鱼、打水漂用：(x, z) 处有没有能钓鱼的水面。返回 {} 或 {id, y（水面高度）, fish（data/play/fish.json 里的水域名）}。
+func water_at(_x: float, _z: float) -> Dictionary:
+	return {}
 
 
 ## 世界地图上的地名 [{pos: Vector2, text}]。
@@ -403,9 +412,9 @@ func _build_gate() -> void:
 
 
 func _build_items() -> void:
-	var glow := ArtMaterials.glow(_col(data.get("item_color"), Color(0.6, 0.9, 1.0)), 2.6)
-	var shell := ArtMaterials.flat(_col(data.get("item_shell"), Color(0.95, 0.95, 1.0)), 0.2)
 	for it: Dictionary in data.get("items", []):
+		var kind := str(it.get("kind", ""))
+		var look := item_look(kind)
 		var root := Node3D.new()
 		root.name = "Item_" + str(it["id"])
 		root.add_to_group("collectibles")
@@ -415,18 +424,29 @@ func _build_items() -> void:
 		root.position = pos
 		add_child(root)
 		var core := MeshInstance3D.new()
-		var sm := SphereMesh.new()
-		sm.radius = 0.22
-		sm.height = 0.44
-		sm.radial_segments = 16
-		sm.rings = 8
-		if str(data.get("item_shape", "pearl")) == "shard":
-			var pm := PrismMesh.new()
-			pm.size = Vector3(0.3, 0.55, 0.16)
-			core.mesh = pm
-		else:
-			core.mesh = sm
-		core.material_override = glow
+		match str(look["shape"]):
+			"shard":
+				var pm := PrismMesh.new()
+				pm.size = Vector3(0.3, 0.55, 0.16)
+				core.mesh = pm
+			"shell":
+				# 扇贝：压扁的三棱柱，尖朝下
+				var pm := PrismMesh.new()
+				pm.size = Vector3(0.5, 0.42, 0.1)
+				core.mesh = pm
+				core.rotation.z = PI
+			"tablet":
+				var bm := BoxMesh.new()
+				bm.size = Vector3(0.42, 0.56, 0.08)
+				core.mesh = bm
+			_:
+				var sm := SphereMesh.new()
+				sm.radius = 0.22
+				sm.height = 0.44
+				sm.radial_segments = 16
+				sm.rings = 8
+				core.mesh = sm
+		core.material_override = look["glow"]
 		core.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		root.add_child(core)
 		var ring := MeshInstance3D.new()
@@ -434,12 +454,41 @@ func _build_items() -> void:
 		tm.inner_radius = 0.34
 		tm.outer_radius = 0.4
 		ring.mesh = tm
-		ring.material_override = shell
+		ring.material_override = look["shell"]
 		ring.rotation.x = PI * 0.5
 		ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		root.add_child(ring)
-		items.append({"id": str(it["id"]), "node": root, "pos": pos})
+		items.append({"id": str(it["id"]), "node": root, "pos": pos, "kind": kind, "lore": str(it.get("lore", ""))})
 	refresh()
+
+
+## 某一类收集品的样子与名字（数据里的 item_kinds；没有分类的世界用 item_name / item_shape / item_color）。
+func item_look(kind: String) -> Dictionary:
+	var key := kind if kind != "" else "_default"
+	if _looks.has(key):
+		return _looks[key]
+	var k: Dictionary = (data.get("item_kinds", {}) as Dictionary).get(kind, {})
+	var look := {
+		"name": str(k.get("name", data.get("item_name", "收集品"))),
+		"shape": str(k.get("shape", data.get("item_shape", "pearl"))),
+		"glow": ArtMaterials.glow(_col(k.get("color", data.get("item_color")), Color(0.6, 0.9, 1.0)), 2.6),
+		"shell": ArtMaterials.flat(_col(k.get("shell", data.get("item_shell")), Color(0.95, 0.95, 1.0)), 0.2),
+	}
+	_looks[key] = look
+	return look
+
+
+## 某一类已经捡到几件 / 一共几件（kind 为空 = 全部）。
+func items_count(kind := "") -> Vector2i:
+	var got := WorldState.collected(world_id)
+	var have := 0
+	var total := 0
+	for it in items:
+		if kind == "" or str(it["kind"]) == kind:
+			total += 1
+			if str(it["id"]) in got:
+				have += 1
+	return Vector2i(have, total)
 
 
 ## 收集品显示与否：已经捡过、或这一局关掉了收集品，就不显示。
@@ -465,8 +514,19 @@ func pick(item_id: String) -> bool:
 			tw.tween_property(n, "scale", Vector3.ONE * 1.6, 0.15)
 			tw.tween_property(n, "scale", Vector3.ONE * 0.01, 0.25)
 			tw.tween_callback(n.hide)
+	var kind := ""
+	var lore := ""
+	for it in items:
+		if str(it["id"]) == item_id:
+			kind = str(it["kind"])
+			lore = str(it["lore"])
 	var got := WorldState.collected(world_id).size()
-	EventBus.toast_requested.emit(tr("捡到%s（%d / %d）") % [tr(str(data.get("item_name", "收集品"))), got, items.size()])
+	var c := items_count(kind)
+	var text := tr("捡到%s（%d / %d）") % [tr(str(item_look(kind)["name"])), c.x, c.y]
+	if lore != "" and WorldState.journal_add("lore", lore):
+		var entry: Dictionary = (data.get("lore", {}) as Dictionary).get(lore, {})
+		text += "\n" + tr("石板上刻着「%s」，记进了旅行日志的传说页") % QuestLog.text(entry, "title")
+	EventBus.toast_requested.emit(text)
 	on_collected(item_id, got)
 	SaveManager.request_save()
 	return true
@@ -575,7 +635,8 @@ func _build_ui() -> void:
 	add_child((load("res://scenes/ui/HUD.tscn") as PackedScene).instantiate())
 	add_child((load("res://scenes/ui/PauseMenu.tscn") as PackedScene).instantiate())
 	for item: Array in [["Minimap", Minimap], ["WorldMap", WorldMap], ["CompassBar", CompassBar], ["JournalPanel", JournalPanel],
-			["ChatBox", ChatBox], ["ActionBar", ActionBar], ["Performance", PerformanceDirector], ["UnderwaterOverlay", preload("res://scripts/ui/UnderwaterOverlay.gd")]]:
+			["ChatBox", ChatBox], ["ActionBar", ActionBar], ["Performance", PerformanceDirector], ["UnderwaterOverlay", preload("res://scripts/ui/UnderwaterOverlay.gd")],
+			["PlayActivities", PlayActivities], ["CookingPanel", CookingPanel]]:
 		var n: Node = (item[1] as GDScript).new()
 		n.name = item[0]
 		add_child(n)

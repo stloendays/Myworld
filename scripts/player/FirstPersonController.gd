@@ -41,6 +41,7 @@ var noclip := false
 var arms: FirstPersonArms = null
 var seat: Seat = null       ## 坐着时所在的座位（沙发、长椅、躺椅）
 var boat: Canoe = null      ## 在独木舟上时所乘的船
+var rail: RailRide = null    ## 被水流冲着走、骑着蝠鲼时（亚特兰蒂斯）：位置由路线决定
 var input_locked := false   ## 打开棋盘等全屏界面时为 true：不读移动、视角和交互键
 ## 动作（动作栏 / 数字键）："ground_sit" 席地坐、"lie" 躺下、"wave" 挥手、"dance" 跳舞、"clap" 鼓掌；"" = 没有。
 ## 坐、躺、跳舞一直保持，按移动键 / 空格 / E 起身；挥手、鼓掌做完自动结束。
@@ -238,7 +239,7 @@ func _swim(delta: float) -> void:
 	var running := _use_stamina(delta, autopilot_run if autopilot_enabled else Input.is_action_pressed("sprint"), true, dir.length_squared() > 0.01)
 	if swim_tired and dir.y < 0.0:
 		dir.y = 0.0   # 游累了潜不下去，只能慢慢漂着游回岸边
-	var target := dir * (swim_sprint_speed if running else swim_speed) * (0.5 if swim_tired else 1.0)
+	var target := dir * (swim_sprint_speed if running else swim_speed) * (0.5 if swim_tired else 1.0) * current_water.speed_scale * Play.mult("swim_speed")
 	var surface := current_water.surface_y()
 	var diving := dir.y < -0.2
 	if surface < INF and not diving:
@@ -344,7 +345,9 @@ func _update_focus() -> void:
 			if seated_target is Seat:
 				seated_target = null
 		var text := "E  下船（靠近码头或岸边）  ·  W/S 划  A/D 转向  Shift 用力划"
-		if seat != null:
+		if rail != null:
+			text = rail.prompt()
+		elif seat != null:
 			text = tr(seated_target.get_prompt(self)) + tr("    ·    E 对着别处：站起来") if seated_target != null else "E  站起来（或按移动键）"
 		elif emote in EMOTE_POSES:
 			text = "E  站起来（或按移动键）"
@@ -383,6 +386,8 @@ func try_interact() -> bool:
 		return true
 	if boat != null:
 		return disembark()
+	if rail != null:
+		return rail.try_release(self)
 	interact_ray.force_raycast_update()
 	var target := _current_target()
 	if not InteractionSystem.interact(self, target):
@@ -427,7 +432,7 @@ func heading_degrees() -> float:
 # ---------------------------------------------------------------- 坐下与划船
 
 func is_riding() -> bool:
-	return seat != null or boat != null
+	return seat != null or boat != null or rail != null
 
 
 ## 坐到座位上：关掉碰撞，定在坐垫上，腿向前伸；身体朝座位方向，头仍可自由环顾。
@@ -492,6 +497,10 @@ func _leave_ride() -> void:
 		seat.occupant = null
 		seat._publish_state()
 		seat = null
+	if rail != null:
+		var r := rail
+		rail = null
+		r.rider_left(self)
 	if boat != null:
 		boat.rider = null
 		boat.throttle = 0.0
@@ -505,9 +514,30 @@ func _leave_ride() -> void:
 		velocity = Vector3.ZERO
 
 
+## 开始被一条路线带着走（洋流、蝠鲼）：关掉碰撞，位置每帧由路线给出。
+func start_rail(r: RailRide) -> void:
+	if is_riding():
+		return
+	set_flying(false)
+	rail = r
+	_enter_ride(r.pose)
+
+
+## 路线走完（或松手）：留在路线给的落脚点。
+func end_rail(exit_point: Vector3) -> void:
+	if rail == null:
+		return
+	_leave_ride()
+	global_position = exit_point
+
+
 ## 坐着 / 划船时每帧：位置跟着座位或船，身体朝向座位或船头。
 func _ride(_delta: float) -> void:
 	velocity = Vector3.ZERO
+	if rail != null:
+		global_position = rail.rider_position()
+		body.rotation.y = rail.rider_yaw() - rotation.y
+		return
 	if seat != null:
 		global_position = seat.occupant_origin()
 		body.rotation.y = seat.global_rotation.y - rotation.y
@@ -670,7 +700,7 @@ func _use_stamina(delta: float, wants_run: bool, in_water: bool, moving: bool) -
 	if drain > 0.0:
 		stamina = maxf(0.0, stamina - drain * delta)
 	else:
-		stamina = minf(1.0, stamina + STAMINA_REGEN * delta)
+		stamina = minf(1.0, stamina + STAMINA_REGEN * Play.mult("stamina_regen") * delta)
 	if stamina <= 0.0:
 		exhausted = true
 	elif stamina >= 0.35:

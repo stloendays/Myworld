@@ -13,6 +13,8 @@ var lamps := {}                 ## uid -> InteractableToggle
 var seats: Array[Seat] = []
 var bed: Bed
 var chess: ChessTable
+var pot: CookPot
+var cabinet: TrophyCabinet
 
 var _lights := {}               ## 名称 -> [OmniLight3D, 亮着时的能量]
 var _fire: GPUParticles3D
@@ -35,6 +37,9 @@ func setup(lights: Dictionary, model: Node) -> void:
 	# 茶几上的国际象棋（白方靠沙发一侧）
 	chess = ChessTable.create(&"cabin_chess", Vector3(1.08, 0.47, 1.3), 0.0)
 	add_child(chess)
+	# 北墙书架和边桌之间的收藏柜（面朝屋里）
+	cabinet = TrophyCabinet.create(Vector3(1.25, 0.0, -3.0))
+	add_child(cabinet)
 
 
 func _find_glow_materials(model: Node) -> void:
@@ -66,6 +71,8 @@ func _build_stove() -> void:
 	_smoke.position = CHIMNEY_TOP
 	add_child(_smoke)
 	stove.toggled.connect(_on_stove)
+	pot = CookPot.create(&"cabin_pot", STOVE + Vector3(0.0, 1.16, 0.0), stove)
+	add_child(pot)
 	_on_stove(stove.on)
 
 

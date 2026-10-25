@@ -10,7 +10,8 @@
       "scene": "res://scenes/main/Main.tscn",
       "arrivals": {
         "world_02": {"pos": [25.6, 2.25, -103.2], "heading": 270.0},
-        "world_03": {"pos": [-90.0, 0.0, 86.0], "heading": 90.0, "ground": true}
+        "world_03": {"pos": [-90.0, 0.0, 86.0], "heading": 90.0, "ground": true},
+        "world_04": {"pos": [4.6, -6.6, 78.4], "heading": 90.0}
       },
       "size_m": 250,
       "summary": "湖、森林、木屋、玻璃泳池馆与地下水族馆。",
@@ -40,7 +41,19 @@
       "summary": "落日下的沙海：月牙绿洲、石柱废墟和阶梯神殿。从南部草甸的沙之门进去。",
       "atlas": [0.8, 0.3],
       "color": "#e3b06a"
+    },
+    {
+      "id": "world_04",
+      "name": "亚特兰蒂斯",
+      "name_en": "Atlantis",
+      "status": "open",
+      "scene": "res://scenes/worlds/World04.tscn",
+      "data": "res://data/worlds/atlantis.json",
+      "arrivals": {"dusk_lake": {"pos": [0.0, 10.4], "heading": 0.0}},
+      "summary": "海底沉没的古城：三圈水环、两圈陆环，气泡穹顶下的神殿与山铜尖塔。从水族馆海洋大缸底部的石环潜进去。",
+      "atlas": [0.68, 0.82],
+      "color": "#4fb3c4"
     }
   ],
-  "links": [["dusk_lake", "world_02"], ["dusk_lake", "world_03"]]
+  "links": [["dusk_lake", "world_02"], ["dusk_lake", "world_03"], ["dusk_lake", "world_04"]]
 }

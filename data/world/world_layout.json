@@ -83,6 +83,11 @@
 
   "canoe": {"pos": [-28.0, 24.0], "heading": 90.0},
 
+  "atlantis_ring": {
+    "_doc": "泳池馆地下海洋大缸底部的古老石环（泳池馆局部坐标：local = [x, z]，石环中心离缸底沙面 lift 米；石环面朝 ±X，人沿 X 方向游过去）。穿过它去 world 指的世界。",
+    "local": [-2.0, -5.6], "lift": 1.75, "radius": 1.3, "world": "world_04"
+  },
+
   "snow_peak": {
     "zone_id": "snow_peak",
     "center": [102, -108],

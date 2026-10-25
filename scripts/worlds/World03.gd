@@ -369,6 +369,11 @@ func _build_camp(c: Vector2) -> void:
 	light.omni_range = 8.0
 	light.position = Vector3(c.x, y + 1.0, c.y + 1.5)
 	add_child(light)
+	# 篝火上架着一口铁锅：用钓到的鱼做饭（CookPot）
+	for k in 3:
+		var a := float(k) / 3.0 * TAU
+		solid_box(self, Vector3(0.06, 1.5, 0.06), Transform3D(Basis(Vector3(-sin(a), 0.0, cos(a)), 0.3), Vector3(c.x + cos(a) * 0.45, y + 0.7, c.y + 1.5 + sin(a) * 0.45)), crate_wood(), false)
+	add_child(CookPot.create(&"dune_pot", Vector3(c.x, y + 0.62, c.y + 1.5)))
 	var crate := ArtMaterials.pbr("weathered_planks", Color(0.86, 0.66, 0.46), "world")
 	for p: Vector3 in [Vector3(-5.0, 0.4, 1.5), Vector3(-5.2, 1.2, 1.4), Vector3(5.5, 0.4, 2.5)]:
 		solid_box(self, Vector3(0.8, 0.8, 0.8), Transform3D(Basis(Vector3.UP, p.x * 0.1), Vector3(c.x + p.x, y + p.y, c.y + p.z)), crate)
@@ -469,3 +474,16 @@ func draw_map(canvas: CanvasItem) -> void:
 	canvas.draw_circle(MiniWorld.v2([58.0, -30.0]), 2.5, Color(0.8, 0.45, 0.3))
 	if altar != null and altar.is_complete():
 		canvas.draw_circle(c, 3.0, Color(1.0, 0.78, 0.4))
+
+
+## 钓鱼：月牙绿洲（水面 y = 0）。
+func water_at(x: float, z: float) -> Dictionary:
+	if _oasis.is_empty():
+		return {}
+	if Vector2(x, z).distance_to(MiniWorld.v2(_oasis["center"])) < float(_oasis["radius"]) - 0.5:
+		return {"id": "oasis", "y": 0.0, "fish": "oasis"}
+	return {}
+
+
+static func crate_wood() -> Material:
+	return ArtMaterials.pbr("stained_pine", Color(0.5, 0.36, 0.24), "world")

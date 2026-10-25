@@ -1,6 +1,7 @@
 class_name PhotoList
 extends RefCounted
-## 摄影清单：data/photo/subjects.json 列出的 18 样东西（小动物、各世界的地标、天鲸、彩虹、闪电、星空、仙境）。
+## 摄影清单：data/photo/subjects.json 列出的 22 样东西（小动物、各世界的地标、天鲸、亚特兰蒂斯的尖塔 / 穹顶 / 大蝠鲼 / 鲸鱼、彩虹、闪电、星空、仙境）。
+## place 带 outside 时，相机要在离原点这么远之外才算（比如从海里看穹顶）。
 ## 按 F12 拍照时（ActionBar.take_photo）看画面中央：视线 22° 以内、够近、没被挡住的清单对象记进图鉴（WorldState.journal → photos），
 ## 旅行日志的「收藏」页能看到拍到了哪些。所有玩法模式都能拍，“摄影”模式的说明里专门提它。
 
@@ -42,7 +43,7 @@ static func recognize(cam: Camera3D, tree: SceneTree) -> Array:
 						found.append(id)
 						break
 			"place":
-				if str(s.get("world", "")) == world:
+				if str(s.get("world", "")) == world and eye.length() >= float(s.get("outside", 0.0)):
 					var p: Array = s["pos"]
 					if _in_view(cam, eye, fwd, Vector3(float(p[0]), float(p[1]), float(p[2])), max_d, 6.0):
 						found.append(id)

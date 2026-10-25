@@ -4,8 +4,10 @@ extends Node
 ## 角色所在区域（按 entity_id）、探索发现的地点、载具（独木舟）位置。M4 由 SaveManager 把 snapshot() 写成 user://saves/ 的版本化 JSON。
 ## 改动存档字段时必须同时升级 SCHEMA_VERSION 并写迁移。
 
-const SCHEMA_VERSION := 4   ## v2：加入 discoveries 与 vehicles；v3：加入 quests（图腾任务）与 journal（图鉴）；
+const SCHEMA_VERSION := 5   ## v2：加入 discoveries 与 vehicles；v3：加入 quests（图腾任务）与 journal（图鉴）；
                             ## v4：加入 rules（新建游戏的玩法与设定）、collections（各世界的收集品）、player（所在世界、位置、朝向）
+                            ## v5：加入 achievements（成就）、records（打水漂、计时挑战的最好成绩）、catches（钓到的鱼：条数与最大尺寸）、
+                            ##     pantry（鱼和做过的菜）、treasures（各世界挖到的宝箱）
 
 var world_seed: int = 0
 
@@ -39,6 +41,11 @@ var quests: Dictionary = {}               ## 任务 id -> {state: active / done,
 var journal: Dictionary = {}              ## 图鉴：kind（species / constellations）-> 按记录顺序的 id 列表
 var collections: Dictionary = {}          ## 收集品：世界 id -> 按收集顺序的 id 列表（云珠、古代碎片……）
 var player_spot: Dictionary = {}          ## 存档时玩家所在：{world, pos: [x, y, z], heading}（SaveManager 写入，读档时用来放人）
+var achievements: Array = []              ## 已解锁的成就 id（按解锁顺序）
+var records: Dictionary = {}              ## 纪录：skip_best（打水漂最多弹几下）、course:<id>（计时挑战最好成绩，秒）、dishes（做过几道菜）……
+var catches: Dictionary = {}              ## 鱼 id -> {count, best_cm}
+var pantry: Dictionary = {}               ## 食材与菜：fish:<鱼 id> -> 条数
+var treasures: Dictionary = {}            ## 世界 id -> 挖到宝箱时的游戏日
 
 var _actor_zones: Dictionary = {}    ## actor_id -> { zone_id: is_indoor }
 
@@ -89,6 +96,11 @@ func snapshot() -> Dictionary:
 		"collections": collections.duplicate(true),
 		"rules": GameRules.to_dict(),
 		"player": player_spot.duplicate(true),
+		"achievements": achievements.duplicate(),
+		"records": records.duplicate(true),
+		"catches": catches.duplicate(true),
+		"pantry": pantry.duplicate(true),
+		"treasures": treasures.duplicate(true),
 	}
 
 
@@ -106,6 +118,12 @@ static func migrate(data: Dictionary) -> Dictionary:
 		d["rules"] = GameRules.defaults()
 		d["collections"] = {}
 		d["player"] = {}
+	if v < 5:
+		d["achievements"] = []
+		d["records"] = {}
+		d["catches"] = {}
+		d["pantry"] = {}
+		d["treasures"] = {}
 	d["rules"] = GameRules.sanitize(d.get("rules", {}))
 	d["schema_version"] = SCHEMA_VERSION
 	return d
@@ -208,6 +226,11 @@ func restore(data: Dictionary) -> void:
 	journal = (d.get("journal", {}) as Dictionary).duplicate(true)
 	collections = (d.get("collections", {}) as Dictionary).duplicate(true)
 	player_spot = (d.get("player", {}) as Dictionary).duplicate(true)
+	achievements = (d.get("achievements", []) as Array).duplicate()
+	records = (d.get("records", {}) as Dictionary).duplicate(true)
+	catches = (d.get("catches", {}) as Dictionary).duplicate(true)
+	pantry = (d.get("pantry", {}) as Dictionary).duplicate(true)
+	treasures = (d.get("treasures", {}) as Dictionary).duplicate(true)
 
 
 ## 新局：清掉上一局的进度（发现、任务、图鉴、收集品、门灯状态、船、标记）。时间天气由 GameRules.apply_start 设。
@@ -220,6 +243,11 @@ func reset_progress() -> void:
 	journal.clear()
 	collections.clear()
 	player_spot.clear()
+	achievements.clear()
+	records.clear()
+	catches.clear()
+	pantry.clear()
+	treasures.clear()
 
 
 ## 收集一件收集品；已经收过返回 false。

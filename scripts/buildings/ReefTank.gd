@@ -111,6 +111,8 @@ static func _decor(h: PoolHouse, root: Node3D, r: Rect2, sand_y: float, top: flo
 		var p := Vector3(rng.randf_range(r.position.x + 0.6, r.end.x - 0.6), sand_y, rng.randf_range(r.position.y + 0.5, r.end.y - 1.2))
 		if absf(p.x - PoolHouse.CHANNEL.get_center().x) < 1.6:
 			continue
+		if absf(p.x - float(WorldLayout.section("atlantis_ring").get("local", [99.0])[0])) < 1.8:
+			continue
 		var asset: String = ["plant_bush", "plant_bushSmall", "plant_bushDetailed", "mushroom_redGroup", "mushroom_tanGroup", "grass_large"][rng.randi() % 6]
 		var node := ArtMaterials.kenney_prop(NATURE + asset + ".glb", p, rng.randf() * 360.0, rng.randf_range(1.6, 3.2))
 		h._underwater_restyle(node, asset, rng)
