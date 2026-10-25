@@ -12,7 +12,7 @@ extends Node
 
 const PRESETS := {
 	"low": {"ssr": 0, "ssao": false, "ssao_half": true, "splits": 2, "shadow_dist": 60.0, "atlas": 2048, "msaa": Viewport.MSAA_DISABLED, "ssaa": Viewport.SCREEN_SPACE_AA_FXAA, "pos_atlas": 1024, "radiance": Sky.RADIANCE_SIZE_128, "lod": 4.0, "cover_shadows": false, "taa": false},
-	"medium": {"ssr": 32, "ssao": true, "ssao_half": true, "splits": 2, "shadow_dist": 90.0, "atlas": 2048, "msaa": Viewport.MSAA_DISABLED, "ssaa": Viewport.SCREEN_SPACE_AA_SMAA, "pos_atlas": 2048, "radiance": Sky.RADIANCE_SIZE_128, "lod": 2.0, "cover_shadows": false, "taa": false},
+	"medium": {"ssr": 32, "ssao": true, "ssao_half": true, "splits": 2, "shadow_dist": 90.0, "atlas": 2048, "msaa": Viewport.MSAA_DISABLED, "ssaa": Viewport.SCREEN_SPACE_AA_DISABLED, "pos_atlas": 2048, "radiance": Sky.RADIANCE_SIZE_128, "lod": 2.0, "cover_shadows": false, "taa": true},
 	"high": {"ssr": 64, "ssao": true, "ssao_half": false, "splits": 4, "shadow_dist": 120.0, "atlas": 4096, "msaa": Viewport.MSAA_DISABLED, "ssaa": Viewport.SCREEN_SPACE_AA_DISABLED, "pos_atlas": 2048, "radiance": Sky.RADIANCE_SIZE_256, "lod": 1.0, "cover_shadows": true, "taa": true},
 	"ultra": {"ssr": 128, "ssao": true, "ssao_half": false, "splits": 4, "shadow_dist": 160.0, "atlas": 4096, "msaa": Viewport.MSAA_2X, "ssaa": Viewport.SCREEN_SPACE_AA_DISABLED, "pos_atlas": 4096, "radiance": Sky.RADIANCE_SIZE_256, "lod": 0.5, "cover_shadows": true, "taa": true},
 }
@@ -67,7 +67,7 @@ func apply_quality() -> void:
 	get_viewport().screen_space_aa = p["ssaa"]
 	get_viewport().positional_shadow_atlas_size = p["pos_atlas"]
 	get_viewport().mesh_lod_threshold = p["lod"]
-	# 高 / 极高画质用时间抗锯齿（TAA）：走动时细草、栏杆、木板缝、阴影边的锯齿闪烁约减半（devtools/FlickerProbe 的 jiggle 测试）
+	# 中 / 高 / 极高画质用时间抗锯齿（TAA）（v0.5 起中画质也用：走动时溪边、林道闪烁约减半）：走动时细草、栏杆、木板缝、阴影边的锯齿闪烁约减半（devtools/FlickerProbe 的 jiggle 测试）
 	get_viewport().use_taa = bool(p.get("taa", false))
 	var cover := get_tree().get_first_node_in_group("ground_cover")
 	if cover != null:
@@ -151,8 +151,9 @@ func _apply_scale() -> void:
 	vp.fsr_sharpness = fsr_sharpness_for(s)
 
 
-## FSR 的锐化：100 % 比例时不锐化（2.0 = 关）。锐化会把细草、远处树叶和木板缝的锯齿放大，走动时闪得厉害
-## （FlickerProbe 走动机位：林道、溪边闪烁像素约翻倍）。比例降下去时才慢慢加一点锐化补清晰度，连续变化、不跳。
+## FSR 的锐化：显卡忙、动态分辨率降到 100 % 以下时 FSR 才真正放大画面，这时引擎默认的强锐化（0.2）会把细草、
+## 远处树叶和木板缝的锯齿放大，走动时闪得厉害（FlickerProbe 75 % 比例走动：林道闪烁像素 7.3 % → 2.1 %，溪边 6.6 % → 4.2 %）。
+## 改成随比例连续变化的轻锐化：100 % 不锐化（2.0 = 关），降到 60 % 时 0.9，中间没有跳变。
 static func fsr_sharpness_for(scale: float) -> float:
 	return lerpf(2.0, 0.9, clampf((0.99 - scale) / 0.39, 0.0, 1.0))
 

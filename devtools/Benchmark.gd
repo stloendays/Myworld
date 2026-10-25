@@ -127,6 +127,9 @@ func _bench_worlds(main: Node, cam: Camera3D) -> Array:
 			await _frames(90)
 			world.player.set_physics_process(false)
 			cam.current = true
+			# 新世界的界面节点会按玩家设置重新套一遍显示设置：再关一次垂直同步，否则帧率卡在屏幕刷新率
+			DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
+			Engine.max_fps = 0
 		var e: Array = spot["eye"]
 		var y := float(e[1]) + (0.0 if spot.get("abs", false) else world.height_at(float(e[0]), float(e[2])))
 		cam.global_position = Vector3(float(e[0]), y, float(e[2]))

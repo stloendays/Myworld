@@ -13,6 +13,8 @@ const INK := Color(0.97, 0.94, 0.86)
 
 var _bar: Control
 var _stamina: ProgressBar
+var _last_heading := INF
+var _redraw_timer := 0.0
 
 
 func _ready() -> void:
@@ -57,7 +59,13 @@ func _process(_delta: float) -> void:
 	var player := get_tree().get_first_node_in_group("local_player") as FirstPersonController
 	_bar.visible = GameRules.flag("hud_compass") and player != null
 	if _bar.visible:
-		_bar.queue_redraw()
+		# 朝向变了才重画；标记（远近、发现与否）每 0.25 秒刷新一次
+		var h := player_bearing(player)
+		_redraw_timer -= _delta
+		if absf(wrapf(h - _last_heading, -180.0, 180.0)) > 0.1 or _redraw_timer <= 0.0:
+			_last_heading = h
+			_redraw_timer = 0.25
+			_bar.queue_redraw()
 	var uses := GameRules.flag("stamina") or GameRules.flag("swim_stamina")
 	_stamina.visible = uses and player != null and player.stamina < 0.999
 	if _stamina.visible:

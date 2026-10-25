@@ -704,10 +704,10 @@ func _test_performance() -> void:
 	var ultra_ok := get_viewport().msaa_3d == Viewport.MSAA_2X and get_viewport().screen_space_aa == Viewport.SCREEN_SPACE_AA_DISABLED and get_viewport().use_taa
 	GameSettings.set_value("graphics_quality", "medium", false)
 	await _frames(2)
-	var medium_ok := not get_viewport().use_taa and get_viewport().screen_space_aa == Viewport.SCREEN_SPACE_AA_SMAA
+	var medium_ok := get_viewport().use_taa and get_viewport().screen_space_aa == Viewport.SCREEN_SPACE_AA_DISABLED   # v0.5：中画质也用 TAA（走动时闪烁约减半）
 	GameSettings.set_value("graphics_quality", "high", false)
 	await _frames(2)
-	notes.append("画质 低 %s / 中 %s / 高 %s（TAA）/ 极高 %s" % [low_ok, medium_ok, high_ok, ultra_ok])
+	notes.append("画质 低 %s / 中 %s（TAA）/ 高 %s（TAA）/ 极高 %s" % [low_ok, medium_ok, high_ok, ultra_ok])
 	# 动态分辨率防抖：只超预算一次不降
 	var once := perf.update_dynamic_scale(25.0)
 	perf.update_dynamic_scale(10.0)
@@ -2889,7 +2889,7 @@ func _test_flicker_sources() -> void:
 	var bm := BlockyMesh.material(0.06)
 	var mip := bm.texture_filter == BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS and bm.albedo_texture.get_image().has_mipmaps()
 	climate.apply_preset("Autumn_Dusk_Clear")
-	_check("闪动的根因已修：太阳阴影方向按 0.15° 小步更新（静止时阴影边不再来回跳）、100 % 比例时 FSR 不锐化、方块人物动物的噪点贴图有 mipmap",
+	_check("闪动的根因已修：太阳阴影方向按 0.15° 小步更新（静止时阴影边不再来回跳）、动态分辨率降比例时 FSR 只轻锐化（100 % 不锐化、连续变化）、方块人物动物的噪点贴图有 mipmap",
 		held and stepped and jumped and is_equal_approx(sharp_full, 2.0) and continuous and is_equal_approx(vp_sharp, 2.0) and mip,
 		"小步不动 %s · 超过一步跟上 %s · 跳时间到位 %s · 100%% 锐化 %.1f（关）· 连续 %s · 视口 %.1f · mipmap %s" % [held, stepped, jumped, sharp_full, continuous, vp_sharp, mip])
 

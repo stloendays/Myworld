@@ -64,6 +64,8 @@ func _run() -> void:
 			legacy = true
 		elif a.begins_with("sharp="):
 			sharp = a.substr(6).to_float()
+		elif a.begins_with("scale="):
+			GameSettings.set_value("render_scale", a.substr(6).to_float(), false)
 		elif a.begins_with("quality="):
 			quality = a.substr(8)
 		elif a.begins_with("spots="):

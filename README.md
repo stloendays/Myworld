@@ -177,7 +177,7 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | `scripts/buildings/StoneCottage.gd`、`scripts/interactions/LockedDoor.gd` | 南部草地的石头小屋（门锁着，暂时进不去） |
 | `scripts/world/Streams.gd`、`shaders/stream_water.gdshader`、布局 `terrain.channels` 与 `nature.bridges` | 西岭小溪（河床是地形沟槽）、小瀑布与水雾、溪边石头芦苇；北岭裂谷；木板桥和原木桥 |
 | `shaders/cover_flat.gdshader`、`foliage.gdshader` 的 fade 参数 | 草、花、蘑菇远处逐株缩小消失（不再整块抖动淡出） |
-| `devtools/FlickerProbe.tscn`、`devtools/flicker_report.py` | 画面闪动探针：固定机位连续渲染，逐像素统计闪烁、画热力图；jiggle 模式比较抗锯齿方案 |
+| `devtools/FlickerProbe.tscn`、`devtools/flicker_report.py` | 画面闪动探针：固定机位连续渲染，逐像素统计闪烁、画热力图；jiggle 模式比较抗锯齿方案；dynres / legacy / quality= / scale= 按玩家设置对比修复前后 |
 | `data/weather/seasonal_fx.json` | 季节飘落物方案：落叶、花瓣，以及保留的“原版红点”（`legacy_red_motes`） |
 | `tests/TestRunner.tscn` | 自动检查（88 项：QA-01、QA-02、QA-10、天气、人物、泳池馆、游泳、动物、聊天框、小地图、开发者模式、设置、国际象棋、动作轮盘、世界地图等；`DUSK_TEST_ONLY=_test_xxx` 只跑某几项） |
 | `scripts/core/Updater.gd` | 自动更新（Autoload）：查 GitHub Releases、下载核对、退出后替换 exe 并重启 |

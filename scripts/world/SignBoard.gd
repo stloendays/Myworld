@@ -44,6 +44,7 @@ var line_keys := PackedStringArray()     ## 每一行属于哪一段（title_zh 
 var title_tag: Label3D = null         ## 木签上的标题（卷起时也看得到）
 
 var _target := 0.0
+var _check_timer := 0.0
 var _scroll: Node3D                   ## 原点 = 上轴中心；纸面沿本地 -Y 往下展开
 var _paper: MeshInstance3D
 var _paper_mat: StandardMaterial3D
@@ -260,8 +261,11 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	var want := 1.0 if force_open else _wanted()
-	_target = want
+	# 卷着或展开着不动时每 0.1 秒看一次距离就够了；正在卷 / 展开时每帧更新
+	_check_timer -= delta
+	if _check_timer <= 0.0 or not is_equal_approx(unroll, _target):
+		_check_timer = 0.1
+		_target = 1.0 if force_open else _wanted()
 	if is_equal_approx(unroll, _target):
 		return
 	unroll = move_toward(unroll, _target, delta / UNROLL_SECONDS)
