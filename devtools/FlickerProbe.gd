@@ -18,6 +18,8 @@ const SPOTS := [
 	{"name": "f06_cave_mouth", "climate": {"season": "SUMMER", "hour": 15.0, "weather": "CLEAR"}, "eye": [-5.5, 3.9, -80.5], "look": [-7.5, 4.0, -96]},
 	{"name": "f07_meadow", "climate": {"season": "SUMMER", "hour": 15.0, "weather": "CLEAR"}, "eye": [-84, 3.8, 82], "look": [-70, 2.5, 100]},
 	{"name": "f08_poolhouse", "climate": {"season": "SUMMER", "hour": 15.0, "weather": "CLEAR"}, "eye": [-20, 3.8, 66], "look": [4, 2.0, 84]},
+	{"name": "fb1_creek_bridge", "climate": {"season": "SUMMER", "hour": 16.0, "weather": "CLEAR"}, "eye": [-77.5, 3.2, -8.5], "look": [-84.0, 2.6, -1.5]},
+	{"name": "fb2_gorge_bridge", "climate": {"season": "SUMMER", "hour": 15.0, "weather": "CLEAR"}, "eye": [-83.5, 15.5, -93.5], "look": [-89.8, 11.5, -89.0]},
 ]
 
 var _camera: Camera3D

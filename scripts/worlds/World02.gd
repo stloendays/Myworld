@@ -12,6 +12,7 @@ var portal: FairyPortal = null
 
 func _enter_tree() -> void:
 	add_to_group("world_root")
+	Main.anchor_to_origin(self)
 
 
 func _ready() -> void:
