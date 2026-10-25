@@ -61,6 +61,7 @@ func read() -> Dictionary:
 		raw = JSON.parse_string(FileAccess.get_file_as_string(LEGACY_JOURNAL))
 		if raw is Dictionary:
 			(raw as Dictionary)["schema_version"] = int((raw as Dictionary).get("schema_version", 3))
+			(raw as Dictionary)["legacy"] = true
 	if not raw is Dictionary:
 		return {}
 	return WorldState.migrate(raw)
@@ -74,7 +75,7 @@ func summary() -> Dictionary:
 	var p: Dictionary = d.get("player", {})
 	var r: Dictionary = d.get("rules", {})
 	return {"world": str(p.get("world", "dusk_lake")), "day": int(d.get("world_day", 1)), "minutes": float(d.get("time_minutes", 0.0)),
-		"mode": str(r.get("mode", "explore")), "saved_at": str(d.get("saved_at", ""))}
+		"mode": str(r.get("mode", "explore")), "saved_at": str(d.get("saved_at", "")), "legacy": d.get("legacy", false)}
 
 
 ## 当前世界的完整快照（含玩家位置）。
@@ -143,6 +144,16 @@ func continue_game() -> bool:
 	var d := read()
 	if d.is_empty():
 		return false
+	# v0.4 只存了任务与图鉴（user://journal.json）：按默认设定开一局（秋季黄昏的湖畔），再把任务和图鉴接上
+	if d.get("legacy", false):
+		var q: Dictionary = d.get("quests", {})
+		var j: Dictionary = d.get("journal", {})
+		await start_new(GameRules.defaults())
+		WorldState.quests = q.duplicate(true)
+		WorldState.journal = j.duplicate(true)
+		QuestLog.changed.emit()
+		save()
+		return true
 	WorldState.restore(d)
 	GameRules.set_all(d.get("rules", {}))
 	_apply_scene_state()

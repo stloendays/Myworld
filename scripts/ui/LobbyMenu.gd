@@ -509,6 +509,9 @@ func _refresh_continue() -> void:
 	_continue_label.visible = _continue_button.visible
 	if s.is_empty():
 		return
+	if s.get("legacy", false):
+		_continue_label.text = tr("接着 v0.4 的任务和图鉴，从秋天黄昏的湖畔开始")
+		return
 	var w := WorldRegistry.get_world(str(s["world"]))
 	var m := int(s["minutes"])
 	_continue_label.text = tr("%s · 第 %d 天 %02d:%02d · %s") % [tr(str(w.get("name", s["world"]))), int(s["day"]), m / 60, m % 60,

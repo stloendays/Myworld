@@ -1791,3 +1791,6 @@ msgstr "Teleported to the gate."
 msgid "那里没有地面"
 msgstr "there is no ground there"
 
+msgid "接着 v0.4 的任务和图鉴，从秋天黄昏的湖畔开始"
+msgstr "Picks up your v0.4 quests and field guide, starting at the lake on an autumn evening"
+

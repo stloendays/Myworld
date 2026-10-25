@@ -335,6 +335,7 @@ func _shoot_worlds(prefix: String) -> void:
 				b.set_lit(true)
 			await _wait(30)
 			(world as World02).whale.position = Vector3(World02.WHALE_NEAR.x, World02.WHALE_NEAR.y, 0.0)
+			(world as World02).whale_pivot.rotation.y = deg_to_rad(-40.0)
 		if shot.get("altar", false) and world is World03:
 			(world as World03).altar.apply_state("placed:6")
 		if player_view:
