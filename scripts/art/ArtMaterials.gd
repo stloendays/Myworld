@@ -344,7 +344,11 @@ static func for_kenney(asset: String, material: String) -> Material:
 
 ## 在后台线程里提前开始读这些 GLB（Main 进入场景树时调用）。之后 kenney_mesh 里的 load() 会等着用
 ## 同一个后台任务的结果，几十个模型并行读，不再在主线程上一个接一个读。
+## 无窗口运行（自动检查）时不开后台线程：无窗口用的是假渲染器，它分配网格、材质 RID 的表不是线程安全的，
+## 后台线程读模型和主线程建木屋、泳池馆同时分配时偶尔会撞（日志里 "Attempting to initialize the wrong RID"）。
 static func preload_kenney(paths: PackedStringArray) -> void:
+	if DisplayServer.get_name() == "headless":
+		return
 	for path in paths:
 		if not _cache.has("mesh:" + path) and ResourceLoader.exists(path):
 			ResourceLoader.load_threaded_request(path, "PackedScene", true)

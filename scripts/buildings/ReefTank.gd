@@ -121,6 +121,8 @@ static func _decor(h: PoolHouse, root: Node3D, r: Rect2, sand_y: float, top: flo
 	for i in 30:
 		var cx := -9.5 if i < 15 else 9.0
 		var p := Vector3(cx + rng.randf_range(-2.2, 2.2), sand_y, rng.randf_range(r.position.y + 0.5, r.position.y + 3.4))
+		if absf(p.x - float(WorldLayout.section("atlantis_ring").get("local", [99.0])[0])) < 1.0:
+			continue
 		_kelp(root, p, rng.randf_range(2.6, 5.2), rng)
 	# 沉没的独木舟：半埋在东侧沙里，船头翘起
 	var wreck := ArtMaterials.kenney_prop(NATURE + "canoe.glb", Vector3(5.5, sand_y - 0.15, back + 1.6), 63.0, 3.9)

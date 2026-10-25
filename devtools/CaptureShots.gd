@@ -136,7 +136,7 @@ const SHOTS := [
 	{"name": "v05_12_compass_stamina", "climate": DUSK, "player": [-60.0, 10.0], "heading": 20.0, "pitch": -3.0, "stamina": 0.45},
 	{"name": "v05_13_journal_collection", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "journal": 2},
 	# 亚特兰蒂斯入口与更多玩法（atl_00、play_）
-	{"name": "atl_00_ring", "climate": DUSK, "house": true, "eye": [2.6, -7.4, -4.0], "look": [-2.0, -8.05, -5.6]},
+	{"name": "atl_00_ring", "climate": DUSK, "house": true, "eye": [-7.0, -7.7, -3.4], "look": [-10.0, -8.0, -5.5]},
 	{"name": "play_01_fishing", "climate": DUSK, "player": [-3.0, 26.0], "y": 1.0, "heading": 80.0, "pitch": -2.0, "fish": true},
 	{"name": "play_02_skipping", "climate": {"season": "SUMMER", "hour": 17.0, "weather": "CLEAR"}, "eye": [4.0, 2.4, 31.5], "look": [16.0, 0.3, 25.0], "skip": [-2.0, 1.0, 26.0, 90.0], "skip_frames": 26},
 	{"name": "play_03_treasure", "climate": DUSK, "eye": [-44.6, 1.5, 35.8], "ground": true, "look": [-47.0, 0.4, 33.0], "look_ground": true, "chest": [-47.0, 33.0]},
@@ -332,7 +332,7 @@ const WORLD_SHOTS := [
 	{"name": "atl_06_current", "world": "world_04", "player": [-57.0, 18.0], "heading": 90.0, "pitch": -8.0, "rail": "current", "progress": 48.0},
 	{"name": "atl_07_manta", "world": "world_04", "player": [-78.0, -12.0], "heading": 0.0, "pitch": -10.0, "rail": "manta", "progress": 160.0, "third_person": true},
 	{"name": "atl_10_oxygen_hud", "world": "world_04", "player": [6.0, 76.0], "y": 3.0, "heading": 0.0, "pitch": 8.0, "oxygen": 0.55},
-	{"name": "atl_11_tablet", "world": "world_04", "player": [12.0, 23.0], "heading": 180.0, "pitch": -25.0},
+	{"name": "atl_11_tablet", "world": "world_04", "player": [12.0, 23.4], "heading": 0.0, "pitch": -22.0},
 	{"name": "atl_14_dive_rings", "world": "world_04", "player": [28.0, 60.0], "y": 2.0, "heading": 132.0, "pitch": 2.0, "course": "dive_rings"},
 	{"name": "atl_08_world_map", "world": "world_04", "player": [0.0, 10.4], "heading": 0.0, "world_map": true},
 	{"name": "atl_09_night", "world": "world_04", "solve": true, "hour": 22.0, "eye": [36.0, 18.0, 44.0], "look": [0.0, 4.0, 0.0]},

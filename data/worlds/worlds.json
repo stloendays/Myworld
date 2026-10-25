@@ -11,7 +11,7 @@
       "arrivals": {
         "world_02": {"pos": [25.6, 2.25, -103.2], "heading": 270.0},
         "world_03": {"pos": [-90.0, 0.0, 86.0], "heading": 90.0, "ground": true},
-        "world_04": {"pos": [4.6, -6.6, 78.4], "heading": 90.0}
+        "world_04": {"pos": [-3.5, -6.6, 79.2], "heading": 90.0}
       },
       "size_m": 250,
       "summary": "湖、森林、木屋、玻璃泳池馆与地下水族馆。",
