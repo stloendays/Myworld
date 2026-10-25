@@ -1767,3 +1767,21 @@ msgstr "cloud pearl"
 msgid "古代碎片"
 msgstr "ancient shard"
 
+msgid "收藏"
+msgstr "Collection"
+
+msgid "云海浮岛：云珠 %d / %d · 风灯 %d / %d"
+msgstr "Cloudsea Isles: cloud pearls %d / %d · beacons %d / %d"
+
+msgid "琥珀沙丘：古代碎片 %d / %d · 祭坛 %d / %d"
+msgstr "Amber Dunes: ancient shards %d / %d · altar %d / %d"
+
+msgid "摄影清单  %d / %d（F12 拍照时画面中央的东西）"
+msgstr "Photo list  %d / %d (whatever is in the middle of the frame when you press F12)"
+
+msgid "摄影清单：拍到了「%s」（%d / %d）"
+msgstr "Photo list: you photographed the %s (%d / %d)"
+
+msgid "探索点"
+msgstr "Places"
+

@@ -1,7 +1,8 @@
 class_name JournalPanel
 extends CanvasLayer
-## 旅行日志（按 J 开关，Esc 关闭）：两页——「任务」列出进行中和已完成的图腾任务及目标进度；
+## 旅行日志（按 J 开关，Esc 关闭）：三页——「任务」列出进行中和已完成的图腾任务及目标进度；
 ## 「图鉴」列出见过的动物和认出的星座（没见过的显示 ？？？，数量写在标题上）。
+## 「收藏」：每个世界的探索点、收集品（云珠、古代碎片）、风灯与祭坛，以及摄影清单拍到了哪些。
 ## 同时负责左上角的任务追踪：进行中的任务标题和当前进度（最多 3 条，没有任务时不显示）。
 ## 图鉴的想法参考了 GitHub 上 bitbrain/pandora 把物品、任务、角色都当数据条目管理的做法。
 
@@ -9,6 +10,7 @@ var _root: Control
 var _tabs: TabContainer
 var _quest_box: VBoxContainer
 var _dex_box: VBoxContainer
+var _collect_box: VBoxContainer
 var _tracker: VBoxContainer
 var _tracker_panel: PanelContainer
 var _player: FirstPersonController = null
@@ -112,6 +114,7 @@ func _refresh() -> void:
 	var all_stars := StarField.constellations()
 	_dex_box.add_child(_label(tr("星座  %d / %d") % [stars.size(), all_stars.size()], 22, Color(1.0, 0.85, 0.5)))
 	_dex_box.add_child(_grid(all_stars.map(func(c: Dictionary) -> String: return QuestLog.text(c, "name") if str(c["id"]) in stars else "？？？")))
+	_refresh_collection()
 	_refresh_tracker(player)
 
 
@@ -195,6 +198,7 @@ func _build() -> void:
 	col.add_child(_tabs)
 	_quest_box = _page(tr("任务"))
 	_dex_box = _page(tr("图鉴"))
+	_collect_box = _page(tr("收藏"))
 
 
 func _page(tab_name: String) -> VBoxContainer:
@@ -230,3 +234,37 @@ func _build_tracker() -> void:
 	_tracker.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_tracker.add_theme_constant_override("separation", 2)
 	_tracker_panel.add_child(_tracker)
+
+
+## 收藏页：各世界的探索点和收集品进度、摄影清单。
+func _refresh_collection() -> void:
+	for c in _collect_box.get_children():
+		c.queue_free()
+	var head := Color(1.0, 0.85, 0.5)
+	var body := Color(0.92, 0.9, 0.86)
+	_collect_box.add_child(_label(tr("探索点"), 22, head))
+	var lake_found := 0
+	for poi in Exploration.pois():
+		if StringName(poi["id"]) in WorldState.discoveries:
+			lake_found += 1
+	var lines := ["%s  %d / %d" % [tr("暮色湖畔"), lake_found, Exploration.pois().size()]]
+	for wid in ["world_02", "world_03"]:
+		var pois: Array = MiniWorld.data_for(wid).get("pois", [])
+		var found := pois.filter(func(p: Dictionary) -> bool: return StringName(p["id"]) in WorldState.discoveries).size()
+		lines.append("%s  %d / %d" % [tr(str(WorldRegistry.get_world(wid).get("name", wid))), found, pois.size()])
+	_collect_box.add_child(_label("      " + "      ".join(lines), 18, body))
+	_collect_box.add_child(_label(tr("收集品"), 22, head))
+	var lit := 0
+	for uid in WorldState.interactables:
+		if str(uid).begins_with("cs_beacon_") and str(WorldState.interactables[uid]) == "lit":
+			lit += 1
+	var altar := str(WorldState.interactables.get(&"du_altar", "placed:0"))
+	var placed := int(altar.get_slice(":", 1)) if altar.begins_with("placed:") else 0
+	var cs: Dictionary = MiniWorld.data_for("world_02")
+	var du: Dictionary = MiniWorld.data_for("world_03")
+	_collect_box.add_child(_label("      " + tr("云海浮岛：云珠 %d / %d · 风灯 %d / %d") % [WorldState.collected("world_02").size(), (cs.get("items", []) as Array).size(), lit, (cs.get("beacons", []) as Array).size()], 18, body))
+	_collect_box.add_child(_label("      " + tr("琥珀沙丘：古代碎片 %d / %d · 祭坛 %d / %d") % [WorldState.collected("world_03").size(), (du.get("items", []) as Array).size(), placed, (du.get("items", []) as Array).size()], 18, body))
+	var shots: Array = WorldState.journal_list("photos")
+	var all := PhotoList.subjects()
+	_collect_box.add_child(_label(tr("摄影清单  %d / %d（F12 拍照时画面中央的东西）") % [shots.size(), all.size()], 22, head))
+	_collect_box.add_child(_grid(all.map(func(s: Dictionary) -> String: return PhotoList.label(s) if str(s["id"]) in shots else "？？？")))

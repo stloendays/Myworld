@@ -586,3 +586,9 @@ E  点亮风灯	E  Light the wind beacon
 云端灯塔	Sky Lighthouse
 云珠	cloud pearl
 古代碎片	ancient shard
+收藏	Collection
+云海浮岛：云珠 %d / %d · 风灯 %d / %d	Cloudsea Isles: cloud pearls %d / %d · beacons %d / %d
+琥珀沙丘：古代碎片 %d / %d · 祭坛 %d / %d	Amber Dunes: ancient shards %d / %d · altar %d / %d
+摄影清单  %d / %d（F12 拍照时画面中央的东西）	Photo list  %d / %d (whatever is in the middle of the frame when you press F12)
+摄影清单：拍到了「%s」（%d / %d）	Photo list: you photographed the %s (%d / %d)
+探索点	Places

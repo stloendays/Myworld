@@ -5,6 +5,8 @@ extends Node
 ## move：相机每帧沿视线横向平移 3 cm（走路时的闪动：远处植被淡出、Z 冲突、阴影抖动）。
 ## jiggle：相机左右来回转 1/3 像素（画面内容不变）：前后两帧差得越多，锯齿闪烁越重（flicker_report.py --jiggle 统计）。
 ## smaa / taa：对比用的抗锯齿方案（单帧 SMAA / Godot 自带 TAA）。
+## dynres：按玩家默认开着动态分辨率（一直走 FSR）；legacy：v0.5 修复前的做法（FSR 锐化 0.2、太阳每帧转动），对比用；
+## quality=low/medium/high/ultra：画质档；spots=a,b：只拍这几个机位；bias= / sharp=：试验贴图 mip 偏移和 FSR 锐化。
 ## 画质按玩家默认（高），只关动态分辨率和帧率上限（动态分辨率另有自动检查）。
 
 const MAIN_SCENE := "res://scenes/main/Main.tscn"
@@ -38,6 +40,7 @@ func _run() -> void:
 	var smaa := false
 	var taa := false
 	var dynres := false
+	var legacy := false   ## v0.5 修复前的做法：FSR 锐化 0.2、太阳每帧转（对比用）
 	var bias := INF
 	var sharp := -1.0
 	var quality := ""
@@ -57,6 +60,8 @@ func _run() -> void:
 			dynres = true
 		elif a.begins_with("bias="):
 			bias = a.substr(5).to_float()
+		elif a == "legacy":
+			legacy = true
 		elif a.begins_with("sharp="):
 			sharp = a.substr(6).to_float()
 		elif a.begins_with("quality="):
@@ -103,6 +108,9 @@ func _run() -> void:
 			get_viewport().texture_mipmap_bias = bias
 		if sharp >= 0.0:
 			get_viewport().fsr_sharpness = sharp
+		if legacy:
+			get_viewport().fsr_sharpness = 0.2
+			(_main.get_node("World/Environment") as EnvironmentDirector).sun_step_deg = 0.0
 		var climate := _main.get_node("Systems") as ClimateSystem
 		var c: Dictionary = spot["climate"]
 		if c.has("preset"):

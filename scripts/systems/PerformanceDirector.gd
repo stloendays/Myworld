@@ -148,6 +148,13 @@ func _apply_scale() -> void:
 	# 开着动态分辨率就一直用 FSR（100% 时只做锐化）：比例在 100% 上下变动时不在两种缩放之间来回切，画面不跳
 	var fsr := s < 0.99 or (GameSettings.dynamic_resolution and DisplayServer.get_name() != "headless")
 	vp.scaling_3d_mode = Viewport.SCALING_3D_MODE_FSR if fsr else Viewport.SCALING_3D_MODE_BILINEAR
+	vp.fsr_sharpness = fsr_sharpness_for(s)
+
+
+## FSR 的锐化：100 % 比例时不锐化（2.0 = 关）。锐化会把细草、远处树叶和木板缝的锯齿放大，走动时闪得厉害
+## （FlickerProbe 走动机位：林道、溪边闪烁像素约翻倍）。比例降下去时才慢慢加一点锐化补清晰度，连续变化、不跳。
+static func fsr_sharpness_for(scale: float) -> float:
+	return lerpf(2.0, 0.9, clampf((0.99 - scale) / 0.39, 0.0, 1.0))
 
 
 func _update_underground() -> void:

@@ -677,6 +677,7 @@ func _build_whale() -> void:
 		boxes.append({"box": p.slice(0, 6), "color": p[6]})
 	(whale as MeshInstance3D).mesh = BlockyMesh.build(boxes, func(k: String) -> Color: return WHALE_COLORS.get(k, Color.WHITE), 0.5)
 	whale.position = Vector3(WHALE_FAR.x, WHALE_FAR.y, 0.0)
+	whale.add_to_group("sky_whale")
 	whale_pivot.add_child(whale)
 	_check_beacons(true)
 

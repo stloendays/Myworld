@@ -102,6 +102,8 @@ func _run() -> void:
 	await _test_cottage()
 	await _test_nature()
 	_test_cover_fade()
+	await _test_flicker_sources()
+	await _test_dune_gate_and_photos()
 	await _test_game_rules()
 	await _test_save_v4()
 	await _test_new_game_menu()
@@ -2117,13 +2119,13 @@ func _test_fullscreen_and_world_map() -> void:
 	for w in WorldRegistry.worlds():
 		if not WorldRegistry.is_open(str(w["id"])):
 			planned += 1
-	# 世界三还在规划中：进不去、只提示；世界二是“建设中可进入”（真正的往返在 _test_world_travel 里测）
-	var blocked := not WorldRegistry.enter("world_03") and not WorldRegistry.can_enter("world_03") and WorldRegistry.can_enter("world_02")
+	# v0.5：三个世界都开放了。当前所在的世界进不去（只提示）；另外两个能去（真正的往返在 _test_world_travel 里测）
+	var blocked := not WorldRegistry.enter("dusk_lake") and WorldRegistry.can_enter("world_02") and WorldRegistry.can_enter("world_03")
 	wm.toggle()
 	await _frames(2)
-	_check("F11 / Alt+Enter 全屏切换（不误开聊天）；Tab 打开世界地图，世界注册表含规划中的其他世界", f11 and on and opened and not wm.open \
-		and str(cur.get("id", "")) == "dusk_lake" and planned >= 1 and blocked,
-		"F11 %s，全屏 %s，地图打开 %s，当前 %s，规划中 %d 个，规划中的世界不能进、建设中的能进 %s" % [f11, on, opened, cur.get("name", "?"), planned, blocked])
+	_check("F11 / Alt+Enter 全屏切换（不误开聊天）；Tab 打开世界地图，世界注册表里三个世界都开放（所在的世界不能再进）", f11 and on and opened and not wm.open \
+		and str(cur.get("id", "")) == "dusk_lake" and planned == 0 and WorldRegistry.worlds().size() == 3 and blocked,
+		"F11 %s，全屏 %s，地图打开 %s，当前 %s，未开放 %d 个，所在世界不能进、另两个能去 %s" % [f11, on, opened, cur.get("name", "?"), planned, blocked])
 
 # ---------------------------------------------------------------- 工具
 
@@ -2851,3 +2853,83 @@ func _test_new_game_menu() -> void:
 	GameRules.apply_ongoing()
 	WorldState.season_override = null
 	(_main.get_node("Systems") as ClimateSystem).apply_preset("Autumn_Dusk_Clear")
+
+
+# ---------------------------------------------------------------- v0.5：闪动的根因、沙之门、摄影清单
+
+func _test_flicker_sources() -> void:
+	var env := _main.get_node("World/Environment") as EnvironmentDirector
+	var climate := _main.get_node("Systems") as ClimateSystem
+	climate.apply_preset("Autumn_Dusk_Clear")
+	await _frames(3)
+	# 太阳方向按小步更新：走 0.2 游戏分钟（太阳挪 0.05°）阴影方向不变；走 1 分钟（0.25°）才跟上；跳时间立刻到位
+	var b0 := env.sun.basis
+	climate.clock.advance(0.2)
+	await _frames(2)
+	var held := env.sun.basis.is_equal_approx(b0)
+	climate.clock.advance(1.0)
+	await _frames(2)
+	var stepped := not env.sun.basis.is_equal_approx(b0)
+	climate.set_hour(9.0)
+	await _frames(2)
+	var want := EnvironmentDirector._direction(env.sun_elevation, env.sun_azimuth)
+	var jumped := rad_to_deg((-env.sun.global_basis.z).angle_to(-want)) < 0.2
+	# FSR：100 % 比例不锐化；比例往下降时锐化连续加上（没有跳变）
+	var sharp_full := PerformanceDirector.fsr_sharpness_for(1.0)
+	var continuous := true
+	var prev := sharp_full
+	for i in 41:
+		var s := 1.0 - i * 0.01
+		var v := PerformanceDirector.fsr_sharpness_for(s)
+		continuous = continuous and absf(v - prev) < 0.05
+		prev = v
+	(_main.get_node("Performance") as PerformanceDirector)._apply_scale()
+	var vp_sharp := get_viewport().fsr_sharpness
+	# 方块人物和小动物的像素噪点贴图带 mipmap（远处不闪砂点）
+	var bm := BlockyMesh.material(0.06)
+	var mip := bm.texture_filter == BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS and bm.albedo_texture.get_image().has_mipmaps()
+	climate.apply_preset("Autumn_Dusk_Clear")
+	_check("闪动的根因已修：太阳阴影方向按 0.15° 小步更新（静止时阴影边不再来回跳）、100 % 比例时 FSR 不锐化、方块人物动物的噪点贴图有 mipmap",
+		held and stepped and jumped and is_equal_approx(sharp_full, 2.0) and continuous and is_equal_approx(vp_sharp, 2.0) and mip,
+		"小步不动 %s · 超过一步跟上 %s · 跳时间到位 %s · 100%% 锐化 %.1f（关）· 连续 %s · 视口 %.1f · mipmap %s" % [held, stepped, jumped, sharp_full, continuous, vp_sharp, mip])
+
+
+func _test_dune_gate_and_photos() -> void:
+	var gate := get_tree().get_first_node_in_group("dune_gate") as DuneGate
+	var cfg := WorldLayout.section("dune_gate")
+	var c := WorldLayout.v2(cfg["center"])
+	var placed := gate != null and Vector2(gate.global_position.x, gate.global_position.z).distance_to(c) < 0.1 \
+		and absf(gate.global_position.y - WorldTerrain.height_at(c.x, c.y)) < 0.3 and gate.portal.target_world == "world_03"
+	# 从步道那边走到门前，看着门：对准的是光门，提示能进去
+	await _setup_at(c + Vector2(2.0, 0.0), deg_to_rad(90.0))
+	_player.look_at_point(gate.portal.global_position)
+	await _frames(3)
+	var focused := _player.focused_target() == gate.portal and WorldTravel.blocked_reason("world_03") == ""
+	var no_trees := Vegetation.tree_density(c.x, c.y) == 0.0
+	_check("沙之门：南部草甸的砂岩石拱立在地上，门前没有树，看着光门能对准、通往琥珀沙丘", placed and focused and no_trees,
+		"摆放 %s · 对准 %s · 没有树 %s" % [placed, focused, no_trees])
+	# 摄影清单：看着木屋拍到「湖边木屋」；夜里抬头拍到「星空」；背对着就认不出；记进图鉴并存档
+	var climate := _main.get_node("Systems") as ClimateSystem
+	climate.apply_preset("Autumn_Dusk_Clear")
+	WorldState.journal.erase("photos")
+	await _setup_at(Vector2(-48.0, 41.0), 0.0)
+	_player.look_at_point(Vector3(-69.0, 5.0, 37.0))
+	await _frames(3)
+	var cabin := PhotoList.recognize(_player.camera, get_tree()).has("cabin")
+	_player.look_at_point(Vector3(-30.0, 5.0, 45.0))
+	await _frames(3)
+	var away := not PhotoList.recognize(_player.camera, get_tree()).has("cabin")
+	_player.look_at_point(Vector3(-69.0, 5.0, 37.0))
+	await _frames(3)
+	var got := PhotoList.capture(_player.camera, get_tree())
+	climate.set_hour(23.0)
+	climate.set_weather(&"CLEAR", 0.0)
+	await _frames(5)
+	_player.head.rotation.x = deg_to_rad(60.0)
+	await _frames(3)
+	var stars := PhotoList.recognize(_player.camera, get_tree()).has("stars")
+	_player.head.rotation.x = 0.0
+	var journal_ok := WorldState.journal_list("photos").has("cabin") and got == ["cabin"]
+	climate.apply_preset("Autumn_Dusk_Clear")
+	_check("摄影清单（%d 样）：看着木屋拍照认出「湖边木屋」并记进图鉴，背对着认不出；夜里抬头能拍到星空" % PhotoList.subjects().size(),
+		cabin and away and stars and journal_ok, "木屋 %s · 背对 %s · 记下 %s · 星空 %s" % [cabin, away, journal_ok, stars])

@@ -46,7 +46,8 @@ static func material(px: float, kind := "default") -> StandardMaterial3D:
 		return _materials[key]
 	var m := StandardMaterial3D.new()
 	m.albedo_texture = _noise_texture()
-	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	# 最近邻 + mipmap：近处是清楚的像素块，远处用缩小的贴图，人和动物走远了身上不再闪砂点
+	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
 	m.uv1_triplanar = true
 	m.uv1_scale = Vector3.ONE / (16.0 * px)
 	m.vertex_color_use_as_albedo = true
@@ -76,5 +77,6 @@ static func _noise_texture() -> ImageTexture:
 			for x in 16:
 				var v := rng.randf_range(0.86, 1.0)
 				img.set_pixel(x, y, Color(v, v, v))
+		img.generate_mipmaps()
 		_noise = ImageTexture.create_from_image(img)
 	return _noise
