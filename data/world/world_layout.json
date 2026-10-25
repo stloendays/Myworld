@@ -159,7 +159,7 @@
     {"id": "sign_islet", "text": "lake_islet", "pos": [37.6, -3.2], "yaw_deg": -70.0, "style": "stand", "width": 1.4, "scale": 1.4},
     {"id": "sign_fairy_glade", "text": "fairy_glade", "pos": [62.5, 90.6], "yaw_deg": -115.0, "style": "stand", "width": 1.5, "scale": 1.45},
     {"id": "sign_snow_trail", "text": "snow_peak_trail", "pos": [-76.5, -51.5], "yaw_deg": -90.0, "style": "stand", "width": 1.5, "scale": 1.45},
-    {"id": "sign_snow_summit", "text": "snow_peak_summit", "pos": [99.0, -105.5], "yaw_deg": -78.0, "style": "stand", "width": 1.5, "scale": 1.45},
+    {"id": "sign_snow_summit", "text": "snow_peak_summit", "pos": [98.0, -104.0], "yaw_deg": -78.0, "style": "stand", "width": 1.5, "scale": 1.45},
     {"id": "sign_falls", "text": "west_falls", "pos": [-93.0, 6.4], "yaw_deg": 150.0, "style": "stand", "width": 1.4, "scale": 1.4},
     {"id": "sign_gorge", "text": "north_gorge", "pos": [-86.6, -81.6], "yaw_deg": 170.0, "style": "stand", "width": 1.4, "scale": 1.4},
     {"id": "sign_cave", "text": "cave_mouth", "pos": [-12.2, -89.2], "yaw_deg": 20.0, "style": "stand", "width": 1.5, "scale": 1.45},

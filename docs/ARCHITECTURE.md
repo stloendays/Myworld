@@ -64,11 +64,11 @@ Main (Main.gd)
 
 | 模块 | 状态 | 职责 |
 |---|---|---|
-| `WorldState`（Autoload） | 已实现 | 日期时间、季节覆盖、天气与过渡进度、种子、地面积雪/湿润、可交互物状态、角色区域、探索发现、载具、任务与图鉴；`snapshot()` 给 M4 存档（版本 3） |
+| `WorldState`（Autoload） | 已实现 | 日期时间、季节覆盖、天气与过渡进度、种子、地面积雪/湿润、可交互物状态、角色区域、探索发现、载具、任务与图鉴、收集品；`snapshot()` / `migrate()` / `restore()`（存档版本 4：加入本局规则、收集品、玩家所在世界与位置） |
 | `EventBus`（Autoload） | 已实现 | 只发通知不存状态 |
 | `GameSettings`（Autoload） | 已实现 | FOV、灵敏度、按键表、UI 中文字体主题 |
 | `PlayerProfile`（Autoload） | 已实现 | 本地玩家外观，存 `user://appearance.json` |
-| `Net`（Autoload，NetworkManager）/ `RemotePlayers` / `LobbyMenu` | M2 扩展已实现 | 房主自建房间（ENet），20 Hz 同步人物位置与身体状态（坐、躺、划船、手势），4 Hz 广播房主的时间天气；门等交互由房主核对距离后广播；协议版本 2。见 `docs/COOP.md` |
+| `Net`（Autoload，NetworkManager）/ `RemotePlayers` / `LobbyMenu` | M2 扩展已实现 | 房主自建房间（ENet），20 Hz 同步人物位置与身体状态（坐、躺、划船、手势），4 Hz 广播房主的时间天气；门等交互由房主核对距离后广播；欢迎包带房主的本局规则（GameRules），房主改了再广播，访客离开房间后换回自己的；协议版本 3。见 `docs/COOP.md` |
 | 界面语言 | 已实现 | 原文中文，`locale/en.po` 英文；`GameSettings.language` = auto（跟随系统）/ en / zh |
 | `InteractionSystem` / `Interactable` | 已实现 | 统一 `interact(actor, target)`；子类提供提示、状态、`apply_state()` |
 | `WorldClock` / `SeasonController` / `WeatherController` / `ClimateSystem` | M2 已实现 | 只写 WorldState、只发事件，不碰任何画面节点 |
@@ -80,19 +80,23 @@ Main (Main.gd)
 | `CabinLife` / `InteractableToggle` / `Seat` / `Bed` | 已实现 | 木屋生活交互，状态按 uid 记在 WorldState |
 | `Canoe` / `Exploration` | 已实现 | 独木舟（自算运动，位置记在 `WorldState.vehicles`）；湖上探索点（`WorldState.discoveries`，存档 v2） |
 | `ActionBar`（动作轮盘）/ 控制器 `do_emote()` / `CharacterModel` 姿势与手势 | 已实现 | 动作：`ground_sit`、`lie` 是姿势（身体放低或放倒，眼睛跟着移动），`wave`、`dance`、`clap` 是叠加在站姿上的手势；状态在 `FirstPersonController.emote` |
-| `WorldRegistry` / `WorldMap` | 已实现 | `data/worlds/worlds.json` 列出所有世界（status：open / preview / planned、根场景、到达位置）；地图读注册表与布局绘制；`WorldRegistry.enter()` 把能去的世界交给 WorldTravel |
+| `WorldRegistry` / `WorldMap` | 已实现 | `data/worlds/worlds.json` 列出所有世界（status、根场景、布局数据、到达位置）；地图画当前世界（湖畔读布局，别的世界问 `MiniWorld`）；`WorldRegistry.enter()` 把能去的世界交给 WorldTravel |
+| `MiniWorld` / `World02`（云海浮岛）/ `World03`（琥珀沙丘） | v0.5 | 湖畔以外的世界的共用底座：按数据文件建天空雾光、地形（解析高度函数 → 网格 + 碰撞）、卷轴、收集品、探索点、光门、玩家与全套界面；掉出世界回到最后站稳的地方；`height_at()`、`map_markers()`、`draw_map()` 供小地图、世界地图、罗盘、自动检查使用。天气季节系统只在湖畔，这两个世界的光照固定（太阳不动，阴影不会爬） |
+| `GameRules`（Autoload） | v0.5 | 新建游戏的玩法与设定（23 个选项、5 种模式、9 个预设）：只记规则、回答查询；时钟、季节、天气、小动物、仙境、任务图鉴、HUD、体力、夜晚亮度各自来问；开局一次性的（季节时刻天气、出生世界与出生点）由 `apply_start()` 设 |
+| `CompassBar` / `PhotoList` | v0.5 | 罗盘条与体力条；摄影清单（`data/photo/subjects.json`，F12 拍照时认出画面中央的对象，记进 `WorldState.journal.photos`） |
 | `WorldTravel`（Autoload） | M2 扩展已实现 | 跨世界旅行：渐黑 → 卸载当前世界 → 清缓存 → 后台线程加载 → 实例化 → 渐亮；记录当前世界与来时的世界；联机时不能离开 |
 | `BootLoader` / `LoadingScreen` / `IntroCutscene` | 已实现 | 启动流程、共用的加载画面（启动与跨世界旅行）、开场过场；`BootLoader.active` 期间大厅菜单不自己弹出 |
 | `Fade`（Autoload） | 已实现 | 盖在所有界面上的转场黑幕：`fade_out` / `fade_in` / `flash`；启动交接、进出房间、传送时用 |
-| `QuestLog`（Autoload）/ `CaveTotem` / `DialoguePanel` / `JournalPanel` | M2 扩展已实现 | 任务内容在 `data/quests/quests.json`；状态在 `WorldState.quests`、图鉴在 `WorldState.journal`（存档 v3）；每 0.4 秒只读世界状态检查目标；进度另写 `user://journal.json` |
+| `QuestLog`（Autoload）/ `CaveTotem` / `DialoguePanel` / `JournalPanel` | M2 扩展已实现 | 任务内容在 `data/quests/quests.json`；状态在 `WorldState.quests`、图鉴在 `WorldState.journal`；每 0.4 秒只读世界状态检查目标；有变化时请 SaveManager 存档（旧的 `user://journal.json` 作为 v3 存档迁移读取）；规则关掉任务 / 图鉴时不发任务、不记图鉴 |
 | `WorldTerrain` 沟槽 / `Streams` | M2 扩展已实现 | `terrain.channels`：小溪（沟底只降不升、跌水成瀑布）与裂谷（陡壁窄底、两头渐浅）；沟底高度首次调用时按原地形算好，碰撞、网格、植被共用；`Streams` 画水面、水雾、桥（桥头引坡贴地） |
 | `Cave` / `StoneCottage` / `StarField` | M2 扩展已实现 | 图腾山洞（世界坐标生成的洞道网格与双面三角网碰撞，室内区域 `cave`）；锁着门的石头小屋；星座（`data/sky/constellations.json`） |
 | `Precipitation` 季节飘落物 | 已实现 | 方案在 `data/weather/seasonal_fx.json`（落叶、花瓣、保留的原版红点）；`profile_override` 供开发者面板临时切换 |
 | `AudioDirector` | M3 接口占位 | 订阅区域与天气事件做室内外混音 |
-| `SaveManager` | M4 接口占位 | `user://saves/` 版本化 JSON |
+| `SaveManager`（Autoload） | v0.5 已实现 | `user://saves/world.json`（v4，临时文件 + 原子替换）：新建（旧档先备份）/ 继续 / 每 60 s、换世界、退出时自动存；读档后按 uid 恢复门灯、船位，回到存档时的世界与位置；联机做客和自动检查里不写盘 |
+| `Interactable` 状态延续 | v0.5 | 读过档或从别的世界回来时，可交互物按 `WorldState.interactables` 里存下的状态摆（不再被新建的初始状态覆盖） |
 
 已使用的事件：`time_changed`、`season_changed`、`weather_transition_started`、`weather_changed`、`zone_entered`、`zone_exited`、`interactable_state_changed`、`interaction_prompt_changed`。
-预留事件（目前没有发送方）：`save_loaded`。
+v0.5 新增：`collected`（捡到收集品）、`photo_taken`（摄影清单记下新对象）；`save_loaded` 由 SaveManager 读档后发送。
 
 事件顺序：WorldClock 推进时间 → SeasonController / WeatherController 更新状态 → EnvironmentDirector 每帧读取 WorldState 合成画面。天气随机数只由 `weather_seed` 与 `weather_change_count` 决定，读档后天气序列不变。
 

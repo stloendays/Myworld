@@ -156,6 +156,11 @@ static func _tp(chat: ChatBox, args: Array) -> void:
 	var p := _player(chat)
 	if p == null:
 		return
+	# 在云海浮岛、琥珀沙丘里：坐标是那个世界的，地面高度也问那个世界；出生点 = 光门前
+	var mini := chat.get_tree().get_first_node_in_group("world_root") as MiniWorld
+	if mini != null:
+		_tp_mini(chat, p, mini, args)
+		return
 	var target := Vector2.INF
 	if args.size() == 1 and str(args[0]) in ["出生点", "spawn"]:
 		target = WorldLayout.v2(WorldLayout.section("spawn")["position"])
@@ -216,3 +221,23 @@ static func _find_id(ids: Array, arg: String, season: bool) -> StringName:
 				or TranslationServer.translate(str(prof.get("name", ""))).to_lower() == arg.to_lower():
 			return StringName(id)
 	return &""
+
+
+static func _tp_mini(chat: ChatBox, p: FirstPersonController, mini: MiniWorld, args: Array) -> void:
+	if args.size() == 1 and str(args[0]) in ["出生点", "spawn"]:
+		mini.place_player(p, {})
+		Fade.flash("", 0.6)
+		chat.post_system(chat.tr("已传送到光门前。"))
+		return
+	if args.size() != 2 or not str(args[0]).is_valid_float() or not str(args[1]).is_valid_float():
+		chat.post_error(chat.tr("用法：/tp <x> <z> 或 /tp 出生点"))
+		return
+	var t := Vector2(str(args[0]).to_float(), str(args[1]).to_float())
+	var h := mini.height_at(t.x, t.y)
+	if h < -1e6:
+		chat.post_error(chat.tr("不能传送到 (%.1f, %.1f)：%s。") % [t.x, t.y, chat.tr("那里没有地面")])
+		return
+	p.global_position = Vector3(t.x, h + 0.2, t.y)
+	p.velocity = Vector3.ZERO
+	Fade.flash("", 0.6)
+	chat.post_system(chat.tr("已传送到 (%.1f, %.1f)。") % [t.x, t.y])

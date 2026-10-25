@@ -75,18 +75,22 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | 划独木舟 | W / S 划、A / D 转向、Shift 用力划、E 下船（靠码头或岸边） |
 | 国际象棋 | 看着木屋茶几上的棋盘按 E；鼠标点子再点格子；Esc 关闭 |
 | 动作轮盘 | G（按住往方向推、松开选中；或轻点后用鼠标点）：休息（坐下 → 躺下 → 起身）、挥手、跳舞、鼓掌；快捷键 1–4 |
-| 拍照 | F12（存到“图片\Dusk Lake”） |
-| 世界地图 | Tab（整张地图 + 世界总览，Esc 或 Tab 关闭） |
-| 旅行日志 | J（任务进度 + 图鉴：见过的动物、认出的星座；Esc 或 J 关闭） |
+| 拍照 | F12（存到“图片\Dusk Lake”）；画面中央有摄影清单上的东西（小动物、地标、天鲸、彩虹、星空……）就记进旅行日志 |
+| 世界地图 | Tab（当前世界的整张地图 + 世界总览，列表里点另一个世界可以直接前往；Esc 或 Tab 关闭） |
+| 旅行日志 | J（任务进度、图鉴、收藏：各世界的探索点、云珠、古代碎片、风灯、祭坛和摄影清单；Esc 或 J 关闭） |
 | 和老图腾说话 | 北边山洞里看着图腾按 E；E / 空格继续，1–3 选选项，Esc 离开 |
+| 解说卷轴 | 走近 3.6 m 自动展开、走远卷起；第三人称面朝展开的卷轴时镜头拉近到肩后 |
 | 全屏 | F11 或 Alt + Enter |
-| 联机 | 启动时的大厅里“创建房间 / 加入房间”（输入房间号）；游戏中 Esc →“多人房间” |
+| 开局 | 启动大厅：“继续上次的世界”；“单人游戏 / 创建房间”先到“新建游戏”设定页（玩法模式、出生世界与出生点、季节时刻天气、一天长度、天气变化、小动物、仙境、任务图鉴、小地图罗盘、体力、夜晚亮度、种子，9 个一键预设） |
+| 别的世界 | 图腾山洞尽头的光门 → 云海浮岛；南部草甸西边的沙之门 → 琥珀沙丘；那边的光门回湖畔。掉出浮岛会被风托回最后站稳的地方 |
+| 罗盘 / 体力 | 屏幕上方的罗盘条（方位、探索点、收集品、光门）；开了“奔跑体力 / 游泳体力”时下方有体力条 |
+| 联机 | 启动时的大厅里“创建房间 / 加入房间”（输入房间号）；游戏中 Esc →“多人房间”；访客照房主的本局设定走 |
 | 界面语言 | 默认跟随系统（中文系统显示中文）；大厅或 设置 → 操作 里可改 English / 中文 |
 | 第一 / 第三人称 | V（第一人称能看到自己的双手，大小在 设置 → 视角 → 手的大小 里调） |
 | 小地图 | M（右上角圆形小地图，随朝向旋转，下方显示区域名） |
 | 暂停 / 释放鼠标 | Esc（“设置”：画面、视角、操作、小地图、开发者，自动保存；“人物外观”换发型和衣服） |
 | 坐标信息 | F3（日期时间天气、帧率、世界坐标、朝向、所在区域、室内/室外） |
-| 聊天 | T 或 Enter 打开，/ 直接输入命令（/help 查看），↑↓ 翻历史，Esc 取消 |
+| 聊天 | T 或 Enter 打开，/ 直接输入命令（/help 查看），↑↓ 翻历史，Esc 取消；/tp 在云海浮岛、琥珀沙丘里用那个世界的坐标 |
 | 开发者模式 | F2（左侧开发者面板：天气、季节、时间、传送；F 飞行，N 穿墙，F4 收起面板） |
 
 ## 如何验证坐标与室内外连续性
@@ -145,10 +149,16 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | `scripts/core/PlayerProfile.gd`、`scripts/ui/WardrobePanel.gd` | 本地玩家外观（存 user://appearance.json）、外观编辑面板 |
 | `scripts/ui/ChatBox.gd`、`ChatCommands.gd` | 聊天框（左下角消息记录与输入行、系统消息）与 / 命令 |
 | `scripts/ui/DevPanel.gd` | F2 开发者面板：天气、季节、时间、飞行、穿墙、传送（地点在布局文件 `dev_spots`） |
-| `scripts/ui/Minimap.gd` | 右上角圆形小地图：底图后台烘焙并缓存，步道和建筑矢量绘制 |
+| `scripts/ui/Minimap.gd` | 右上角圆形小地图：湖畔底图后台烘焙并缓存，步道和建筑矢量绘制；别的世界由那个世界提供底图、图形和标记 |
 | `scripts/player/FirstPersonArms.gd` | 第一人称的双手（随外观变化，走路、跳跃、交互、游泳都有动作） |
 | `scripts/core/GameSettings.gd` | 设置与按键（Autoload），保存在 `user://settings.json` |
-| `scripts/systems/AudioDirector.gd`、`SaveManager.gd` | M3/M4 的**接口占位**（未运行） |
+| `scripts/systems/AudioDirector.gd` | M3 的**接口占位**（未运行） |
+| `scripts/systems/SaveManager.gd` | 世界存档（Autoload）：`user://saves/world.json`（v4，临时文件 + 原子替换），新建 / 继续、自动存、旧档迁移 |
+| `scripts/core/GameRules.gd` | 本局玩法与设定（Autoload）：23 个选项、5 种玩法模式、9 个预设；各系统按它调整，联机以房主为准 |
+| `scripts/worlds/MiniWorld.gd`、`World02.gd`、`World03.gd`、`WindBeacon.gd`、`RelicAltar.gd`、`data/worlds/cloudsea.json`、`dunes.json` | 湖畔以外的世界：共用底座（地形、界面、收集品、探索点、掉落回岸）；云海浮岛、琥珀沙丘；风灯、祭坛 |
+| `scripts/world/DuneGate.gd` | 南部草甸的沙之门（去琥珀沙丘） |
+| `scripts/ui/CompassBar.gd`、`scripts/core/PhotoList.gd`、`data/photo/subjects.json` | 罗盘条与体力条；摄影清单（F12 认出画面中央的东西） |
+| `shaders/cloud_sea.gdshader`、`sky_waterfall.gdshader` | 云海与浮岛瀑布 |
 | `scripts/buildings/PoolHouse.gd` | 泳池馆与地下水族馆：大厅、泳池、池底洞口与玻璃水管、楼梯、鱼缸、灯光、碰撞、水体与区域（全部程序生成，坐标来自布局） |
 | `scripts/buildings/ReefTank.gd` | 地下水族馆的海洋大缸：落地玻璃、水下通道、礁石海带沉船、气泡与光束、灯光 |
 | `scripts/games/`（ChessGame、ChessAI、ChessPanel、ChessTable） | 国际象棋：完整规则（perft 验证）、电脑对手、2D 棋盘界面、茶几上的 3D 棋盘 |
@@ -156,10 +166,10 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | `shaders/pool_tiles.gdshader`、`pool_water.gdshader`、`caustic_sand.gdshader`、`foliage.gdshader`、`include/` | 泳池马赛克与焦散、池水、缸底沙、随风摆动的植被、雨点涟漪与焦散函数 |
 | `scripts/animals/`（FaunaData、FaunaSpawner、Animal、BlockyModel、BlockyMesh、FishSchool） | 小动物：出没规则、生成、行为、方块模型、鱼群 |
 | `data/animals/species.json` | 所有动物的部件、配色、速度、出没规则与生成点、萤火虫 |
-| `scripts/world/SignBoard.gd`、`SignsBuilder.gd`、`data/world/signs.json` | 中英双语解说立牌（立式 / 讲台 / 挂墙，牌面按文字自动定尺寸）；室外立牌位置在布局文件 `signs` 里 |
+| `scripts/world/SignBoard.gd`、`SignsBuilder.gd`、`data/world/signs.json` | 中英双语解说卷轴（立架 / 斜案 / 挂墙，纸面按文字自动定尺寸、逐行断好；走近展开、走远卷起）；室外卷轴位置在布局文件 `signs` 里 |
 | `scripts/ui/ActionBar.gd` | G 动作轮盘（平时不显示）：休息、挥手、跳舞、鼓掌，F12 拍照（动作本身在 `FirstPersonController.do_emote()` 与 `CharacterModel` 的姿势和手势里） |
 | `scripts/ui/WorldMap.gd`、`scripts/core/WorldRegistry.gd`、`data/worlds/worlds.json` | Tab 世界地图；世界注册表（世界列表、状态、根场景、到达位置） |
-| `scripts/core/WorldTravel.gd`、`scenes/worlds/World02.tscn`、`scripts/worlds/World02.gd` | 跨世界旅行（Autoload）：先卸载当前世界、清缓存，再在后台线程加载下一个世界；世界二的占位浮岛 |
+| `scripts/core/WorldTravel.gd`、`scenes/worlds/World02.tscn`、`World03.tscn` | 跨世界旅行（Autoload）：先卸载当前世界、清缓存，再在后台线程加载下一个世界 |
 | `scenes/boot/Boot.tscn`、`scripts/ui/BootLoader.gd`、`LoadingScreen.gd`、`IntroCutscene.gd`、`ScreenFade.gd` | 启动流程（工程主场景）：加载画面 → 开场过场 → 主菜单；加载画面跨世界旅行也用；`Fade` 转场黑幕（Autoload） |
 | `scripts/world/Cave.gd`、`scripts/interactions/CaveTotem.gd` | 图腾山洞：沿中线生成的洞道与岩丘、石厅、篝火、水晶、尽头光门；会说话的老图腾 |
 | `scripts/core/QuestLog.gd`、`data/quests/quests.json`、`scripts/ui/DialoguePanel.gd`、`scripts/ui/JournalPanel.gd` | 任务与图鉴（Autoload）：任务目标检查、图鉴记录、`user://journal.json`；图腾对话框；J 旅行日志与左上角任务追踪 |
@@ -218,13 +228,14 @@ pwsh -File devtools/fetch_polyhaven.ps1
 - **图腾山洞与任务**：北边岩脊里的山洞，石厅里有会说话的老图腾和不灭的篝火，九个任务一个一个接；洞的尽头一道光门通往第二个世界（先卸载湖畔再加载，不同时占内存；世界二目前是雾中浮岛）
 - **旅行日志、图鉴、星座**：J 查看任务进度和图鉴（14 种动物、5 个原创星座），晴朗的夜里盯着星座看就能认出；南部草地多了一座锁着门的石头小屋
 - **画面闪动优化与自然景观**：高画质改用 TAA（走动时锯齿闪烁约减半）、草花远处逐株缩小不再成块闪现、动态分辨率防抖；西边一条从山坡流进湖的小溪，中途一道小瀑布，林道上一座木板桥；西北小山被一道 7.5 m 深的裂谷劈开，林道上架着原木桥，两头能走下谷底
+- **v0.5 新地图、卷轴、新建游戏**：世界二「云海浮岛」（五座浮岛、三座绳桥、十二块跳台、四座风灯和天鲸、八颗云珠、池塘与瀑布）；世界三「琥珀沙丘」（沙丘、能游泳的月牙绿洲、石柱废墟、风蚀石拱、驼队营地、阶梯神殿与六块古代碎片的祭坛），湖畔南部草甸新开沙之门；解说立牌全部换成走近才展开的卷轴；启动大厅加“新建游戏”设定页（23 个选项、9 个预设）和“继续上次的世界”，世界存档 v4；罗盘条、体力、摄影清单、旅行日志收藏页；闪动从根上修（太阳阴影小步更新、100 % 比例不做 FSR 锐化、方块贴图 mipmap）（见 `docs/V0_5.md`）
 - **启动与过场、双手**：启动图 → 加载画面（进度、阶段、小提示）→ 三段镜头的开场过场（可跳过、可在设置里关）→ 主菜单；进出房间、传送时黑幕转场；第一人称双手缩小一半、分在左右下角并露出拳头；右键用手或挥手（见 `docs/BOOT_INTRO_HANDS.md`）
 - 自动检查（91 项）、启动流程检查（6 项）与联机检查（10 项）、截图与性能测试工具；`devtools/GlitchProbe.tscn` 逐块检查立牌、独木舟、桥的摆放
 
 ## 未实现（按里程碑）
 
 - **M3**：音频 Bus 与环境音、壁炉 / 灯 / 沙发交互
-- **M4**：存档读档、完整设置菜单、画质档位、Windows 导出、性能统计（尚未测帧率，不宣称 60 FPS）
+- **M4**：完整设置菜单与改键（世界存档、画质档位、Windows 导出、帧率测试已在各扩展里做了）
 - **M5**：NPC（联机已提前做了房主自建房间、最多 4 人的版本，见 docs/COOP.md）
 
 ## 素材与版权

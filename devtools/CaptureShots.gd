@@ -129,6 +129,12 @@ const SHOTS := [
 	{"name": "v05_05_scroll_third_person", "climate": DUSK, "player": [-46.3, 22.6], "heading": 90.0, "pitch": -4.0, "third_person": true},
 	{"name": "v05_06_scroll_night", "climate": {"season": "SUMMER", "hour": 22.0, "weather": "CLEAR"}, "eye": [-47.1, 1.65, 29.4], "ground": true, "look": [-47.0, 1.75, 32.0]},
 	{"name": "v05_07_dune_gate", "climate": DUSK, "eye": [-83.5, 1.7, 89.0], "ground": true, "look": [-94.0, 3.0, 86.0]},
+	{"name": "v05_08_lobby_home", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "lobby": true},
+	{"name": "v05_09_new_game", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "lobby": true, "newgame": ""},
+	{"name": "v05_10_new_game_winter", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "lobby": true, "newgame": "winter"},
+	{"name": "v05_11_new_game_en", "lang": "en", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "lobby": true, "newgame": "hardcore"},
+	{"name": "v05_12_compass_stamina", "climate": DUSK, "player": [-60.0, 10.0], "heading": 20.0, "pitch": -3.0, "stamina": 0.45},
+	{"name": "v05_13_journal_collection", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "journal": 2},
 ]
 
 const OUTFITS := [
@@ -503,6 +509,12 @@ func _setup_player_view(shot: Dictionary) -> void:
 			lobby.open()
 		else:
 			lobby.close()
+	if lobby != null and shot.has("newgame"):
+		lobby.open_new_game(false)
+		if str(shot["newgame"]) != "":
+			lobby._apply_preset(str(shot["newgame"]))
+	elif lobby != null and lobby.is_open() and lobby._page == LobbyMenu.Page.NEWGAME:
+		lobby._show(LobbyMenu.Page.HOME)
 	var world_map := _main.get_node("WorldMap") as WorldMap
 	if world_map.open != shot.get("world_map", false):
 		world_map.toggle()
@@ -547,6 +559,11 @@ func _setup_player_view(shot: Dictionary) -> void:
 	await _wait(30)
 	if shot.has("settings"):
 		pause.open_settings(int(shot["settings"]))
+	if shot.has("stamina"):
+		GameRules.set_rule("stamina", true)
+		_player.stamina = float(shot["stamina"])
+		WorldState.journal["photos"] = ["cabin", "rabbit", "rainbow"]
+		await _wait(4)
 	if shot.get("open_chess", false):
 		table.interact(_player)
 		table.panel.click_square(ChessGame.square_from_name("d2"))

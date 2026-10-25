@@ -22,6 +22,16 @@ const SPOTS := [
 	{"name": "石头小屋", "eye": [-83, 1.7, 91], "look": [-70, 3.0, 96]},
 	{"name": "西岭小瀑布", "eye": [-93.2, 1.25, 2.2], "look": [-99.6, 4.4, 2.8]},
 	{"name": "北岭裂谷", "eye": [-79.0, 1.7, -92.0], "look": [-90.0, 11.0, -89.2]},
+	{"name": "沙之门", "eye": [-84.0, 1.7, 89.0], "look": [-94.0, 3.0, 86.0]},
+]
+## v0.5 的两个新世界（world：那个世界的 id；eye.y 为离地高度，abs 时为绝对高度）
+const WORLD_SPOTS := [
+	{"name": "云海浮岛·主岛", "world": "world_02", "eye": [0.0, 1.65, 13.5], "look": [-9.0, 4.0, -7.0]},
+	{"name": "云海浮岛·全景", "world": "world_02", "eye": [46.0, 26.0, 52.0], "look": [-4.0, -2.0, -26.0], "abs": true},
+	{"name": "云海浮岛·跳台望灯塔", "world": "world_02", "eye": [2.0, 10.5, -64.0], "look": [10.0, 13.0, -96.0], "abs": true},
+	{"name": "琥珀沙丘·光门", "world": "world_03", "eye": [0.0, 1.65, 70.5], "look": [10.0, 3.0, 20.0]},
+	{"name": "琥珀沙丘·绿洲", "world": "world_03", "eye": [3.0, 1.65, 33.0], "look": [27.0, 1.0, 22.0]},
+	{"name": "琥珀沙丘·全景", "world": "world_03", "eye": [55.0, 34.0, 95.0], "look": [-5.0, 2.0, 0.0], "abs": true},
 ]
 
 
@@ -51,7 +61,11 @@ func _run() -> void:
 	cam.current = true
 	await _frames(120)
 	var results := []
+	# -- worlds：只测湖岸出生点（对照）和两个新世界
+	var only_worlds := OS.get_cmdline_user_args().has("worlds")
 	for spot in SPOTS:
+		if only_worlds and str(spot["name"]) != "湖岸出生点":
+			continue
 		if spot.has("preset"):
 			(main.get_node("Systems") as ClimateSystem).apply_preset(str(spot["preset"]))
 		if spot.get("night", false):
@@ -88,10 +102,54 @@ func _run() -> void:
 		}
 		print("BENCH ", JSON.stringify(r))
 		results.append(r)
+	results.append_array(await _bench_worlds(main, cam))
 	var f := FileAccess.open("user://benchmark.json", FileAccess.WRITE)
 	if f != null:
 		f.store_string(JSON.stringify({"adapter": RenderingServer.get_video_adapter_name(), "resolution": str(get_viewport().get_visible_rect().size), "results": results}, "  "))
 	get_tree().quit()
+
+
+## 换到云海浮岛、琥珀沙丘各测几个机位（世界直接加在本节点下，和湖畔不同时存在）。
+func _bench_worlds(main: Node, cam: Camera3D) -> Array:
+	var out := []
+	main.queue_free()
+	await _frames(5)
+	var world: MiniWorld = null
+	var world_id := ""
+	for spot: Dictionary in WORLD_SPOTS:
+		if str(spot["world"]) != world_id:
+			if world != null:
+				world.queue_free()
+				await _frames(5)
+			world_id = str(spot["world"])
+			world = (load(str(WorldRegistry.get_world(world_id)["scene"])) as PackedScene).instantiate() as MiniWorld
+			add_child(world)
+			await _frames(90)
+			world.player.set_physics_process(false)
+			cam.current = true
+		var e: Array = spot["eye"]
+		var y := float(e[1]) + (0.0 if spot.get("abs", false) else world.height_at(float(e[0]), float(e[2])))
+		cam.global_position = Vector3(float(e[0]), y, float(e[2]))
+		cam.look_at(Vector3(float(spot["look"][0]), float(spot["look"][1]), float(spot["look"][2])), Vector3.UP)
+		await _frames(30)
+		var start := Time.get_ticks_usec()
+		var frames := 0
+		while Time.get_ticks_usec() - start < 4_000_000:
+			await get_tree().process_frame
+			frames += 1
+		var seconds := (Time.get_ticks_usec() - start) / 1_000_000.0
+		var r := {
+			"spot": spot["name"],
+			"fps": snappedf(frames / seconds, 0.1),
+			"frame_ms": snappedf(1000.0 * seconds / frames, 0.01),
+			"gpu_ms": snappedf(RenderingServer.viewport_get_measured_render_time_gpu(get_viewport().get_viewport_rid()), 0.01),
+			"draw_calls": RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_DRAW_CALLS_IN_FRAME),
+			"primitives": RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_PRIMITIVES_IN_FRAME),
+			"vram_mb": snappedf(RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_VIDEO_MEM_USED) / 1048576.0, 0.1),
+		}
+		print("BENCH ", JSON.stringify(r))
+		out.append(r)
+	return out
 
 
 func _frames(n: int) -> void:

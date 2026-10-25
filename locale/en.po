@@ -1785,3 +1785,9 @@ msgstr "Photo list: you photographed the %s (%d / %d)"
 msgid "探索点"
 msgstr "Places"
 
+msgid "已传送到光门前。"
+msgstr "Teleported to the gate."
+
+msgid "那里没有地面"
+msgstr "there is no ground there"
+
