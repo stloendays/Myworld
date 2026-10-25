@@ -179,12 +179,12 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | `shaders/cover_flat.gdshader`、`foliage.gdshader` 的 fade 参数 | 草、花、蘑菇远处逐株缩小消失（不再整块抖动淡出） |
 | `devtools/FlickerProbe.tscn`、`devtools/flicker_report.py` | 画面闪动探针：固定机位连续渲染，逐像素统计闪烁、画热力图；jiggle 模式比较抗锯齿方案；dynres / legacy / quality= / scale= 按玩家设置对比修复前后 |
 | `data/weather/seasonal_fx.json` | 季节飘落物方案：落叶、花瓣，以及保留的“原版红点”（`legacy_red_motes`） |
-| `tests/TestRunner.tscn` | 自动检查（88 项：QA-01、QA-02、QA-10、天气、人物、泳池馆、游泳、动物、聊天框、小地图、开发者模式、设置、国际象棋、动作轮盘、世界地图等；`DUSK_TEST_ONLY=_test_xxx` 只跑某几项） |
+| `tests/TestRunner.tscn` | 自动检查（101 项：卷轴、新建游戏规则、存档 v4、云海浮岛、琥珀沙丘、QA-01、QA-02、QA-10、天气、人物、泳池馆、游泳、动物、聊天框、小地图、开发者模式、设置、国际象棋、动作轮盘、世界地图等；`DUSK_TEST_ONLY=_test_xxx` 只跑某几项） |
 | `scripts/core/Updater.gd` | 自动更新（Autoload）：查 GitHub Releases、下载核对、退出后替换 exe 并重启 |
 | `scripts/world/FairyGlade.gd`、`scripts/interactions/FairyPortal.gd`、`shaders/fairy_portal.gdshader` | 仙境林地：只在晴朗夜里出现的特殊事件（仙树、蘑菇圈、水晶、漂浮小岛、月光石门） |
 | `scripts/world/SnowPeak.gd` | 雪山顶：石堆、旗杆、面朝湖的长椅、常年小雪（山体是地形 hills 里的 snow_peak，雪线、林线在布局文件里；远处主峰在 `DistantBackdrop`） |
 | `export_presets.cfg` | Windows 导出设置（单文件 exe，资源打包在里面），输出到 `dist/` |
-| `tests/NetTest.tscn` | 联机检查（两个进程本机回环，10 项：加入、同步人物与动作、门、聊天、独木舟、天气时间、房主离开、版本不一致） |
+| `tests/NetTest.tscn` | 联机检查（两个进程本机回环，11 项：房主规则同步、加入、同步人物与动作、门、聊天、独木舟、天气时间、房主离开、版本不一致） |
 | `scripts/net/`（NetworkManager、RemotePlayer、RemotePlayers、RoomCode）、`scripts/ui/LobbyMenu.gd` | 联机：房主自建房间（ENet）、房间号、远端玩家显示与同步；启动大厅 |
 | `locale/en.tsv`、`locale/en.po`、`devtools/make_po.sh` | 英文翻译表（界面原文是中文） |
 | `devtools/CaptureShots.tscn` | 按预设机位截图到 `docs/screenshots/` |
@@ -230,7 +230,7 @@ pwsh -File devtools/fetch_polyhaven.ps1
 - **画面闪动优化与自然景观**：高画质改用 TAA（走动时锯齿闪烁约减半）、草花远处逐株缩小不再成块闪现、动态分辨率防抖；西边一条从山坡流进湖的小溪，中途一道小瀑布，林道上一座木板桥；西北小山被一道 7.5 m 深的裂谷劈开，林道上架着原木桥，两头能走下谷底
 - **v0.5 新地图、卷轴、新建游戏**：世界二「云海浮岛」（五座浮岛、三座绳桥、十二块跳台、四座风灯和天鲸、八颗云珠、池塘与瀑布）；世界三「琥珀沙丘」（沙丘、能游泳的月牙绿洲、石柱废墟、风蚀石拱、驼队营地、阶梯神殿与六块古代碎片的祭坛），湖畔南部草甸新开沙之门；解说立牌全部换成走近才展开的卷轴；启动大厅加“新建游戏”设定页（23 个选项、9 个预设）和“继续上次的世界”，世界存档 v4；罗盘条、体力、摄影清单、旅行日志收藏页；闪动从根上修（太阳阴影小步更新、100 % 比例不做 FSR 锐化、方块贴图 mipmap）（见 `docs/V0_5.md`）
 - **启动与过场、双手**：启动图 → 加载画面（进度、阶段、小提示）→ 三段镜头的开场过场（可跳过、可在设置里关）→ 主菜单；进出房间、传送时黑幕转场；第一人称双手缩小一半、分在左右下角并露出拳头；右键用手或挥手（见 `docs/BOOT_INTRO_HANDS.md`）
-- 自动检查（91 项）、启动流程检查（6 项）与联机检查（10 项）、截图与性能测试工具；`devtools/GlitchProbe.tscn` 逐块检查立牌、独木舟、桥的摆放
+- 自动检查（101 项）、启动流程检查（6 项）与联机检查（11 项）、截图与性能测试工具；`devtools/GlitchProbe.tscn` 逐块检查立牌、独木舟、桥的摆放
 
 ## 未实现（按里程碑）
 
