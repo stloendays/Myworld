@@ -65,6 +65,12 @@ var _emote_time := 0.0
 var _emote_view_forced := false
 var _pose_head := Vector3.ZERO   ## 坐地 / 躺下时眼睛相对站姿的偏移
 
+## 第三人称时，面朝一幅已经展开的卷轴站在它前面：镜头慢慢拉近到肩后 READ_BOOM 米，字看得清；走开或转身恢复。
+const READ_BOOM := 1.15
+const READ_OFFSET := Vector3(0.75, 0.45, 0.0)   ## 读卷轴时镜头再往右上偏一点，头不挡字
+var reading_sign: SignBoard = null
+var _read_timer := 0.0
+
 
 func _ready() -> void:
 	add_to_group("actors")
@@ -179,9 +185,11 @@ func _physics_process(delta: float) -> void:
 	if arms != null:
 		arms.visible = not third_person and emote != "lie"
 		arms.animate(delta, flat_speed, grounded, swimming, run_speed)
-	var boom_target := third_person_distance if third_person else 0.0
-	camera_boom.spring_length = lerpf(camera_boom.spring_length, boom_target, 1.0 - exp(-12.0 * delta))
-	camera_boom.position = camera_boom.position.lerp(third_person_offset if third_person else Vector3.ZERO, 1.0 - exp(-12.0 * delta))
+	_update_reading(delta)
+	var boom_target := (READ_BOOM if reading_sign != null else third_person_distance) if third_person else 0.0
+	camera_boom.spring_length = lerpf(camera_boom.spring_length, boom_target, 1.0 - exp((-5.0 if reading_sign != null else -12.0) * delta))
+	var boom_offset := (READ_OFFSET if reading_sign != null else third_person_offset) if third_person else Vector3.ZERO
+	camera_boom.position = camera_boom.position.lerp(boom_offset, 1.0 - exp((-5.0 if reading_sign != null else -12.0) * delta))
 	_update_bob(delta, flat_speed if grounded else 0.0)
 
 
@@ -608,3 +616,31 @@ func _emote_tick(delta: float) -> bool:
 	camera_boom.spring_length = lerpf(camera_boom.spring_length, third_person_distance if third_person else 0.0, 1.0 - exp(-12.0 * delta))
 	_update_bob(delta, 0.0)
 	return true
+
+
+func _update_reading(delta: float) -> void:
+	_read_timer -= delta
+	if _read_timer > 0.0:
+		return
+	_read_timer = 0.2
+	reading_sign = null
+	if not third_person:
+		return
+	var fwd := -global_basis.z
+	fwd.y = 0.0
+	fwd = fwd.normalized()
+	for n in get_tree().get_nodes_in_group("sign_boards"):
+		var sb := n as SignBoard
+		if sb == null or sb.unroll < 0.5:
+			continue
+		var to := sb.global_position - global_position
+		to.y = 0.0
+		var d := to.length()
+		if d > sb.unroll_radius or d < 0.2:
+			continue
+		var dir := to / d
+		# 人朝着卷轴，而且站在卷轴正面（正面朝本地 +Z）
+		if fwd.dot(dir) < 0.55 or sb.global_basis.z.dot(-dir) < 0.2:
+			continue
+		reading_sign = sb
+		return

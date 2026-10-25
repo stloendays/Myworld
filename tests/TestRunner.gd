@@ -68,6 +68,7 @@ func _run() -> void:
 	await _test_character()
 	_house = _main.get_node("PoolHouse") as PoolHouse
 	_test_signs()
+	await _test_scrolls()
 	await _test_chat()
 	_test_release()
 	await _test_poolhouse_walk()
@@ -2417,3 +2418,75 @@ func _test_snow_peak() -> void:
 	var flurry_ok := peak.flurry != null and peak.flurry.emitting
 	_check("山顶长椅可以坐，周围常年飘小雪", sat and flurry_ok, "坐下 %s · 小雪 %s" % [sat, flurry_ok])
 	await _setup_at(Vector2(-50.0, 29.0), 0.0)
+
+
+# ---------------------------------------------------------------- 卷轴（v0.5：解说立牌换成走近才展开的卷轴）
+
+func _sign_by_text(id: String) -> SignBoard:
+	for s in get_tree().get_nodes_in_group("sign_boards"):
+		if (s as SignBoard).text_id == id:
+			return s as SignBoard
+	return null
+
+
+func _test_scrolls() -> void:
+	var font := GameSettings.ui_theme().default_font
+	var signs := get_tree().get_nodes_in_group("sign_boards")
+	# 每幅卷轴的文字逐行拼回去和 signs.json 一字不差；每一行都不超出纸面
+	var text_bad := PackedStringArray()
+	var overflow := PackedStringArray()
+	for s: SignBoard in signs:
+		var t: Dictionary = SignBoard.texts().get(s.text_id, {})
+		for key in ["title_zh", "title_en", "body_zh", "body_en"]:
+			var joined := ""
+			for i in s.lines.size():
+				if s.line_keys[i] == key:
+					joined += s.lines[i].text
+			if joined.replace(" ", "") != str(t.get(key, "")).replace(" ", ""):
+				text_bad.append("%s.%s" % [s.text_id, key])
+		for l: Label3D in s.lines:
+			if l != null and font.get_string_size(l.text, HORIZONTAL_ALIGNMENT_LEFT, -1, l.font_size).x * l.pixel_size > s.panel_size.x - SignBoard.MARGIN * 2.0 + 0.01:
+				overflow.append("%s「%s」" % [s.text_id, l.text.left(8)])
+	var sign := _sign_by_text("trail_poolhouse")
+	var front := sign.global_basis.z
+	front.y = 0.0
+	front = front.normalized()
+	var at := Vector2(sign.global_position.x, sign.global_position.z)
+	var f2 := Vector2(front.x, front.z)
+	# 远处：卷起，纸面上的字一行都不显示，木签标题在
+	await _setup_at(at + f2 * 12.0, 0.0)
+	await _seconds(1.2)
+	var rolled := sign.unroll == 0.0 and sign.lines.all(func(l: Label3D) -> bool: return l == null or not l.visible) \
+		and sign.title_tag != null and sign.title_tag.visible
+	# 走到正前方 2.5 m：平滑展开（中途是半开），全部文字露出来
+	var near := at + f2 * 2.5
+	_player.global_position = Vector3(near.x, WorldTerrain.height_at(near.x, near.y) + 0.05, near.y)
+	_player.velocity = Vector3.ZERO
+	await _frames(16)
+	var midway := sign.unroll > 0.05 and sign.unroll < 0.95
+	await _seconds(1.0)
+	var opened := sign.is_open() and sign.lines.all(func(l: Label3D) -> bool: return l == null or l.visible)
+	# 退到半径和回差之间：保持展开；再走远：卷回去
+	await _setup_at(at + f2 * (SignBoard.RADIUS + 0.4), 0.0)
+	await _seconds(1.0)
+	var held := sign.is_open()
+	await _setup_at(at + f2 * 7.0, 0.0)
+	await _seconds(1.2)
+	var rolled_back := sign.unroll == 0.0
+	_check("卷轴：远处卷起不显示字，走近 0.6 s 平滑展开、全部文字露出，在回差区保持展开，走远卷回；文字逐行拼回与原文一致、不出纸面",
+		signs.size() >= 18 and rolled and midway and opened and held and rolled_back and text_bad.is_empty() and overflow.is_empty(),
+		"卷轴 %d 幅 · 卷起 %s · 半开 %s · 展开 %s · 回差保持 %s · 卷回 %s · 文字不一致 %s · 出纸 %s" % [signs.size(), rolled, midway, opened, held, rolled_back,
+			", ".join(text_bad) if not text_bad.is_empty() else "无", ", ".join(overflow) if not overflow.is_empty() else "无"])
+	# 第三人称：面朝展开的卷轴时镜头拉近到肩后，转身恢复
+	var heading := rad_to_deg(atan2(-f2.x, -f2.y))
+	await _setup_at(at + f2 * 2.6, 0.0)
+	_player.rotation.y = atan2(f2.x, f2.y)
+	_player.set_third_person(true)
+	await _seconds(1.5)
+	var reading := _player.reading_sign == sign and _player.camera_boom.spring_length < 1.5
+	_player.rotation.y += PI
+	await _seconds(1.5)
+	var released := _player.reading_sign == null and _player.camera_boom.spring_length > GameSettings.third_person_distance - 0.4
+	_player.set_third_person(false)
+	_check("第三人称读卷轴：面朝展开的卷轴时镜头拉近到肩后（%.2f m），转身恢复" % FirstPersonController.READ_BOOM, reading and released,
+		"拉近 %s · 恢复 %s（朝向 %.0f°）" % [reading, released, heading])

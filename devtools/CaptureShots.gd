@@ -122,6 +122,12 @@ const SHOTS := [
 	{"name": "m2k_10_journal_quests", "climate": {"season": "SUMMER", "hour": 16.0, "weather": "CLEAR"}, "state": {"quests": {"fireside": "done", "lake_survey": "active", "summit": "active"}, "species": ["rabbit", "fox", "duck", "bird", "clownfish"], "constellations": ["canoe", "fox"]}, "player": [-49.0, 27.0], "heading": 75.0, "pitch": -4.0, "journal": 0},
 	{"name": "m2k_12_journal_dex", "climate": {"season": "SUMMER", "hour": 16.0, "weather": "CLEAR"}, "state": {"quests": {"fireside": "done", "lake_survey": "active", "summit": "active"}, "species": ["rabbit", "fox", "duck", "bird", "clownfish"], "constellations": ["canoe", "fox"]}, "player": [-49.0, 27.0], "heading": 75.0, "pitch": -4.0, "journal": 1},
 	{"name": "m2k_13_quest_tracker", "climate": {"season": "SUMMER", "hour": 16.0, "weather": "CLEAR"}, "state": {"quests": {"fireside": "done", "lake_survey": "active", "summit": "active"}}, "player": [-49.0, 27.0], "heading": 75.0, "pitch": -4.0},
+	{"name": "v05_01_scroll_rolled", "climate": DUSK, "eye": [-46.2, 1.65, 23.5], "ground": true, "look": [-47.0, 2.2, 32.0]},
+	{"name": "v05_02_scroll_open", "climate": DUSK, "eye": [-47.1, 1.65, 29.4], "ground": true, "look": [-47.0, 1.75, 32.0]},
+	{"name": "v05_03_scroll_lectern", "climate": DUSK, "house": true, "eye": [-1.6, 1.75, -5.6], "look": [-1.6, 0.85, -3.6]},
+	{"name": "v05_04_scroll_wall", "climate": DUSK, "house": true, "eye": [-19.0, 1.8, -1.5], "look": [-12.0, 2.6, 0.5]},
+	{"name": "v05_05_scroll_third_person", "climate": DUSK, "player": [-46.3, 22.6], "heading": 90.0, "pitch": -4.0, "third_person": true},
+	{"name": "v05_06_scroll_night", "climate": {"season": "SUMMER", "hour": 22.0, "weather": "CLEAR"}, "eye": [-47.1, 1.65, 29.4], "ground": true, "look": [-47.0, 1.75, 32.0]},
 ]
 
 const OUTFITS := [
