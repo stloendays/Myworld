@@ -29,3 +29,7 @@ signal interaction_prompt_changed(text: String)
 signal discovered(poi_id: StringName)           ## 探索点第一次被发现（HUD 弹出提示，小地图标记）
 @warning_ignore("unused_signal")
 signal toast_requested(text: String)            ## 屏幕中上方的短提示（几秒后消失）
+@warning_ignore("unused_signal")
+signal collected(world_id: String, item_id: String)   ## 捡到一件收集品（云珠、古代碎片……）
+@warning_ignore("unused_signal")
+signal photo_taken(subjects: Array)                  ## F12 拍照时认出的摄影清单对象 id

@@ -20,7 +20,7 @@ enum State { OFFLINE, HOSTING, CONNECTING, CLIENT }
 
 const DEFAULT_PORT := RoomCode.DEFAULT_PORT
 const MAX_PLAYERS := 4
-const PROTOCOL := 2   ## 2：姿态里加了身体状态（坐、躺、划船、手势）
+const PROTOCOL := 3   ## 2：姿态里加了身体状态（坐、躺、划船、手势）；3：欢迎包带房主的本局规则（GameRules），房主改规则再广播
 const BODY_STATES := ["", "sit", "paddle", "ground_sit", "lie", "wave", "dance", "clap"]
 const POSE_HZ := 20.0
 const WORLD_HZ := 4.0
@@ -47,6 +47,7 @@ var _poses := {}            ## peer_id -> 最近一次位置（房主核对交�
 var _applying_remote := false
 var _announced_weather: StringName = &""
 var _weather_paused_node: Node = null
+var _own_rules: Dictionary = {}   ## 做客前自己的规则（离开房间时换回来）
 
 
 func _ready() -> void:
@@ -59,6 +60,7 @@ func _ready() -> void:
 	EventBus.interactable_state_changed.connect(_on_local_interactable)
 	PlayerProfile.name_changed.connect(_send_profile)
 	PlayerProfile.appearance.changed.connect(_send_profile)
+	GameRules.changed.connect(_on_rules_changed)
 
 
 func _notification(what: int) -> void:
@@ -150,6 +152,10 @@ func leave_room(quiet := false) -> void:
 	room_codes.clear()
 	upnp_status = ""
 	_resume_local_weather()
+	if was == State.CLIENT and not _own_rules.is_empty():
+		GameRules.set_all(_own_rules)
+		GameRules.apply_ongoing()
+		_own_rules = {}
 	_set_state(State.OFFLINE)
 	_remote_players_call("clear")
 	roster_changed.emit()
@@ -337,7 +343,7 @@ func _hello(protocol: int, version: String, info: Dictionary) -> void:
 			_roster_add.rpc_id(other, id, info)
 	_roster_add(id, info)
 	# 欢迎包里的名单已经包括这位访客自己
-	_welcome.rpc_id(id, roster, world_snapshot(), WorldState.interactables)
+	_welcome.rpc_id(id, roster, world_snapshot(), WorldState.interactables, GameRules.to_dict())
 	notice.emit(tr("%s 来到了湖畔。") % info["name"])
 
 
@@ -355,9 +361,11 @@ func _rejected(reason: String, host_version: String) -> void:
 
 
 @rpc("authority", "call_remote", "reliable")
-func _welcome(host_roster: Dictionary, world: Dictionary, interactables: Dictionary) -> void:
+func _welcome(host_roster: Dictionary, world: Dictionary, interactables: Dictionary, rules: Dictionary) -> void:
 	roster = host_roster
+	_own_rules = GameRules.to_dict()
 	_set_state(State.CLIENT)
+	_apply_rules(rules)
 	_pause_local_weather()
 	_apply_world(world)
 	_applying_remote = true
@@ -627,3 +635,24 @@ func _chat_from(id: int, kind: String, text: String) -> void:
 	if id == my_id():
 		return
 	chat_received.emit(kind, str(roster.get(id, {}).get("name", "?")), text)
+
+
+# ---------------------------------------------------------------- 本局规则（房主为准）
+
+func _on_rules_changed() -> void:
+	if is_host() and roster.size() > 1 and not _applying_remote:
+		_rules.rpc(GameRules.to_dict())
+
+
+@rpc("authority", "call_remote", "reliable")
+func _rules(rules: Dictionary) -> void:
+	if is_client():
+		_apply_rules(rules)
+
+
+## 访客照房主的规则走（一天长度、动物数量、仙境、体力、HUD……）；开局类的（起始时刻、天气）不用，世界状态本来就跟房主同步。
+func _apply_rules(rules: Dictionary) -> void:
+	_applying_remote = true
+	GameRules.set_all(rules)
+	GameRules.apply_ongoing()
+	_applying_remote = false

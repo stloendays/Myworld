@@ -72,7 +72,10 @@ func _on_season_changed(_from: StringName, to: StringName) -> void:
 func _schedule_next() -> void:
 	var dwell: Array = ClimateData.weather().get("dwell_hours", [3.0, 8.0])
 	var rng := _rng(202)
-	WorldState.weather_next_change = WorldState.absolute_minutes() + rng.randf_range(float(dwell[0]), float(dwell[1])) * 60.0
+	# 本局规则：频繁 / 很少变天按倍率缩放驻留时长，锁定就不再自动变天（手动和预设照样能换）
+	var scale := GameRules.weather_dwell_scale()
+	var hours := rng.randf_range(float(dwell[0]), float(dwell[1]))
+	WorldState.weather_next_change = 1.0e15 if is_inf(scale) else WorldState.absolute_minutes() + hours * scale * 60.0
 	WorldState.weather_change_count += 1
 
 

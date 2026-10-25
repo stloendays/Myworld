@@ -213,8 +213,10 @@ func _apply(season: StringName, minutes: float, w: Dictionary) -> void:
 	moon.light_energy = 0.22 * night * (1.0 - overcast * 0.7)
 	moon.shadow_enabled = night > 0.6
 
-	environment.ambient_light_energy = _keyf(AMBIENT, sun_elevation) * lerpf(1.0, 0.85, overcast) + flash * 0.8
-	environment.tonemap_exposure = lerpf(1.05, 1.35, night)
+	# 本局规则“夜晚更亮”：夜里环境光和曝光再提一些（月光下也看得清路）
+	var bright := 0.0 if Engine.is_editor_hint() else (1.0 if GameRules.flag("bright_nights") else 0.0)
+	environment.ambient_light_energy = _keyf(AMBIENT, sun_elevation) * lerpf(1.0, 0.85, overcast) + flash * 0.8 + bright * night * 0.5
+	environment.tonemap_exposure = lerpf(1.05, 1.35 + bright * 0.45, night)
 	environment.fog_light_color = horizon.lerp(top, 0.35) * 0.8
 	environment.fog_density = 0.0024 + float(w["fog"])
 	environment.fog_sun_scatter = 0.25 * (1.0 - overcast)

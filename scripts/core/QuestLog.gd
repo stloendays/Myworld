@@ -4,7 +4,7 @@ extends Node
 ##   · 每 0.4 秒按当前世界状态检查进行中的任务目标（发现了哪些地方、玩家在哪、看没看到彩虹、图鉴里有几种动物……），
 ##     全部完成就记为完成并弹出提示；
 ##   · 记图鉴：玩家走近（9 m 内）的动物、鱼缸里游过身边的鱼、夜里认出的星座；
-##   · 把任务与图鉴写到 user://journal.json（自动检查和截图工具里不读不写，不碰玩家的进度）。
+##   · 有变化时请 SaveManager 存档（v0.5 起任务与图鉴随世界存档保存；旧的 user://journal.json 由 SaveManager 迁移读取）。
 ## 参考了 GitHub 上 shomykohai/quest-system（任务 = 目标列表 + 状态）的结构，按本项目“内容写在 JSON、状态在 WorldState”的规则重写。
 
 signal changed                                   ## 任务或图鉴有变化（任务追踪、日志界面刷新用）
@@ -27,8 +27,6 @@ func _ready() -> void:
 	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(DATA_PATH))
 	_data = parsed if parsed is Dictionary else {"quests": []}
 	persist = DisplayServer.get_name() != "headless" and not _is_dev_run()
-	if persist:
-		_load()
 	EventBus.interactable_state_changed.connect(_on_interactable)
 
 
@@ -103,6 +101,8 @@ func done_count() -> int:
 
 ## 图腾下一个能给的任务（按顺序第一个没接过的）；进行中已满 MAX_ACTIVE 个或全部接过返回空字典。
 func next_offer() -> Dictionary:
+	if not GameRules.flag("quests"):
+		return {}
 	if active_ids().size() >= MAX_ACTIVE:
 		return {}
 	for q: Dictionary in quests():
@@ -228,6 +228,8 @@ func _on_interactable(uid: StringName, state: String) -> void:
 
 ## 记一条图鉴（kind：species / constellations）；新的返回 true 并提示。
 func record(kind: String, id: String, label: String) -> bool:
+	if not GameRules.flag("journal"):
+		return false
 	if not WorldState.journal_add(kind, id):
 		return false
 	var fmt := tr("图鉴新增：%s") if kind == "species" else tr("认出了星座：%s")
@@ -262,25 +264,8 @@ static func species_label(id: String) -> String:
 func _changed() -> void:
 	changed.emit()
 	if persist:
-		_save()
+		SaveManager.request_save()
 
-
-func _save() -> void:
-	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
-	if f == null:
-		return
-	f.store_string(JSON.stringify({"schema_version": WorldState.SCHEMA_VERSION, "quests": WorldState.quests, "journal": WorldState.journal}, "  "))
-
-
-func _load() -> void:
-	if not FileAccess.file_exists(SAVE_PATH):
-		return
-	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(SAVE_PATH))
-	if not parsed is Dictionary:
-		return
-	var d := WorldState.migrate(parsed)
-	WorldState.quests = d.get("quests", {})
-	WorldState.journal = d.get("journal", {})
 
 
 ## 自动检查用：清空任务与图鉴（不碰磁盘）。

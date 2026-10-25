@@ -37,6 +37,11 @@ func _run() -> void:
 	var jiggle := false
 	var smaa := false
 	var taa := false
+	var dynres := false
+	var bias := INF
+	var sharp := -1.0
+	var quality := ""
+	var only := PackedStringArray()
 	for a: String in OS.get_cmdline_user_args():
 		if a.begins_with("out="):
 			_out = a.substr(4)
@@ -48,10 +53,22 @@ func _run() -> void:
 			smaa = true
 		elif a == "taa":
 			taa = true
+		elif a == "dynres":
+			dynres = true
+		elif a.begins_with("bias="):
+			bias = a.substr(5).to_float()
+		elif a.begins_with("sharp="):
+			sharp = a.substr(6).to_float()
+		elif a.begins_with("quality="):
+			quality = a.substr(8)
+		elif a.begins_with("spots="):
+			only = a.substr(6).split(",")
 		else:
 			prefix = a
 	GameSettings.set_value("fullscreen", false, false)
-	GameSettings.set_value("dynamic_resolution", false, false)
+	GameSettings.set_value("dynamic_resolution", dynres, false)
+	if quality != "":
+		GameSettings.set_value("graphics_quality", quality, false)
 	GameSettings.set_value("max_fps", 0, false)
 	_main = (load(MAIN_SCENE) as PackedScene).instantiate()
 	add_child(_main)
@@ -80,8 +97,12 @@ func _run() -> void:
 	if chat != null:
 		chat.visible = false
 	for spot: Dictionary in SPOTS:
-		if not str(spot["name"]).begins_with(prefix):
+		if not str(spot["name"]).begins_with(prefix) or (not only.is_empty() and not only.has(str(spot["name"]))):
 			continue
+		if not is_inf(bias):
+			get_viewport().texture_mipmap_bias = bias
+		if sharp >= 0.0:
+			get_viewport().fsr_sharpness = sharp
 		var climate := _main.get_node("Systems") as ClimateSystem
 		var c: Dictionary = spot["climate"]
 		if c.has("preset"):

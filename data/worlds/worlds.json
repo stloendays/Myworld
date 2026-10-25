@@ -1,5 +1,5 @@
 {
-  "_doc": "世界注册表（WorldRegistry、WorldTravel 读取）：世界地图右侧的世界列表与跨世界传送都以这里为准。status：open = 可以进入 / preview = 建设中但能进去（占位场景）/ planned = 规划中（地图上显示为未开放）。scene：世界的根场景；arrivals：从某个世界过来时玩家站的位置（世界坐标）和朝向。atlas 为世界地图里“世界总览”小图上的相对位置（0–1）。",
+  "_doc": "世界注册表（WorldRegistry、WorldTravel 读取）：世界地图右侧的世界列表与跨世界传送都以这里为准。status：open = 可以进入 / preview = 建设中但能进去 / planned = 规划中（地图上显示为未开放）。scene：世界的根场景；data：世界的布局数据（MiniWorld 读取）；arrivals：从某个世界过来时玩家站的位置（世界坐标，ground = true 时 y 取地面高度）和朝向。atlas 为世界地图里“世界总览”小图上的相对位置（0–1）。",
   "current": "dusk_lake",
   "worlds": [
     {
@@ -8,7 +8,10 @@
       "name_en": "Dusk Lake",
       "status": "open",
       "scene": "res://scenes/main/Main.tscn",
-      "arrivals": {"world_02": {"pos": [25.6, 2.25, -103.2], "heading": 270.0}},
+      "arrivals": {
+        "world_02": {"pos": [25.6, 2.25, -103.2], "heading": 270.0},
+        "world_03": {"pos": [-90.0, 0.0, 86.0], "heading": 90.0, "ground": true}
+      },
       "size_m": 250,
       "summary": "湖、森林、木屋、玻璃泳池馆与地下水族馆。",
       "atlas": [0.5, 0.55],
@@ -16,23 +19,27 @@
     },
     {
       "id": "world_02",
-      "name": "未命名世界 · 二",
-      "name_en": "World II",
-      "status": "preview",
+      "name": "云海浮岛",
+      "name_en": "Cloudsea Isles",
+      "status": "open",
       "scene": "res://scenes/worlds/World02.tscn",
-      "arrivals": {"dusk_lake": {"pos": [0.0, 0.2, 7.0], "heading": 0.0}},
-      "summary": "建设中：从图腾山洞尽头的光门进去，目前只有一座雾中的浮岛。",
-      "atlas": [0.18, 0.25],
-      "color": "#7fa6c9"
+      "data": "res://data/worlds/cloudsea.json",
+      "arrivals": {"dusk_lake": {"pos": [0.0, 13.5], "heading": 0.0}},
+      "summary": "黄昏云海上的五座浮岛：绳桥、风灯、跳台和一头天鲸。从图腾山洞尽头的光门进去。",
+      "atlas": [0.2, 0.24],
+      "color": "#9fb6e0"
     },
     {
       "id": "world_03",
-      "name": "未命名世界 · 三",
-      "name_en": "World III",
-      "status": "planned",
-      "summary": "规划中。",
-      "atlas": [0.82, 0.3],
-      "color": "#9cc28a"
+      "name": "琥珀沙丘",
+      "name_en": "Amber Dunes",
+      "status": "open",
+      "scene": "res://scenes/worlds/World03.tscn",
+      "data": "res://data/worlds/dunes.json",
+      "arrivals": {"dusk_lake": {"pos": [0.0, 70.5], "heading": 0.0}},
+      "summary": "落日下的沙海：月牙绿洲、石柱废墟和阶梯神殿。从南部草甸的沙之门进去。",
+      "atlas": [0.8, 0.3],
+      "color": "#e3b06a"
     }
   ],
   "links": [["dusk_lake", "world_02"], ["dusk_lake", "world_03"]]

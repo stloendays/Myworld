@@ -22,7 +22,10 @@ func _ready() -> void:
 		# 从别的世界回来：站在来时那道门前（worlds.json → arrivals）
 		var a := WorldTravel.arrival()
 		if not a.is_empty():
-			player.teleport_to(Vector3(float(a["pos"][0]), float(a["pos"][1]), float(a["pos"][2])), float(a.get("heading", 0.0)))
+			var p := Vector3(float(a["pos"][0]), float(a["pos"][1]), float(a["pos"][2]))
+			if a.get("ground", false):
+				p.y = WorldTerrain.height_at(p.x, p.z) + 0.2
+			player.teleport_to(p, float(a.get("heading", 0.0)))
 	if GameSettings.can_grab_mouse():
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	var remote := RemotePlayers.new()
@@ -40,6 +43,12 @@ func _ready() -> void:
 	var journal := JournalPanel.new()
 	journal.name = "JournalPanel"
 	add_child(journal)
+	var gate := DuneGate.new()
+	gate.name = "DuneGate"
+	add_child(gate)
+	var compass := CompassBar.new()
+	compass.name = "CompassBar"
+	add_child(compass)
 
 
 ## 世界坐标就是 Main 的坐标：Main 自己和它下面的 3D 节点在场景文件里都不该带位移或旋转——
@@ -68,3 +77,17 @@ static func place_at_spawn(player: FirstPersonController) -> void:
 	if spawn.has("look_at"):
 		var t := WorldLayout.v2(spawn["look_at"])
 		player.look_at_point(Vector3(t.x, y + 1.65, t.y))
+
+
+## 罗盘和小地图用的标记：探索点（发现了没有）和两道光门（山洞尽头去云海浮岛、南部草甸的沙之门去琥珀沙丘）。
+func map_markers() -> Array:
+	var out := []
+	for poi in Exploration.pois():
+		out.append({"pos": WorldLayout.v2(poi["center"]), "kind": "poi", "done": StringName(poi["id"]) in WorldState.discoveries, "label": str(poi["name"])})
+	var cave := WorldLayout.section("cave")
+	if cave.has("portal"):
+		out.append({"pos": WorldLayout.v2(cave["portal"]["pos"]), "kind": "gate", "done": false, "label": "光门"})
+	var dune := WorldLayout.section("dune_gate")
+	if not dune.is_empty():
+		out.append({"pos": WorldLayout.v2(dune["center"]), "kind": "gate", "done": false, "label": "沙之门"})
+	return out

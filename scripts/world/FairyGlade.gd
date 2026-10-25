@@ -68,7 +68,8 @@ func _ready() -> void:
 ## 现在该不该出现：晴朗（或多云）的夜里。
 static func should_appear(time_minutes: float, weather: StringName) -> bool:
 	var t := fposmod(time_minutes, 1440.0)
-	return (t >= NIGHT_START or t < NIGHT_END) and not weather in BAD_WEATHER
+	# 本局规则：从不 / 晴朗的夜晚（默认）/ 每个夜晚
+	return (t >= NIGHT_START or t < NIGHT_END) and GameRules.fairy_allows(weather, not weather in BAD_WEATHER)
 
 
 func _process(delta: float) -> void:

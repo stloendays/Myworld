@@ -8,7 +8,7 @@ extends CanvasLayer
 ## 只在 Main 是当前主场景时自动弹出（自动检查、截图工具里不弹）；命令行 -- --skip-menu 也可跳过，
 ## -- --host 直接建房，-- --join <房间号> 直接加入。
 
-enum Page { HOME, JOIN, ROOM }
+enum Page { HOME, JOIN, ROOM, NEWGAME }
 
 var _root: Control
 var _panel: PanelContainer
@@ -33,6 +33,16 @@ var _upnp_label: Label
 var _players_label: Label
 var _room_offline: Control
 var _room_online: Control
+var _continue_button: Button
+var _continue_label: Label
+## 新建游戏页：正在编辑的整套规则、每个选项的控件、是否开局后建房
+var _draft: Dictionary = {}
+var _widgets := {}
+var _new_for_host := false
+var _mode_hint: Label
+var _start_button: Button
+var _new_title: Label
+var _new_scroll: ScrollContainer
 
 
 var _last_state := 0
@@ -89,9 +99,11 @@ func close() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if _open and event.is_action_pressed("pause"):
-		# 启动页没有“返回”：Esc 等于单人游戏
-		if _page == Page.JOIN and Net.state == Net.State.OFFLINE:
+		# 启动页没有“返回”：Esc 等于继续上次的世界（没有存档就按默认设定开一局）；设定页和加入页 Esc 回首页
+		if (_page == Page.JOIN and Net.state == Net.State.OFFLINE) or _page == Page.NEWGAME:
 			_show(Page.HOME)
+		elif _page == Page.HOME and not SaveManager.active and not Net.is_online():
+			_quick_start()
 		else:
 			close()
 		get_viewport().set_input_as_handled()
@@ -104,6 +116,9 @@ func _show(page: int) -> void:
 	if page == Page.HOME:
 		_name_edit.text = PlayerProfile.display_name
 		_name_edit.placeholder_text = PlayerProfile.player_name()
+		_refresh_continue()
+	elif page == Page.NEWGAME:
+		_refresh_new_game()
 	elif page == Page.JOIN:
 		_join_status.text = ""
 		_join_button.disabled = false
@@ -121,7 +136,7 @@ func _apply_name() -> void:
 
 func _single() -> void:
 	_apply_name()
-	close()
+	open_new_game(false)
 
 
 func _host() -> void:
@@ -278,6 +293,7 @@ func _build() -> void:
 	_pages[Page.HOME] = _build_home()
 	_pages[Page.JOIN] = _build_join()
 	_pages[Page.ROOM] = _build_room()
+	_pages[Page.NEWGAME] = _build_new_game()
 	for p in _pages.values():
 		stack.add_child(p)
 
@@ -311,8 +327,15 @@ func _build_home() -> Control:
 	_name_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_row.add_child(_name_edit)
 
+	_continue_button = _button("继续上次的世界", _continue)
+	box.add_child(_continue_button)
+	_continue_label = Label.new()
+	_continue_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_continue_label.add_theme_font_size_override("font_size", 15)
+	_continue_label.add_theme_color_override("font_color", Color(0.85, 0.82, 0.74))
+	box.add_child(_continue_label)
 	box.add_child(_button("单人游戏", _single))
-	box.add_child(_button("创建房间", _host))
+	box.add_child(_button("创建房间", open_new_game.bind(true)))
 	box.add_child(_button("加入房间", open.bind(Page.JOIN)))
 
 	var lang_row := _row(box, "语言 / Language")
@@ -476,3 +499,209 @@ func _button(text: String, cb: Callable) -> Button:
 	b.custom_minimum_size = Vector2(0, 44)
 	b.pressed.connect(cb)
 	return b
+
+
+# ---------------------------------------------------------------- 继续 / 新建游戏
+
+func _refresh_continue() -> void:
+	var s := SaveManager.summary()
+	_continue_button.visible = not s.is_empty() and not Net.is_online()
+	_continue_label.visible = _continue_button.visible
+	if s.is_empty():
+		return
+	var w := WorldRegistry.get_world(str(s["world"]))
+	var m := int(s["minutes"])
+	_continue_label.text = tr("%s · 第 %d 天 %02d:%02d · %s") % [tr(str(w.get("name", s["world"]))), int(s["day"]), m / 60, m % 60,
+		tr(_choice_label("mode", s["mode"]))]
+
+
+func _continue() -> void:
+	_apply_name()
+	close()
+	await SaveManager.continue_game()
+
+
+## 首页按 Esc：有存档就继续，没有就按默认设定开一局（和以前直接进湖畔一样）。
+func _quick_start() -> void:
+	if SaveManager.has_save():
+		_continue()
+		return
+	_apply_name()
+	close()
+	await SaveManager.start_new(GameRules.defaults())
+
+
+## 打开新建游戏页；for_host = 开局后直接建房（联机房间目前都在暮色湖畔）。
+func open_new_game(for_host: bool) -> void:
+	_apply_name()
+	_new_for_host = for_host
+	_draft = GameRules.with_mode(GameRules.defaults(), "explore")
+	if not _open:
+		open(Page.NEWGAME)
+	else:
+		_show(Page.NEWGAME)
+
+
+func _start_new() -> void:
+	var rules := _draft.duplicate()
+	if _new_for_host:
+		rules["spawn_world"] = "dusk_lake"
+	close()
+	await SaveManager.start_new(rules)
+	if _new_for_host:
+		_host()
+
+
+static func _choice_label(key: String, value: Variant) -> String:
+	for c: Array in GameRules.option(key).get("choices", []):
+		if str(c[0]) == str(value):
+			return str(c[1])
+	return str(value)
+
+
+func _build_new_game() -> Control:
+	var box := _vbox(10)
+	box.custom_minimum_size = Vector2(880, 0)
+	_new_title = _title("新建游戏")
+	box.add_child(_new_title)
+	# 一键预设
+	var presets_label := Label.new()
+	presets_label.text = "一键预设"
+	presets_label.add_theme_color_override("font_color", Color(1.0, 0.86, 0.55))
+	box.add_child(presets_label)
+	var flow := HFlowContainer.new()
+	flow.add_theme_constant_override("h_separation", 8)
+	flow.add_theme_constant_override("v_separation", 8)
+	for p: Dictionary in GameRules.PRESETS:
+		var b := Button.new()
+		b.name = "Preset_" + str(p["id"])
+		b.text = str(p["name"])
+		b.custom_minimum_size = Vector2(0, 36)
+		b.pressed.connect(_apply_preset.bind(str(p["id"])))
+		flow.add_child(b)
+	box.add_child(flow)
+	_mode_hint = Label.new()
+	_mode_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_mode_hint.custom_minimum_size = Vector2(860, 0)
+	_mode_hint.add_theme_color_override("font_color", Color(0.86, 0.9, 0.8))
+	box.add_child(_mode_hint)
+	# 选项：按分组排两列
+	_new_scroll = ScrollContainer.new()
+	_new_scroll.custom_minimum_size = Vector2(880, 470)
+	_new_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	box.add_child(_new_scroll)
+	var groups := _vbox(6)
+	groups.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_new_scroll.add_child(groups)
+	for g: String in GameRules.GROUPS:
+		var head := Label.new()
+		head.text = g
+		head.add_theme_font_size_override("font_size", 21)
+		head.add_theme_color_override("font_color", Color(1.0, 0.86, 0.55))
+		groups.add_child(head)
+		var grid := GridContainer.new()
+		grid.columns = 4
+		grid.add_theme_constant_override("h_separation", 14)
+		grid.add_theme_constant_override("v_separation", 6)
+		groups.add_child(grid)
+		for o: Dictionary in GameRules.OPTIONS:
+			if o["group"] != g:
+				continue
+			var l := Label.new()
+			l.text = str(o["label"])
+			l.custom_minimum_size = Vector2(170, 0)
+			grid.add_child(l)
+			grid.add_child(_option_widget(o))
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	var back := _button("返回", _show.bind(Page.HOME))
+	back.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(back)
+	_start_button = _button("开始游戏", _start_new)
+	_start_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(_start_button)
+	box.add_child(row)
+	return box
+
+
+func _option_widget(o: Dictionary) -> Control:
+	var key: String = o["key"]
+	var w: Control
+	match str(o["kind"]):
+		"toggle":
+			var cb := CheckButton.new()
+			cb.toggled.connect(func(on: bool) -> void: _set_draft(key, on))
+			w = cb
+		"seed":
+			var h := HBoxContainer.new()
+			var sb := SpinBox.new()
+			sb.min_value = 0
+			sb.max_value = 999999
+			sb.step = 1
+			sb.tooltip_text = tr("0 = 世界自带的种子")
+			sb.value_changed.connect(func(v: float) -> void: _set_draft(key, int(v), false))
+			h.add_child(sb)
+			var rb := Button.new()
+			rb.text = "随机"
+			rb.pressed.connect(func() -> void: _set_draft(key, randi_range(1, 999999)))
+			h.add_child(rb)
+			w = h
+		_:
+			var ob := OptionButton.new()
+			ob.custom_minimum_size = Vector2(190, 0)
+			ob.item_selected.connect(func(i: int) -> void: _set_draft(key, ob.get_item_metadata(i)))
+			w = ob
+	w.name = "Rule_" + key
+	_widgets[key] = w
+	return w
+
+
+func _apply_preset(id: String) -> void:
+	_draft = GameRules.preset_rules(id)
+	_refresh_new_game()
+
+
+func _set_draft(key: String, value: Variant, refresh := true) -> void:
+	if key == "mode":
+		_draft = GameRules.with_mode(_draft, str(value))
+	else:
+		_draft[key] = value
+		if key == "spawn_world":
+			_draft["spawn_point"] = "default"
+	_draft = GameRules.sanitize(_draft)
+	if refresh:
+		_refresh_new_game.call_deferred()
+
+
+## 控件跟着草稿走（模式、预设会一下改很多项；出生点的下拉随出生世界换内容）。
+func _refresh_new_game() -> void:
+	if _draft.is_empty():
+		_draft = GameRules.with_mode(GameRules.defaults(), "explore")
+	_new_title.text = tr("新建游戏 · 开局后创建房间") if _new_for_host else tr("新建游戏")
+	_start_button.text = tr("开始并创建房间") if _new_for_host else tr("开始游戏")
+	_mode_hint.text = tr(str(GameRules.MODE_HINTS.get(str(_draft["mode"]), "")))
+	if SaveManager.has_save():
+		_mode_hint.text += "  " + tr("（上次的存档会先备份再开新局）")
+	for o: Dictionary in GameRules.OPTIONS:
+		var key: String = o["key"]
+		var w: Control = _widgets[key]
+		var v: Variant = _draft.get(key)
+		match str(o["kind"]):
+			"toggle":
+				(w as CheckButton).set_pressed_no_signal(bool(v))
+			"seed":
+				(w.get_child(0) as SpinBox).set_value_no_signal(float(v))
+			_:
+				var ob := w as OptionButton
+				var choices: Array = o.get("choices", [])
+				if str(o["kind"]) == "spawn":
+					choices = GameRules.spawn_choices(str(_draft["spawn_world"]))
+				ob.clear()
+				for c: Array in choices:
+					ob.add_item(str(c[1]))
+					ob.set_item_metadata(ob.item_count - 1, c[0])
+					if str(c[0]) == str(v):
+						ob.select(ob.item_count - 1)
+				ob.disabled = key == "spawn_world" and _new_for_host
+	if _new_for_host:
+		(_widgets["spawn_world"] as OptionButton).tooltip_text = tr("联机房间目前都在暮色湖畔")

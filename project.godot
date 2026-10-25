@@ -24,6 +24,7 @@ config/custom_user_dir_name="DuskLake"
 [autoload]
 
 GameSettings="*res://scripts/core/GameSettings.gd"
+GameRules="*res://scripts/core/GameRules.gd"
 EventBus="*res://scripts/core/EventBus.gd"
 WorldState="*res://scripts/core/WorldState.gd"
 PlayerProfile="*res://scripts/core/PlayerProfile.gd"
@@ -32,6 +33,7 @@ Updater="*res://scripts/core/Updater.gd"
 Fade="*res://scripts/ui/ScreenFade.gd"
 QuestLog="*res://scripts/core/QuestLog.gd"
 WorldTravel="*res://scripts/core/WorldTravel.gd"
+SaveManager="*res://scripts/systems/SaveManager.gd"
 
 [display]
 

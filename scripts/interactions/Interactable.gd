@@ -9,7 +9,17 @@ extends Node3D
 
 func _ready() -> void:
 	add_to_group("interactables")
-	WorldState.register_interactable(uid, get_state())
+	# 读过档或从别的世界回来：按存下的状态摆（门开着、灯亮着）；第一次出现就登记现在的状态
+	if uid != &"" and WorldState.interactables.has(uid):
+		_adopt_saved.call_deferred()
+	else:
+		WorldState.register_interactable(uid, get_state())
+
+
+func _adopt_saved() -> void:
+	var saved := WorldState.get_interactable_state(uid)
+	if saved != "" and saved != get_state():
+		apply_state(saved)
 
 
 func get_prompt(_actor: Node) -> String:

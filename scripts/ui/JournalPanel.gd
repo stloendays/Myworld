@@ -21,6 +21,7 @@ func _ready() -> void:
 	_build_tracker()
 	_root.visible = false
 	QuestLog.changed.connect(_refresh)
+	GameRules.changed.connect(_refresh)
 	_refresh()
 
 
@@ -117,7 +118,7 @@ func _refresh() -> void:
 func _refresh_tracker(player: FirstPersonController) -> void:
 	for c in _tracker.get_children():
 		c.queue_free()
-	var ids := QuestLog.active_ids()
+	var ids := QuestLog.active_ids() if GameRules.flag("quests") and GameRules.flag("hud_tracker") else []
 	_tracker_panel.visible = not ids.is_empty()
 	for id: String in ids.slice(0, 3):
 		var q := QuestLog.get_quest(id)

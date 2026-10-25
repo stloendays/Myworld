@@ -16,6 +16,7 @@ var arriving_from := ""          ## 刚从哪个世界过来（新世界按 worl
 var busy := false
 var progress := 0.0
 var last_report: Dictionary = {}  ## 最近一次旅行的内存与时间记录（自动检查读）
+var pending_spawn: Dictionary = {}  ## 到了新世界以后要站的地方（新建游戏的出生点、读档的位置）；SaveManager 在到达后放人
 
 var _screen: LoadingScreen
 
@@ -43,6 +44,7 @@ func travel(id: String) -> bool:
 	if why != "":
 		EventBus.toast_requested.emit(why)
 		return false
+	SaveManager.save()
 	_do_travel(id)
 	return true
 

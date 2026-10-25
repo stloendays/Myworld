@@ -121,6 +121,14 @@
     ]
   },
 
+  "dune_gate": {
+    "_doc": "南部草甸西边的沙之门：砂岩石拱里的光门，通往世界三琥珀沙丘。门面朝东（yaw 90）对着草甸步道。",
+    "zone_id": "dune_gate",
+    "center": [-94, 86],
+    "yaw_deg": 90.0,
+    "world": "world_03"
+  },
+
   "cottage": {
     "_doc": "南部草地上的石头小屋：门锁着，暂时进不去。yaw_deg 让门（本地 +Z）朝向西边的草地步道。",
     "zone_id": "cottage",
@@ -155,7 +163,8 @@
     {"id": "sign_falls", "text": "west_falls", "pos": [-93.0, 6.4], "yaw_deg": 150.0, "style": "stand", "width": 1.4, "scale": 1.4},
     {"id": "sign_gorge", "text": "north_gorge", "pos": [-86.6, -81.6], "yaw_deg": 170.0, "style": "stand", "width": 1.4, "scale": 1.4},
     {"id": "sign_cave", "text": "cave_mouth", "pos": [-12.2, -89.2], "yaw_deg": 20.0, "style": "stand", "width": 1.5, "scale": 1.45},
-    {"id": "sign_cottage", "text": "stone_cottage", "pos": [-76.6, 92.4], "yaw_deg": -70.0, "style": "stand", "width": 1.4, "scale": 1.4}
+    {"id": "sign_cottage", "text": "stone_cottage", "pos": [-76.6, 92.4], "yaw_deg": -70.0, "style": "stand", "width": 1.4, "scale": 1.4},
+    {"id": "sign_dune_gate", "text": "dune_gate", "pos": [-89.0, 82.5], "yaw_deg": 60.0, "style": "stand", "width": 1.5, "scale": 1.45}
   ],
 
   "dev_spots": [
@@ -176,6 +185,7 @@
     {"name": "图腾石厅", "pos": [5.0, -99.0], "ground": true, "heading": 160.0},
     {"name": "石头小屋", "pos": [-79.0, 95.0], "ground": true, "heading": 90.0},
     {"name": "南部草甸", "pos": [-84.0, 93.0], "ground": true, "heading": 0.0},
+    {"name": "沙之门", "pos": [-90.0, 86.0], "ground": true, "heading": 90.0},
     {"name": "西北观景点", "pos": [-93.0, -101.0], "ground": true, "heading": 135.0},
     {"name": "湖心上空（飞行）", "pos": [35.0, 30.0, -2.0], "heading": 250.0, "fly": true}
   ],
@@ -184,7 +194,8 @@
     {"id": "cabin", "rect": [-76.5, 31.5, -56.5, 42.5]},
     {"id": "poolhouse", "rect": [-10.5, 73.5, 18.5, 94.5]},
     {"id": "cave", "rect": [-15.0, -113.0, 36.0, -86.5]},
-    {"id": "cottage", "rect": [-76.0, 90.5, -64.0, 101.5]}
+    {"id": "cottage", "rect": [-76.0, 90.5, -64.0, 101.5]},
+    {"id": "dune_gate", "rect": [-97.5, 82.5, -90.5, 89.5]}
   ],
 
   "zones": [
@@ -237,7 +248,8 @@
       {"id": "lakeside_lawn", "center": [-47, 24], "radius": 11},
       {"id": "viewpoint_top", "center": [-93, -101], "radius": 13},
       {"id": "poolhouse_clearing", "center": [4, 84], "radius": 21},
-      {"id": "fairy_glade_clearing", "center": [76, 88], "radius": 17}
+      {"id": "fairy_glade_clearing", "center": [76, 88], "radius": 17},
+      {"id": "dune_gate_clearing", "center": [-93, 86], "radius": 7}
     ],
     "treeline": 21.0,
     "rock_count": 160,

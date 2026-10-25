@@ -62,7 +62,7 @@ func _ready() -> void:
 	EventBus.season_changed.connect(_on_season_changed)
 	Net.notice.connect(post_system)
 	Net.chat_received.connect(post)
-	post_system(tr("欢迎来到暮色湖畔。按 T 聊天，输入 /help 查看命令。"))
+	post_system(tr("欢迎来到%s。按 T 聊天，输入 /help 查看命令。") % tr(str(WorldRegistry.current().get("name", "暮色湖畔"))))
 
 
 func is_open() -> bool:

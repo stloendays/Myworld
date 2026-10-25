@@ -31,29 +31,40 @@ var _zone_label: Label
 var _task := -1
 var _image: Image = null
 var _zone_names := {}
+var _world: MiniWorld = null   ## 在云海浮岛、琥珀沙丘等世界里：底图、图形和标记都由那个世界提供
 
 
 func _ready() -> void:
 	layer = 4
 	add_to_group("minimap")
-	var e := WorldTerrain.extent()
-	world_rect = Rect2(-e, -e, e * 2.0, e * 2.0)
-	for z in WorldLayout.zones():
-		_zone_names[StringName(z["zone_id"])] = str(z.get("name", z["zone_id"]))
+	_world = get_tree().get_first_node_in_group("world_root") as MiniWorld
 	_build()
-	_load_or_bake()
+	if _world != null:
+		world_rect = _world.map_rect()
+		map_texture = _world.map_texture
+	else:
+		var e := WorldTerrain.extent()
+		world_rect = Rect2(-e, -e, e * 2.0, e * 2.0)
+		for z in WorldLayout.zones():
+			_zone_names[StringName(z["zone_id"])] = str(z.get("name", z["zone_id"]))
+		_load_or_bake()
 	GameSettings.changed.connect(_sync_visibility)
+	GameRules.changed.connect(_sync_visibility)
 	_sync_visibility()
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("toggle_minimap"):
+		if not GameRules.flag("hud_minimap"):
+			EventBus.toast_requested.emit(tr("这一局关掉了小地图（新建游戏时的设定）"))
+			get_viewport().set_input_as_handled()
+			return
 		GameSettings.set_value("minimap_enabled", not GameSettings.minimap_enabled)
 		get_viewport().set_input_as_handled()
 
 
 func _sync_visibility() -> void:
-	_root.visible = GameSettings.minimap_enabled
+	_root.visible = GameSettings.minimap_enabled and GameRules.flag("hud_minimap")
 
 
 func is_ready() -> bool:
@@ -125,6 +136,8 @@ func _player() -> FirstPersonController:
 
 ## 区域名：取最具体的一个（室内优先，其次是非湖泊的小区域）。
 func _zone_text(player: FirstPersonController) -> String:
+	if _world != null:
+		return _world_zone_text(player)
 	var zones := WorldState.zones_of(player.entity_id)
 	var best := ""
 	for z in zones:
@@ -158,6 +171,10 @@ func _draw_map() -> void:
 	_canvas.draw_set_transform_matrix(t)
 	if map_texture != null:
 		_canvas.draw_texture_rect(map_texture, world_rect, false)
+	if _world != null:
+		_world.draw_map(_canvas)
+		_canvas.draw_set_transform_matrix(Transform2D.IDENTITY)
+		return
 	for pts in WorldLayout.path_polylines():
 		_canvas.draw_polyline(pts, PATH_COLOR, 2.4, true)
 	var dock := WorldLayout.section("dock")
@@ -276,6 +293,9 @@ func _bake(img: Image) -> void:
 func _draw_markers(center: Vector2, r: float) -> void:
 	var t := world_to_map()
 	var font := GameSettings.ui_theme().default_font
+	if _world != null:
+		_draw_world_markers(t, font, center, r)
+		return
 	for poi in Exploration.pois():
 		var p := t * WorldLayout.v2(poi["center"])
 		if p.distance_to(center) > r - 10.0:
@@ -283,7 +303,7 @@ func _draw_markers(center: Vector2, r: float) -> void:
 		if StringName(poi["id"]) in WorldState.discoveries:
 			_overlay.draw_circle(p, 5.0, Color(1.0, 0.82, 0.35))
 			_overlay.draw_arc(p, 5.0, 0.0, TAU, 24, Color(0.15, 0.1, 0.05), 1.2, true)
-		else:
+		elif GameRules.flag("poi_markers"):
 			_overlay.draw_circle(p, 6.5, Color(0.12, 0.12, 0.14, 0.75))
 			_overlay.draw_string(font, p + Vector2(-3.6, 5.0), "?", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(0.85, 0.85, 0.85))
 	for v in get_tree().get_nodes_in_group("vehicles"):
@@ -298,3 +318,34 @@ func _draw_markers(center: Vector2, r: float) -> void:
 		var side := Vector2(-screen_fwd.y, screen_fwd.x)
 		var hull := PackedVector2Array([p + screen_fwd * 7.0, p + side * 2.6, p - screen_fwd * 7.0, p - side * 2.6])
 		_overlay.draw_colored_polygon(hull, Color(0.85, 0.25, 0.18))
+
+
+## 别的世界：区域名 = 走进了哪个探索点的范围，否则是世界的名字。
+func _world_zone_text(player: FirstPersonController) -> String:
+	var me := Vector2(player.global_position.x, player.global_position.z)
+	for poi: Dictionary in _world.data.get("pois", []):
+		if me.distance_to(MiniWorld.v2(poi["center"])) <= float(poi["radius"]):
+			return tr(str(poi["name"]))
+	return tr(str(WorldRegistry.get_world(_world.world_id).get("name", "")))
+
+
+## 别的世界的标记：探索点（问号 / 金点）、收集品（小蓝点，捡过不画）、光门（紫圈）。
+func _draw_world_markers(t: Transform2D, font: Font, center: Vector2, r: float) -> void:
+	for m: Dictionary in _world.map_markers():
+		var p := t * (m["pos"] as Vector2)
+		if p.distance_to(center) > r - 8.0:
+			continue
+		match str(m["kind"]):
+			"item":
+				if not m["done"]:
+					_overlay.draw_circle(p, 3.6, Color(0.55, 0.9, 1.0))
+					_overlay.draw_arc(p, 3.6, 0.0, TAU, 16, Color(0.1, 0.15, 0.2), 1.0, true)
+			"gate":
+				_overlay.draw_arc(p, 5.0, 0.0, TAU, 20, Color(0.85, 0.7, 1.0), 2.0, true)
+			_:
+				if m["done"]:
+					_overlay.draw_circle(p, 5.0, Color(1.0, 0.82, 0.35))
+					_overlay.draw_arc(p, 5.0, 0.0, TAU, 24, Color(0.15, 0.1, 0.05), 1.2, true)
+				elif GameRules.flag("poi_markers"):
+					_overlay.draw_circle(p, 6.5, Color(0.12, 0.12, 0.14, 0.75))
+					_overlay.draw_string(font, p + Vector2(-3.6, 5.0), "?", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(0.85, 0.85, 0.85))

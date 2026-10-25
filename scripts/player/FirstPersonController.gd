@@ -71,6 +71,15 @@ const READ_OFFSET := Vector3(0.75, 0.45, 0.0)   ## 读卷轴时镜头再往右�
 var reading_sign: SignBoard = null
 var _read_timer := 0.0
 
+## 体力（本局规则“奔跑体力”“游泳体力”打开时才用）：跑步、游泳都耗，停下来慢慢回满。
+## 跑到 0 要歇到 35 % 才能再跑；游泳体力耗尽时游速减半、潜不下去（不会淹死，慢慢游回岸）。
+const STAMINA_RUN_DRAIN := 0.14     ## 每秒（满体力能跑约 7 秒）
+const STAMINA_SWIM_DRAIN := 0.045   ## 每秒（满体力能游约 22 秒，快游再多耗）
+const STAMINA_REGEN := 0.22
+var stamina := 1.0
+var exhausted := false
+var swim_tired := false
+
 
 func _ready() -> void:
 	add_to_group("actors")
@@ -226,8 +235,10 @@ func _fly(delta: float) -> void:
 
 func _swim(delta: float) -> void:
 	var dir := _swim_direction()
-	var running := autopilot_run if autopilot_enabled else Input.is_action_pressed("sprint")
-	var target := dir * (swim_sprint_speed if running else swim_speed)
+	var running := _use_stamina(delta, autopilot_run if autopilot_enabled else Input.is_action_pressed("sprint"), true, dir.length_squared() > 0.01)
+	if swim_tired and dir.y < 0.0:
+		dir.y = 0.0   # 游累了潜不下去，只能慢慢漂着游回岸边
+	var target := dir * (swim_sprint_speed if running else swim_speed) * (0.5 if swim_tired else 1.0)
 	var surface := current_water.surface_y()
 	var diving := dir.y < -0.2
 	if surface < INF and not diving:
@@ -261,7 +272,7 @@ func _swim_direction() -> Vector3:
 
 func _walk(delta: float) -> void:
 	var wish := _wish_direction()
-	var running := autopilot_run if autopilot_enabled else Input.is_action_pressed("sprint")
+	var running := _use_stamina(delta, autopilot_run if autopilot_enabled else Input.is_action_pressed("sprint"), false, wish != Vector3.ZERO)
 	var speed := run_speed if running else walk_speed
 
 	if is_on_floor():
@@ -644,3 +655,29 @@ func _update_reading(delta: float) -> void:
 			continue
 		reading_sign = sb
 		return
+
+
+## 这一帧能不能跑（游）快：按规则扣体力或回体力。返回实际是否在跑。
+func _use_stamina(delta: float, wants_run: bool, in_water: bool, moving: bool) -> bool:
+	var run_rule := GameRules.flag("stamina")
+	var swim_rule := GameRules.flag("swim_stamina")
+	var running := wants_run and moving
+	var drain := 0.0
+	if in_water and swim_rule:
+		drain = STAMINA_SWIM_DRAIN * (2.5 if running else (1.0 if moving else 0.3))
+	elif not in_water and run_rule and running and not exhausted:
+		drain = STAMINA_RUN_DRAIN
+	if drain > 0.0:
+		stamina = maxf(0.0, stamina - drain * delta)
+	else:
+		stamina = minf(1.0, stamina + STAMINA_REGEN * delta)
+	if stamina <= 0.0:
+		exhausted = true
+	elif stamina >= 0.35:
+		exhausted = false
+	swim_tired = in_water and swim_rule and exhausted
+	if run_rule and exhausted and not in_water:
+		return false
+	if swim_tired:
+		return false
+	return running
