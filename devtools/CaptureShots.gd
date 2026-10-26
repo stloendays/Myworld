@@ -62,6 +62,7 @@ const SHOTS := [
 	{"name": "m2c_02_minimap_poolhouse", "climate": DUSK, "player": [-12.0, 80.0], "heading": 95.0, "pitch": -4.0},
 	{"name": "m2c_03_dev_panel", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "pitch": -2.0, "dev": true},
 	{"name": "m2c_04_settings_view", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "settings": 1},
+	{"name": "m3_01_settings_sound", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "settings": 3},
 	{"name": "m2c_05_hands_aquarium", "climate": DUSK, "player": [12.0, 84.0], "y": -5.0, "heading": 270.0, "pitch": -4.0},
 	{"name": "m2e_01_cabin_night_stove", "climate": {"season": "AUTUMN", "hour": 21.0, "weather": "CLEAR"}, "player": [-60.0, 37.0], "heading": 0.0, "seat": "Seat_cabin_sofa_left", "pitch": -12.0},
 	{"name": "m2e_02_chimney_smoke", "climate": DUSK, "eye": [-58, 4.5, 31], "look": [-72.9, 10.0, 36.0]},

@@ -142,6 +142,8 @@ func cast() -> bool:
 	_fish_t = 0.0
 	_bite_at = bite_wait if bite_wait > 0.0 else _rng.randf_range(2.5, 6.0)
 	_make_bobber(Vector3(spot.x, float(w["y"]), spot.z))
+	Sound.play("whoosh")
+	Sound.play("plop", Vector3(spot.x, float(w["y"]), spot.z))
 	_status_text(tr("等鱼咬钩……（鱼漂沉下去时按 R 收竿）"))
 	return true
 
@@ -167,6 +169,8 @@ func reel() -> Dictionary:
 			var first := Play.record_catch(str(got["id"]), float(got["cm"]))
 			var f := Play.fish(str(got["id"]))
 			last_catch = got
+			if _bobber != null:
+				Sound.play("splash", _bobber.global_position)
 			_say(tr("钓到了%s，%.1f 厘米！") % [Play.text(f, "name"), float(got["cm"])] + (tr("（图鉴新增）") if first else ""))
 	else:
 		_say(tr("收竿了，还没有鱼咬钩"))
@@ -245,6 +249,7 @@ func _update_fishing(delta: float) -> void:
 		if _fish_t >= _bite_at:
 			fish_state = "bite"
 			_fish_t = 0.0
+			Sound.play("splash_small", _bobber.global_position)
 			_status_text(tr("咬钩了！快按 R 收竿！"))
 	elif fish_state == "bite":
 		_bobber.global_position.y = base_y - 0.12 + sin(t * 18.0) * 0.04
@@ -303,6 +308,7 @@ func throw_stone(power: float, pitch_deg := INF) -> Dictionary:
 	var sim := simulate_skip(start, fwd, pitch, speed)
 	last_skip = sim
 	_launch_stone(sim)
+	Sound.play("whoosh")
 	return sim
 
 
@@ -383,6 +389,7 @@ func _update_stone() -> void:
 
 
 func _splash(at: Vector3) -> void:
+	Sound.play("plop", at)
 	var p := CPUParticles3D.new()
 	p.one_shot = true
 	p.emitting = false
@@ -435,6 +442,7 @@ func dig() -> String:
 	var me := Vector2(p.global_position.x, p.global_position.z)
 	var d := me.distance_to(spot["pos"])
 	_dirt(Vector3(p.global_position.x, g, p.global_position.z) + (-p.global_basis.z * 0.8))
+	Sound.play("dig")
 	if Play.treasure_found(world_id()):
 		_say(tr("这个世界的宝箱已经挖到了"))
 		last_dig = "already"

@@ -13,6 +13,7 @@ static func shots() -> Array:
 func play(main: Node) -> void:
 	var list := shots().duplicate(true)
 	var title_shot := int(WorldLayout.section("intro").get("title_shot", 0))
+	music_theme = "intro"
 	if title_shot < list.size():
 		(list[title_shot] as Dictionary)["title"] = {"text": "Dusk Lake", "sub": tr("暮色湖畔 · 一片属于你的湖")}
 	await play_shots(main, list)

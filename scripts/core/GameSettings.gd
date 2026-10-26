@@ -75,6 +75,11 @@ const DEFAULTS := {
 	"auto_update_check": true,        ## 启动时到 GitHub 检查新版本（只在导出的游戏里）
 	"language": "auto",               ## 界面语言：auto（默认，跟随系统）/ en / zh
 	"renderer": "auto",               ## 渲染方式：auto（Vulkan，起不来引擎自动换）/ compatibility（OpenGL）/ angle；下次启动生效（StartupGuard）
+	"volume_master": 1.0,             ## 总音量（0–1）
+	"volume_music": 0.45,             ## 背景音乐（规格：极轻，默认偏低）
+	"volume_ambience": 0.8,           ## 环境声（风、水、雨、鸟虫、炉火）
+	"volume_effects": 0.85,           ## 音效（脚步、开门、交互）
+	"volume_ui": 0.7,                 ## 界面（按钮、提示）
 }
 
 var fov := 75.0
@@ -102,6 +107,11 @@ var emote_third_person := true
 var auto_update_check := true
 var language := "auto"
 var renderer := "auto"
+var volume_master := 1.0
+var volume_music := 0.45
+var volume_ambience := 0.8
+var volume_effects := 0.85
+var volume_ui := 0.7
 
 var developer_mode := false
 var _window_user_set := false   ## 只有玩家改过（或设置文件里有）才去动垂直同步与全屏，命令行 --disable-vsync 不被覆盖
@@ -196,6 +206,8 @@ func set_value(key: String, value: Variant, save := true) -> void:
 			value = value if str(value) in LANGUAGES else "auto"
 		"renderer":
 			value = value if str(value) in StartupGuard.RENDERERS else "auto"
+		"volume_master", "volume_music", "volume_ambience", "volume_effects", "volume_ui":
+			value = clampf(float(value), 0.0, 1.0)
 	set(key, value)
 	if key in ["vsync", "fullscreen"]:
 		_window_user_set = true

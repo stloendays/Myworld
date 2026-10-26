@@ -10,6 +10,7 @@ extends CanvasLayer
 ##     "player" / "player_look" = 玩家的眼睛 / 视线前方 20 m；
 ##   captions：[{text, text_en}] 这一段里依次出现的字幕；title：{text, text_en, sub, sub_en} 居中的大标题；
 ##   cue：这一段开始时发 cue 信号（例如让新星座一颗一颗亮起来）；cut：true = 和上一段之间不黑场。
+## 过场整体可以带 music（一段写好的配乐，MusicDirector.play_theme）。
 ## 过场期间隐藏其他界面、人物站定、锁住鼠标环视，结束后全部恢复，发 finished。
 
 signal finished
@@ -25,6 +26,7 @@ var shot_index := -1         ## 正在放第几段（自动检查、截图工具
 var shot_t := 0.0            ## 这一段放了几秒
 var caption_text := ""       ## 现在屏幕上的字幕
 var text_vars: Dictionary = {}   ## 字幕里 {名字} 换成的文字
+var music_theme := ""            ## 配乐（data/audio/music.json → themes），过场开始时放、结束时淡出
 var missing := PackedStringArray()   ## 找不到的锚点（自动检查读）
 
 var _cam: Camera3D
@@ -66,6 +68,7 @@ static func any_playing(tree: SceneTree) -> bool:
 static func run(root: Node, id: String, resolver := Callable(), on_cue := Callable(), vars := {}) -> Cutscene:
 	var cs := Cutscene.new()
 	cs.text_vars = vars
+	cs.music_theme = str((data().get(id, {}) as Dictionary).get("music", ""))
 	cs.name = "Cutscene_" + id
 	root.add_child(cs)
 	if on_cue.is_valid():
@@ -95,6 +98,8 @@ func play_shots(main: Node, list: Array, resolver := Callable()) -> void:
 	_elapsed = 0.0
 	PlayerHold.set_held(self, get_tree(), true)
 	_player.input_locked = true
+	if music_theme != "":
+		Sound.music.play_theme(music_theme)
 	if not Fade.is_black():
 		await Fade.fade_out(0.4)
 	visible = true
@@ -179,6 +184,8 @@ func _anchor(id: String) -> Variant:
 func _finish() -> void:
 	if not Fade.is_black():
 		await Fade.fade_out(0.45)
+	if music_theme != "":
+		Sound.music.end_theme()
 	_bars(0.0)
 	for l in [_title, _subtitle, _caption, _hint]:
 		(l as Label).modulate.a = 0.0

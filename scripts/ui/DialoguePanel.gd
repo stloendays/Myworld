@@ -168,6 +168,7 @@ func _input(event: InputEvent) -> void:
 # ---------------------------------------------------------------- 界面
 
 func _show_page() -> void:
+	Sound.play("blip")
 	var p: Dictionary = pages[page_index]
 	_text.text = str(p["text"])
 	_shown = 0.0

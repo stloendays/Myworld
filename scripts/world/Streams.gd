@@ -100,6 +100,9 @@ func _vert(st: SurfaceTool, p: Vector3, uv: Vector2, steep: float) -> void:
 
 
 func _mist(at: Vector3) -> void:
+	var roar := SoundEmitter.create("waterfall")
+	roar.position = at
+	add_child(roar)
 	var p := CPUParticles3D.new()
 	p.name = "FallMist"
 	p.position = at
@@ -216,6 +219,7 @@ func _build_bridge(b: Dictionary) -> void:
 	var frame := ArtMaterials.named("M_Frame")
 	var bark := ArtMaterials.pbr("pine_bark", Color(0.62, 0.52, 0.46), "world")
 	var body := StaticBody3D.new()
+	body.set_meta("surface", "wood")
 	body.collision_layer = PhysicsLayers.WORLD
 	body.collision_mask = 0
 	root.add_child(body)

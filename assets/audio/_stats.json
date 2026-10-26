@@ -1,0 +1,818 @@
+{
+ "amb_wind": {
+  "seconds": 24,
+  "peak": 0.496,
+  "rms_db": -21,
+  "dc": 0,
+  "loop": true,
+  "seam": 0.0217
+ },
+ "amb_cold_wind": {
+  "seconds": 24,
+  "peak": 0.368,
+  "rms_db": -23,
+  "dc": 0,
+  "loop": true,
+  "seam": 0.0132
+ },
+ "amb_rain_light": {
+  "seconds": 16,
+  "peak": 0.887,
+  "rms_db": -24,
+  "dc": 0,
+  "loop": true,
+  "seam": 0.008
+ },
+ "amb_rain_heavy": {
+  "seconds": 16,
+  "peak": 0.892,
+  "rms_db": -19,
+  "dc": 0,
+  "loop": true,
+  "seam": 0.1562
+ },
+ "amb_rain_roof": {
+  "seconds": 16,
+  "peak": 0.509,
+  "rms_db": -23,
+  "dc": 0,
+  "loop": true,
+  "seam": 0.0046
+ },
+ "amb_crickets": {
+  "seconds": 20,
+  "peak": 0.39,
+  "rms_db": -27,
+  "dc": 0,
+  "loop": true,
+  "seam": 0.0104
+ },
+ "amb_forest": {
+  "seconds": 24,
+  "peak": 0.145,
+  "rms_db": -31,
+  "dc": 0,
+  "loop": true,
+  "seam": 0.0449
+ },
+ "amb_lake": {
+  "seconds": 18,
+  "peak": 0.591,
+  "rms_db": -23,
+  "dc": 0,
+  "loop": true,
+  "seam": 0.0001
+ },
+ "amb_creek": {
+  "seconds": 12,
+  "peak": 0.676,
+  "rms_db": -22,
+  "dc": 0,
+  "loop": true,
+  "seam": 0.0026
+ },
+ "amb_waterfall": {
+  "seconds": 12,
+  "peak": 0.515,
+  "rms_db": -19,
+  "dc": 0,
+  "loop": true,
+  "seam": 0.0128
+ },
+ "amb_fire": {
+  "seconds": 16,
+  "peak": 0.906,
+  "rms_db": -26,
+  "dc": 0,
+  "loop": true,
+  "seam": 0.0032
+ },
+ "amb_underwater": {
+  "seconds": 16,
+  "peak": 0.562,
+  "rms_db": -21,
+  "dc": 0,
+  "loop": true,
+  "seam": 0.0035
+ },
+ "amb_cave": {
+  "seconds": 18,
+  "peak": 0.313,
+  "rms_db": -31,
+  "dc": 0,
+  "loop": true,
+  "seam": 0.0001
+ },
+ "amb_cloud_wind": {
+  "seconds": 24,
+  "peak": 0.472,
+  "rms_db": -23,
+  "dc": 0,
+  "loop": true,
+  "seam": 0.0173
+ },
+ "amb_desert_wind": {
+  "seconds": 24,
+  "peak": 0.386,
+  "rms_db": -23,
+  "dc": 0,
+  "loop": true,
+  "seam": 0.0388
+ },
+ "amb_dome": {
+  "seconds": 24,
+  "peak": 0.477,
+  "rms_db": -24,
+  "dc": 0,
+  "loop": true,
+  "seam": 0.0021
+ },
+ "amb_fairy": {
+  "seconds": 16,
+  "peak": 0.217,
+  "rms_db": -29,
+  "dc": 0,
+  "loop": true,
+  "seam": 0.0035
+ },
+ "amb_pool": {
+  "seconds": 12,
+  "peak": 0.344,
+  "rms_db": -27,
+  "dc": 0,
+  "loop": true,
+  "seam": 0.0024
+ },
+ "bird_1": {
+  "seconds": 0.42,
+  "peak": 0.631,
+  "rms_db": -13,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "bird_2": {
+  "seconds": 0.55,
+  "peak": 0.631,
+  "rms_db": -14.4,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "bird_3": {
+  "seconds": 0.5,
+  "peak": 0.631,
+  "rms_db": -16,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "bird_4": {
+  "seconds": 0.75,
+  "peak": 0.631,
+  "rms_db": -9.6,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "bird_5": {
+  "seconds": 1,
+  "peak": 0.631,
+  "rms_db": -13.2,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "bird_6": {
+  "seconds": 0.5,
+  "peak": 0.631,
+  "rms_db": -15.4,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "owl": {
+  "seconds": 1.9,
+  "peak": 0.501,
+  "rms_db": -16.2,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "frog_1": {
+  "seconds": 0.45,
+  "peak": 0.501,
+  "rms_db": -21,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "frog_2": {
+  "seconds": 0.45,
+  "peak": 0.501,
+  "rms_db": -20.3,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "thunder_1": {
+  "seconds": 7.5,
+  "peak": 0.794,
+  "rms_db": -20.5,
+  "dc": -0.00001,
+  "loop": false,
+  "seam": 0
+ },
+ "thunder_2": {
+  "seconds": 7.5,
+  "peak": 0.794,
+  "rms_db": -17.6,
+  "dc": 0.00003,
+  "loop": false,
+  "seam": 0
+ },
+ "thunder_3": {
+  "seconds": 7.5,
+  "peak": 0.794,
+  "rms_db": -18.2,
+  "dc": -0.00004,
+  "loop": false,
+  "seam": 0
+ },
+ "step_grass_1": {
+  "seconds": 0.22,
+  "peak": 0.447,
+  "rms_db": -22.6,
+  "dc": 0.00005,
+  "loop": false,
+  "seam": 0
+ },
+ "step_grass_2": {
+  "seconds": 0.22,
+  "peak": 0.447,
+  "rms_db": -23.1,
+  "dc": 0.00004,
+  "loop": false,
+  "seam": 0
+ },
+ "step_grass_3": {
+  "seconds": 0.22,
+  "peak": 0.447,
+  "rms_db": -22.6,
+  "dc": 0.00004,
+  "loop": false,
+  "seam": 0
+ },
+ "step_grass_4": {
+  "seconds": 0.22,
+  "peak": 0.447,
+  "rms_db": -24.6,
+  "dc": 0.00003,
+  "loop": false,
+  "seam": 0
+ },
+ "step_gravel_1": {
+  "seconds": 0.2,
+  "peak": 0.447,
+  "rms_db": -25.2,
+  "dc": 0.00004,
+  "loop": false,
+  "seam": 0
+ },
+ "step_gravel_2": {
+  "seconds": 0.2,
+  "peak": 0.447,
+  "rms_db": -26.3,
+  "dc": 0.00002,
+  "loop": false,
+  "seam": 0
+ },
+ "step_gravel_3": {
+  "seconds": 0.2,
+  "peak": 0.447,
+  "rms_db": -27,
+  "dc": 0.00003,
+  "loop": false,
+  "seam": 0
+ },
+ "step_gravel_4": {
+  "seconds": 0.2,
+  "peak": 0.447,
+  "rms_db": -25.6,
+  "dc": 0.00003,
+  "loop": false,
+  "seam": 0
+ },
+ "step_wood_1": {
+  "seconds": 0.3,
+  "peak": 0.447,
+  "rms_db": -21.5,
+  "dc": 0.00001,
+  "loop": false,
+  "seam": 0
+ },
+ "step_wood_2": {
+  "seconds": 0.3,
+  "peak": 0.447,
+  "rms_db": -21.3,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "step_wood_3": {
+  "seconds": 0.3,
+  "peak": 0.447,
+  "rms_db": -21.8,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "step_wood_4": {
+  "seconds": 0.3,
+  "peak": 0.447,
+  "rms_db": -22.3,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "step_stone_1": {
+  "seconds": 0.18,
+  "peak": 0.447,
+  "rms_db": -28.3,
+  "dc": 0.00004,
+  "loop": false,
+  "seam": 0
+ },
+ "step_stone_2": {
+  "seconds": 0.18,
+  "peak": 0.447,
+  "rms_db": -28.3,
+  "dc": 0.00004,
+  "loop": false,
+  "seam": 0
+ },
+ "step_stone_3": {
+  "seconds": 0.18,
+  "peak": 0.447,
+  "rms_db": -29.3,
+  "dc": 0.00004,
+  "loop": false,
+  "seam": 0
+ },
+ "step_stone_4": {
+  "seconds": 0.18,
+  "peak": 0.447,
+  "rms_db": -29.2,
+  "dc": 0.00004,
+  "loop": false,
+  "seam": 0
+ },
+ "step_snow_1": {
+  "seconds": 0.3,
+  "peak": 0.447,
+  "rms_db": -24.8,
+  "dc": 0.00001,
+  "loop": false,
+  "seam": 0
+ },
+ "step_snow_2": {
+  "seconds": 0.3,
+  "peak": 0.447,
+  "rms_db": -26.6,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "step_snow_3": {
+  "seconds": 0.3,
+  "peak": 0.447,
+  "rms_db": -26.1,
+  "dc": 0.00001,
+  "loop": false,
+  "seam": 0
+ },
+ "step_snow_4": {
+  "seconds": 0.3,
+  "peak": 0.447,
+  "rms_db": -26.1,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "step_sand_1": {
+  "seconds": 0.25,
+  "peak": 0.447,
+  "rms_db": -23.5,
+  "dc": 0.00002,
+  "loop": false,
+  "seam": 0
+ },
+ "step_sand_2": {
+  "seconds": 0.25,
+  "peak": 0.447,
+  "rms_db": -24.8,
+  "dc": 0.00002,
+  "loop": false,
+  "seam": 0
+ },
+ "step_sand_3": {
+  "seconds": 0.25,
+  "peak": 0.447,
+  "rms_db": -24.3,
+  "dc": 0.00002,
+  "loop": false,
+  "seam": 0
+ },
+ "step_sand_4": {
+  "seconds": 0.25,
+  "peak": 0.447,
+  "rms_db": -23.9,
+  "dc": 0.00003,
+  "loop": false,
+  "seam": 0
+ },
+ "step_water_1": {
+  "seconds": 0.4,
+  "peak": 0.447,
+  "rms_db": -23,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "step_water_2": {
+  "seconds": 0.4,
+  "peak": 0.447,
+  "rms_db": -23.1,
+  "dc": 0.00005,
+  "loop": false,
+  "seam": 0
+ },
+ "step_water_3": {
+  "seconds": 0.4,
+  "peak": 0.447,
+  "rms_db": -19.8,
+  "dc": -0.00005,
+  "loop": false,
+  "seam": 0
+ },
+ "step_water_4": {
+  "seconds": 0.4,
+  "peak": 0.447,
+  "rms_db": -22.2,
+  "dc": 0.00004,
+  "loop": false,
+  "seam": 0
+ },
+ "land": {
+  "seconds": 0.35,
+  "peak": 0.562,
+  "rms_db": -17.7,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "splash_1": {
+  "seconds": 1.2,
+  "peak": 0.708,
+  "rms_db": -19.7,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "splash_2": {
+  "seconds": 1.2,
+  "peak": 0.708,
+  "rms_db": -18.4,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "swim_1": {
+  "seconds": 0.6,
+  "peak": 0.398,
+  "rms_db": -26.1,
+  "dc": 0.00001,
+  "loop": false,
+  "seam": 0
+ },
+ "swim_2": {
+  "seconds": 0.6,
+  "peak": 0.398,
+  "rms_db": -26.9,
+  "dc": 0.00011,
+  "loop": false,
+  "seam": 0
+ },
+ "swim_3": {
+  "seconds": 0.6,
+  "peak": 0.398,
+  "rms_db": -22.4,
+  "dc": 0.00011,
+  "loop": false,
+  "seam": 0
+ },
+ "drip": {
+  "seconds": 1.2,
+  "peak": 0.398,
+  "rms_db": -23.7,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "door_open_1": {
+  "seconds": 0.8,
+  "peak": 0.562,
+  "rms_db": -28.9,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "door_open_2": {
+  "seconds": 0.8,
+  "peak": 0.562,
+  "rms_db": -30.5,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "door_close_1": {
+  "seconds": 0.5,
+  "peak": 0.631,
+  "rms_db": -17.8,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "door_close_2": {
+  "seconds": 0.5,
+  "peak": 0.631,
+  "rms_db": -17.8,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "door_locked": {
+  "seconds": 0.4,
+  "peak": 0.501,
+  "rms_db": -22.5,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "unlock": {
+  "seconds": 0.9,
+  "peak": 0.562,
+  "rms_db": -22.9,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "switch": {
+  "seconds": 0.12,
+  "peak": 0.398,
+  "rms_db": -35.8,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "fire_ignite": {
+  "seconds": 1.3,
+  "peak": 0.631,
+  "rms_db": -33.5,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "fire_out": {
+  "seconds": 1.1,
+  "peak": 0.447,
+  "rms_db": -25.3,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "cloth_1": {
+  "seconds": 0.5,
+  "peak": 0.355,
+  "rms_db": -26,
+  "dc": 0.00001,
+  "loop": false,
+  "seam": 0
+ },
+ "cloth_2": {
+  "seconds": 0.5,
+  "peak": 0.355,
+  "rms_db": -25.1,
+  "dc": 0.00001,
+  "loop": false,
+  "seam": 0
+ },
+ "beacon": {
+  "seconds": 3.4,
+  "peak": 0.631,
+  "rms_db": -21.8,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "stone_turn": {
+  "seconds": 0.8,
+  "peak": 0.562,
+  "rms_db": -23.2,
+  "dc": 0.00011,
+  "loop": false,
+  "seam": 0
+ },
+ "altar": {
+  "seconds": 2.8,
+  "peak": 0.631,
+  "rms_db": -19.1,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "portal": {
+  "seconds": 2.6,
+  "peak": 0.631,
+  "rms_db": -20.8,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "shutter": {
+  "seconds": 0.2,
+  "peak": 0.447,
+  "rms_db": -31.2,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "whoosh": {
+  "seconds": 0.45,
+  "peak": 0.398,
+  "rms_db": -23.3,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "plop": {
+  "seconds": 0.3,
+  "peak": 0.501,
+  "rms_db": -24.2,
+  "dc": 0.00004,
+  "loop": false,
+  "seam": 0
+ },
+ "splash_small": {
+  "seconds": 0.6,
+  "peak": 0.562,
+  "rms_db": -23.3,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "dig": {
+  "seconds": 0.4,
+  "peak": 0.501,
+  "rms_db": -20.5,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "chess": {
+  "seconds": 0.15,
+  "peak": 0.398,
+  "rms_db": -25.2,
+  "dc": -0.00001,
+  "loop": false,
+  "seam": 0
+ },
+ "sizzle": {
+  "seconds": 1.6,
+  "peak": 0.398,
+  "rms_db": -28.2,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "paddle": {
+  "seconds": 0.7,
+  "peak": 0.398,
+  "rms_db": -22.4,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "ui_click": {
+  "seconds": 0.03,
+  "peak": 0.316,
+  "rms_db": -21.2,
+  "dc": -0.00012,
+  "loop": false,
+  "seam": 0
+ },
+ "ui_open": {
+  "seconds": 0.09,
+  "peak": 0.282,
+  "rms_db": -21.7,
+  "dc": -0.00005,
+  "loop": false,
+  "seam": 0
+ },
+ "ui_close": {
+  "seconds": 0.09,
+  "peak": 0.251,
+  "rms_db": -22.7,
+  "dc": 0.00005,
+  "loop": false,
+  "seam": 0
+ },
+ "blip": {
+  "seconds": 0.05,
+  "peak": 0.158,
+  "rms_db": -27.7,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "paper": {
+  "seconds": 0.55,
+  "peak": 0.316,
+  "rms_db": -27.9,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "page": {
+  "seconds": 0.35,
+  "peak": 0.316,
+  "rms_db": -24.4,
+  "dc": -0.00001,
+  "loop": false,
+  "seam": 0
+ },
+ "pickup": {
+  "seconds": 1.4,
+  "peak": 0.501,
+  "rms_db": -21,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "discover": {
+  "seconds": 2.2,
+  "peak": 0.447,
+  "rms_db": -21.6,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "quest": {
+  "seconds": 1.6,
+  "peak": 0.562,
+  "rms_db": -20.5,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "achievement": {
+  "seconds": 3.2,
+  "peak": 0.562,
+  "rms_db": -20.9,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "inst_harp": {
+  "seconds": 4.5,
+  "peak": 0.708,
+  "rms_db": -24.9,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "inst_bell": {
+  "seconds": 4,
+  "peak": 0.708,
+  "rms_db": -16,
+  "dc": 0,
+  "loop": false,
+  "seam": 0
+ },
+ "inst_bass": {
+  "seconds": 3.5,
+  "peak": 0.708,
+  "rms_db": -14.8,
+  "dc": -0.00002,
+  "loop": false,
+  "seam": 0
+ },
+ "inst_pad": {
+  "seconds": 6,
+  "peak": 0.631,
+  "rms_db": -12.9,
+  "dc": 0,
+  "loop": true,
+  "seam": 0.0026
+ }
+}

@@ -103,6 +103,7 @@ func _run() -> void:
 	await _test_constellations()
 	await _test_cottage_letters()
 	await _test_story_chapter()
+	await _test_audio()
 	await _test_nature()
 	_test_cover_fade()
 	await _test_flicker_sources()
@@ -603,6 +604,199 @@ func _play_world_story(w: MiniWorld, id: String) -> bool:
 	GameSettings.set_value("story_cutscenes", false, false)
 	return watch["played"] and int(watch["last_shot"]) == Cutscene.shots_of(id).size() - 1 \
 		and (watch["missing"] as PackedStringArray).is_empty() and not _player.input_locked and _player.camera.current
+
+
+## M3 声音：总线、声音表与文件、环境层随季节天气昼夜、QA-05 进屋雨声 2.5 秒内减弱（炉火照响）、脚步按地面、交互音效、
+## 雷声按距离延迟、背景音乐的曲风与过场配乐、音量设置。（无窗口时音频驱动是 dummy：查的是混音状态，不是真的声音。）
+func _test_audio() -> void:
+	var climate := _main.get_node("Systems") as ClimateSystem
+	var life := _cabin.get_node("Generated/Life") as CabinLife
+	# 1. 总线与声音表
+	var buses := AudioDirector.BUSES.all(func(b: String) -> bool: return AudioServer.get_bus_index(b) != -1)
+	var lp_ok := ["AMB_OUTDOOR", "AMB_WEATHER"].all(func(b: String) -> bool: return AudioServer.get_bus_effect(AudioServer.get_bus_index(b), 0) is AudioEffectLowPassFilter)
+	var missing := PackedStringArray()
+	var loops_ok := true
+	for id: String in SoundBank.data():
+		for f in SoundBank.files(id):
+			if not ResourceLoader.exists(SoundBank.DIR + f + ".wav"):
+				missing.append(f)
+		var s := SoundBank.stream(id) as AudioStreamWAV
+		if s == null:
+			missing.append(id)
+		elif SoundBank.info(id).get("loop", false) and s.loop_mode != AudioStreamWAV.LOOP_FORWARD:
+			loops_ok = false
+	var stats: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SoundBank.DIR + "_stats.json"))
+	var clean := stats.values().all(func(v: Dictionary) -> bool: return float(v["peak"]) <= 0.99 and absf(float(v["dc"])) < 0.002)
+	_check("声音：六条总线（户外、天气带低通），声音表 %d 个声音的文件都在、循环音设了循环；%d 个合成文件没有削波和直流偏移" % [SoundBank.data().size(), stats.size()],
+		buses and lp_ok and missing.is_empty() and loops_ok and clean and stats.size() >= 100,
+		"总线 %s · 低通 %s · 缺 %s · 循环 %s · 干净 %s" % [buses, lp_ok, ", ".join(missing), loops_ok, clean])
+
+	# 2. 环境层：夏夜虫鸣、夏日正午树叶与鸟、雨天的雨、冬天的寒风
+	await _setup_at(Vector2(-50.0, 29.0), 0.0)
+	var layers := {}
+	for c: Array in [["夏夜", &"SUMMER", 23.0, &"CLEAR"], ["夏日", &"SUMMER", 12.0, &"CLEAR"], ["大雨", &"SUMMER", 12.0, &"HEAVY_RAIN"], ["冬日", &"WINTER", 11.0, &"CLEAR"]]:
+		climate.jump_to_season(c[1])
+		climate.set_hour(c[2])
+		climate.set_weather(c[3], 0.0)
+		await _seconds(2.5)
+		layers[c[0]] = Sound.layer_gain.duplicate()
+	var amb_ok: bool = layers["夏夜"]["crickets"] > 0.4 and layers["夏夜"]["forest"] < 0.05 and layers["夏日"]["forest"] > 0.3 \
+		and layers["夏日"]["crickets"] < 0.05 and layers["大雨"]["rain_heavy"] > 0.5 and layers["冬日"]["cold_wind"] > 0.3 \
+		and layers["冬日"]["crickets"] < 0.05 and Sound._lake.playing
+	# 站到小溪边：小溪声源就在最近的那段溪水上
+	await _setup_at(Vector2(-72.0, 3.0), 0.0)
+	await _seconds(0.3)
+	var creek_d := Vector2(Sound._creek.global_position.x, Sound._creek.global_position.z).distance_to(Vector2(-72.0, 3.0))
+	amb_ok = amb_ok and Sound._creek.playing and creek_d < 6.0
+	_check("环境层：夏夜有虫鸣没有白天的树叶，夏日正午相反，大雨有雨声，冬天换成寒风；湖水声从最近的岸边、小溪声从最近的一段溪水传来",
+		amb_ok, "虫鸣 %.2f/%.2f · 树叶 %.2f/%.2f · 大雨 %.2f · 寒风 %.2f · 湖水 %s · 小溪 %s（%.1f m）" % [layers["夏夜"]["crickets"], layers["夏日"]["crickets"],
+			layers["夏夜"]["forest"], layers["夏日"]["forest"], layers["大雨"]["rain_heavy"], layers["冬日"]["cold_wind"], Sound._lake.playing,
+			Sound._creek.playing, creek_d])
+
+	# 3. QA-05：大雨里从门外走进木屋 → 2.5 秒内户外与天气声减弱、压低通，不是一下子断；炉火照响；出门反向恢复
+	climate.jump_to_season(&"AUTUMN")
+	climate.set_hour(20.0)
+	climate.set_weather(&"HEAVY_RAIN", 0.0)
+	life.stove.set_on(true)
+	var door := _cabin.find_children("*", "InteractableDoor", true, false)
+	(door[0] as InteractableDoor).set_open(false, true)
+	_player.teleport_to(_cabin_point(Vector3(0.0, 0.05, 6.5)))
+	await _seconds(3.0)
+	var out0: Dictionary = Sound.bus_state("AMB_WEATHER")
+	_player.teleport_to(_cabin_point(Vector3(-1.5, 0.05, -1.0)))
+	await _seconds(0.3)
+	var early: Dictionary = Sound.bus_state("AMB_WEATHER")
+	await _seconds(2.2)
+	var inside: Dictionary = Sound.bus_state("AMB_WEATHER")
+	var fire := life.find_children("*", "SoundEmitter", true, false)
+	var fire_on: bool = not fire.is_empty() and (fire[0] as SoundEmitter).on and (fire[0] as SoundEmitter).playing
+	var roof := float(Sound.layer_gain["rain_roof"])
+	_player.teleport_to(_cabin_point(Vector3(0.0, 0.05, 6.5)))
+	await _seconds(2.5)
+	var back: Dictionary = Sound.bus_state("AMB_WEATHER")
+	var drop := float(out0["db"]) - float(inside["db"])
+	var early_drop := float(out0["db"]) - float(early["db"])
+	var qa05: bool = drop > 10.0 and float(inside["cutoff"]) < 1200.0 and early_drop > 0.5 and early_drop < drop * 0.6 \
+		and fire_on and roof > 0.5 and absf(float(back["db"]) - float(out0["db"])) < 1.5 and float(back["cutoff"]) > 15000.0
+	_check("QA-05 进木屋 2.5 秒内室外雨声逐步减弱（降 %.1f dB、低通到 %d Hz；0.3 秒时只降了 %.1f dB），屋顶雨声和炉火照响；出门恢复" % [drop, int(inside["cutoff"]), early_drop],
+		qa05, "炉火 %s · 屋顶雨 %.2f · 出门后 %.1f dB / %d Hz" % [fire_on, roof, float(back["db"]) - float(out0["db"]), int(back["cutoff"])])
+	# 炉火熄灭：声音先减弱再停
+	life.stove.set_on(false)
+	await _seconds(0.3)
+	var fading: bool = not fire.is_empty() and (fire[0] as SoundEmitter).playing and (fire[0] as SoundEmitter).volume_db < SoundBank.volume_db("fire") - 3.0
+	await _seconds(3.0)
+	var stopped: bool = not fire.is_empty() and not (fire[0] as SoundEmitter).playing
+	life.stove.set_on(true)
+	_check("炉火熄灭时声音先减弱、再停掉", fading and stopped, "减弱 %s · 停 %s" % [fading, stopped])
+
+	# 4. 脚步：草地、码头木板、木屋里、山洞、雪山顶、浅水；落地有闷响
+	climate.set_weather(&"CLEAR", 0.0)
+	climate.jump_to_season(&"SUMMER")
+	var cave := get_tree().get_first_node_in_group("cave") as Cave
+	var t := cave.totem.global_position
+	var meadow := Vector2(-80.0, -40.0)
+	for c: Vector2 in [Vector2(-80.0, -40.0), Vector2(-60.0, -30.0), Vector2(-100.0, 20.0), Vector2(-40.0, -60.0), Vector2(-20.0, 60.0)]:
+		if WorldLayout.distance_to_paths(c) > 4.0 and WorldTerrain.height_at(c.x, c.y) > WorldLayout.water_level() + 1.0:
+			meadow = c
+			break
+	var spots := {"grass": meadow, "wood": Vector2(-20.0, 26.0), "stone": Vector2(t.x, t.z + 3.0), "snow": Vector2(100.0, -104.0)}
+	var heard := {}
+	for want: String in spots:
+		await _setup_at(spots[want], 0.0)
+		if want == "wood":
+			_player.teleport_to(Vector3(-20.0, 1.2, 26.0))   # 码头面板上
+			await _seconds(0.4)
+		var before: int = Sound.steps
+		await _walk_for(Vector3(0.0, 0.0, 1.0) if want != "wood" else Vector3(1.0, 0.0, 0.0), 1.6)
+		heard[want] = [Sound.last_surface, Sound.steps - before]
+	_player.teleport_to(_cabin_point(Vector3(-1.5, 0.05, -1.0)))
+	await _seconds(0.4)
+	var before_c: int = Sound.steps
+	await _walk_for(Vector3(1.0, 0.0, 0.0), 1.2)
+	heard["cabin"] = [Sound.last_surface, Sound.steps - before_c]
+	var steps_ok := true
+	for want: String in spots:
+		steps_ok = steps_ok and heard[want][0] == want and int(heard[want][1]) >= 2
+	steps_ok = steps_ok and heard["cabin"][0] == "wood" and int(heard["cabin"][1]) >= 1
+	# 从 3 m 高处掉下来：落地的闷响
+	await _setup_at(meadow, 0.0)
+	_player.global_position.y += 3.0
+	Sound.last_sound = ""
+	await _seconds(1.2)
+	var landed := Sound.last_sound.begins_with("step_") or Sound.last_sound == "land"
+	_check("脚步按地面换声音（草地、码头木板、山洞石头、雪山顶的雪、木屋地板），走一段有几步；从高处落地有一声闷响",
+		steps_ok and landed, "%s · 落地 %s" % [str(heard), landed])
+
+	# 5. 交互音效：开关木屋的门、开关灯；雷声按距离延迟
+	Sound.last_sound = ""
+	_player.teleport_to(_cabin_point(Vector3(0.0, 0.05, 3.0)))
+	await _seconds(0.3)
+	var was_open: bool = (door[0] as InteractableDoor).is_open()
+	(door[0] as InteractableDoor).set_open(not was_open)
+	await _frames(2)
+	var door_sound := Sound.last_sound
+	(door[0] as InteractableDoor).set_open(was_open)
+	await _frames(2)
+	var door_back := Sound.last_sound
+	var lamp := _main.find_children("*", "InteractableToggle", true, false).filter(func(n: Node) -> bool: return String((n as InteractableToggle).uid) == "cabin_floor_lamp")
+	(lamp[0] as InteractableToggle).set_on(not (lamp[0] as InteractableToggle).on)
+	await _frames(2)
+	var click := Sound.last_sound
+	(lamp[0] as InteractableToggle).set_on(not (lamp[0] as InteractableToggle).on)
+	var th0 := int(Sound.counts.get("thunder", 0))
+	EventBus.lightning_strike.emit(686.0)
+	await _seconds(1.0)
+	var too_soon := int(Sound.counts.get("thunder", 0)) - th0
+	await _seconds(1.5)
+	var thunder := int(Sound.counts.get("thunder", 0)) - th0
+	var fx_ok := door_sound == ("door_open" if not was_open else "door_close") and door_back == ("door_close" if not was_open else "door_open") \
+		and click == "switch" and too_soon == 0 and thunder == 1
+	_check("交互音效：开门 / 关门、开关灯各有声音；闪电 686 m 外，雷声 2 秒后才到", fx_ok,
+		"门 %s → %s · 灯 %s · 1 秒时雷 %d 声 · 2.5 秒时 %d 声" % [door_sound, door_back, click, too_soon, thunder])
+
+	# 6. 背景音乐：湖畔白天 / 夜里的曲风、开一首会出音；过场配乐放完淡出；其他世界的曲风写在数据里
+	var music: MusicDirector = Sound.music
+	climate.set_hour(12.0)
+	await _seconds(0.5)
+	var day_mood := music.current_mood()
+	climate.set_hour(23.0)
+	await _seconds(0.5)
+	var night_mood := music.current_mood()
+	var n0 := music.notes_played
+	music.start_piece()
+	await _seconds(12.0)
+	var played := music.notes_played - n0
+	music.play_theme("light")
+	await _seconds(3.0)
+	var in_theme := music.theme == "light" and not music.playing_piece
+	music.end_theme()
+	var moods_ok := ["cloudsea", "dunes", "atlantis", "lake_rain", "lake_winter", "lake_dusk"].all(func(m: String) -> bool: return music.moods().has(m))
+	var themes_ok := Cutscene.data().keys().filter(func(k: String) -> bool: return not k.begins_with("_")).all(
+		func(k: String) -> bool: return str((Cutscene.data()[k] as Dictionary).get("music", "")) != "")
+	_check("背景音乐：湖畔白天是 lake_day、夜里是 lake_night，开一首 12 秒里出了 %d 个音；过场配乐能放能停；六段剧情过场都配了乐，其他世界各有曲风" % played,
+		day_mood == "lake_day" and night_mood == "lake_night" and played >= 4 and in_theme and music.theme == "" and moods_ok and themes_ok,
+		"白天 %s · 夜里 %s · 过场 %s · 曲风 %s · 配乐 %s" % [day_mood, night_mood, in_theme, moods_ok, themes_ok])
+
+	# 7. 音量设置：音乐拉到 0 静音，环境声跟着设置走
+	GameSettings.set_value("volume_music", 0.0, false)
+	var muted := AudioServer.is_bus_mute(AudioServer.get_bus_index("MUSIC"))
+	GameSettings.set_value("volume_music", 0.45, false)
+	var unmuted := not AudioServer.is_bus_mute(AudioServer.get_bus_index("MUSIC"))
+	GameSettings.set_value("volume_ambience", 0.4, false)
+	await _frames(2)
+	var amb_db := AudioServer.get_bus_volume_db(AudioServer.get_bus_index("AMB_INDOOR"))
+	GameSettings.set_value("volume_ambience", 0.8, false)
+	_check("音量设置：背景音乐拉到 0 就静音，环境声 40 %% 时 %.1f dB" % amb_db, muted and unmuted and absf(amb_db - linear_to_db(0.4)) < 0.2,
+		"静音 %s · 恢复 %s" % [muted, unmuted])
+	# 8. 每帧的开销：混音、脚步、湖水 / 小溪声源跟随、音乐调度加起来（主线程上，不含音频线程的混音）
+	await _setup_at(Vector2(-72.0, 3.0), 0.0)
+	var t0 := Time.get_ticks_usec()
+	for i in 600:
+		Sound._process(1.0 / 60.0)
+		Sound.music._process(1.0 / 60.0)
+	var per_frame := (Time.get_ticks_usec() - t0) / 600.0
+	_check("声音每帧在主线程上的开销 %.0f µs（小溪边，所有环境层在算）" % per_frame, per_frame < 400.0)
+	climate.set_weather(&"CLEAR", 0.0)
 
 
 func _test_nature() -> void:
@@ -1204,7 +1398,7 @@ func _test_licenses_cover_imports() -> void:
 		if row.size() > 1 and row[1] != "":
 			prefixes.append(row[1])
 	var missing := PackedStringArray()
-	var files := _list_files("res://assets/imported", "")
+	var files := _list_files("res://assets/imported", "") + _list_files("res://assets/audio", "")
 	var counted := 0
 	for path in files:
 		if path.get_extension() in ["import", "uid", "gitkeep"]:

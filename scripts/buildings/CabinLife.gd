@@ -78,6 +78,11 @@ func _build_stove() -> void:
 	_smoke.position = CHIMNEY_TOP
 	add_child(_smoke)
 	stove.toggled.connect(_on_stove)
+	# 炉火声：生火时慢慢响起来，熄灭时先减弱再停（SoundEmitter）
+	var crackle := SoundEmitter.create("fire", stove.on)
+	crackle.position = STOVE + Vector3(0.0, 0.6, 0.0)
+	add_child(crackle)
+	stove.toggled.connect(crackle.set_on)
 	pot = CookPot.create(&"cabin_pot", STOVE + Vector3(0.0, 1.16, 0.0), stove)
 	add_child(pot)
 	_on_stove(stove.on)

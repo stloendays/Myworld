@@ -51,9 +51,12 @@ func open(tab := 0) -> void:
 	_tabs.current_tab = tab
 	_refresh()
 	_root.visible = true
+	Sound.play("page")
 
 
 func close() -> void:
+	if _root.visible:
+		Sound.play("page")
 	_root.visible = false
 	if _player != null:
 		_player.input_locked = false

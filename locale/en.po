@@ -2220,3 +2220,21 @@ msgstr "E  Open the letter"
 msgid "剧情过场动画"
 msgstr "Story cutscenes"
 
+msgid "声音"
+msgstr "Sound"
+
+msgid "总音量"
+msgstr "Master volume"
+
+msgid "背景音乐"
+msgstr "Music"
+
+msgid "环境声（风雨鸟虫）"
+msgstr "Ambience"
+
+msgid "音效（脚步、开门）"
+msgstr "Effects (footsteps, doors)"
+
+msgid "界面"
+msgstr "Interface"
+

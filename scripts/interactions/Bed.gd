@@ -65,6 +65,8 @@ func sleep(actor: Node, instant := false) -> float:
 	var hours := hours_to_sleep(WorldState.time_minutes)
 	sleeping = true
 	if not instant:
+		Sound.play("cloth")
+	if not instant:
 		await _fade_to(1.0, 0.9)
 	var climate := get_tree().get_first_node_in_group("climate_system") as ClimateSystem
 	if climate != null:
