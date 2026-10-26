@@ -42,6 +42,7 @@ var _piece_font: Font
 
 
 func _ready() -> void:
+	add_to_group(UiStyle.COVER_GROUP)
 	layer = 25
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	var sf := SystemFont.new()
@@ -83,7 +84,7 @@ func _build() -> void:
 	_root.theme = GameSettings.ui_theme()
 	add_child(_root)
 	var dim := ColorRect.new()
-	dim.color = Color(0.03, 0.03, 0.05, 0.55)
+	dim.color = UiStyle.DIM
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_root.add_child(dim)
 	var center := CenterContainer.new()

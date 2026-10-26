@@ -10,6 +10,7 @@ extends Node
 ##     篝火、升上天的暮烬、满天的星座、石头小屋自己亮起来的台灯，最后是第一章的标题；书桌上多了划船人的第四封信。
 ## 过场的镜头和字幕在 data/story/cutscenes.json；锚点（湖、山洞、图腾、小屋、看星星的位置）在 anchor() 里按布局算。
 ## 设置里关掉“剧情过场动画”时，只弹提示、直接把结果放进世界。联机访客不放（世界状态以房主为准）。
+## 休闲模式（GameRules.is_story() 为假）没有这些剧情：星座一开始就全在天上，暮烬只在晴朗的秋夜出现，不放过场。
 ## 状态都在 WorldState.flags：star_<id>（新星座放过）、ember_night_seen、ember_night_heard、farewell_read、star_chart_done。
 
 const LIGHTS := ["cloudsea_beacons", "dunes_altar", "atlantis_spire"]
@@ -47,7 +48,12 @@ static func ember_time(time_minutes: float, season: StringName) -> bool:
 
 ## 暮烬之夜：三盏灯都亮了、在傍晚到凌晨之间；讲完最后一个故事以后只在晴朗的秋夜。
 static func is_ember_night() -> bool:
-	if not lights_done() or not ember_time(WorldState.time_minutes, WorldState.season_id):
+	if not ember_time(WorldState.time_minutes, WorldState.season_id):
+		return false
+	# 休闲模式没有剧情：暮烬只是晴朗秋夜的一道风景
+	if not GameRules.is_story():
+		return WorldState.season_id == &"AUTUMN" and WorldState.weather_id == &"CLEAR"
+	if not lights_done():
 		return false
 	if not heard():
 		return true
@@ -56,7 +62,7 @@ static func is_ember_night() -> bool:
 
 ## 图腾这次要讲最后一个故事（暮烬正飘着、接了「暮烬之夜」、还没讲过）。
 func finale_ready() -> bool:
-	return embers_on and QuestLog.state_of("ember_night") == "active" and not heard()
+	return embers_on and GameRules.is_story() and QuestLog.state_of("ember_night") == "active" and not heard()
 
 
 func _ready() -> void:
@@ -82,6 +88,8 @@ func _process(delta: float) -> void:
 		return
 	var player := get_tree().get_first_node_in_group("local_player") as FirstPersonController
 	if not _can_play(player):
+		return
+	if not GameRules.is_story():
 		return
 	if embers_on and not bool(WorldState.flags.get("ember_night_seen", false)):
 		WorldState.flags["ember_night_seen"] = true
@@ -122,7 +130,7 @@ func _set_embers(on: bool, instant: bool) -> void:
 		precip.story_profile = EMBER_PROFILE if on else ""
 	if not on:
 		return
-	if not heard() and WorldState.weather_id != &"CLEAR":
+	if GameRules.is_story() and not heard() and WorldState.weather_id != &"CLEAR":
 		var weather := get_tree().get_first_node_in_group("weather_controller") as WeatherController
 		if weather != null:
 			weather.request_weather(&"CLEAR", 0.0 if instant else 40.0)

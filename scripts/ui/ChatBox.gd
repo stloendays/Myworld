@@ -269,10 +269,7 @@ func _build() -> void:
 	add_child(root)
 
 	_log_bg = Panel.new()
-	var bg := StyleBoxFlat.new()
-	bg.bg_color = Color(0.03, 0.03, 0.06, 0.55)
-	bg.set_corner_radius_all(6)
-	_log_bg.add_theme_stylebox_override("panel", bg)
+	_log_bg.add_theme_stylebox_override("panel", UiStyle.pill(0.55))
 	_log_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_anchor_bottom_left(_log_bg, 16.0, -66.0 - 286.0, -60.0)
 	_log_bg.visible = false
@@ -297,13 +294,8 @@ func _build() -> void:
 	_field.max_length = MAX_LENGTH
 	_field.placeholder_text = "说点什么…（/help 查看命令，Esc 取消）"   # 占位文字由 Godot 自动翻译
 	_field.context_menu_enabled = false
-	var field := StyleBoxFlat.new()
-	field.bg_color = Color(0.03, 0.03, 0.06, 0.78)
-	field.set_corner_radius_all(6)
-	field.content_margin_left = 10.0
-	field.content_margin_right = 10.0
-	_field.add_theme_stylebox_override("normal", field)
-	_field.add_theme_stylebox_override("focus", field)
+	_field.add_theme_stylebox_override("normal", UiStyle.box(Color(UiStyle.FIELD, 0.86), 10, Color(1, 1, 1, 0.1), 1, Vector4(14, 6, 14, 6)))
+	_field.add_theme_stylebox_override("focus", UiStyle.box(Color(UiStyle.FIELD, 0.9), 10, Color(UiStyle.ACCENT, 0.7), 1, Vector4(14, 6, 14, 6)))
 	_anchor_bottom_left(_field, 16.0, -56.0, -16.0)
 	_field.visible = false
 	_field.text_submitted.connect(_on_text_submitted)

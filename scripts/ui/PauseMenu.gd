@@ -14,7 +14,14 @@ var _wardrobe = null   ## WardrobePanel（带 closed 信号）
 var _controls := {}    ## 设置键 -> [控件, 数值标签或 null]
 
 
+signal closed
+
+var _standalone := false     ## 从大厅打开的设置页：返回 / Esc 直接关掉，回到大厅
+var _mode_label: Label = null
+
+
 func _ready() -> void:
+	add_to_group(UiStyle.COVER_GROUP)
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	layer = 20
 	_build()
@@ -48,6 +55,7 @@ func _dev_panel_open() -> bool:
 
 
 func _set_open(open: bool) -> void:
+	var was := _open
 	_open = open
 	_root.visible = open
 	if not open:
@@ -57,11 +65,16 @@ func _set_open(open: bool) -> void:
 	# 联机时世界不能停（房主一停，大家的时间天气都停了）：只让自己的人物站定
 	get_tree().paused = open and not Net.is_online()
 	PlayerHold.set_held(self, get_tree(), open)
+	UiStyle.sync_cover(get_tree())
 	if _can_capture():
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if open or _dev_panel_open() else Input.MOUSE_MODE_CAPTURED
+	if was and not open:
+		closed.emit()
 
 
-func open_settings(tab := 0) -> void:
+## 打开设置页；standalone = 从大厅打开（返回时整个关掉，回到大厅）。
+func open_settings(tab := 0, standalone := false) -> void:
+	_standalone = standalone
 	if not _open:
 		_set_open(true)
 	_menu.visible = false
@@ -105,18 +118,24 @@ func _centered(content: Control) -> Control:
 
 func _build_main_menu() -> Control:
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 14)
-	var title := Label.new()
-	title.text = "Dusk Lake · 暂停"
-	title.add_theme_font_size_override("font_size", 28)
-	box.add_child(title)
-	var keys := Label.new()
+	box.add_theme_constant_override("separation", 12)
+	box.custom_minimum_size = Vector2(560, 0)
+	box.add_child(UiStyle.title("暂停", 34))
+	_mode_label = UiStyle.hint("", 17)
+	_mode_label.add_theme_color_override("font_color", UiStyle.MOON)
+	box.add_child(_mode_label)
+	box.add_child(UiStyle.rule())
+	var keys := UiStyle.hint("", 15)
 	keys.text = "WASD 移动 · Shift 奔跑 · 空格 跳跃/上浮 · C 下潜 · E 或右键 交互 · V 视角\nG 动作轮盘（1 休息 · 2 挥手 · 3 跳舞 · 4 鼓掌）· F12 拍照 · T 聊天\nM 小地图 · Tab 世界地图 · F11 全屏 · F3 坐标 · F2 开发者模式（F 飞行 · N 穿墙 · F4 面板）"
 	box.add_child(keys)
-	for item in [["继续", _close], ["多人房间", _open_room], ["全屏 / 窗口（F11）", func() -> void: GameSettings.set_value("fullscreen", not GameSettings.fullscreen)], ["设置", open_settings.bind(0)], ["人物外观", _show_wardrobe], ["退出游戏", _quit]]:
+	box.add_child(UiStyle.rule())
+	for item in [["继续", _close], ["多人房间", _open_room], ["全屏 / 窗口（F11）", func() -> void: GameSettings.set_value("fullscreen", not GameSettings.fullscreen)], ["设置", open_settings.bind(0, false)], ["人物外观", _show_wardrobe], ["回到主菜单", _to_lobby], ["退出游戏", _quit]]:
 		var b := Button.new()
 		b.text = item[0]
+		b.custom_minimum_size = Vector2(0, 44)
 		b.pressed.connect(item[1])
+		if item[0] == "继续":
+			UiStyle.primary(b)
 		box.add_child(b)
 	return box
 
@@ -124,13 +143,10 @@ func _build_main_menu() -> Control:
 func _build_settings() -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 12)
-	var title := Label.new()
-	title.text = "设置"
-	title.add_theme_font_size_override("font_size", 26)
-	box.add_child(title)
+	box.add_child(UiStyle.title("设置", 30))
 	var tabs := TabContainer.new()
 	tabs.name = "Tabs"
-	tabs.custom_minimum_size = Vector2(620, 330)
+	tabs.custom_minimum_size = Vector2(760, 400)
 	box.add_child(tabs)
 
 	var display := _tab(tabs, "画面")
@@ -265,7 +281,8 @@ func _row(parent: Control, label_text: String) -> HBoxContainer:
 	row.add_theme_constant_override("separation", 12)
 	var label := Label.new()
 	label.text = label_text
-	label.custom_minimum_size = Vector2(170, 0)
+	label.custom_minimum_size = Vector2(190, 0)
+	label.add_theme_color_override("font_color", UiStyle.TEXT_SOFT)
 	row.add_child(label)
 	parent.add_child(row)
 	return row
@@ -323,6 +340,10 @@ func _on_option(index: int, key: String) -> void:
 
 ## 控件跟随当前设置（按 M、F2 等快捷键改了设置时，菜单里也同步）。
 func _refresh() -> void:
+	if _mode_label != null:
+		var mode := tr("剧情模式") if GameRules.is_story() else tr("休闲模式")
+		var where := tr(str(WorldRegistry.get_world(WorldTravel.current_world).get("name", "")))
+		_mode_label.text = mode + "  ·  " + where + ("  ·  " + tr("联机中") if Net.is_online() else "")
 	for key in _controls:
 		var c: Control = _controls[key][0]
 		var value: Variant = GameSettings.developer_mode if key == "developer_mode" else GameSettings.get(key)
@@ -366,7 +387,20 @@ func _show_wardrobe() -> void:
 	_wardrobe.visible = true
 
 
+## 存好进度，回到大厅首页（换模式、换存档、建房）。
+func _to_lobby() -> void:
+	SaveManager.save()
+	_set_open(false)
+	var lobby := get_parent().get_node_or_null("LobbyMenu") as LobbyMenu
+	if lobby != null:
+		lobby.open()
+
+
 func _show_menu() -> void:
+	if _standalone:
+		_standalone = false
+		_set_open(false)
+		return
 	_wardrobe.visible = false
 	_settings.visible = false
 	_menu.visible = true

@@ -62,6 +62,24 @@ const SHOTS := [
 	{"name": "m2c_02_minimap_poolhouse", "climate": DUSK, "player": [-12.0, 80.0], "heading": 95.0, "pitch": -4.0},
 	{"name": "m2c_03_dev_panel", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "pitch": -2.0, "dev": true},
 	{"name": "m2c_04_settings_view", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "settings": 1},
+	# v0.6 界面：统一主题、大厅的剧情 / 休闲模式卡与更新检测、单语言卷轴（ui_*）
+	{"name": "ui_01_lobby", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "lobby": true},
+	{"name": "ui_02_lobby_en", "lang": "en", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "lobby": true},
+	{"name": "ui_03_lobby_update", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "lobby": true, "update": "0.6.0"},
+	{"name": "ui_04_story_new", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "lobby": true, "lobby_page": "story"},
+	{"name": "ui_05_casual_new", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "lobby": true, "newgame": ""},
+	{"name": "ui_06_join", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "lobby": true, "lobby_page": "join"},
+	{"name": "ui_07_pause", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "pause": true},
+	{"name": "ui_08_settings", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "settings": 0},
+	{"name": "ui_09_prompt_toast", "climate": DUSK, "letters": {}, "player": [-4.3, 26.0], "y": 1.0, "heading": 108.0, "pitch": -26.0, "toast": "发现新地点：码头尽头", "prompt": ["R", "钓鱼"]},
+	{"name": "ui_10_dialogue", "climate": {"season": "SUMMER", "hour": 16.0, "weather": "CLEAR"}, "state": {}, "player": [8.0, -102.2], "heading": 0.0, "pitch": 9.0, "dialogue": true},
+	{"name": "ui_11_journal", "climate": {"season": "SUMMER", "hour": 16.0, "weather": "CLEAR"}, "state": {"quests": {"fireside": "done", "lake_survey": "active", "sky_lamps": "active"}, "species": ["rabbit", "fox", "duck"], "constellations": ["canoe"]}, "player": [-49.0, 27.0], "heading": 75.0, "pitch": -4.0, "journal": 0},
+	{"name": "ui_12_chat", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "chat": "open"},
+	{"name": "ui_13_world_map", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "world_map": true},
+	{"name": "ui_14_scroll_zh", "climate": DUSK, "eye": [-47.1, 1.65, 29.4], "ground": true, "look": [-47.0, 1.75, 32.0]},
+	{"name": "ui_15_scroll_en", "lang": "en", "climate": DUSK, "eye": [-47.1, 1.65, 29.4], "ground": true, "look": [-47.0, 1.75, 32.0]},
+	{"name": "ui_16_dialogue_casual_en", "lang": "en", "casual": true, "climate": {"season": "SUMMER", "hour": 16.0, "weather": "CLEAR"}, "state": {}, "player": [8.0, -102.2], "heading": 0.0, "pitch": 9.0, "dialogue": true},
+	{"name": "ui_17_journal_en", "lang": "en", "climate": DUSK, "trophies": true, "player": [-49.0, 27.0], "heading": 75.0, "journal": 5},
 	{"name": "m3_01_settings_sound", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "settings": 3},
 	{"name": "m2c_05_hands_aquarium", "climate": DUSK, "player": [12.0, 84.0], "y": -5.0, "heading": 270.0, "pitch": -4.0},
 	{"name": "m2e_01_cabin_night_stove", "climate": {"season": "AUTUMN", "hour": 21.0, "weather": "CLEAR"}, "player": [-60.0, 37.0], "heading": 0.0, "seat": "Seat_cabin_sofa_left", "pitch": -12.0},
@@ -590,8 +608,12 @@ func _setup_player_view(shot: Dictionary) -> void:
 		lobby.open_new_game(false)
 		if str(shot["newgame"]) != "":
 			lobby._apply_preset(str(shot["newgame"]))
-	elif lobby != null and lobby.is_open() and lobby._page == LobbyMenu.Page.NEWGAME:
+	elif lobby != null and lobby.is_open() and lobby._page != LobbyMenu.Page.HOME:
 		lobby._show(LobbyMenu.Page.HOME)
+	if lobby != null and shot.has("lobby_page"):
+		lobby._show({"story": LobbyMenu.Page.STORY, "join": LobbyMenu.Page.JOIN, "room": LobbyMenu.Page.ROOM}[str(shot["lobby_page"])])
+	# "casual": true 这一张按休闲模式拍（模式卡、日志、图腾的话都跟着变）
+	GameRules.set_rule("play", "casual" if shot.get("casual", false) else "story")
 	var world_map := _main.get_node("WorldMap") as WorldMap
 	if world_map.open != shot.get("world_map", false):
 		world_map.toggle()
@@ -636,6 +658,12 @@ func _setup_player_view(shot: Dictionary) -> void:
 	await _wait(30)
 	if shot.has("settings"):
 		pause.open_settings(int(shot["settings"]))
+	if shot.get("pause", false):
+		pause._set_open(true)
+	if shot.has("toast"):
+		EventBus.toast_requested.emit(tr(str(shot["toast"])))
+	if shot.has("prompt"):
+		EventBus.interaction_prompt_changed.emit("%s  %s" % [shot["prompt"][0], tr(str(shot["prompt"][1]))])
 	if shot.has("stamina"):
 		GameRules.set_rule("stamina", true)
 		_player.stamina = float(shot["stamina"])

@@ -56,12 +56,12 @@ static func extras() -> Array:
 
 ## 这个新星座的世界已经点亮（可以放出来了）。
 static func unlocked(c: Dictionary) -> bool:
-	return not c.has("requires") or bool(WorldState.flags.get(str(c["requires"]), false))
+	return not c.has("requires") or not GameRules.is_story() or bool(WorldState.flags.get(str(c["requires"]), false))
 
 
-## 已经在天上（原有的、或放过一次的新星座）。
+## 已经在天上（原有的、或放过一次的新星座）。休闲模式没有剧情，八个星座一开始就都在天上。
 static func shown(c: Dictionary) -> bool:
-	return not c.has("requires") or bool(WorldState.flags.get("star_" + str(c["id"]), false))
+	return not c.has("requires") or not GameRules.is_story() or bool(WorldState.flags.get("star_" + str(c["id"]), false))
 
 
 ## 星座中心或其中一颗星的方向（单位向量）。az 北 = 0、顺时针；本世界北 = -Z、东 = +X。

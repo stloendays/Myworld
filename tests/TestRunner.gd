@@ -111,6 +111,7 @@ func _run() -> void:
 	await _test_game_rules()
 	await _test_save_v4()
 	await _test_new_game_menu()
+	await _test_play_modes()
 	await _test_play_lake()
 	await _test_world_travel()
 	_test_startup_guard()
@@ -3129,21 +3130,34 @@ func _sign_by_text(id: String) -> SignBoard:
 func _test_scrolls() -> void:
 	var font := GameSettings.ui_theme().default_font
 	var signs := get_tree().get_nodes_in_group("sign_boards")
-	# 每幅卷轴的文字逐行拼回去和 signs.json 一字不差；每一行都不超出纸面
+	# 每幅卷轴只写一种语言，跟着界面语言走：换语言后重写，文字逐行拼回去和 signs.json 一字不差，
+	# 另一种语言一行都没有；每一行都不超出纸面
 	var text_bad := PackedStringArray()
 	var overflow := PackedStringArray()
-	for s: SignBoard in signs:
-		var t: Dictionary = SignBoard.texts().get(s.text_id, {})
-		for key in ["title_zh", "title_en", "body_zh", "body_en"]:
-			var joined := ""
-			for i in s.lines.size():
-				if s.line_keys[i] == key:
-					joined += s.lines[i].text
-			if joined.replace(" ", "") != str(t.get(key, "")).replace(" ", ""):
-				text_bad.append("%s.%s" % [s.text_id, key])
-		for l: Label3D in s.lines:
-			if l != null and font.get_string_size(l.text, HORIZONTAL_ALIGNMENT_LEFT, -1, l.font_size).x * l.pixel_size > s.panel_size.x - SignBoard.MARGIN * 2.0 + 0.01:
-				overflow.append("%s「%s」" % [s.text_id, l.text.left(8)])
+	var keep_language := GameSettings.language
+	for lang in ["en", "zh"]:
+		GameSettings.set_value("language", lang, false)
+		await _frames(2)
+		var other := "zh" if lang == "en" else "en"
+		for s: SignBoard in signs:
+			if s.language != lang:
+				text_bad.append("%s 没换成 %s" % [s.text_id, lang])
+				continue
+			var t: Dictionary = SignBoard.texts().get(s.text_id, {})
+			for key in ["title_" + lang, "body_" + lang]:
+				var joined := ""
+				for i in s.lines.size():
+					if s.line_keys[i] == key:
+						joined += s.lines[i].text
+				if joined.replace(" ", "") != str(t.get(key, "")).replace(" ", ""):
+					text_bad.append("%s.%s" % [s.text_id, key])
+			if ("title_" + other) in s.line_keys or ("body_" + other) in s.line_keys:
+				text_bad.append("%s 混了 %s" % [s.text_id, other])
+			for l: Label3D in s.lines:
+				if l != null and font.get_string_size(l.text, HORIZONTAL_ALIGNMENT_LEFT, -1, l.font_size).x * l.pixel_size > s.panel_size.x - SignBoard.MARGIN * 2.0 + 0.01:
+					overflow.append("%s「%s」" % [s.text_id, l.text.left(8)])
+	GameSettings.set_value("language", keep_language, false)
+	await _frames(2)
 	var sign := _sign_by_text("trail_poolhouse")
 	var front := sign.global_basis.z
 	front.y = 0.0
@@ -3269,14 +3283,17 @@ func _test_game_rules() -> void:
 	notes.append("仙境 从不 %s · 每晚 %s · 晴夜 %s" % [never_ok, every_ok, clear_ok])
 	# 任务、图鉴开关
 	QuestLog.reset()
-	GameRules.set_rule("quests", false)
-	var no_quest := QuestLog.next_offer().is_empty()
+	# 任务跟着游戏模式走：休闲模式没有任务（勾了也会被合法化掉），剧情模式一定有
+	GameRules.set_rule("play", "casual")
+	GameRules.set_rule("quests", true)
+	var no_quest := QuestLog.next_offer().is_empty() and not GameRules.flag("quests")
 	GameRules.set_rule("journal", false)
 	var no_journal := not QuestLog.record("species", "rabbit", "兔子")
-	GameRules.set_rule("quests", true)
+	GameRules.set_rule("play", "story")
+	var quest_back := not QuestLog.next_offer().is_empty() and GameRules.flag("journal")
+	GameRules.set_rule("play", "casual")
 	GameRules.set_rule("journal", true)
-	var quest_back := not QuestLog.next_offer().is_empty()
-	notes.append("关任务 %s · 关图鉴 %s · 恢复 %s" % [no_quest, no_journal, quest_back])
+	notes.append("休闲没有任务 %s · 关图鉴 %s · 剧情模式恢复 %s" % [no_quest, no_journal, quest_back])
 	# 界面：小地图、罗盘
 	var mm := _main.get_node("Minimap") as Minimap
 	GameRules.set_rule("hud_minimap", false)
@@ -3395,16 +3412,117 @@ func _test_new_game_menu() -> void:
 	await lobby._start_new()
 	await _seconds(0.5)
 	var applied := GameRules.mode() == "challenge" and GameRules.flag("stamina") and WorldState.season_id == &"WINTER" \
-		and absf(WorldState.time_minutes - 720.0) < 2.0 and not lobby.is_open()
+		and absf(WorldState.time_minutes - 720.0) < 2.0 and not lobby.is_open() and not GameRules.is_story() and SaveManager.slot == "casual"
 	var at_dock := Vector2(_player.global_position.x, _player.global_position.z).distance_to(Vector2(-2.0, 26.0)) < 1.5
-	_check("新建游戏设定页：%d 个选项、%d 个一键预设，套预设和换模式会改对应选项，出生点随出生世界变化（云海浮岛 %d 个），开始后规则、季节时刻和出生点都按设定" % [widgets, presets, spawn_items],
-		page_ok and widgets == GameRules.OPTIONS.size() and presets == GameRules.PRESETS.size() and preset_ok and mode_ok and spawn_items >= 5 and applied and at_dock,
+	_check("新建休闲世界设定页：%d 个选项（游戏模式和任务开关不在这里）、%d 个一键预设，套预设和换模式会改对应选项，出生点随出生世界变化（云海浮岛 %d 个），开始后是休闲模式、规则、季节时刻和出生点都按设定" % [widgets, presets, spawn_items],
+		page_ok and widgets == GameRules.OPTIONS.filter(LobbyMenu._listed).size() and presets == GameRules.PRESETS.size() and preset_ok and mode_ok and spawn_items >= 5 and applied and at_dock,
 		"页面 %s · 预设 %s · 模式 %s · 生效 %s · 码头 %s（%.1f, %.1f）" % [page_ok, preset_ok, mode_ok, applied, at_dock, _player.global_position.x, _player.global_position.z])
 	SaveManager.active = false
 	GameRules.set_all(GameRules.defaults())
 	GameRules.apply_ongoing()
 	WorldState.season_override = null
 	(_main.get_node("Systems") as ClimateSystem).apply_preset("Autumn_Dusk_Clear")
+	SaveManager.use_slot("story")
+
+
+# ---------------------------------------------------------------- 剧情模式 / 休闲模式：两个存档槽、休闲没有剧情、联机只开休闲
+
+func _test_play_modes() -> void:
+	var keep := {"dir": SaveManager.dir, "path": SaveManager.path, "slot": SaveManager.slot, "persist": SaveManager.persist, "active": SaveManager.active}
+	var root := "user://test_play_modes"
+	_wipe_dir(root)
+	SaveManager.dir = root.path_join("saves")
+	SaveManager.path = SaveManager.slot_path("story")
+	SaveManager.persist = true
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(SaveManager.dir))
+	var story_file := SaveManager.slot_path("story")
+	var casual_file := SaveManager.slot_path("casual")
+	# v0.5 的单一存档：没有任务的复制到休闲槽、有任务的复制到剧情槽，原文件留着
+	var single := WorldState.snapshot()
+	single["rules"] = GameRules.casual_defaults()
+	_write_json(SaveManager.single_path(), single)
+	SaveManager._migrate_single_save()
+	var to_casual := FileAccess.file_exists(casual_file) and not FileAccess.file_exists(story_file)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(casual_file))
+	single["rules"] = GameRules.story_defaults()
+	_write_json(SaveManager.single_path(), single)
+	SaveManager._migrate_single_save()
+	var to_story := FileAccess.file_exists(story_file) and not FileAccess.file_exists(casual_file) and FileAccess.file_exists(SaveManager.single_path())
+	_wipe_dir(root)
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(SaveManager.dir))
+	# 剧情开一局、改到别的一天存下；再开一局休闲：两个存档都在、互不覆盖
+	await SaveManager.start_new(GameRules.story_defaults())
+	var story_on := SaveManager.slot == "story" and GameRules.is_story() and GameRules.flag("quests")
+	var story_day := WorldState.world_day + 2
+	WorldState.world_day = story_day
+	SaveManager.save()
+	await SaveManager.start_new(GameRules.casual_defaults())
+	var casual_on := SaveManager.slot == "casual" and SaveManager.path == casual_file and not GameRules.is_story() and not GameRules.flag("quests")
+	var both := SaveManager.has_save_in("story") and SaveManager.has_save_in("casual") \
+		and int(SaveManager.summary("story").get("day", 0)) == story_day and int(SaveManager.summary("casual").get("day", 0)) != story_day
+	# 休闲模式没有剧情：图腾只说一句闲话就道别；石头小屋的门推开就进；新星座一开始都在天上；终章不会来
+	var dialogue := _main.get_node("DialoguePanel") as DialoguePanel
+	WorldState.flags["met_totem"] = true
+	var pages := dialogue.build_pages()
+	var chat_only := pages.size() == 1 and (pages[0]["choices"] as Array).size() == 1 and not str(pages[0]["text"]).is_empty()
+	var cottage := get_tree().get_first_node_in_group("stone_cottage") as StoneCottage
+	cottage.door.apply_state("locked")
+	cottage.door.interact(_player)
+	var door_open := str(cottage.door.get("_state")) == "open"
+	cottage.door.apply_state("locked")
+	var stars_up := StarField.extras().all(func(c: Dictionary) -> bool: return StarField.shown(c) and StarField.unlocked(c))
+	for k in StoryDirector.LIGHTS:
+		WorldState.flags[k] = true
+	var story := get_tree().get_first_node_in_group("story_director") as StoryDirector
+	var no_finale := not story.finale_ready()
+	for k in StoryDirector.LIGHTS:
+		WorldState.flags.erase(k)
+	# 回到剧情：读回剧情槽，模式和日子都是剧情那一局的
+	await SaveManager.continue_game("story")
+	var story_back := GameRules.is_story() and SaveManager.slot == "story" and WorldState.world_day == story_day
+	# 联机只开休闲：正在玩剧情时点“创建房间”，先存好剧情进度；还没有休闲世界就先去建一个（建好再开房间），不会用剧情世界开房间
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(story_file))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(casual_file))
+	var lobby := _main.get_node("LobbyMenu") as LobbyMenu
+	lobby.open()
+	await _frames(2)
+	await lobby._host_casual()
+	await _frames(2)
+	var host_flow := FileAccess.file_exists(story_file) and lobby._page == LobbyMenu.Page.NEWGAME and lobby._new_for_host and not Net.is_online()
+	lobby.close()
+	await _frames(2)
+	SaveManager.active = false
+	SaveManager.dir = keep["dir"]
+	SaveManager.path = keep["path"]
+	SaveManager.slot = keep["slot"]
+	SaveManager.persist = keep["persist"]
+	SaveManager.active = keep["active"]
+	_wipe_dir(root)
+	GameRules.set_all(GameRules.defaults())
+	GameRules.apply_ongoing()
+	WorldState.season_override = null
+	(_main.get_node("Systems") as ClimateSystem).apply_preset("Autumn_Dusk_Clear")
+	_check("剧情 / 休闲两种模式：各一个存档槽互不覆盖（v0.5 旧档按有无任务分进去），休闲没有任务、图腾只闲聊、小屋门推开就进、新星座都在天上、不会触发终章；联机只开休闲世界",
+		to_casual and to_story and story_on and casual_on and both and chat_only and door_open and stars_up and no_finale and story_back and host_flow,
+		"迁移 休闲 %s 剧情 %s · 剧情开局 %s · 休闲开局 %s · 两档并存 %s · 图腾闲聊 %s · 门 %s · 星座 %s · 无终章 %s · 读回剧情 %s · 联机走休闲 %s"
+			% [to_casual, to_story, story_on, casual_on, both, chat_only, door_open, stars_up, no_finale, story_back, host_flow])
+
+
+func _write_json(path: String, d: Dictionary) -> void:
+	var f := FileAccess.open(path, FileAccess.WRITE)
+	f.store_string(JSON.stringify(d))
+	f.close()
+
+
+func _wipe_dir(path: String) -> void:
+	var abs := ProjectSettings.globalize_path(path)
+	if not DirAccess.dir_exists_absolute(abs):
+		return
+	for f in DirAccess.get_files_at(abs):
+		DirAccess.remove_absolute(abs.path_join(f))
+	for d in DirAccess.get_directories_at(abs):
+		_wipe_dir(path.path_join(d))
+	DirAccess.remove_absolute(abs)
 
 
 # ---------------------------------------------------------------- v0.5：闪动的根因、沙之门、摄影清单

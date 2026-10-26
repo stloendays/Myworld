@@ -55,6 +55,10 @@ func build_pages() -> Array[Dictionary]:
 	if not WorldState.flags.get("met_totem", false):
 		WorldState.flags["met_totem"] = true
 		out.append({"text": QuestLog.line("greeting"), "choices": []})
+	# 休闲模式没有任务：图腾只说说湖边的事
+	if not GameRules.is_story():
+		out.append({"text": QuestLog.casual_line(), "choices": [{"label": tr("再见。"), "action": "close"}]})
+		return out
 	for q: Dictionary in QuestLog.unthanked():
 		out.append({"text": QuestLog.text(q, "done"), "choices": [], "thank": str(q["id"])})
 	# 暮烬之夜：图腾讲最后一个故事，讲完放终章过场
@@ -181,6 +185,7 @@ func _show_page() -> void:
 		b.text = "%d   %s" % [i + 1, str((choices[i] as Dictionary)["label"])]
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		b.focus_mode = Control.FOCUS_NONE
+		b.custom_minimum_size = Vector2(0, 40)
 		b.pressed.connect(choose.bind(i))
 		_choices.add_child(b)
 	_hint.visible = choices.is_empty()
@@ -201,13 +206,8 @@ func _build() -> void:
 	panel.offset_right = 470.0
 	panel.offset_top = -300.0
 	panel.offset_bottom = -40.0
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.06, 0.05, 0.05, 0.86)
-	sb.border_color = Color(0.85, 0.66, 0.38, 0.8)
-	sb.set_border_width_all(2)
-	sb.set_corner_radius_all(14)
-	sb.content_margin_left = 30.0
-	sb.content_margin_right = 30.0
+	var sb := UiStyle.panel(0.9, 26)
+	sb.border_color = Color(UiStyle.ACCENT, 0.55)
 	sb.content_margin_top = 20.0
 	sb.content_margin_bottom = 18.0
 	panel.add_theme_stylebox_override("panel", sb)
@@ -217,7 +217,7 @@ func _build() -> void:
 	panel.add_child(col)
 	_name_label = Label.new()
 	_name_label.add_theme_font_size_override("font_size", 22)
-	_name_label.add_theme_color_override("font_color", Color(1.0, 0.8, 0.45))
+	_name_label.add_theme_color_override("font_color", UiStyle.ACCENT)
 	col.add_child(_name_label)
 	_text = RichTextLabel.new()
 	_text.fit_content = true
@@ -233,5 +233,5 @@ func _build() -> void:
 	_hint.text = tr("E / 空格  继续        Esc  离开")
 	_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_hint.add_theme_font_size_override("font_size", 16)
-	_hint.add_theme_color_override("font_color", Color(0.85, 0.82, 0.76))
+	_hint.add_theme_color_override("font_color", UiStyle.TEXT_DIM)
 	col.add_child(_hint)

@@ -32,11 +32,13 @@ var _task := -1
 var _image: Image = null
 var _zone_names := {}
 var _world: MiniWorld = null   ## 在云海浮岛、琥珀沙丘等世界里：底图、图形和标记都由那个世界提供
+var _covered := false   ## 大厅、日志、地图等面板开着时收起来
 
 
 func _ready() -> void:
 	layer = 4
 	add_to_group("minimap")
+	add_to_group(UiStyle.CHROME_GROUP)
 	_world = get_tree().get_first_node_in_group("world_root") as MiniWorld
 	_build()
 	if _world != null:
@@ -64,7 +66,12 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _sync_visibility() -> void:
-	_root.visible = GameSettings.minimap_enabled and GameRules.flag("hud_minimap")
+	_root.visible = GameSettings.minimap_enabled and GameRules.flag("hud_minimap") and not _covered
+
+
+func sync_cover() -> void:
+	_covered = UiStyle.cover_open(get_tree())
+	_sync_visibility()
 
 
 func is_ready() -> bool:
@@ -121,6 +128,8 @@ func _process(_delta: float) -> void:
 		_task = -1
 		map_texture = ImageTexture.create_from_image(_image)
 		_image.save_png(_cache_path())
+	if UiStyle.cover_open(get_tree()) != _covered:
+		sync_cover()
 	if not _root.visible:
 		return
 	_canvas.queue_redraw()

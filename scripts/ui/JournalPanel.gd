@@ -16,12 +16,15 @@ var _lore_box: VBoxContainer
 var _ach_box: VBoxContainer
 var _tracker: VBoxContainer
 var _tracker_panel: PanelContainer
+var _tracker_holder: Control
 var _player: FirstPersonController = null
 
 
 func _ready() -> void:
+	add_to_group(UiStyle.COVER_GROUP)
 	layer = 18
 	add_to_group("journal_panel")
+	add_to_group(UiStyle.CHROME_GROUP)
 	_build()
 	_build_tracker()
 	_root.visible = false
@@ -96,31 +99,33 @@ func _refresh() -> void:
 		if st == "":
 			continue
 		any = true
-		var title := _label(("✓  " if st == "done" else "◆  ") + QuestLog.text(q, "title"), 22, Color(0.75, 0.95, 0.7) if st == "done" else Color(1.0, 0.85, 0.5))
+		var title := _label(("✓  " if st == "done" else "◆  ") + QuestLog.text(q, "title"), 22, Color(0.75, 0.95, 0.7) if st == "done" else UiStyle.ACCENT)
 		_quest_box.add_child(title)
 		for o: Dictionary in q.get("objectives", []):
 			var line := "      " + QuestLog.text(o, "text")
 			if st == "active" and player != null:
 				var p := QuestLog.objective_progress(o, player)
 				line += "   %d / %d" % [p.x, p.y]
-			_quest_box.add_child(_label(line, 18, Color(0.92, 0.9, 0.86)))
+			_quest_box.add_child(_label(line, 18, UiStyle.TEXT))
 	var left := 0
 	for q: Dictionary in QuestLog.quests():
 		if QuestLog.state_of(str(q["id"])) == "":
 			left += 1
-	if not any:
-		_quest_box.add_child(_label(tr("还没有任务。去北边山洞里找老图腾说说话。"), 20, Color(0.92, 0.9, 0.86)))
-	if left > 0:
+	if not GameRules.is_story():
+		_quest_box.add_child(_label(tr("休闲模式没有图腾的任务：随便走走、钓钓鱼、看看星星。想跟着老图腾的故事走，回大厅选剧情模式。"), 20, UiStyle.TEXT))
+	elif not any:
+		_quest_box.add_child(_label(tr("还没有任务。去北边山洞里找老图腾说说话。"), 20, UiStyle.TEXT))
+	if left > 0 and GameRules.is_story():
 		_quest_box.add_child(_label(tr("还有 %d 个任务，老图腾会一个一个告诉你。") % left, 18, Color(0.8, 0.78, 0.74)))
 	# 图鉴：动物（陆地 + 水里）与星座
 	var seen: Array = WorldState.journal_list("species")
 	var all_species := (FaunaData.data().get("species", {}) as Dictionary).keys()
 	all_species.erase("fairy")
-	_dex_box.add_child(_label(tr("动物  %d / %d") % [seen.filter(func(s: String) -> bool: return s in all_species).size(), all_species.size()], 22, Color(1.0, 0.85, 0.5)))
+	_dex_box.add_child(_label(tr("动物  %d / %d") % [seen.filter(func(s: String) -> bool: return s in all_species).size(), all_species.size()], 22, UiStyle.ACCENT))
 	_dex_box.add_child(_grid(all_species.map(func(s: String) -> String: return QuestLog.species_label(s) if s in seen else "？？？")))
 	var stars: Array = WorldState.journal_list("constellations")
 	var all_stars := StarField.constellations()
-	_dex_box.add_child(_label(tr("星座  %d / %d") % [stars.size(), all_stars.size()], 22, Color(1.0, 0.85, 0.5)))
+	_dex_box.add_child(_label(tr("星座  %d / %d") % [stars.size(), all_stars.size()], 22, UiStyle.ACCENT))
 	_dex_box.add_child(_grid(all_stars.map(func(c: Dictionary) -> String: return QuestLog.text(c, "name") if str(c["id"]) in stars else "？？？")))
 	_refresh_collection()
 	_refresh_play()
@@ -136,7 +141,7 @@ func _refresh_tracker(player: FirstPersonController) -> void:
 	_tracker_panel.visible = not ids.is_empty()
 	for id: String in ids.slice(0, 3):
 		var q := QuestLog.get_quest(id)
-		_tracker.add_child(_label(QuestLog.text(q, "title"), 20, Color(1.0, 0.85, 0.5), true))
+		_tracker.add_child(_label(QuestLog.text(q, "title"), 20, UiStyle.ACCENT, true))
 		for o: Dictionary in q.get("objectives", []):
 			var line := QuestLog.text(o, "text")
 			if player != null:
@@ -147,9 +152,15 @@ func _refresh_tracker(player: FirstPersonController) -> void:
 
 
 func _process(_delta: float) -> void:
+	sync_cover()
 	# 进度（比如走到哪了）随时在变：每秒刷新一次追踪栏
 	if Engine.get_process_frames() % 60 == 0 and _tracker_panel.visible:
 		_refresh_tracker(get_tree().get_first_node_in_group("local_player") as FirstPersonController)
+
+
+## 日志、地图、暂停这些面板开着时收起追踪栏，免得压在面板上。
+func sync_cover() -> void:
+	_tracker_holder.visible = not UiStyle.cover_open(get_tree())
 
 
 func _label(text: String, size: int, color: Color, shadow := false) -> Label:
@@ -170,7 +181,7 @@ func _grid(names: Array) -> GridContainer:
 	g.add_theme_constant_override("h_separation", 18)
 	g.add_theme_constant_override("v_separation", 6)
 	for n: String in names:
-		var l := _label(n, 18, Color(0.92, 0.9, 0.86) if n != "？？？" else Color(0.6, 0.58, 0.56))
+		var l := _label(n, 18, UiStyle.TEXT if n != "？？？" else UiStyle.TEXT_DIM)
 		l.custom_minimum_size = Vector2(150.0, 0.0)
 		g.add_child(l)
 	return g
@@ -189,7 +200,7 @@ func _build() -> void:
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_root.add_child(center)
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(900.0, 560.0)
+	panel.custom_minimum_size = Vector2(960.0, 600.0)
 	center.add_child(panel)
 	var margin := MarginContainer.new()
 	for side in ["left", "right", "top", "bottom"]:
@@ -200,7 +211,7 @@ func _build() -> void:
 	margin.add_child(col)
 	var head := HBoxContainer.new()
 	col.add_child(head)
-	var title := _label(tr("旅行日志"), 28, Color(1.0, 0.92, 0.75))
+	var title := _label(tr("旅行日志"), 30, UiStyle.ACCENT)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title)
 	head.add_child(_label(tr("J / Esc  关闭"), 16, Color(0.85, 0.82, 0.76)))
@@ -228,22 +239,18 @@ func _page(tab_name: String) -> VBoxContainer:
 
 
 func _build_tracker() -> void:
-	var holder := Control.new()
-	holder.set_anchors_preset(Control.PRESET_FULL_RECT)
-	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(holder)
+	_tracker_holder = Control.new()
+	_tracker_holder.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_tracker_holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_tracker_holder)
 	_tracker_panel = PanelContainer.new()
 	_tracker_panel.position = Vector2(20.0, 110.0)
 	_tracker_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.05, 0.05, 0.06, 0.45)
-	sb.set_corner_radius_all(10)
-	sb.content_margin_left = 14.0
-	sb.content_margin_right = 16.0
-	sb.content_margin_top = 8.0
-	sb.content_margin_bottom = 10.0
+	var sb := UiStyle.pill(0.5)
+	sb.content_margin_top = 10.0
+	sb.content_margin_bottom = 12.0
 	_tracker_panel.add_theme_stylebox_override("panel", sb)
-	holder.add_child(_tracker_panel)
+	_tracker_holder.add_child(_tracker_panel)
 	_tracker = VBoxContainer.new()
 	_tracker.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_tracker.add_theme_constant_override("separation", 2)
@@ -254,8 +261,8 @@ func _build_tracker() -> void:
 func _refresh_collection() -> void:
 	for c in _collect_box.get_children():
 		c.queue_free()
-	var head := Color(1.0, 0.85, 0.5)
-	var body := Color(0.92, 0.9, 0.86)
+	var head := UiStyle.ACCENT
+	var body := UiStyle.TEXT
 	_collect_box.add_child(_label(tr("探索点"), 22, head))
 	var lake_found := 0
 	for poi in Exploration.pois():
@@ -303,8 +310,8 @@ static func _kind_count(kind: String) -> Vector2i:
 func _refresh_play() -> void:
 	for c in _play_box.get_children():
 		c.queue_free()
-	var head := Color(1.0, 0.85, 0.5)
-	var body := Color(0.92, 0.9, 0.86)
+	var head := UiStyle.ACCENT
+	var body := UiStyle.TEXT
 	var fl := Play.fish_list()
 	_play_box.add_child(_label(tr("鱼  %d / %d（R 钓鱼）") % [WorldState.catches.size(), fl.size()], 22, head))
 	_play_box.add_child(_grid(fl.map(_fish_cell)))
@@ -345,40 +352,40 @@ func _refresh_lore() -> void:
 	for c in _lore_box.get_children():
 		c.queue_free()
 	var letters := PaddlerStory.letters()
-	_lore_box.add_child(_label(tr("划船人的信  %d / %d") % [PaddlerStory.read_ids().size(), letters.size()], 22, Color(1.0, 0.85, 0.5)))
+	_lore_box.add_child(_label(tr("划船人的信  %d / %d") % [PaddlerStory.read_ids().size(), letters.size()], 22, UiStyle.ACCENT))
 	for l: Dictionary in letters:
 		if PaddlerStory.is_read(str(l["id"])):
-			_lore_box.add_child(_label(PaddlerStory.text(l, "title"), 20, Color(1.0, 0.75, 0.5)))
-			var body := _label(PaddlerStory.text(l, "text") + "\n" + PaddlerStory.signature(), 18, Color(0.92, 0.9, 0.86))
+			_lore_box.add_child(_label(PaddlerStory.text(l, "title"), 20, UiStyle.ACCENT_DEEP.lightened(0.15)))
+			var body := _label(PaddlerStory.text(l, "text") + "\n" + PaddlerStory.signature(), 18, UiStyle.TEXT)
 			body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			body.custom_minimum_size = Vector2(820.0, 0.0)
 			_lore_box.add_child(body)
 		else:
-			_lore_box.add_child(_label(tr("？？？（还没找到这封信）"), 18, Color(0.6, 0.58, 0.56)))
+			_lore_box.add_child(_label(tr("？？？（还没找到这封信）"), 18, UiStyle.TEXT_DIM))
 	# 暮烬之夜以后书桌上的第四封信：读过才列出来（之前不提示还有一封）
 	if PaddlerStory.is_read(PaddlerStory.FAREWELL):
 		var f := PaddlerStory.letter(PaddlerStory.FAREWELL)
-		_lore_box.add_child(_label(PaddlerStory.text(f, "title"), 20, Color(1.0, 0.75, 0.5)))
-		var fb := _label(PaddlerStory.text(f, "text") + "\n" + PaddlerStory.signature(), 18, Color(0.92, 0.9, 0.86))
+		_lore_box.add_child(_label(PaddlerStory.text(f, "title"), 20, UiStyle.ACCENT_DEEP.lightened(0.15)))
+		var fb := _label(PaddlerStory.text(f, "text") + "\n" + PaddlerStory.signature(), 18, UiStyle.TEXT)
 		fb.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		fb.custom_minimum_size = Vector2(820.0, 0.0)
 		_lore_box.add_child(fb)
 	_lore_box.add_child(_label(" ", 12, Color.WHITE))
 	var lore: Dictionary = MiniWorld.data_for("world_04").get("lore", {})
 	var read: Array = WorldState.journal_list("lore")
-	_lore_box.add_child(_label(tr("亚特兰蒂斯的石板  %d / %d") % [read.size(), lore.size()], 22, Color(1.0, 0.85, 0.5)))
+	_lore_box.add_child(_label(tr("亚特兰蒂斯的石板  %d / %d") % [read.size(), lore.size()], 22, UiStyle.ACCENT))
 	var keys := lore.keys()
 	keys.sort()
 	for k: String in keys:
 		var e: Dictionary = lore[k]
 		if k in read:
-			_lore_box.add_child(_label(QuestLog.text(e, "title"), 20, Color(1.0, 0.75, 0.5)))
-			var t := _label(QuestLog.text(e, "text"), 18, Color(0.92, 0.9, 0.86))
+			_lore_box.add_child(_label(QuestLog.text(e, "title"), 20, UiStyle.ACCENT_DEEP.lightened(0.15)))
+			var t := _label(QuestLog.text(e, "text"), 18, UiStyle.TEXT)
 			t.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			t.custom_minimum_size = Vector2(820.0, 0.0)
 			_lore_box.add_child(t)
 		else:
-			_lore_box.add_child(_label(tr("？？？（还没找到这块石板）"), 18, Color(0.6, 0.58, 0.56)))
+			_lore_box.add_child(_label(tr("？？？（还没找到这块石板）"), 18, UiStyle.TEXT_DIM))
 
 
 ## 成就页。
@@ -387,7 +394,7 @@ func _refresh_achievements() -> void:
 		c.queue_free()
 	var list := Play.achievements()
 	var got := WorldState.achievements
-	_ach_box.add_child(_label(tr("成就  %d / %d") % [got.size(), list.size()] + ("" if GameRules.flag("achievements") else tr("（这一局关掉了成就）")), 22, Color(1.0, 0.85, 0.5)))
+	_ach_box.add_child(_label(tr("成就  %d / %d") % [got.size(), list.size()] + ("" if GameRules.flag("achievements") else tr("（这一局关掉了成就）")), 22, UiStyle.ACCENT))
 	for a: Dictionary in list:
 		var done := str(a["id"]) in got
 		_ach_box.add_child(_label(("✓  " if done else "·  ") + Play.text(a, "name") + "  —  " + Play.text(a, "desc"), 18,

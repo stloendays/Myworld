@@ -307,9 +307,7 @@ func ui_theme() -> Theme:
 		var font := SystemFont.new()
 		font.font_names = PackedStringArray(["Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC",
 			"Noto Sans CJK SC", "Noto Sans SC", "sans-serif"])
-		_theme = Theme.new()
-		_theme.default_font = font
-		_theme.default_font_size = 18
+		_theme = UiStyle.build_theme(font)
 	return _theme
 
 

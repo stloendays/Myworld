@@ -1,6 +1,9 @@
 extends Node
-## 世界存档（Autoload，v0.5 起真正启用）：WorldState.snapshot() 写成 user://saves/world.json（版本化 JSON，
-## 先写临时文件再原子替换），里面有本局规则（GameRules）、时间天气、发现、任务与图鉴、收集品、门灯状态、船、玩家所在世界与位置。
+## 世界存档（Autoload，v0.5 起真正启用）：WorldState.snapshot() 写成版本化 JSON（先写临时文件再原子替换）。
+## 剧情模式和休闲模式各一个存档槽：user://saves/story.json、casual.json（v0.5 的单一存档 world.json 第一次启动时
+## 按它的规则复制到对应的槽——有图腾任务的算剧情，没有的算休闲——原文件留着不动）。联机只开休闲模式的世界。
+## 存档里
+## 有本局规则（GameRules）、时间天气、发现、任务与图鉴、收集品、门灯状态、船、玩家所在世界与位置。
 ##   · 新建游戏（大厅“新建游戏”页）：旧存档先备份成 world.bak.json，清掉进度，按规则设好开局，去出生世界；
 ##   · 继续：读档 → 迁移到当前版本（v1–v3 的旧档、或只有旧的 user://journal.json 时都能读）→ 恢复状态 → 回到存档时的世界和位置；
 ##   · 本局开始后每 60 s、换世界后、退出游戏时自动存；联机做客时不存（世界是房主的）。
@@ -9,15 +12,14 @@ extends Node
 signal saved
 signal loaded
 
-const DIR := "user://saves"
-const PATH := "user://saves/world.json"
-const BACKUP := "user://saves/world.bak.json"
-const LEGACY_JOURNAL := "user://journal.json"   ## v0.4 只存了任务与图鉴（存档 v3）
+const SLOTS := ["story", "casual"]
 const AUTOSAVE_SECONDS := 60.0
 
 var persist := true          ## false：不碰磁盘（自动检查、截图工具）
 var active := false          ## 本局已开始（新建或继续），才自动存
-var path := PATH             ## 自动检查可以改到别的文件
+var dir := "user://saves"   ## 存档文件夹；自动检查改到别处，不碰真的存档
+var slot := "story"          ## 现在用的存档槽：story / casual
+var path := "user://saves/story.json"   ## 自动检查可以改到别的文件
 var last_error := ""
 
 var _timer := AUTOSAVE_SECONDS
@@ -28,6 +30,57 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	persist = DisplayServer.get_name() != "headless" and not QuestLog._is_dev_run()
 	WorldTravel.travel_finished.connect(_on_travel_finished)
+	if persist:
+		_migrate_single_save()
+
+
+## 剧情 / 休闲槽的文件。
+func slot_path(s: String) -> String:
+	return dir.path_join((s if s in SLOTS else "story") + ".json")
+
+
+## v0.5 的单一存档（只作迁移来源）。
+func single_path() -> String:
+	return dir.path_join("world.json")
+
+
+## v0.4 只存了任务与图鉴（存档 v3），在存档文件夹旁边。
+func legacy_journal() -> String:
+	return dir.get_base_dir().path_join("journal.json")
+
+
+## v0.5 只有一个存档 world.json：两个槽都还没有时，按它的规则复制到剧情或休闲的槽。
+func _migrate_single_save() -> void:
+	if not FileAccess.file_exists(single_path()):
+		return
+	for k in SLOTS:
+		if FileAccess.file_exists(slot_path(k)):
+			return
+	var raw: Variant = JSON.parse_string(FileAccess.get_file_as_string(single_path()))
+	if not raw is Dictionary:
+		return
+	var rules: Dictionary = (raw as Dictionary).get("rules", {})
+	var s := "story" if bool(rules.get("quests", true)) else "casual"
+	DirAccess.copy_absolute(ProjectSettings.globalize_path(single_path()), ProjectSettings.globalize_path(slot_path(s)))
+
+
+## 换存档槽（剧情 / 休闲）。自动检查改过 path 时不动它。
+func use_slot(s: String) -> void:
+	var was_slot := path == single_path()
+	for k in SLOTS:
+		was_slot = was_slot or path == slot_path(k)
+	slot = s if s in SLOTS else "story"
+	if was_slot:
+		path = slot_path(slot)
+
+
+func has_save_in(s: String) -> bool:
+	return FileAccess.file_exists(slot_path(s)) or (s == "story" and _legacy_only())
+
+
+## 只有 v0.4 的 journal.json（没有 v0.5 的单一存档）：剧情槽从它接着玩。
+func _legacy_only() -> bool:
+	return not FileAccess.file_exists(single_path()) and FileAccess.file_exists(legacy_journal())
 
 
 func _notification(what: int) -> void:
@@ -49,16 +102,20 @@ func request_save() -> void:
 
 
 func has_save() -> bool:
-	return FileAccess.file_exists(path) or (path == PATH and FileAccess.file_exists(LEGACY_JOURNAL))
+	return has_save_in(slot) if path == slot_path(slot) else FileAccess.file_exists(path)
 
 
 ## 读出并迁移到当前版本；没有存档返回空字典。只有旧的 journal.json 时把它当成 v3 存档。
 func read() -> Dictionary:
+	return read_file(path)
+
+
+func read_file(file: String) -> Dictionary:
 	var raw: Variant = null
-	if FileAccess.file_exists(path):
-		raw = JSON.parse_string(FileAccess.get_file_as_string(path))
-	elif path == PATH and FileAccess.file_exists(LEGACY_JOURNAL):
-		raw = JSON.parse_string(FileAccess.get_file_as_string(LEGACY_JOURNAL))
+	if FileAccess.file_exists(file):
+		raw = JSON.parse_string(FileAccess.get_file_as_string(file))
+	elif file == slot_path("story") and _legacy_only():
+		raw = JSON.parse_string(FileAccess.get_file_as_string(legacy_journal()))
 		if raw is Dictionary:
 			(raw as Dictionary)["schema_version"] = int((raw as Dictionary).get("schema_version", 3))
 			(raw as Dictionary)["legacy"] = true
@@ -67,15 +124,20 @@ func read() -> Dictionary:
 	return WorldState.migrate(raw)
 
 
-## 大厅首页“继续”按钮上的一行：世界、第几天、季节、时刻、玩法。
-func summary() -> Dictionary:
-	var d := read()
+## 大厅模式卡上“继续”那一行：世界、第几天、时刻、玩法风格、完成了几个任务。s 为空时用现在的槽。
+func summary(s := "") -> Dictionary:
+	var d := read_file(slot_path(s) if s in SLOTS else path)
 	if d.is_empty():
 		return {}
+	var done := 0
+	for q in (d.get("quests", {}) as Dictionary).values():
+		if q is Dictionary and str(q.get("state", "")) == "done":
+			done += 1
 	var p: Dictionary = d.get("player", {})
 	var r: Dictionary = d.get("rules", {})
 	return {"world": str(p.get("world", "dusk_lake")), "day": int(d.get("world_day", 1)), "minutes": float(d.get("time_minutes", 0.0)),
-		"mode": str(r.get("mode", "explore")), "saved_at": str(d.get("saved_at", "")), "legacy": d.get("legacy", false)}
+		"mode": str(r.get("mode", "explore")), "saved_at": str(d.get("saved_at", "")), "legacy": d.get("legacy", false),
+		"quests_done": done}
 
 
 ## 当前世界的完整快照（含玩家位置）。
@@ -100,7 +162,7 @@ func save() -> bool:
 	if not persist:
 		saved.emit()
 		return true
-	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(DIR))
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(path.get_base_dir()))
 	var tmp := path + ".tmp"
 	var f := FileAccess.open(tmp, FileAccess.WRITE)
 	if f == null:
@@ -120,8 +182,9 @@ func save() -> bool:
 
 ## 新建游戏：rules 是设定页选好的整套规则。备份旧档 → 清进度 → 规则生效 → 开局时间天气 → 去出生世界的出生点。
 func start_new(rules: Dictionary) -> void:
+	use_slot(str(rules.get("play", "story")))
 	if persist and FileAccess.file_exists(path):
-		DirAccess.copy_absolute(ProjectSettings.globalize_path(path), ProjectSettings.globalize_path(BACKUP))
+		DirAccess.copy_absolute(ProjectSettings.globalize_path(path), ProjectSettings.globalize_path(path.get_basename() + ".bak.json"))
 	WorldState.reset_progress()
 	QuestLog.reset()
 	GameRules.set_all(rules)
@@ -139,8 +202,10 @@ func start_new(rules: Dictionary) -> void:
 	save()
 
 
-## 继续上次的世界：读档、恢复状态、回到存档时的世界与位置。没有存档返回 false。
-func continue_game() -> bool:
+## 继续上次的世界：读档、恢复状态、回到存档时的世界与位置。s = 存档槽（空 = 现在的槽）。没有存档返回 false。
+func continue_game(s := "") -> bool:
+	if s != "":
+		use_slot(s)
 	var d := read()
 	if d.is_empty():
 		return false
@@ -148,14 +213,16 @@ func continue_game() -> bool:
 	if d.get("legacy", false):
 		var q: Dictionary = d.get("quests", {})
 		var j: Dictionary = d.get("journal", {})
-		await start_new(GameRules.defaults())
+		await start_new(GameRules.story_defaults())
 		WorldState.quests = q.duplicate(true)
 		WorldState.journal = j.duplicate(true)
 		QuestLog.changed.emit()
 		save()
 		return true
 	WorldState.restore(d)
-	GameRules.set_all(d.get("rules", {}))
+	var rules: Dictionary = (d.get("rules", {}) as Dictionary).duplicate()
+	rules["play"] = slot     # 槽决定模式（v0.5 的旧档里没有这一项）
+	GameRules.set_all(rules)
 	_apply_scene_state()
 	GameRules.apply_ongoing()
 	QuestLog.changed.emit()
