@@ -38,6 +38,9 @@ const ACTIONS := {
 	"action_4": [KEY_4],
 	"photo": [KEY_F12],
 	"journal": [KEY_J],
+	"fish": [KEY_R],
+	"skip_stone": [KEY_Q],
+	"dig": [KEY_B],
 }
 
 ## 鼠标按键：右键 = 用手（对着东西就用，没对着就挥手）

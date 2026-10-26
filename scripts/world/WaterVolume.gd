@@ -9,6 +9,7 @@ extends Node3D
 @export var size := Vector3(4.0, 2.0, 4.0)
 @export var radius := 0.0          ## > 0 时为圆柱，size.y 为高度
 @export var open_top := true
+@export var speed_scale := 1.0     ## 游泳速度倍率（亚特兰蒂斯的大海里游得快一点，地图大）
 
 
 func _ready() -> void:

@@ -1,0 +1,28 @@
+{
+  "_doc": "钓鱼（PlayActivities、Play 读取）。waters：每片水域能钓到的鱼（湖 lake、绿洲 oasis、浮岛池塘 pond、亚特兰蒂斯 atlantis）。fish：weight 越大越常见，size 是长度范围（厘米）。recipes：炉火烹饪的菜（fish 用几条鱼，kinds 至少几种不同的鱼），吃了得到 buff（倍率 × seconds 秒）。",
+  "fish": [
+    {"id": "perch", "name": "河鲈", "name_en": "Perch", "waters": ["lake"], "weight": 5, "size": [14, 32], "color": [0.55, 0.6, 0.32]},
+    {"id": "trout", "name": "虹鳟", "name_en": "Rainbow Trout", "waters": ["lake"], "weight": 4, "size": [22, 48], "color": [0.7, 0.62, 0.68]},
+    {"id": "carp", "name": "鲤鱼", "name_en": "Carp", "waters": ["lake"], "weight": 3, "size": [30, 70], "color": [0.72, 0.56, 0.3]},
+    {"id": "golden_trout", "name": "金色湖鳟", "name_en": "Golden Trout", "waters": ["lake"], "weight": 1, "size": [30, 55], "color": [1.0, 0.78, 0.3]},
+    {"id": "pupfish", "name": "沙漠鳉", "name_en": "Desert Pupfish", "waters": ["oasis"], "weight": 5, "size": [4, 9], "color": [0.4, 0.55, 0.85]},
+    {"id": "tilapia", "name": "绿洲罗非", "name_en": "Oasis Tilapia", "waters": ["oasis"], "weight": 4, "size": [15, 35], "color": [0.5, 0.58, 0.5]},
+    {"id": "amber_catfish", "name": "琥珀鲶", "name_en": "Amber Catfish", "waters": ["oasis"], "weight": 1, "size": [40, 90], "color": [0.85, 0.55, 0.25]},
+    {"id": "cloud_minnow", "name": "云雀鱼", "name_en": "Cloud Minnow", "waters": ["pond"], "weight": 5, "size": [5, 12], "color": [0.9, 0.92, 1.0]},
+    {"id": "sky_koi", "name": "天蓝锦鲤", "name_en": "Sky Koi", "waters": ["pond"], "weight": 1, "size": [30, 60], "color": [0.45, 0.7, 1.0]},
+    {"id": "bream", "name": "山铜鲷", "name_en": "Orichalcum Bream", "waters": ["atlantis"], "weight": 4, "size": [18, 40], "color": [0.95, 0.5, 0.3]},
+    {"id": "lanternfish", "name": "灯笼鱼", "name_en": "Lanternfish", "waters": ["atlantis"], "weight": 4, "size": [6, 15], "color": [0.4, 0.9, 1.0]},
+    {"id": "mackerel", "name": "银鲭", "name_en": "Silver Mackerel", "waters": ["atlantis"], "weight": 3, "size": [25, 45], "color": [0.7, 0.78, 0.85]},
+    {"id": "temple_eel", "name": "古城海鳗", "name_en": "Temple Eel", "waters": ["atlantis"], "weight": 1, "size": [60, 140], "color": [0.35, 0.45, 0.4]}
+  ],
+  "recipes": [
+    {"id": "grilled_fish", "name": "烤鱼", "name_en": "Grilled Fish", "fish": 1, "kinds": 1, "buff": "well_fed"},
+    {"id": "fish_soup", "name": "鱼汤", "name_en": "Fish Soup", "fish": 2, "kinds": 1, "buff": "warm"},
+    {"id": "seafood_platter", "name": "海鲜拼盘", "name_en": "Seafood Platter", "fish": 3, "kinds": 3, "buff": "vigor"}
+  ],
+  "buffs": {
+    "well_fed": {"name": "饱足", "name_en": "Well fed", "desc": "体力恢复快一倍", "desc_en": "Stamina recovers twice as fast", "seconds": 300, "mult": {"stamina_regen": 2.0}},
+    "warm": {"name": "暖身", "name_en": "Warm", "desc": "海底的氧气多撑一倍", "desc_en": "Air lasts twice as long under the sea", "seconds": 300, "mult": {"oxygen_drain": 0.5}},
+    "vigor": {"name": "活力", "name_en": "Vigour", "desc": "游得快三成、体力恢复快一倍、氧气更耐用", "desc_en": "Swim 30% faster, stamina recovers twice as fast, air lasts longer", "seconds": 300, "mult": {"swim_speed": 1.3, "stamina_regen": 2.0, "oxygen_drain": 0.7}}
+  }
+}

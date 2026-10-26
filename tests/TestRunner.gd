@@ -107,6 +107,7 @@ func _run() -> void:
 	await _test_game_rules()
 	await _test_save_v4()
 	await _test_new_game_menu()
+	await _test_play_lake()
 	await _test_world_travel()
 	_report()
 
@@ -405,8 +406,14 @@ func _test_world_travel() -> void:
 			planned += 1
 	var notes := PackedStringArray()
 	var all_ok: bool = blocked_here and planned == 0
-	for target in ["world_02", "world_03"]:
-		var ok_go := WorldRegistry.enter(target)
+	var welcome_ok := true
+	for target in ["world_02", "world_03", "world_04"]:
+		# 亚特兰蒂斯从水族馆海洋大缸底部的石环潜过去；另外两个用世界地图里的入口（和光门一样走 WorldRegistry）
+		var ok_go := false
+		if target == "world_04":
+			ok_go = await _swim_through_ring()
+		else:
+			ok_go = WorldRegistry.enter(target)
 		await WorldTravel.travel_finished
 		var w := get_tree().get_first_node_in_group("world_root") as MiniWorld
 		var only_one: bool = get_tree().get_nodes_in_group("world_root").size() == 1 and w != null and w.world_id == target \
@@ -420,10 +427,16 @@ func _test_world_travel() -> void:
 		var mm := w.get_node("Minimap") as Minimap
 		var wm := w.get_node("WorldMap") as WorldMap
 		var maps_ok := mm._world == w and mm.map_texture != null and wm._rect() == w.map_rect() and w.get_node_or_null("CompassBar") != null
+		# 左下角的欢迎语按当前世界写（以前在别的世界也写“欢迎来到暮色湖畔”）
+		var chat := w.get_node("ChatBox") as ChatBox
+		var wname := tr(str(WorldRegistry.get_world(target)["name"]))
+		welcome_ok = welcome_ok and not chat.messages.is_empty() and str(chat.messages[0]["text"]).contains(wname) and WorldTravel.current_world == target
 		if target == "world_02":
 			await _check_cloudsea(w as World02)
-		else:
+		elif target == "world_03":
 			await _check_dunes(w as World03)
+		else:
+			await _check_atlantis(w as World04)
 		var back := WorldRegistry.enter("dusk_lake")
 		await WorldTravel.travel_finished
 		_main = get_tree().get_first_node_in_group("world_root") as Node3D
@@ -438,8 +451,25 @@ func _test_world_travel() -> void:
 		notes.append("%s：节点 %d → %d（卸载后 %d）· 静态内存 %.0f → %.0f → 回湖畔 %.0f MB · 小地图/世界地图 %s · 回到门前 %s · %d ms" % [target, nodes_lake, nodes_w,
 			int(r.get("nodes_unloaded", 0)), mem_lake / 1048576.0, mem_w / 1048576.0, mem_back / 1048576.0, maps_ok, at_gate, int(r.get("ms", 0))])
 	var lobby := _main.get_node_or_null("LobbyMenu") as LobbyMenu
-	_check("跨世界：图腾山洞的光门去云海浮岛、南部草甸的沙之门去琥珀沙丘，每次先卸载再加载（只有一个世界），新世界有自己的小地图、世界地图和罗盘；回湖畔站在门前，内存不涨",
+	_check("跨世界：图腾山洞的光门去云海浮岛、南部草甸的沙之门去琥珀沙丘、水族馆大缸的石环潜去亚特兰蒂斯，每次先卸载再加载（只有一个世界），新世界有自己的小地图、世界地图和罗盘；回湖畔站在门前，内存不涨",
 		all_ok and (lobby == null or not lobby.is_open()), "；".join(notes))
+	_check("欢迎语按当前世界：在云海浮岛、琥珀沙丘、亚特兰蒂斯左下角写的是那个世界的名字，世界根节点自己声明当前世界", welcome_ok)
+	# 回来都还在：再去一次亚特兰蒂斯，尖塔亮着、大门开着、石板还在日志里
+	WorldRegistry.enter("world_04")
+	await WorldTravel.travel_finished
+	var w4 := get_tree().get_first_node_in_group("world_root") as World04
+	_player = w4.player
+	await _seconds(1.0)
+	var kept: bool = w4.puzzle_done and w4.door_open and w4.spire_light.visible and WorldState.journal_list("lore").has("lore_6") \
+		and not (w4.items.filter(func(it: Dictionary) -> bool: return str(it["id"]) == "tablet_06")[0]["node"] as Node3D).visible
+	WorldRegistry.enter("dusk_lake")
+	await WorldTravel.travel_finished
+	_main = get_tree().get_first_node_in_group("world_root") as Node3D
+	_player = get_tree().get_first_node_in_group("local_player") as FirstPersonController
+	await _seconds(1.0)
+	var mem_end := Performance.get_monitor(Performance.MEMORY_STATIC)
+	_check("亚特兰蒂斯的进度回来还在：再去一次，尖塔亮着、神殿大门开着、捡过的石板不再出现；回湖畔内存不涨",
+		kept and mem_end < mem_lake * 1.15, "保留 %s · 静态内存 %.0f → %.0f MB" % [kept, mem_lake / 1048576.0, mem_end / 1048576.0])
 
 
 func _mw_setup(w: MiniWorld, xz: Vector2, yaw: float) -> void:
@@ -1551,8 +1581,8 @@ func _test_exploration_save() -> void:
 	var snap := WorldState.snapshot()
 	var migrated := WorldState.migrate({"schema_version": 1, "world_day": 3})
 	var ok: bool = found == [&"dock_end"] and again.is_empty() and WorldState.discoveries.size() == before + 1 \
-		and toast.contains("码头尽头") and snap["schema_version"] == 4 and (snap["discoveries"] as Array).has("dock_end") \
-		and snap.has("vehicles") and snap.has("quests") and snap.has("journal") and snap.has("rules") and migrated["schema_version"] == 4 \
+		and toast.contains("码头尽头") and snap["schema_version"] == WorldState.SCHEMA_VERSION and (snap["discoveries"] as Array).has("dock_end") \
+		and snap.has("vehicles") and snap.has("quests") and snap.has("journal") and snap.has("rules") and migrated["schema_version"] == WorldState.SCHEMA_VERSION \
 		and migrated["discoveries"] == [] and migrated["vehicles"] == {} and migrated["quests"] == {} and migrated["journal"] == {}
 	_check("探索：走到码头尽头记为新发现（不重复）、弹出提示；存档快照含发现、船位置、任务、图鉴与本局规则，v1 存档能升级到 v4",
 		ok, "新发现 %s，提示「%s」，快照版本 %d，发现列表 %s" % [str(found), toast, snap["schema_version"], str(snap["discoveries"])])
@@ -1902,11 +1932,12 @@ func _test_release() -> void:
 	GameSettings.set_value("language", "en", false)
 	var skip := ["帮助", "时间", "天气", "季节", "预设", "坐标", "传送", "名字", "清屏", "中文", "、", "：", "季", "天",
 		"%s：%s", "%s — %s", "×%d", "%d°", "—", "  ·  ", "出生点", "语言 / Language",
-		"♟", "♞", "♝", "♜", "♛", "♚", "%s  ·  %s", "  ·  ", "✓  ", "◆  "]
+		"♟", "♞", "♝", "♜", "♛", "♚", "%s  ·  %s", "  ·  ", "✓  ", "◆  ",
+		"%s ×%d", "%d  %s   ·   %s   ·   %s：%s", "%s   %.1f s   ·   %d / %d", "%s · %s  ", "      %s：%s%s", "  —  ", "·  "]
 	var missing := PackedStringArray()
 	var re := RegEx.create_from_string(r'"([^"\n]*[^\x00-\x7F][^"\n]*)"')
 	for dir in ["res://scripts/ui", "res://scripts/net", "res://scripts/interactions", "res://scripts/core", "res://scripts/games",
-			"res://scripts/player", "res://scripts/buildings", "res://scripts/world", "res://scripts/systems", "res://scripts/vehicles", "res://scripts/worlds"]:
+			"res://scripts/player", "res://scripts/buildings", "res://scripts/world", "res://scripts/systems", "res://scripts/vehicles", "res://scripts/worlds", "res://scripts/play"]:
 		for path in _list_files(dir, ".gd"):
 			for line in FileAccess.get_file_as_string(path).split("\n"):
 				var s := line.strip_edges()
@@ -2119,13 +2150,13 @@ func _test_fullscreen_and_world_map() -> void:
 	for w in WorldRegistry.worlds():
 		if not WorldRegistry.is_open(str(w["id"])):
 			planned += 1
-	# v0.5：三个世界都开放了。当前所在的世界进不去（只提示）；另外两个能去（真正的往返在 _test_world_travel 里测）
-	var blocked := not WorldRegistry.enter("dusk_lake") and WorldRegistry.can_enter("world_02") and WorldRegistry.can_enter("world_03")
+	# 四个世界都开放了。当前所在的世界进不去（只提示）；另外三个能去（真正的往返在 _test_world_travel 里测）
+	var blocked := not WorldRegistry.enter("dusk_lake") and WorldRegistry.can_enter("world_02") and WorldRegistry.can_enter("world_03") and WorldRegistry.can_enter("world_04")
 	wm.toggle()
 	await _frames(2)
-	_check("F11 / Alt+Enter 全屏切换（不误开聊天）；Tab 打开世界地图，世界注册表里三个世界都开放（所在的世界不能再进）", f11 and on and opened and not wm.open \
-		and str(cur.get("id", "")) == "dusk_lake" and planned == 0 and WorldRegistry.worlds().size() == 3 and blocked,
-		"F11 %s，全屏 %s，地图打开 %s，当前 %s，未开放 %d 个，所在世界不能进、另两个能去 %s" % [f11, on, opened, cur.get("name", "?"), planned, blocked])
+	_check("F11 / Alt+Enter 全屏切换（不误开聊天）；Tab 打开世界地图，世界注册表里四个世界都开放（所在的世界不能再进）", f11 and on and opened and not wm.open \
+		and str(cur.get("id", "")) == "dusk_lake" and planned == 0 and WorldRegistry.worlds().size() == 4 and blocked,
+		"F11 %s，全屏 %s，地图打开 %s，当前 %s，未开放 %d 个，所在世界不能进、另三个能去 %s" % [f11, on, opened, cur.get("name", "?"), planned, blocked])
 
 # ---------------------------------------------------------------- 工具
 
@@ -2784,13 +2815,13 @@ func _test_save_v4() -> void:
 	GameRules.set_rule("mode", "photo")
 	WorldState.collect("world_02", "pearl_test")
 	var snap := SaveManager.snapshot()
-	var snap_ok: bool = snap["schema_version"] == 4 and (snap["rules"] as Dictionary)["mode"] == "photo" \
+	var snap_ok: bool = snap["schema_version"] == WorldState.SCHEMA_VERSION and (snap["rules"] as Dictionary)["mode"] == "photo" \
 		and ((snap["collections"] as Dictionary)["world_02"] as Array).has("pearl_test") and (snap["player"] as Dictionary).has("pos")
 	var old := WorldState.migrate({"schema_version": 3, "quests": {"fireside": {"state": "done"}}, "journal": {"species": ["rabbit"]}})
-	var migrate_ok: bool = old["schema_version"] == 4 and (old["rules"] as Dictionary) == GameRules.defaults() and old["collections"] == {} \
+	var migrate_ok: bool = old["schema_version"] == WorldState.SCHEMA_VERSION and (old["rules"] as Dictionary) == GameRules.defaults() and old["collections"] == {} \
 		and (old["quests"] as Dictionary).has("fireside")
 	var v1 := WorldState.migrate({"schema_version": 1, "world_day": 5})
-	var v1_ok: bool = v1["schema_version"] == 4 and v1["discoveries"] == [] and (v1["rules"] as Dictionary).size() == GameRules.OPTIONS.size()
+	var v1_ok: bool = v1["schema_version"] == WorldState.SCHEMA_VERSION and v1["discoveries"] == [] and (v1["rules"] as Dictionary).size() == GameRules.OPTIONS.size()
 	notes.append("快照 %s · v3 迁移 %s · v1 迁移 %s" % [snap_ok, migrate_ok, v1_ok])
 	# 真的写一次盘再读回来（换到测试专用的文件，不碰玩家的存档）
 	var keep_path := SaveManager.path
@@ -2933,3 +2964,375 @@ func _test_dune_gate_and_photos() -> void:
 	climate.apply_preset("Autumn_Dusk_Clear")
 	_check("摄影清单（%d 样）：看着木屋拍照认出「湖边木屋」并记进图鉴，背对着认不出；夜里抬头能拍到星空" % PhotoList.subjects().size(),
 		cabin and away and stars and journal_ok, "木屋 %s · 背对 %s · 记下 %s · 星空 %s" % [cabin, away, journal_ok, stars])
+
+
+# ---------------------------------------------------------------- 更多玩法（湖畔）：钓鱼、打水漂、寻宝、烹饪、收藏柜、计时挑战、成就、存档 v5
+
+func _test_play_lake() -> void:
+	var play := _main.get_node("PlayActivities") as PlayActivities
+	var cabin_life := _cabin.get_node("Generated/Life") as CabinLife
+	GameRules.set_all(GameRules.defaults())
+	for d: Dictionary in [WorldState.catches, WorldState.pantry, WorldState.records, WorldState.treasures]:
+		d.clear()
+	WorldState.achievements.clear()
+	Play.buffs.clear()
+	var notes := PackedStringArray()
+	# 钓鱼：码头尽头面朝湖，甩竿落在湖里，咬钩后收竿钓到湖里的鱼；不收鱼会跑；岸上（背对湖）甩不出去
+	_player.teleport_to(Vector3(-3.0, 1.1, 26.0), 90.0)
+	await _seconds(0.6)
+	play.bite_wait = 0.5
+	var cast_ok := play.cast() and play.fish_state == "waiting"
+	await _seconds(0.8)
+	var bit := play.fish_state == "bite"
+	var got := play.reel()
+	var lake_fish := PackedStringArray()
+	for f: Dictionary in Play.fish_list():
+		if "lake" in (f["waters"] as Array):
+			lake_fish.append(str(f["id"]))
+	var caught: bool = not got.is_empty() and str(got["id"]) in lake_fish and Play.fish_total() == 1 and Play.fish_in_pantry().size() == 1
+	play.cast()
+	await _seconds(0.5 + PlayActivities.BITE_WINDOW + 0.4)
+	var escaped := play.fish_state == "" and Play.fish_total() == 1
+	_player.teleport_to(Vector3(-50.0, WorldTerrain.height_at(-50.0, 29.0) + 0.1, 29.0), 270.0)
+	await _seconds(0.5)
+	var land_no := not play.cast() and play.fish_state == ""
+	play.bite_wait = -1.0
+	notes.append("甩竿 %s · 咬钩 %s · 钓到 %s（%s %.1f cm）· 不收会跑 %s · 岸上甩不出 %s" % [cast_ok, bit, caught, got.get("id", "?"), float(got.get("cm", 0.0)), escaped, land_no])
+	_check("钓鱼：码头上按 R 甩竿落进湖里，鱼漂下沉后收竿钓到湖里的鱼（进图鉴和鱼篓）；咬钩后不收鱼会跑；对着岸上甩不出去",
+		cast_ok and bit and caught and escaped and land_no, "；".join(notes))
+	# 打水漂：平着用力扔弹好几下，往下扔一下就沉；纪录写进存档
+	_player.teleport_to(Vector3(-3.0, 1.1, 26.0), 90.0)
+	await _seconds(0.5)
+	var flat := play.throw_stone(1.0, 0.0)
+	var flat_n := int(flat.get("bounces", -1))
+	await _seconds(float((flat["path"] as PackedVector3Array).size()) / 60.0 + 0.5)
+	var steep := play.throw_stone(1.0, -40.0)
+	var steep_n := int(steep.get("bounces", -1))
+	await _seconds(float((steep["path"] as PackedVector3Array).size()) / 60.0 + 0.5)
+	var weak := play.throw_stone(0.0, 0.0)
+	var weak_n := int(weak.get("bounces", 99))
+	await _seconds(float((weak["path"] as PackedVector3Array).size()) / 60.0 + 0.5)
+	var record_ok := int(WorldState.records.get("skip_best", 0)) == flat_n
+	_player.teleport_to(Vector3(-50.0, WorldTerrain.height_at(-50.0, 29.0) + 0.1, 29.0), 270.0)
+	await _seconds(0.3)
+	var inland := play.throw_stone(1.0, 0.0).is_empty()
+	_check("打水漂：平着用力扔弹 %d 下（≥ 3），往下扔 %d 下（≤ 1），不蓄力 %d 下；纪录 %d 写进存档；对着岸上扔不出去" % [flat_n, steep_n, weak_n, int(WorldState.records.get("skip_best", 0))],
+		flat_n >= 3 and steep_n <= 1 and weak_n < flat_n and record_ok and inland)
+	# 寻宝：同一个种子同一个地方，不同种子会换地方；远处挖提示远近，在线索处挖出宝箱
+	notes.clear()
+	var same: bool = Play.treasure_spot("dusk_lake", 777)["index"] == Play.treasure_spot("dusk_lake", 777)["index"]
+	var seen := {}
+	for s in 12:
+		seen[Play.treasure_spot("dusk_lake", s + 1)["index"]] = true
+	var varied := seen.size() >= 3
+	var bad_spots := PackedStringArray()
+	for c: Dictionary in (Play.treasure_data["worlds"] as Dictionary)["dusk_lake"]:
+		var x := float(c["pos"][0])
+		var z := float(c["pos"][1])
+		if WorldTerrain.height_at(x, z) <= WorldLayout.water_level() + 0.2 or Vegetation.tree_density(x, z) >= 0.5:
+			bad_spots.append("(%.0f, %.0f) h %.2f 树 %.2f" % [x, z, WorldTerrain.height_at(x, z), Vegetation.tree_density(x, z)])
+	var lake_spots_ok := bad_spots.is_empty()
+	var spot := Play.treasure_spot("dusk_lake")
+	var sp: Vector2 = spot["pos"]
+	var far_xz := sp + (Vector2(-50.0, 29.0) - sp).normalized() * 30.0
+	await _setup_at(far_xz, 0.0)
+	var far := play.dig()
+	await _setup_at(sp + Vector2(0.6, 0.0), 0.0)
+	var found := play.dig()
+	await _seconds(1.5)
+	var chest_ok := play.chest != null and play.chest.global_position.distance_to(Vector3(sp.x, WorldTerrain.height_at(sp.x, sp.y), sp.y)) < 0.3 and Play.treasure_found("dusk_lake")
+	var again := play.dig()
+	notes.append("同种子同处 %s · 不同种子 %d 处 · 候选点在地上 %s · 远处挖 %s · 线索处 %s · 宝箱 %s · 再挖 %s（埋在 %.0f, %.0f：%s）" % [same, seen.size(), str(lake_spots_ok) + " ".join(bad_spots), far, found, chest_ok, again, sp.x, sp.y, spot["hint"]])
+	_check("寻宝：按世界种子埋宝（同种子同一处、换种子换地方），远处挖提示远近，在线索处按 B 挖出宝箱并存档",
+		same and varied and lake_spots_ok and far in ["far", "near"] and found == "found" and chest_ok and again == "already", "；".join(notes))
+	# 烹饪：炉火灭着做不了；生火后看着铁锅按 E 打开面板，用三种鱼做海鲜拼盘，扣鱼、得到效果
+	notes.clear()
+	Play.record_catch("perch", 20.0)
+	Play.record_catch("trout", 30.0)
+	Play.record_catch("carp", 41.0)
+	var panel := _main.get_node("CookingPanel") as CookingPanel
+	cabin_life.stove.apply_state("off")
+	cabin_life.pot.interact(_player)
+	var cold := not panel.is_open()
+	cabin_life.stove.apply_state("on")
+	cabin_life.pot.interact(_player)
+	var opened := panel.is_open() and _player.input_locked
+	var before := Play._sum(Play.fish_in_pantry())
+	var cooked := Play.cook_problem("seafood_platter") == "" and Play.cook("seafood_platter")
+	var after := Play._sum(Play.fish_in_pantry())
+	var buff_ok: bool = is_equal_approx(Play.mult("swim_speed"), 1.3) and Play.mult("stamina_regen") > 1.5 and int(WorldState.records.get("dishes", 0)) == 1 \
+		and WorldState.flags.get("cooked_seafood_platter", false)
+	var cant := Play.cook_problem("seafood_platter") != ""
+	panel.close()
+	notes.append("灭火做不了 %s · 打开面板 %s · 做拼盘 %s（鱼 %d → %d）· 效果 %s · 鱼不够再做不了 %s" % [cold, opened, cooked, before, after, buff_ok, cant])
+	_check("炉火烹饪：炉火灭着不能做；生火后看着铁锅按 E 打开面板，用三种鱼做海鲜拼盘（扣 3 条鱼），游速 ×1.3、体力恢复加快；鱼不够就做不了",
+		cold and opened and cooked and before - after == 3 and buff_ok and cant and not _player.input_locked, "；".join(notes))
+	Play.buffs.clear()
+	# 收藏柜：钓到了鱼、挖到了宝箱就摆出鱼标本和宝箱；山铜晶还没有
+	cabin_life.cabinet.refresh()
+	var shown := cabin_life.cabinet.shown_ids()
+	_check("木屋收藏柜：按存档摆出收集到的东西（鱼标本、宝箱），没拿到的不摆", shown.has("fish") and shown.has("chest") and not shown.has("orichalcum")
+		and (cabin_life.cabinet.get_node("Trophy_fish") as Node3D).visible, str(shown))
+	# 计时挑战：林道奔跑——走进起点金环开始；跳到后面的检查点不算；按顺序跑完记成绩和奖牌
+	notes.clear()
+	var course := Play.course("lake_trail")
+	var pts: Array = course["points"]
+	var st: Array = course["start"]
+	await _setup_at(Vector2(float(st[0]), float(st[1])) + Vector2(4.5, 0.0), 0.0)
+	await _walk_to(Vector2(float(st[0]), float(st[1])), 6.0)
+	await _frames(3)
+	var started := play.course_id == "lake_trail" and play.timer_text() != ""
+	await _setup_at(Vector2(float(pts[2][0]), float(pts[2][1])), 0.0)
+	await _frames(5)
+	var order_ok := play.course_index == 0
+	await _setup_at(Vector2(float(pts[0][0]), float(pts[0][1])) + Vector2(0.0, -4.5), 0.0)
+	var ran := true
+	for p: Array in pts:
+		ran = await _walk_to(Vector2(float(p[0]), float(p[1])), 40.0) and ran
+	await _frames(5)
+	var best := Play.course_best("lake_trail")
+	var finished := play.course_id == "" and best > 0.0
+	notes.append("开始 %s · 跳过检查点不算 %s · 跑完 %s · 用时 %.1f 秒 · %s" % [started, order_ok, finished, best, Play.MEDAL_NAMES[Play.medal_for("lake_trail", best)]])
+	_check("计时挑战（林道奔跑）：走进起点金环开始计时，直接跳到后面的检查点不算，按顺序跑完记下成绩和奖牌", started and order_ok and ran and finished, "；".join(notes))
+	# 成就：满足条件就解锁并提示；关掉成就的局不解锁
+	WorldState.achievements.clear()
+	GameRules.set_rule("achievements", false)
+	await _seconds(1.3)
+	var none := Play.check_achievements().is_empty() and WorldState.achievements.is_empty()
+	GameRules.set_rule("achievements", true)
+	var unlocked := Play.check_achievements()
+	await _frames(2)
+	var toast := str(_main.get_node("HUD").call("toast_text"))
+	_check("成就：钓到第一条鱼、挖到宝箱、做了海鲜拼盘就解锁并提示（共 %d 个）；关掉成就的局不解锁" % Play.achievements().size(),
+		none and unlocked.has("first_catch") and unlocked.has("treasure_1") and unlocked.has("feast") and toast.contains(tr("成就解锁")), "%s · %s" % [str(unlocked), toast])
+	# 规则开关：关掉钓鱼就提示、甩不出去
+	GameRules.set_rule("fishing", false)
+	_player.teleport_to(Vector3(-3.0, 1.1, 26.0), 90.0)
+	await _seconds(0.4)
+	var off_ok := not play.cast() and play.fish_state == "" and Play.blocked("fishing").contains(tr("钓鱼"))
+	GameRules.set_rule("fishing", true)
+	var stroll := GameRules.with_mode(GameRules.defaults(), "stroll")
+	var modes_ok: bool = not stroll["challenges"] and not stroll["oxygen"] and GameRules.with_mode(GameRules.defaults(), "challenge")["oxygen"] \
+		and GameRules.preset_rules("atlantis")["spawn_world"] == "world_04" and GameRules.spawn_choices("world_04").size() == 5
+	_check("玩法开关：每个新玩法都有规则（%s），关掉钓鱼就甩不出去并提示；悠闲模式关挑战和氧气，挑战模式开氧气；「深海遗城」预设出生在亚特兰蒂斯" % ", ".join(Play.FEATURE_NAMES.keys()),
+		off_ok and modes_ok, "关钓鱼 %s · 模式与预设 %s" % [off_ok, modes_ok])
+	# 存档 v5：新字段写进快照，读回一致；v4 的旧档迁移后新字段是空的、旧内容不丢
+	var snap := SaveManager.snapshot()
+	var snap_ok: bool = snap["schema_version"] == 5 and (snap["catches"] as Dictionary).has("perch") and (snap["treasures"] as Dictionary).has("dusk_lake") \
+		and (snap["records"] as Dictionary).has("course:lake_trail") and (snap["achievements"] as Array).has("first_catch") and (snap["pantry"] as Dictionary).size() > 0
+	var v4 := WorldState.migrate({"schema_version": 4, "collections": {"world_02": ["pearl_01"]}, "rules": {"mode": "photo"}})
+	var v4_ok: bool = v4["schema_version"] == 5 and v4["achievements"] == [] and v4["catches"] == {} and v4["treasures"] == {} \
+		and ((v4["collections"] as Dictionary)["world_02"] as Array).has("pearl_01") and (v4["rules"] as Dictionary)["mode"] == "photo" and (v4["rules"] as Dictionary)["fishing"] == true
+	var keep_path := SaveManager.path
+	var keep_persist := SaveManager.persist
+	var keep_active := SaveManager.active
+	SaveManager.path = "user://test_world_save_v5.json"
+	SaveManager.persist = true
+	SaveManager.active = true
+	var wrote := SaveManager.save()
+	var catches_before := WorldState.catches.duplicate(true)
+	WorldState.catches.clear()
+	WorldState.restore(SaveManager.read())
+	var round_ok := wrote and WorldState.treasures.has("dusk_lake") and WorldState.catches.size() == catches_before.size()
+	for id: String in catches_before:
+		round_ok = round_ok and WorldState.catches.has(id) and int(WorldState.catches[id]["count"]) == int(catches_before[id]["count"]) \
+			and is_equal_approx(float(WorldState.catches[id]["best_cm"]), float(catches_before[id]["best_cm"]))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(SaveManager.path))
+	SaveManager.path = keep_path
+	SaveManager.persist = keep_persist
+	SaveManager.active = keep_active
+	_check("存档 v5：成就、纪录、鱼、鱼篓、宝箱写进快照，写盘读回一致；v4 旧档迁移后新字段为空、原有内容和规则不丢", snap_ok and v4_ok and round_ok,
+		"快照 %s · v4 迁移 %s · 读回 %s" % [snap_ok, v4_ok, round_ok])
+	for d: Dictionary in [WorldState.catches, WorldState.pantry, WorldState.records, WorldState.treasures]:
+		d.clear()
+	WorldState.achievements.clear()
+	WorldState.flags.erase("cooked_seafood_platter")
+	if play.chest != null:
+		play.chest.queue_free()
+		play.chest = null
+	GameRules.set_all(GameRules.defaults())
+
+
+## 某个世界里的埋宝候选点都在地上（有地面、不是水）。
+func _treasure_spots_ok(w: MiniWorld) -> bool:
+	for c: Dictionary in (Play.treasure_data["worlds"] as Dictionary).get(w.world_id, []):
+		var x := float(c["pos"][0])
+		var z := float(c["pos"][1])
+		if w.height_at(x, z) < -1e6 or not w.water_at(x, z).is_empty():
+			return false
+		if w is World04 and (w as World04).ring_at(x, z).begins_with("water"):
+			return false
+		if w is World02 and (w as World02).island_at(x, z).is_empty():
+			return false
+	return true
+
+
+## 在海洋大缸里从石环的一侧游过去：一穿过环面就开始去亚特兰蒂斯（返回是否触发了旅行）。
+func _swim_through_ring() -> bool:
+	var ring := get_tree().get_first_node_in_group("atlantis_ring") as AtlantisRing
+	if ring == null:
+		return false
+	var c := ring.global_position
+	_player.teleport_to(c + Vector3(2.4, -0.9, 0.0), 270.0)
+	await _seconds(0.5)
+	_player.autopilot_enabled = true
+	for i in 6 * 60:
+		if WorldTravel.busy:
+			break
+		_player.autopilot_direction = (c + Vector3(-2.5, -0.9, 0.0)) - _player.global_position
+		await get_tree().physics_frame
+	if not WorldTravel.busy:
+		_player.autopilot_enabled = false
+		return false
+	return true
+
+
+func _check_atlantis(w: World04) -> void:
+	var notes := PackedStringArray()
+	var kinds := {}
+	for it in w.items:
+		kinds[str(it["kind"])] = int(kinds.get(str(it["kind"]), 0)) + 1
+	var scrolls := w.find_children("*", "SignBoard", true, false).size()
+	var species := {}
+	for fs in w.find_children("Life_*", "FishSchool", false, false):
+		for m: Dictionary in (fs as FishSchool).members:
+			species[str((m["def"] as Dictionary).get("name", ""))] = true
+	var spots_ok := _treasure_spots_ok(w)
+	var counts_ok: bool = w.statues.size() == 5 and w.springs.size() == 5 and int(kinds.get("pearl", 0)) == 8 and int(kinds.get("shell", 0)) == 8 \
+		and int(kinds.get("tablet", 0)) == 6 and (w.data["pois"] as Array).size() == 6 and scrolls == 7 and species.size() >= 6 and w.jelly_count() > 0 \
+		and w.canals.size() == 3 and w.houses >= 20 and spots_ok
+	notes.append("雕像 %d · 气泡泉 %d · 珍珠 %d · 贝壳 %d · 石板 %d · 卷轴 %d · 物种 %d · 水母 %d · 房子 %d · 宝藏候选点 %s" % [w.statues.size(), w.springs.size(),
+		int(kinds.get("pearl", 0)), int(kinds.get("shell", 0)), int(kinds.get("tablet", 0)), scrolls, species.size(), w.jelly_count(), w.houses, spots_ok])
+	# 穹顶里是空气、穹顶外是海、水环是水
+	var air := WaterVolume.find(get_tree(), Vector3(0.0, 2.0, 30.0)) == null and WaterVolume.find(get_tree(), Vector3(40.0, 3.0, 40.0)) == null
+	var sea_ok := WaterVolume.find(get_tree(), Vector3(80.0, 5.0, 0.0)) == w.sea and WaterVolume.find(get_tree(), Vector3(0.0, 30.0, 60.0)) == w.sea
+	var canal := WaterVolume.find(get_tree(), Vector3(13.5, -1.2, 8.0))
+	var canal_ok := canal != null and canal.volume_id == &"water1"
+	notes.append("穹顶里是空气 %s · 外面是海 %s · 水环 %s" % [air, sea_ok, canal_ok])
+	# 从外沿沿南边石堤走到中央岛：跨三座石堤，一路不下水
+	_waters_seen.clear()
+	await _mw_setup(w, Vector2(0.0, 58.0), 0.0)
+	_begin_track()
+	var walked := true
+	for p: Vector2 in [Vector2(0.0, 46.0), Vector2(0.0, 32.0), Vector2(0.0, 20.0), Vector2(0.0, 10.4)]:
+		walked = await _walk_to(p, 20.0) and walked
+	_track = false
+	var dry := _waters_seen.is_empty() and w.ring_at(_player.global_position.x, _player.global_position.z) == "island"
+	notes.append("走过三座石堤到中央岛 %s（没下水 %s %s，最大单步 %.2f m，%.0f m）" % [walked, dry, str(_waters_seen.keys()), _max_step, _path_length])
+	var walk_step := _max_step
+	# 神殿大门关着：走到门口进不去
+	WorldState.flags.erase("atlantis_spire")
+	for st in w.statues:
+		st.set_dir(int(_statue_cfg(w, st)["start"]))
+	w.set_doors(false, true)
+	await _frames(2)
+	for p: Vector2 in [Vector2(3.2, 9.0), Vector2(3.4, 0.0), Vector2(1.6, -1.4), Vector2(0.0, -1.9)]:
+		await _walk_to(p, 10.0)
+	await _walk_for(Vector3(0.0, 0.0, -1.0), 2.0)
+	var shut := not w.puzzle_done and not w.door_open and _player.global_position.z > -2.7
+	# 光束谜题：把五尊雕像一尊尊转到对的方向（看着按 E），光一路传到尖塔，尖塔点亮、大门打开
+	var presses := 0
+	for st in w.statues:
+		var sp := st.global_position
+		await _mw_setup(w, Vector2(sp.x, sp.z + 1.9), 0.0)
+		_player.look_at_point(sp + Vector3(0.0, 1.4, 0.0))
+		await _frames(3)
+		for k in 8:
+			if st.dir == st.correct:
+				break
+			if _player.try_interact():
+				presses += 1
+			await _frames(2)
+	await _frames(3)
+	var lit_all := true
+	for st in w.statues:
+		lit_all = lit_all and st.lit and WorldState.get_interactable_state(st.uid) == "dir:%d" % st.correct
+	var solved: bool = w.puzzle_done and lit_all and w.spire_light.visible and WorldState.flags.get("atlantis_spire", false) and w.door_open
+	notes.append("门关着进不去 %s · 按 E %d 次 · 光路 %d 段 · 雕像全亮 %s · 尖塔点亮、开门 %s" % [shut, presses, w.beam_points.size() - 1, lit_all, solved])
+	# 走进神殿，捡到第六块石板（进传说页）
+	await _mw_setup(w, Vector2(0.0, -1.2), 0.0)
+	await _seconds(2.8)
+	var inside := await _walk_to(Vector2(0.0, -5.6), 8.0)
+	await _seconds(0.6)
+	var lore_ok := WorldState.journal_list("lore").has("lore_6") and _player.global_position.z < -4.5
+	notes.append("走进神殿 %s · 第六块石板 %s" % [inside, lore_ok])
+	# 氧气：出了穹顶开始消耗；耗尽黑幕回到最近的气泡泉；在泉边补满；规则关掉就不耗
+	w.oxygen = 1.0
+	_player.teleport_to(Vector3(0.0, 4.0, 75.0), 0.0)
+	await _seconds(2.0)
+	var drains := w.in_sea() and w.oxygen < 0.99 and w.oxygen > 0.9 and _player.swimming
+	var outs := w.oxygen_outs
+	w.oxygen = 0.01
+	await _seconds(2.0)
+	var spring := w.nearest_spring(_player.global_position)
+	var rescued := w.oxygen_outs == outs + 1 and w.oxygen > 0.9 and Vector2(_player.global_position.x - spring.x, _player.global_position.z - spring.z).length() < 4.0
+	w.oxygen = 0.4
+	_player.teleport_to(spring + Vector3(0.0, 1.0, 1.0), 0.0)
+	await _seconds(1.0)
+	var refilled := w.oxygen > 0.95
+	GameRules.set_rule("oxygen", false)
+	_player.teleport_to(Vector3(0.0, 4.0, 75.0), 0.0)
+	await _seconds(1.5)
+	var rule_off := is_equal_approx(w.oxygen, 1.0)
+	GameRules.set_rule("oxygen", true)
+	notes.append("出穹顶耗氧 %s · 耗尽回泉 %s · 泉边补满 %s · 规则关掉不耗 %s（%.0f 秒一条）" % [drains, rescued, refilled, rule_off, w.oxygen_seconds()])
+	# 洋流水渠：走进漩涡泉，水流一路冲到城东头
+	var inlet := MiniWorld.v2(w.data["current"]["inlet"])
+	var rides0 := w.current_ride.rides
+	await _mw_setup(w, inlet + Vector2(3.0, 0.0), 0.0)
+	_begin_track()
+	var frames := 0
+	await _walk_to(inlet, 5.0)
+	var carried := _player.rail == w.current_ride or w.current_ride.rides > rides0
+	while _player.rail != null and frames < 40 * 60:
+		await get_tree().physics_frame
+		frames += 1
+	_track = false
+	var ex: Array = w.data["current"]["exit"]
+	var current_ok: bool = carried and w.current_ride.rides == rides0 + 1 and WorldState.flags.get("current_ride", false) \
+		and _player.global_position.distance_to(Vector3(float(ex[0]), float(ex[1]), float(ex[2]))) < 2.0 and frames < 25 * 60 and _max_step < MAX_STEP
+	notes.append("洋流 %s（%.1f 秒、%.0f m，最大单步 %.2f m）" % [current_ok, frames / 60.0, w.current_ride.length(), _max_step])
+	# 骑蝠鲼：游到礁石边看着它按 E 抓住，绕城一圈回来；骑的时候不耗氧气
+	var mp := w.manta.global_position
+	_player.teleport_to(mp + Vector3(0.0, 0.4, 2.6), 0.0)
+	await _seconds(0.5)
+	_player.look_at_point(w.manta.global_position)
+	await _frames(3)
+	var grabbed := _player.try_interact() and _player.rail == w.manta_ride
+	w.oxygen = 0.5
+	frames = 0
+	while _player.rail != null and frames < 90 * 60:
+		await get_tree().physics_frame
+		frames += 1
+	var manta_ok: bool = grabbed and w.manta_ride.rides == 1 and WorldState.flags.get("manta_ride", false) and w.oxygen >= 0.5 \
+		and Vector2(_player.global_position.x - mp.x, _player.global_position.z - mp.z).length() < 6.0
+	notes.append("骑蝠鲼 %s（%.0f 秒，氧气没掉 %s）" % [manta_ok, frames / 60.0, w.oxygen >= 0.5])
+	# 潜水环（计时挑战）：从起点环游过七个环
+	var play := w.get_node("PlayActivities") as PlayActivities
+	var course := Play.course("dive_rings")
+	w.oxygen = 1.0
+	_player.teleport_to(Vector3(42.0, 3.0, 64.0), 0.0)
+	await _seconds(0.5)
+	var st0: Array = course["start"]
+	await _move_to(Vector3(float(st0[0]), float(st0[1]), float(st0[2])) - Vector3(0.0, 0.9, 0.0), 20.0)
+	var dive_started := play.course_id == "dive_rings"
+	for p: Array in course["points"]:
+		await _move_to(Vector3(float(p[0]), float(p[1]), float(p[2])) - Vector3(0.0, 0.9, 0.0), 30.0)
+	await _frames(3)
+	var dive_ok := dive_started and Play.course_best("dive_rings") > 0.0 and play.course_id == ""
+	notes.append("潜水环 %s（%.1f 秒）" % [dive_ok, Play.course_best("dive_rings")])
+	# 收集品：珍珠、贝壳按类计数
+	var pearls0 := w.items_count("pearl").x
+	w.pick("pearl_03")
+	w.pick("shell_02")
+	var pick_ok := w.items_count("pearl").x == pearls0 + 1 and w.items_count("shell").x >= 1
+	_check("亚特兰蒂斯：同心环城、穹顶里是空气外面是海；走过三座石堤到中央岛；神殿门先关着，转好五尊雕像光照到尖塔、尖塔点亮大门打开，殿里捡到第六块石板；出穹顶耗氧、耗尽回气泡泉、规则可关；洋流水渠、骑蝠鲼、潜水环都能玩完",
+		counts_ok and air and sea_ok and canal_ok and walked and dry and walk_step < MAX_STEP and shut and solved and lore_ok and drains and rescued and refilled and rule_off \
+		and current_ok and manta_ok and dive_ok and pick_ok, "；".join(notes))
+
+
+func _statue_cfg(w: World04, st: LightStatue) -> Dictionary:
+	for s: Dictionary in w.data["statues"]:
+		if StringName(s["id"]) == st.uid:
+			return s
+	return {}

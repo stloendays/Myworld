@@ -1,0 +1,30 @@
+{
+  "_doc": "寻宝（Play 读取）：每个世界几个候选埋宝点，按本局世界种子挑一个（同一个种子总是同一个地方）。hint 是旅行日志「活动」页里给的线索（中英）。pos 为 [x, z]，地面高度由世界的 height_at 给出。",
+  "worlds": {
+    "dusk_lake": [
+      {"pos": [38.5, -5.0], "hint": "湖心小岛上，朝着木屋的那一边。", "hint_en": "On the islet in the lake, on the side that faces the cabin."},
+      {"pos": [-8.0, -83.0], "hint": "图腾山洞的洞口外，再往外走几步。", "hint_en": "Just outside the mouth of the totem cave, a few steps further out."},
+      {"pos": [62.0, 90.0], "hint": "湖东南的林子里，夜里会长出仙境的那片空地西边。", "hint_en": "In the woods south-east of the lake, on the west side of the clearing where the fairy glade appears at night."},
+      {"pos": [99.0, -105.5], "hint": "雪山顶上，石堆和旗杆旁边。", "hint_en": "On the snowy summit, beside the cairn and the flagpole."},
+      {"pos": [-86.0, 90.0], "hint": "南部林间草甸，石头小屋西边的草地上。", "hint_en": "In the southern meadow, on the grass west of the stone cottage."}
+    ],
+    "world_02": [
+      {"pos": [-14.0, 10.0], "hint": "主岛西南，离光门不远的草坡上。", "hint_en": "On the grassy slope south-west on the main island, not far from the gate."},
+      {"pos": [-58.0, -10.0], "hint": "西岛风车的背后。", "hint_en": "Behind the windmill on the west isle."},
+      {"pos": [8.0, -60.0], "hint": "北岛石阵的北边。", "hint_en": "North of the stone ring on the north isle."},
+      {"pos": [59.0, 13.0], "hint": "东岛观鲸台后面的小坡上。", "hint_en": "On the little rise behind the whale watch on the east isle."}
+    ],
+    "world_03": [
+      {"pos": [8.0, 40.0], "hint": "月牙绿洲的西南岸，离水二十来步。", "hint_en": "On the south-west shore of the Crescent Oasis, about twenty steps from the water."},
+      {"pos": [64.0, -34.0], "hint": "驼队营地东南的沙地里。", "hint_en": "In the sand south-east of the caravan camp."},
+      {"pos": [-86.0, 46.0], "hint": "风蚀石拱的西南脚下。", "hint_en": "At the south-west foot of the wind arch."},
+      {"pos": [-42.0, -50.0], "hint": "阶梯神殿西南角外面。", "hint_en": "Outside the south-west corner of the step temple."}
+    ],
+    "world_04": [
+      {"pos": [-36.0, -30.0], "hint": "第二圈陆环的西北边，雕像和水环之间。", "hint_en": "On the north-west of the second land ring, between the statues and the water."},
+      {"pos": [40.0, -20.0], "hint": "第二圈陆环的东边，捧镜雕像南面。", "hint_en": "On the east of the second land ring, south of a mirror statue."},
+      {"pos": [-10.0, 24.0], "hint": "第一圈陆环的南边，水渠底下。", "hint_en": "On the south of the first land ring, below the aqueduct."},
+      {"pos": [84.0, -52.0], "hint": "穹顶外东南的海底，沉船再往东一点。", "hint_en": "On the seabed outside the dome to the south-east, a little east of the sunken ship."}
+    ]
+  }
+}

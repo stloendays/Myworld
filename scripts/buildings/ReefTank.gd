@@ -111,6 +111,8 @@ static func _decor(h: PoolHouse, root: Node3D, r: Rect2, sand_y: float, top: flo
 		var p := Vector3(rng.randf_range(r.position.x + 0.6, r.end.x - 0.6), sand_y, rng.randf_range(r.position.y + 0.5, r.end.y - 1.2))
 		if absf(p.x - PoolHouse.CHANNEL.get_center().x) < 1.6:
 			continue
+		if absf(p.x - float(WorldLayout.section("atlantis_ring").get("local", [99.0])[0])) < 1.8:
+			continue
 		var asset: String = ["plant_bush", "plant_bushSmall", "plant_bushDetailed", "mushroom_redGroup", "mushroom_tanGroup", "grass_large"][rng.randi() % 6]
 		var node := ArtMaterials.kenney_prop(NATURE + asset + ".glb", p, rng.randf() * 360.0, rng.randf_range(1.6, 3.2))
 		h._underwater_restyle(node, asset, rng)
@@ -119,6 +121,8 @@ static func _decor(h: PoolHouse, root: Node3D, r: Rect2, sand_y: float, top: flo
 	for i in 30:
 		var cx := -9.5 if i < 15 else 9.0
 		var p := Vector3(cx + rng.randf_range(-2.2, 2.2), sand_y, rng.randf_range(r.position.y + 0.5, r.position.y + 3.4))
+		if absf(p.x - float(WorldLayout.section("atlantis_ring").get("local", [99.0])[0])) < 1.0:
+			continue
 		_kelp(root, p, rng.randf_range(2.6, 5.2), rng)
 	# 沉没的独木舟：半埋在东侧沙里，船头翘起
 	var wreck := ArtMaterials.kenney_prop(NATURE + "canoe.glb", Vector3(5.5, sand_y - 0.15, back + 1.6), 63.0, 3.9)

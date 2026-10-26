@@ -84,6 +84,9 @@ Main (Main.gd)
 | `MiniWorld` / `World02`（云海浮岛）/ `World03`（琥珀沙丘） | v0.5 | 湖畔以外的世界的共用底座：按数据文件建天空雾光、地形（解析高度函数 → 网格 + 碰撞）、卷轴、收集品、探索点、光门、玩家与全套界面；掉出世界回到最后站稳的地方；`height_at()`、`map_markers()`、`draw_map()` 供小地图、世界地图、罗盘、自动检查使用。天气季节系统只在湖畔，这两个世界的光照固定（太阳不动，阴影不会爬） |
 | `GameRules`（Autoload） | v0.5 | 新建游戏的玩法与设定（23 个选项、5 种模式、9 个预设）：只记规则、回答查询；时钟、季节、天气、小动物、仙境、任务图鉴、HUD、体力、夜晚亮度各自来问；开局一次性的（季节时刻天气、出生世界与出生点）由 `apply_start()` 设 |
 | `CompassBar` / `PhotoList` | v0.5 | 罗盘条与体力条；摄影清单（`data/photo/subjects.json`，F12 拍照时认出画面中央的对象，记进 `WorldState.journal.photos`） |
+| `World04`（亚特兰蒂斯）/ `LightStatue` / `MantaHandle` / `ShapedWater` / `AtlantisRing` | 亚特兰蒂斯 | 世界四：同心环城（`height_at` 按环给高度，石堤是缓坡）、气泡穹顶（`ShapedWater`：整片海减去穹顶球、环形水道），海里没有浮力、游速 ×1.7；氧气、光束谜题（雕像朝向按 uid 存 `dir:N`，每次转动重追光路）、洋流和蝠鲼（`RailRide`）；这里有自己的时钟，光照随时刻变；`AtlantisRing` 是湖畔海洋大缸底的入口（游过环面就去） |
+| `RailRide` | 亚特兰蒂斯 | 沿一条 Curve3D 把玩家带着走（`FirstPersonController.start_rail`，`is_riding()` 为真），头 0.4 秒从站的地方平滑接上路线；可以带一个跟着走的模型（蝠鲼） |
+| `Play`（Autoload）/ `PlayActivities` / `CookPot` / `CookingPanel` / `TrophyCabinet` | 更多玩法 | `Play` 读 `data/play/*.json`，管规则开关与联机限制、鱼、菜与效果倍率、宝藏位置（按种子）、挑战成绩与奖牌、成就；`PlayActivities` 是每个世界里的操作（R 钓鱼、Q 打水漂、B 挖宝、挑战金环）；水面由世界根节点的 `water_at()` 回答 |
 | `WorldTravel`（Autoload） | M2 扩展已实现 | 跨世界旅行：渐黑 → 卸载当前世界 → 清缓存 → 后台线程加载 → 实例化 → 渐亮；记录当前世界与来时的世界；联机时不能离开 |
 | `BootLoader` / `LoadingScreen` / `IntroCutscene` | 已实现 | 启动流程、共用的加载画面（启动与跨世界旅行）、开场过场；`BootLoader.active` 期间大厅菜单不自己弹出 |
 | `Fade`（Autoload） | 已实现 | 盖在所有界面上的转场黑幕：`fade_out` / `fade_in` / `flash`；启动交接、进出房间、传送时用 |
@@ -92,7 +95,7 @@ Main (Main.gd)
 | `Cave` / `StoneCottage` / `StarField` | M2 扩展已实现 | 图腾山洞（世界坐标生成的洞道网格与双面三角网碰撞，室内区域 `cave`）；锁着门的石头小屋；星座（`data/sky/constellations.json`） |
 | `Precipitation` 季节飘落物 | 已实现 | 方案在 `data/weather/seasonal_fx.json`（落叶、花瓣、保留的原版红点）；`profile_override` 供开发者面板临时切换 |
 | `AudioDirector` | M3 接口占位 | 订阅区域与天气事件做室内外混音 |
-| `SaveManager`（Autoload） | v0.5 已实现 | `user://saves/world.json`（v4，临时文件 + 原子替换）：新建（旧档先备份）/ 继续 / 每 60 s、换世界、退出时自动存；读档后按 uid 恢复门灯、船位，回到存档时的世界与位置；联机做客和自动检查里不写盘 |
+| `SaveManager`（Autoload） | v0.5 已实现 | `user://saves/world.json`（v5，临时文件 + 原子替换）：新建（旧档先备份）/ 继续 / 每 60 s、换世界、退出时自动存；读档后按 uid 恢复门灯、船位，回到存档时的世界与位置；联机做客和自动检查里不写盘 |
 | `Interactable` 状态延续 | v0.5 | 读过档或从别的世界回来时，可交互物按 `WorldState.interactables` 里存下的状态摆（不再被新建的初始状态覆盖） |
 
 已使用的事件：`time_changed`、`season_changed`、`weather_transition_started`、`weather_changed`、`zone_entered`、`zone_exited`、`interactable_state_changed`、`interaction_prompt_changed`。

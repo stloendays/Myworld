@@ -1794,3 +1794,348 @@ msgstr "there is no ground there"
 msgid "接着 v0.4 的任务和图鉴，从秋天黄昏的湖畔开始"
 msgstr "Picks up your v0.4 quests and field guide, starting at the lake on an autumn evening"
 
+msgid "%.1f 秒 · %s"
+msgstr "%.1f s · %s"
+
+msgid "%d 条鱼"
+msgstr "%d fish"
+
+msgid "%s 还有 %d 秒"
+msgstr "%s: %d s left"
+
+msgid "%s：%.1f 秒 · %s%s"
+msgstr "%s: %.1f s · %s%s"
+
+msgid "1 / 2 / 3 做菜   ·   E / Esc 关闭"
+msgstr "1 / 2 / 3 cook   ·   E / Esc close"
+
+msgid "E  做饭（用钓到的鱼）"
+msgstr "E  Cook (with the fish you caught)"
+
+msgid "E  抓住蝠鲼的背"
+msgstr "E  Hold on to the manta"
+
+msgid "E  松手（骑着蝠鲼时不耗氧气）"
+msgstr "E  Let go (no air is used while riding the manta)"
+
+msgid "E  转动雕像（45°）"
+msgstr "E  Turn the statue (45°)"
+
+msgid "不够"
+msgstr "Not enough"
+
+msgid "亚特兰蒂斯"
+msgstr "Atlantis"
+
+msgid "亚特兰蒂斯氧气"
+msgstr "Air in Atlantis"
+
+msgid "亚特兰蒂斯的石板  %d / %d"
+msgstr "Tablets of Atlantis  %d / %d"
+
+msgid "亚特兰蒂斯：珍珠 %d / %d · 贝壳 %d / %d · 石板 %d / %d · 尖塔 %s"
+msgstr "Atlantis: pearls %d / %d · shells %d / %d · tablets %d / %d · spire %s"
+
+msgid "传说"
+msgstr "Legends"
+
+msgid "做"
+msgstr "Cook"
+
+msgid "做好了%s，吃得很香——%s：%s（%d 分钟）"
+msgstr "%s is ready, and delicious. %s: %s (%d min)"
+
+msgid "先把炉火生起来（看着铸铁炉按 E）"
+msgstr "Light the fire first (look at the stove and press E)"
+
+msgid "先把炉火生起来，才能做饭"
+msgstr "Light the fire first to cook"
+
+msgid "光照到了山铜尖塔——尖塔亮了，神殿的大门开了！"
+msgstr "The light reached the orichalcum spire. The spire is lit and the temple doors have opened!"
+
+msgid "前面不是水面：走到湖边，对着湖扔"
+msgstr "There is no water ahead: go to the lake shore and throw towards the lake"
+
+msgid "前面没有能钓鱼的水，走到水边对着水面再甩竿"
+msgstr "No fishing water ahead. Go to the water's edge and cast towards it"
+
+msgid "古代石板"
+msgstr "ancient tablet"
+
+msgid "咬钩了！快按 R 收竿！"
+msgstr "A bite! Press R to reel in!"
+
+msgid "哗——被水流一路冲到了城东头"
+msgstr "Whoosh! The current carried you all the way to the east of the city"
+
+msgid "大蝠鲼"
+msgstr "Great manta"
+
+msgid "奔跑和游泳都要体力，海底氧气更少，没有小地图和问号，跳台、绳桥、潜水环都计时。"
+msgstr "Running and swimming cost stamina, there is less air under the sea, no minimap or question marks, and the sky steps, rope bridges and dive rings are timed."
+
+msgid "完成"
+msgstr "finished"
+
+msgid "宝箱"
+msgstr "Treasure chest"
+
+msgid "寻宝"
+msgstr "treasure hunting"
+
+msgid "寻宝线索（B 挖）"
+msgstr "Treasure clues (B to dig)"
+
+msgid "寻宝（B 挖）"
+msgstr "Treasure hunting (B to dig)"
+
+msgid "小图腾"
+msgstr "Little totem"
+
+msgid "山铜晶"
+msgstr "Orichalcum crystal"
+
+msgid "已点亮"
+msgstr "lit"
+
+msgid "弹了 %d 下！"
+msgstr "%d skips!"
+
+msgid "弹了 %d 下，落到岸上了"
+msgstr "%d skips, and it landed on the shore"
+
+msgid "成就"
+msgstr "Achievements"
+
+msgid "成就  %d / %d"
+msgstr "Achievements  %d / %d"
+
+msgid "成就解锁：%s——%s"
+msgstr "Achievement unlocked: %s. %s"
+
+msgid "扑通——一下就沉了，扔平一点、用力一点"
+msgstr "Plop. It sank at once. Throw flatter and harder"
+
+msgid "打水漂"
+msgstr "stone skipping"
+
+msgid "打水漂最多弹 %d 下（Q 按住蓄力）"
+msgstr "Best stone skip: %d (hold Q to charge)"
+
+msgid "打水漂（Q）"
+msgstr "Stone skipping (Q)"
+
+msgid "抓住了！蝠鲼带着你游起来了"
+msgstr "Got it! The manta carries you away"
+
+msgid "挑战中断了"
+msgstr "Challenge abandoned"
+
+msgid "挑战开始：%s——按顺序经过 %d 个环"
+msgstr "Challenge started: %s. Pass the %d rings in order"
+
+msgid "挖到宝箱了！里面是一枚刻着「%s」的金币"
+msgstr "You dug up a treasure chest! Inside is a gold coin stamped \"%s\""
+
+msgid "捧镜雕像"
+msgstr "Mirror statue"
+
+msgid "收竿了，还没有鱼咬钩"
+msgstr "Reeled in. Nothing had bitten yet"
+
+msgid "收集品（云珠、碎片、珍珠、贝壳、石板）"
+msgstr "Collectibles (cloud pearls, shards, pearls, shells, tablets)"
+
+msgid "星盘"
+msgstr "Star globe"
+
+msgid "未点亮"
+msgstr "dark"
+
+msgid "正在生效："
+msgstr "Active:"
+
+msgid "气泡泉：氧气补满了"
+msgstr "Bubble spring: air refilled"
+
+msgid "氧气"
+msgstr "Air"
+
+msgid "氧气用完了……气泡把你托回了泉边"
+msgstr "Out of air... the bubbles carried you back to the spring"
+
+msgid "水柱把你托了起来！"
+msgstr "The water spout lifts you up!"
+
+msgid "水漂石"
+msgstr "Skipping stone"
+
+msgid "没有任务、体力和计时挑战，海底不用氧气，小动物不怕人，适合散步、看风景。"
+msgstr "No tasks, stamina or timed challenges, no air needed under the sea, and animals are not shy. Good for walking and enjoying the views."
+
+msgid "活动"
+msgstr "Activities"
+
+msgid "深海遗城"
+msgstr "Sunken City"
+
+msgid "炉火烹饪"
+msgstr "Fireside Cooking"
+
+msgid "烹饪"
+msgstr "cooking"
+
+msgid "玩法活动"
+msgstr "Activities"
+
+msgid "珍珠"
+msgstr "pearl"
+
+msgid "石板上刻着「%s」，记进了旅行日志的传说页"
+msgstr "The tablet reads \"%s\". It is now in the Legends page of your journal"
+
+msgid "空的"
+msgstr "empty"
+
+msgid "空的（按 R 去钓几条）"
+msgstr "empty (press R to catch a few)"
+
+msgid "站在地上（或贴着海底）才能挖"
+msgstr "Stand on the ground (or on the seabed) to dig"
+
+msgid "站在岸边、码头上才能钓鱼"
+msgstr "Stand on the shore or a dock to fish"
+
+msgid "站在湖边或码头上才能打水漂"
+msgstr "Stand on the lake shore or the dock to skip stones"
+
+msgid "等鱼咬钩……（鱼漂沉下去时按 R 收竿）"
+msgstr "Waiting for a bite... (press R when the float goes under)"
+
+msgid "纪录"
+msgstr "Records"
+
+msgid "联机做客时不能%s（这是房主的世界，记录不会保存）"
+msgstr "You can't do %s as a guest (this is the host's world and your records would not be saved)"
+
+msgid "蝠鲼驮着你绕古城游了一圈，又回到了礁石上"
+msgstr "The manta carried you once around the city and back to its reef"
+
+msgid "被水流冲着走……"
+msgstr "Carried by the current..."
+
+msgid "要 %d 种不同的鱼，鱼篓里只有 %d 种"
+msgstr "Needs %d different kinds of fish; your basket has %d"
+
+msgid "计时挑战"
+msgstr "timed challenges"
+
+msgid "贝壳"
+msgstr "shell"
+
+msgid "走开了，收起鱼竿"
+msgstr "You walked away and put the rod away"
+
+msgid "还没跑过（金牌 %.0f 秒内）"
+msgstr "not run yet (gold under %.0f s)"
+
+msgid "这一局没有开启%s（新建游戏页的「玩法活动」）"
+msgstr "%s is off in this game (see Activities on the New Game page)"
+
+msgid "这个世界没有埋宝藏"
+msgstr "There is no treasure buried in this world"
+
+msgid "这个世界的宝箱已经挖到了"
+msgstr "You already dug up this world's chest"
+
+msgid "这里什么也没有……不过就在附近了！"
+msgstr "Nothing here... but it's very close!"
+
+msgid "这里什么也没有。线索说的地方不太远了"
+msgstr "Nothing here. The place in the clue is not far now"
+
+msgid "这里什么也没有。线索说的地方还远着呢（旅行日志 → 活动）"
+msgstr "Nothing here. The place in the clue is still far away (Journal → Activities)"
+
+msgid "金牌"
+msgstr "Gold"
+
+msgid "钓到了%s，%.1f 厘米！"
+msgstr "You caught a %s, %.1f cm!"
+
+msgid "钓鱼"
+msgstr "fishing"
+
+msgid "钓鱼（R）"
+msgstr "Fishing (R)"
+
+msgid "铁锅"
+msgstr "Cooking pot"
+
+msgid "铜牌"
+msgstr "Bronze"
+
+msgid "银牌"
+msgstr "Silver"
+
+msgid "鱼  %d / %d（R 钓鱼）"
+msgstr "Fish  %d / %d (R to fish)"
+
+msgid "鱼不够：要 %d 条，鱼篓里有 %d 条"
+msgstr "Not enough fish: needs %d, your basket has %d"
+
+msgid "鱼标本"
+msgstr "Mounted fish"
+
+msgid "鱼篓："
+msgstr "Fish basket:"
+
+msgid "鱼跑了……再甩一竿试试"
+msgstr "It got away... cast again"
+
+msgid "（%d 种不同的）"
+msgstr " (%d different kinds)"
+
+msgid "（图鉴新增）"
+msgstr " (new in the field guide)"
+
+msgid "（已挖到）"
+msgstr " (dug up)"
+
+msgid "（新纪录！）"
+msgstr " (new record!)"
+
+msgid "（最好 %.1f 秒）"
+msgstr " (best %.1f s)"
+
+msgid "（最好 %d 下）"
+msgstr " (best %d)"
+
+msgid "（这一局关掉了成就）"
+msgstr " (achievements are off in this game)"
+
+msgid "？？？（还没找到这块石板）"
+msgstr "??? (you haven't found this tablet yet)"
+
+msgid "海底沉没的古城：三圈水环、两圈陆环，气泡穹顶下的神殿与山铜尖塔。从水族馆海洋大缸底部的石环潜进去。"
+msgstr "An ancient city sunk under the sea: three rings of water and two of land, with a temple and an orichalcum spire under a bubble dome. Dive in through the stone ring at the bottom of the aquarium's great ocean tank."
+
+msgid "山铜神殿"
+msgstr "Orichalcum Temple"
+
+msgid "台阶广场"
+msgstr "Stepped Plaza"
+
+msgid "洋流水渠"
+msgstr "Current Aqueduct"
+
+msgid "沉船"
+msgstr "Sunken Ship"
+
+msgid "海带林"
+msgstr "Kelp Forest"
+
+msgid "蝠鲼礁"
+msgstr "Manta Reef"
+

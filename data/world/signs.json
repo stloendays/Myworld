@@ -182,5 +182,47 @@
     "title_en": "Caravan Camp",
     "body_zh": "穿越沙海的驼队在这里歇脚：两顶帐篷、一堆篝火、几只木箱。驼队早就走了，篝火却一直烧着。",
     "body_en": "Caravans crossing the sand rest here: two tents, a campfire and a few crates. The caravan left long ago, but the fire still burns."
+  },
+  "at_welcome": {
+    "title_zh": "亚特兰蒂斯",
+    "title_en": "Atlantis",
+    "body_zh": "一座沉在海底的古城，罩在一个巨大的气泡穹顶里。城是一圈套一圈的：三圈水环、两圈陆环，正中的小岛上是神殿和山铜尖塔。穹顶外是开阔的海底，出去要留意氧气。",
+    "body_en": "An ancient city under the sea, held inside a great bubble dome. It is built in rings: three rings of water and two of land, with the temple and the orichalcum spire on the island at the centre. Outside the dome lies the open seabed; watch your air out there."
+  },
+  "at_rings": {
+    "title_zh": "同心环",
+    "title_en": "The Rings",
+    "body_zh": "古人说，海神在岛上挖出三圈水环、垒起两圈陆环，把爱人的家围在正中，谁也到不了。后来人们在四个方向架起石堤，才把环城连了起来。",
+    "body_en": "The old story says the sea god dug three rings of water and raised two rings of land around the island, so that no one could reach the home of the one he loved. Later people built stone causeways on four sides and joined the rings together."
+  },
+  "at_puzzle": {
+    "title_zh": "光之井",
+    "title_en": "The Light Well",
+    "body_zh": "海面的光从这口井落下来。五尊捧镜的雕像守着环城，看着雕像按 E 把它转一下（每次 45°）：让光一尊接一尊传下去，最后照到正中的山铜尖塔，神殿的大门就会打开。",
+    "body_en": "Light from the surface falls down this well. Five statues holding mirrors stand around the rings. Look at a statue and press E to turn it (45° each time): pass the light from statue to statue until it reaches the orichalcum spire at the centre, and the temple doors will open."
+  },
+  "at_aqueduct": {
+    "title_zh": "洋流水渠",
+    "title_en": "Current Aqueduct",
+    "body_zh": "古城的水渠至今还在流。走进这口漩涡泉，水柱会把你托上水渠，一路冲到城的东头。",
+    "body_en": "The city aqueduct still runs. Step into this swirling spring: the water spout lifts you onto the aqueduct and carries you all the way to the east side of the city."
+  },
+  "at_oxygen": {
+    "title_zh": "穹顶之外",
+    "title_en": "Beyond the Dome",
+    "body_zh": "走出穹顶就进了海里，屏幕下方的气泡条会慢慢变短。海底的气泡泉能把它补满；用完了会被托回最近的一口气泡泉。穹顶外的海里游得比池子里快。",
+    "body_en": "Step out of the dome and you are in the sea; the bubble bar at the bottom of the screen slowly runs down. The bubble springs on the seabed fill it up again; if it runs out you are carried back to the nearest spring. You swim faster out here than in a pool."
+  },
+  "at_temple": {
+    "title_zh": "山铜神殿",
+    "title_en": "Orichalcum Temple",
+    "body_zh": "神殿的墙上镶着山铜——一种只在传说里出现、像火一样发红光的金属。尖塔亮起来之前，大门是不会开的。",
+    "body_en": "The temple walls are set with orichalcum, a metal found only in legend that glows red like fire. The doors will not open until the spire is lit."
+  },
+  "at_manta": {
+    "title_zh": "蝠鲼礁",
+    "title_en": "Manta Reef",
+    "body_zh": "一头大蝠鲼常在这块礁石上歇着。看着它按 E 抓住它的背，它会驮着你绕古城游一圈，再送你回来（途中按 E 松手）。骑着它的时候不耗氧气。",
+    "body_en": "A great manta often rests on this reef. Look at it and press E to hold on to its back: it carries you once around the city and brings you back (press E to let go on the way). You use no air while riding it."
   }
 }
