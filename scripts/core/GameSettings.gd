@@ -59,6 +59,7 @@ const DEFAULTS := {
 	"first_person_arms": "both",      ## both / right / none
 	"hand_size": 0.5,                 ## 第一人称手在画面上的大小（0.4–1.0）
 	"play_intro": true,               ## 启动时播放开场过场
+	"story_cutscenes": true,          ## 剧情到了关键处时播放过场动画（点亮世界、新星座、暮烬之夜、终章）；关掉只弹提示
 	"view_bob": true,                 ## 走路时镜头轻微晃动
 	"minimap_enabled": true,
 	"minimap_rotate": true,           ## true = 随朝向旋转；false = 北朝上
@@ -85,6 +86,7 @@ var shoulder_left := false
 var first_person_arms := "both"
 var hand_size := 0.5
 var play_intro := true
+var story_cutscenes := true
 var view_bob := true
 var minimap_enabled := true
 var minimap_rotate := true

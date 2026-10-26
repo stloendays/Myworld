@@ -15,6 +15,8 @@ const DOME_SHADER := preload("res://shaders/bubble_dome.gdshader")
 const FLOW_SHADER := preload("res://shaders/water_flow.gdshader")
 const OXYGEN_SECONDS := 75.0
 const OXYGEN_SECONDS_HARD := 45.0
+const WHALE_FAR_R := 96.0
+const WHALE_NEAR_R := 72.0
 const MARBLE := Color(0.9, 0.88, 0.82)
 
 var dome_r := 62.0
@@ -59,6 +61,7 @@ var _spring_note := 0.0
 var _current_cool := 0.0
 var _o2_out := false
 var _whale: Node3D = null
+var _whale_mesh: Node3D = null              ## 鲸鱼本体（光回来以后从 96 m 游近到穹顶边上 WHALE_NEAR_R）
 var _rng := RandomNumberGenerator.new()
 var _segments: Array = []                  ## 光路的线段 [[a: Vector2, b: Vector2]]（房子、石柱避开它）
 var _avoid: Array = []                     ## 房子、石柱要避开的点 [Vector2, 半径]
@@ -661,6 +664,9 @@ func _set_puzzle(done: bool, instant: bool) -> void:
 			WorldState.flags["atlantis_spire"] = true
 			EventBus.toast_requested.emit(tr("光照到了山铜尖塔——尖塔亮了，神殿的大门开了！"))
 			SaveManager.request_save()
+			if _whale_mesh != null:
+				_whale_mesh.create_tween().set_trans(Tween.TRANS_SINE).tween_property(_whale_mesh, "position:x", WHALE_NEAR_R, 12.0)
+			play_story("atlantis_light")
 	# 门：尖塔亮过一次就一直开着（存档里的 atlantis_spire）
 	set_doors(done or bool(WorldState.flags.get("atlantis_spire", false)), instant or not done)
 
@@ -1101,7 +1107,7 @@ func _build_life() -> void:
 		fs.species_list = schools[i][1]
 		fs.seed_value = 7000 + i
 		add_child(fs)
-	# 方块鲸鱼：在城外慢慢绕大圈
+	# 方块鲸鱼：在城外慢慢绕大圈；尖塔亮过以后游近到穹顶边上
 	var pivot := Node3D.new()
 	pivot.name = "WhalePivot"
 	add_child(pivot)
@@ -1112,10 +1118,11 @@ func _build_life() -> void:
 	whale.name = "Whale"
 	whale.add_to_group("atl_whale")
 	whale.mesh = BlockyMesh.build(boxes, func(k: String) -> Color: return PoolHouse.DECOR_COLORS.get(k, Color.WHITE), 0.55)
-	whale.position = Vector3(96.0, 20.0, 0.0)
+	whale.position = Vector3(WHALE_NEAR_R if bool(WorldState.flags.get("atlantis_spire", false)) else WHALE_FAR_R, 20.0, 0.0)
 	whale.rotation.y = PI
 	pivot.add_child(whale)
 	_whale = pivot
+	_whale_mesh = whale
 
 
 func jelly_count() -> int:
@@ -1384,3 +1391,21 @@ static func _append_box(st: SurfaceTool, xf: Transform3D, size: Vector3) -> void
 		for idx: int in [0, 2, 1, 0, 3, 2]:
 			st.set_uv(Vector2(float(idx % 2), float(idx / 2)))
 			st.add_vertex(xf * (p[idx] as Vector3))
+
+
+## 过场锚点：spire 尖塔底部中心，temple_door 神殿大门中点，whale 城外的老鲸鱼，其余见 MiniWorld。
+func story_anchor(name: String) -> Variant:
+	match name:
+		"spire":
+			var p := MiniWorld.v2(data["spire"]["pos"])
+			return Vector3(p.x, height_at(p.x, p.y), p.y)
+		"temple_door":
+			if doors.is_empty():
+				return null
+			var sum := Vector3.ZERO
+			for d in doors:
+				sum += d.global_position
+			return sum / doors.size()
+		"whale":
+			return _whale_mesh.global_position if _whale_mesh != null else null
+	return super(name)

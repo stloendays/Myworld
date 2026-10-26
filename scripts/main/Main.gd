@@ -63,6 +63,9 @@ func _ready() -> void:
 	var letters := LetterPanel.new()
 	letters.name = "LetterPanel"
 	add_child(letters)
+	var director := StoryDirector.new()
+	director.name = "StoryDirector"
+	add_child(director)
 
 
 ## 世界坐标就是 Main 的坐标：Main 自己和它下面的 3D 节点在场景文件里都不该带位移或旋转——

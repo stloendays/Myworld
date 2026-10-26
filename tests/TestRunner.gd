@@ -37,6 +37,8 @@ func _run() -> void:
 	print("=== Dusk Lake M0/M1 自动检查 · Godot %s ===" % Engine.get_version_info()["string"])
 	# 不受本机 user://settings.json 影响：测试一律从默认设置开始
 	GameSettings.reset_defaults()
+	# 剧情过场只在 _test_story_chapter 和各世界的 _play_world_story 里打开，免得别的检查走到一半被过场接管镜头
+	GameSettings.set_value("story_cutscenes", false, false)
 	_test_scripts_load()
 	_test_no_scene_switching()
 	_test_layout_bounds()
@@ -100,6 +102,7 @@ func _run() -> void:
 	await _test_totem_quests()
 	await _test_constellations()
 	await _test_cottage_letters()
+	await _test_story_chapter()
 	await _test_nature()
 	_test_cover_fade()
 	await _test_flicker_sources()
@@ -254,7 +257,7 @@ func _test_constellations() -> void:
 	await _seconds(3.0)
 	var day_vis := stars.visibility
 	_check("星座：晴朗夜里在室外盯着看 1.5 秒就认出（记进图鉴），白天看不见",
-		night_vis > 0.9 and found and day_vis < 0.1 and StarField.constellations().size() == 5,
+		night_vis > 0.9 and found and day_vis < 0.1 and StarField.base_list().size() == 5,
 		"夜里可见度 %.2f · 认出 %s · 白天可见度 %.2f" % [night_vis, found, day_vis])
 	QuestLog.reset()
 
@@ -390,6 +393,217 @@ func _test_cottage_letters() -> void:
 
 
 # ---------------------------------------------------------------- 自然景观：小溪、瀑布、裂谷、桥
+
+## 第一章收尾（StoryDirector）：新星座锁着 → 点亮云海后晴夜放过场、星一颗颗亮起 → 星图补完 → 任务前提 →
+## 暮烬之夜（傍晚、放晴、原版红点、湖面暮烬、过场）→ 图腾最后的故事 → 终章过场（小屋台灯亮、书桌上的信）→ 读信完成任务。
+func _test_story_chapter() -> void:
+	var story := _main.get_node("StoryDirector") as StoryDirector
+	var stars := _main.get_node("StarField") as StarField
+	var climate := _main.get_node("Systems") as ClimateSystem
+	var precip := get_tree().get_first_node_in_group("precipitation") as Precipitation
+	var cave := get_tree().get_first_node_in_group("cave") as Cave
+	var dialogue := _main.get_node("DialoguePanel") as DialoguePanel
+	var letters := _main.get_node("LetterPanel") as LetterPanel
+	var cottage := get_tree().get_first_node_in_group("stone_cottage") as StoneCottage
+	var hud := _main.get_node("HUD") as CanvasLayer
+	QuestLog.reset()
+	_clear_story_flags()
+	GameSettings.set_value("story_cutscenes", true, false)
+
+	# 1. 新星座还锁着：晴夜在室外盯着天鲸座的方向看，什么也认不出
+	climate.jump_to_season(&"SUMMER")
+	climate.set_hour(23.0)
+	climate.set_weather(&"CLEAR", 0.0)
+	await _setup_at(Vector2(-2.0, 30.0), 0.0)
+	await _seconds(3.0)
+	var whale_c := StarField.find("sky_whale")
+	_player.look_at_point(_player.head.global_position + StarField.center_dir(whale_c) * 50.0)
+	await _seconds(2.2)
+	var hidden := not (stars._stars["sky_whale"] as MeshInstance3D).visible
+	var unknown := not WorldState.journal_list("constellations").has("sky_whale")
+	_check("新星座：世界的光送回去以前不在天上，盯着看也认不出；湖畔原有 5 个，新的 3 个（天鲸、石拱、蝠鲼）",
+		hidden and unknown and story.playing == "" and StarField.base_list().size() == 5 and StarField.extras().size() == 3,
+		"藏着 %s · 没认出 %s · 原有 %d · 新 %d" % [hidden, unknown, StarField.base_list().size(), StarField.extras().size()])
+
+	# 2. 点亮云海：晴夜、室外，自动放 new_star 过场（隔着湖望过去，星一颗颗亮起、字幕说出星座），放完交还控制
+	WorldState.flags["cloudsea_beacons"] = true
+	var watch := await _watch_cutscene("new_star", 40.0)
+	var revealed := StarField.shown(whale_c) and WorldState.journal_list("constellations").has("sky_whale") \
+		and (stars._stars["sky_whale"] as MeshInstance3D).visible
+	var restored := not _player.input_locked and _player.camera.current and hud.visible and story.playing == ""
+	_check("新星座过场：点亮云海后的晴夜自动播放，镜头独立、界面藏起、人物锁住；字幕说出天鲸座，星座亮起并记进图鉴；放完交还控制",
+		watch["played"] and watch["locked"] and watch["hud_hidden"] and str(watch["captions"]).contains("天鲸座") and watch["revealing"] \
+			and revealed and restored and (watch["missing"] as PackedStringArray).is_empty(),
+		"%s · 亮起 %s · 交还 %s" % [watch, revealed, restored])
+
+	# 3. 星图：一个新星座时还是“没画完”，三个都放出来以后换成“补完的星图”，桌上那张纸重画
+	letters.open_chart(_player)
+	var chart_partial := letters._title.text == QuestLog.text(PaddlerStory.data()["chart"], "title")
+	letters.close()
+	for id in ["stone_arch", "manta"]:
+		WorldState.flags["star_" + id] = true
+		WorldState.journal_add("constellations", id)
+	WorldState.flags["dunes_altar"] = true
+	WorldState.flags["atlantis_spire"] = true
+	letters.open_chart(_player)
+	var chart_done := letters._title.text == QuestLog.text(PaddlerStory.data()["chart_done"], "title")
+	letters.close()
+	await _seconds(0.8)
+	_check("星图：三个新星座都出现在湖畔夜空后，石头小屋的星图补完（说明换成补完的星图），记下成就用的 star_chart_done",
+		chart_partial and chart_done and WorldState.flags.get("star_chart_done", false),
+		"没画完 %s · 补完 %s · 标记 %s" % [chart_partial, chart_done, WorldState.flags.get("star_chart_done", false)])
+
+	# 4. 任务前提：「暮烬之夜」要三盏灯都亮；没亮时图腾说 wait 那句
+	for q: Dictionary in QuestLog.quests():
+		var qid := str(q["id"])
+		if qid == "ember_night":
+			break
+		WorldState.quests[qid] = {"state": "done", "progress": 0, "thanked": true}
+	WorldState.flags["met_totem"] = true
+	WorldState.flags.erase("dunes_altar")
+	var waiting := QuestLog.next_offer().is_empty() and str(QuestLog.waiting_quest().get("id", "")) == "ember_night"
+	var t := cave.totem.global_position
+	await _setup_at(Vector2(t.x, t.z) + Vector2(0.0, 2.6), 0.0)
+	dialogue.open_totem(cave.totem, _player)
+	var wait_line := str(dialogue.pages[0]["text"]) == QuestLog.text(QuestLog.get_quest("ember_night"), "wait")
+	dialogue.close()
+	WorldState.flags["dunes_altar"] = true
+	var offered := str(QuestLog.next_offer().get("id", "")) == "ember_night"
+	QuestLog.accept("ember_night")
+	_check("任务前提：三盏灯没全亮时图腾不给「暮烬之夜」、先说等一等；都亮了才给",
+		waiting and wait_line and offered and QuestLog.state_of("ember_night") == "active",
+		"等着 %s · 说等一等 %s · 给出 %s" % [waiting, wait_line, offered])
+
+	# 5. 暮烬之夜：日落前 10 分钟、正下着雨 → 天放晴、镜头周围换成原版红点、湖面暮烬，第一次放 ember_night 过场
+	climate.set_weather(&"LIGHT_RAIN", 0.0)
+	var sunset := ClimateData.parse_time(str(ClimateData.season_profile(&"SUMMER")["sunset"]))
+	climate.set_hour((sunset - 10.0) / 60.0)
+	await _setup_at(Vector2(-2.0, 30.0), 0.0)
+	var ember_watch := await _watch_cutscene("ember_night", 40.0)
+	var ember_on := story.embers_on and story.ember_field.active and story.ember_field.emitting \
+		and precip.seasonal_profile_id(WorldState.season_id) == StoryDirector.EMBER_PROFILE and WorldState.weather_id == &"CLEAR"
+	var ember_profile: Dictionary = Precipitation.fx_profile(StoryDirector.EMBER_PROFILE)
+	var legacy_kept := int(ember_profile.get("amount", 0)) == 700 and is_equal_approx(float(ember_profile.get("calm", 0.0)), 0.35)
+	_check("暮烬之夜：三盏灯都亮后的傍晚，天放晴，湖面升起暮烬，镜头周围飘原版红点（参数原样 700 个）；第一次放 ember_night 过场",
+		ember_on and legacy_kept and ember_watch["played"] and WorldState.flags.get("ember_night_seen", false) \
+			and (ember_watch["missing"] as PackedStringArray).is_empty() and not _player.input_locked,
+		"暮烬 %s · 原版参数 %s · %s" % [ember_on, legacy_kept, ember_watch])
+
+	# 6. 图腾最后的故事：谢完任务讲 6 页，最后一页合上放终章；终章里小屋台灯亮起、书桌上多一封信
+	await _setup_at(Vector2(t.x, t.z) + Vector2(0.0, 2.6), 0.0)
+	var marker := cave.totem.marker.visible
+	dialogue.open_totem(cave.totem, _player)
+	var lines := QuestLog.finale_lines()
+	var tail: Dictionary = dialogue.pages[-1]
+	var finale_pages: bool = dialogue.pages.size() >= lines.size() and str(tail["text"]) == lines[-1] and tail.get("after", "") == "finale"
+	var guard := 0
+	while dialogue.is_open() and guard < 60:
+		dialogue.advance()
+		guard += 1
+	var finale_watch := await _watch_cutscene("finale", 60.0)
+	var lamp_on := cottage.is_lamp_on() and cottage.farewell != null and is_instance_valid(cottage.farewell)
+	_check("终章：暮烬之夜图腾头上有标记，讲完最后一个故事（%d 页）放终章过场（%d 段、有第一章标题）；小屋台灯亮了，书桌上多了第四封信" % [lines.size(), Cutscene.shots_of("finale").size()],
+		marker and finale_pages and finale_watch["played"] and int(finale_watch["last_shot"]) == Cutscene.shots_of("finale").size() - 1 \
+			and str(finale_watch["titles"]).contains("暮色湖畔") and lamp_on and StoryDirector.heard() \
+			and (finale_watch["missing"] as PackedStringArray).is_empty(),
+		"标记 %s · 故事页 %s · %s · 台灯与信 %s" % [marker, finale_pages, finale_watch, lamp_on])
+
+	# 7. 读书桌上的信：任务完成；图腾谢过以后说新的收尾台词（月光石门）
+	cottage.farewell.interact(_player)
+	var reading := letters.is_open() and letters.showing == PaddlerStory.FAREWELL
+	letters.close()
+	QuestLog.evaluate(_player)
+	var quest_done: bool = QuestLog.state_of("ember_night") == "done" and WorldState.flags.get("farewell_read", false)
+	dialogue.open_totem(cave.totem, _player)
+	var closing := str(dialogue.pages[-1]["text"]) == QuestLog.line("all_done")
+	dialogue.close()
+	# 讲完以后：暮烬只在晴朗的秋夜回来
+	var summer_off := not StoryDirector.is_ember_night()
+	climate.jump_to_season(&"AUTUMN")
+	climate.set_hour(21.0)
+	climate.set_weather(&"CLEAR", 0.0)
+	var autumn_on := StoryDirector.is_ember_night()
+	climate.set_weather(&"LIGHT_RAIN", 0.0)
+	var autumn_rain_off := not StoryDirector.is_ember_night()
+	_check("第四封信：读完「暮烬之夜」任务完成，图腾的收尾台词指向月光石门；讲完以后暮烬只在晴朗的秋夜回来",
+		reading and quest_done and closing and summer_off and autumn_on and autumn_rain_off,
+		"读信 %s · 任务 %s · 收尾 %s · 夏夜 %s · 秋晴 %s · 秋雨 %s" % [reading, quest_done, closing, summer_off, autumn_on, autumn_rain_off])
+
+	# 8. 关掉“剧情过场动画”：新星座直接出现、只弹提示，不放过场
+	GameSettings.set_value("story_cutscenes", false, false)
+	WorldState.flags.erase("star_manta")
+	climate.set_weather(&"CLEAR", 0.0)
+	climate.set_hour(23.0)
+	await _setup_at(Vector2(-2.0, 30.0), 0.0)
+	await _seconds(StoryDirector.GAP + 1.5)   # 终章放完后隔 GAP 秒才看下一件事
+	var no_cutscene := not Cutscene.any_playing(get_tree()) and story.playing == "" and StarField.shown(StarField.find("manta"))
+	_check("设置关掉剧情过场：新星座直接出现，不放过场", no_cutscene, "直接出现 %s · 待放 %s · 正在放 %s · 星空 %.2f · 能放 %s · 室内 %s · 锁 %s · 黑幕 %s" % [no_cutscene,
+		StoryDirector.pending_star(), story.playing, stars.visibility, story._can_play(_player), WorldState.is_indoors(_player.entity_id), _player.input_locked, Fade.is_black()])
+
+	# 收拾：清掉剧情标记，暮烬自己关掉，小屋恢复
+	_clear_story_flags()
+	QuestLog.reset()
+	await _seconds(1.0)
+	cottage.lamp.set_on(false)
+	if cottage.farewell != null:
+		cottage.farewell.queue_free()
+		cottage.farewell = null
+	var off := not story.embers_on and precip.story_profile == ""
+	if not off:
+		_check("剧情标记清掉后暮烬关掉", off)
+
+
+func _clear_story_flags() -> void:
+	for k in ["cloudsea_beacons", "dunes_altar", "atlantis_spire", "star_sky_whale", "star_stone_arch", "star_manta",
+			"ember_night_seen", "ember_night_heard", "farewell_read", "star_chart_done"]:
+		WorldState.flags.erase(k)
+
+
+## 等一段剧情过场开始、放完（最多 timeout 秒），记下过程：放没放、人物锁没锁、界面藏没藏、字幕和标题、放到第几段、缺的锚点。
+func _watch_cutscene(id: String, timeout: float) -> Dictionary:
+	var out := {"played": false, "locked": false, "hud_hidden": false, "captions": [], "titles": "",
+		"last_shot": -1, "revealing": false, "missing": PackedStringArray()}
+	var root := get_tree().get_first_node_in_group("world_root")
+	var hud: CanvasLayer = root.get_node_or_null("HUD") as CanvasLayer if root != null else null
+	var stars := get_tree().get_first_node_in_group("star_field") as StarField
+	var end := Time.get_ticks_msec() + int(timeout * 1000.0 * 4.0)
+	var frames := 0
+	while frames < int(timeout * 60.0) and Time.get_ticks_msec() < end:
+		await get_tree().process_frame
+		frames += 1
+		var cs: Cutscene = null
+		for c in get_tree().get_nodes_in_group("cutscene"):
+			if (c as Cutscene).name == "Cutscene_" + id:
+				cs = c
+		if cs != null and cs.playing:
+			out["played"] = true
+			out["locked"] = out["locked"] or _player.input_locked
+			if hud != null:
+				out["hud_hidden"] = out["hud_hidden"] or not hud.visible
+			if cs.caption_text != "" and not (out["captions"] as Array).has(cs.caption_text):
+				(out["captions"] as Array).append(cs.caption_text)
+			if cs._title.modulate.a > 0.5:
+				out["titles"] = cs._title.text
+			out["last_shot"] = maxi(int(out["last_shot"]), cs.shot_index)
+			out["missing"] = cs.missing.duplicate()
+			if stars != null and stars.revealing != "":
+				out["revealing"] = true
+		elif out["played"] and (cs == null or not cs.playing):
+			break
+	await _frames(2)
+	return out
+
+
+## 在别的世界补放一次“光送回去”的剧情过场（自动检查平时关着过场，免得走到一半被接管）：
+## 每段都放到、锚点都找得到、放完交还控制。
+func _play_world_story(w: MiniWorld, id: String) -> bool:
+	GameSettings.set_value("story_cutscenes", true, false)
+	w.play_story(id)
+	var watch := await _watch_cutscene(id, 40.0)
+	GameSettings.set_value("story_cutscenes", false, false)
+	return watch["played"] and int(watch["last_shot"]) == Cutscene.shots_of(id).size() - 1 \
+		and (watch["missing"] as PackedStringArray).is_empty() and not _player.input_locked and _player.camera.current
+
 
 func _test_nature() -> void:
 	var creek: Dictionary = {}
@@ -638,6 +852,8 @@ func _check_cloudsea(w: World02) -> void:
 	var whale_ok: bool = lit == 4 and w.whale_near and WorldState.flags.get("cloudsea_beacons", false) \
 		and WorldState.get_interactable_state(&"cs_beacon_main") == "lit"
 	notes.append("点亮 %d / 4 · 天鲸游近 %s" % [lit, whale_ok])
+	var story_ok := await _play_world_story(w, "cloudsea_light")
+	notes.append("点亮的过场 %s" % story_ok)
 	# 掉出世界：从主岛边上走进云海，几秒后回到最后站稳的地方
 	await _mw_setup(w, Vector2(0.0, 12.0), 0.0)
 	await _seconds(1.0)
@@ -665,7 +881,7 @@ func _check_cloudsea(w: World02) -> void:
 	await _seconds(1.0)
 	var swim_ok := _player.swimming
 	_check("云海浮岛：5 座岛、3 座绳桥、12 块跳台（每跳空隙 < 1.6 m、高差 < 0.6 m）；走过三座绳桥都不掉，西岛发现风车并捡到云珠，四座风灯按 E 点亮后天鲸游近，掉进云海会回到岸上，池塘能游",
-		counts_ok and walked and no_fall and mill and picked and whale_ok and fall_ok and swim_ok and hop_ok, "；".join(notes) + " · 游泳 %s" % swim_ok)
+		counts_ok and walked and no_fall and mill and picked and whale_ok and story_ok and fall_ok and swim_ok and hop_ok, "；".join(notes) + " · 游泳 %s" % swim_ok)
 
 
 func _check_dunes(w: World03) -> void:
@@ -701,9 +917,10 @@ func _check_dunes(w: World03) -> void:
 	var placed := _player.try_interact() and w.altar.is_complete()
 	await _frames(3)
 	var beam_ok: bool = w.beam.visible and WorldState.get_interactable_state(&"du_altar") == "placed:6" and WorldState.flags.get("dunes_altar", false)
-	notes.append("碎片 %s · 爬上神殿 %s（y %.1f / 顶 %.1f，最大单步 %.2f）· 嵌回 %s · 光柱 %s" % [have, climbed and on_top, _player.global_position.y, w.ramp[1].y, _max_step, placed, beam_ok])
+	var story_ok := await _play_world_story(w, "dunes_light")
+	notes.append("碎片 %s · 爬上神殿 %s（y %.1f / 顶 %.1f，最大单步 %.2f）· 嵌回 %s · 光柱 %s · 过场 %s" % [have, climbed and on_top, _player.global_position.y, w.ramp[1].y, _max_step, placed, beam_ok, story_ok])
 	_check("琥珀沙丘：6 块古代碎片、6 个探索点、6 幅卷轴；从光门走到绿洲能下水游泳，捡齐碎片后从坡道走上神殿顶，看着祭坛按 E 嵌回，光柱升起并存档",
-		counts_ok and walked and swim and have and climbed and on_top and placed and beam_ok and _max_step < MAX_STEP, "；".join(notes))
+		counts_ok and walked and swim and have and climbed and on_top and placed and beam_ok and story_ok and _max_step < MAX_STEP, "；".join(notes))
 
 
 # ---------------------------------------------------------------- 国际象棋
@@ -1407,6 +1624,7 @@ func _test_settings() -> void:
 	var roundtrip := GameSettings.to_dict() == saved
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 	GameSettings.reset_defaults()
+	GameSettings.set_value("story_cutscenes", false, false)
 	await _frames(2)
 	_check("设置：限幅、立即生效（第三人称距离/肩位/手的显示）、保存后读回一致、恢复默认",
 		clamped and applied and reset_ok and roundtrip and _player.arms.model.parts["arm_l"].visible,
@@ -3357,7 +3575,11 @@ func _check_atlantis(w: World04) -> void:
 	for st in w.statues:
 		lit_all = lit_all and st.lit and WorldState.get_interactable_state(st.uid) == "dir:%d" % st.correct
 	var solved: bool = w.puzzle_done and lit_all and w.spire_light.visible and WorldState.flags.get("atlantis_spire", false) and w.door_open
+	var story_played := await _play_world_story(w, "atlantis_light")
+	var whale_near := absf(w._whale_mesh.position.x - World04.WHALE_NEAR_R) < 1.0 or w._whale_mesh.position.x < World04.WHALE_FAR_R - 0.5
+	var story_ok := story_played and whale_near
 	notes.append("门关着进不去 %s · 按 E %d 次 · 光路 %d 段 · 雕像全亮 %s · 尖塔点亮、开门 %s" % [shut, presses, w.beam_points.size() - 1, lit_all, solved])
+	notes.append("点亮的过场 %s（老鲸鱼游近 %s）" % [story_ok, whale_near])
 	# 走进神殿，捡到第六块石板（进传说页）
 	await _mw_setup(w, Vector2(0.0, -1.2), 0.0)
 	await _seconds(2.8)
@@ -3437,7 +3659,7 @@ func _check_atlantis(w: World04) -> void:
 	var pick_ok := w.items_count("pearl").x == pearls0 + 1 and w.items_count("shell").x >= 1
 	_check("亚特兰蒂斯：同心环城、穹顶里是空气外面是海；走过三座石堤到中央岛；神殿门先关着，转好五尊雕像光照到尖塔、尖塔点亮大门打开，殿里捡到第六块石板；出穹顶耗氧、耗尽回气泡泉、规则可关；洋流水渠、骑蝠鲼、潜水环都能玩完",
 		counts_ok and air and sea_ok and canal_ok and walked and dry and walk_step < MAX_STEP and shut and solved and lore_ok and drains and rescued and refilled and rule_off \
-		and current_ok and manta_ok and dive_ok and pick_ok, "；".join(notes))
+		and current_ok and manta_ok and dive_ok and pick_ok and story_ok, "；".join(notes))
 
 
 func _statue_cfg(w: World04, st: LightStatue) -> Dictionary:

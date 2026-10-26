@@ -21,6 +21,7 @@ var splash: GPUParticles3D = null
 var leaves: GPUParticles3D = null
 var leaves_kind := ""
 var profile_override := ""
+var story_profile := ""   ## 剧情临时指定的方案（暮烬之夜 = 原版红点 legacy_red_motes，StoryDirector 设）；开发者面板的 profile_override 优先
 const FX_PATH := "res://data/weather/seasonal_fx.json"
 static var _fx: Dictionary = {}
 
@@ -97,6 +98,8 @@ func seasonal_profile_id(season: StringName) -> String:
 		return ""
 	if profile_override != "":
 		return profile_override
+	if story_profile != "":
+		return story_profile
 	return str((fx_data()["active"] as Dictionary).get(String(season), ""))
 
 

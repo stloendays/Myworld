@@ -2,7 +2,7 @@ class_name CaveTotem
 extends Interactable
 ## 图腾山洞里会说话的老图腾：三节雕刻木柱叠在石座上，顶上一对展开的木翅膀，眼睛是会发光的青色方块。
 ## 看着它按 E 打开对话（DialoguePanel）：先谢谢你完成的任务，再给下一个任务（QuestLog）。
-## 有新任务可接时，头顶有一颗慢慢转的金色菱形；说话时眼睛更亮。本节点原点在石座底面中心，+Z 是脸朝的方向。
+## 有新任务可接（或暮烬之夜有故事要讲）时，头顶有一颗慢慢转的金色菱形；说话时眼睛更亮。本节点原点在石座底面中心，+Z 是脸朝的方向。
 
 const PX := 0.1   ## 雕刻细节的方块边长（米）
 
@@ -22,6 +22,7 @@ static func create(id: StringName) -> CaveTotem:
 
 
 func _ready() -> void:
+	add_to_group("cave_totem")
 	_build()
 	super()
 
@@ -42,7 +43,9 @@ func set_talking(on: bool) -> void:
 
 func _process(delta: float) -> void:
 	_t += delta
-	var has_offer := not QuestLog.next_offer().is_empty() or not QuestLog.unthanked().is_empty()
+	var story := get_tree().get_first_node_in_group("story_director") as StoryDirector
+	var has_offer := not QuestLog.next_offer().is_empty() or not QuestLog.unthanked().is_empty() \
+		or (story != null and story.finale_ready())
 	marker.visible = has_offer and not _talking
 	if marker.visible:
 		marker.rotation.y = _t * 1.6

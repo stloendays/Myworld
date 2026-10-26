@@ -105,6 +105,25 @@ func water_at(_x: float, _z: float) -> Dictionary:
 	return {}
 
 
+## 剧情过场的锚点（data/story/cutscenes.json）：Vector3 位置或带朝向的 Transform3D，没有返回 null。
+## 这里给大家都有的 spawn（默认出生点，离地 1.6 m）和 sunset（从出生点望向这个世界的太阳，远处 300 m：所有世界朝着同一轮落日）；子类补自己世界里的东西（风灯、祭坛、尖塔……）。
+func story_anchor(name: String) -> Variant:
+	if name == "spawn" or name == "sunset":
+		var s := v2(data.get("spawn", {}).get("pos", [0.0, 0.0]))
+		var p := Vector3(s.x, height_at(s.x, s.y) + 1.6, s.y)
+		if name == "sunset":
+			return p + _sun.global_basis.z * 300.0 if _sun != null else null
+		return p
+	return null
+
+
+## 这个世界的光送回去的那一刻放一段过场（设置里关掉了就不放；回湖畔以后新星座由 StoryDirector 接着放）。
+func play_story(id: String) -> void:
+	if not GameSettings.story_cutscenes or Cutscene.any_playing(get_tree()) or player == null:
+		return
+	Cutscene.run(self, id, story_anchor)
+
+
 ## 世界地图上的地名 [{pos: Vector2, text}]。
 func map_labels() -> Array:
 	return data.get("labels", []).map(func(l: Dictionary) -> Dictionary: return {"pos": v2(l["pos"]), "text": str(l["text"])})

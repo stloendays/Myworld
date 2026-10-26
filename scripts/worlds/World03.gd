@@ -13,6 +13,7 @@ const PALM_COLORS := {"trunk": Color(0.55, 0.4, 0.26), "trunk2": Color(0.62, 0.4
 
 var altar: RelicAltar = null
 var beam: MeshInstance3D = null
+var stone_head: Node3D = null                  ## 石柱废墟里望着落日的石像头（过场锚点）
 var ramp: PackedVector3Array = []            ## 神殿坡道底端和顶端（自动检查走上去用）
 var tumbleweeds: Array[Node3D] = []
 
@@ -248,6 +249,7 @@ func _on_altar_complete() -> void:
 		WorldState.flags["dunes_altar"] = true
 		EventBus.toast_requested.emit(tr("碎片全部嵌回祭坛——神殿升起了一道光！"))
 		SaveManager.request_save()
+		play_story("dunes_light")
 
 
 ## 石柱废墟：一圈石柱（有的断了半截）、两段半埋的石墙、一颗方块石像头。
@@ -307,6 +309,7 @@ func _build_ruins(c: Vector2) -> void:
 	head.position = Vector3(c.x + 2.0, y - 0.6, c.y + 1.0)
 	head.rotation.y = deg_to_rad(-80.0)
 	add_child(head)
+	stone_head = head
 	var hb := StaticBody3D.new()
 	hb.collision_layer = PhysicsLayers.WORLD
 	hb.collision_mask = 0
@@ -487,3 +490,17 @@ func water_at(x: float, z: float) -> Dictionary:
 
 static func crate_wood() -> Material:
 	return ArtMaterials.pbr("stained_pine", Color(0.5, 0.36, 0.24), "world")
+
+
+## 过场锚点：altar 祭坛，head 石像头（带朝向，+Z 是它的脸），sunset 石像头望着的落日方向（远处 80 m），其余见 MiniWorld。
+func story_anchor(name: String) -> Variant:
+	match name:
+		"altar":
+			return altar.global_position if altar != null else null
+		"head":
+			return stone_head.global_transform if stone_head != null else null
+		"sunset":
+			if stone_head == null or _sun == null:
+				return null
+			return stone_head.global_position + _sun.global_basis.z * 80.0
+	return super(name)

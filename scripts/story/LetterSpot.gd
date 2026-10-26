@@ -1,7 +1,7 @@
 class_name LetterSpot
 extends Interactable
 ## 放着一封划船人的信的地方（PaddlerStory）：kind = book（木屋书架顶上的旧书，信纸露出一角）、
-## crate（码头尽头的旧木盒）、tin（湖心小岛营火边石头上的铁盒）；chart 是石头小屋桌上的星图（纸由 StoneCottage 画，这里只管能看）。
+## crate（码头尽头的旧木盒）、tin（湖心小岛营火边石头上的铁盒）；envelope 是暮烬之夜以后石头小屋书桌上的第四封信；chart 是石头小屋桌上的星图（纸由 StoneCottage 画，这里只管能看）。
 ## 看着它按 E 打开 LetterPanel 读信；读过还能再读。读信只改本机玩家自己的记录（WorldState.flags.letters），
 ## 不是世界状态，所以 get_state 为空。
 ## 本节点原点在物件底面中心，+Z 是正面。
@@ -32,6 +32,8 @@ func get_prompt(_actor: Node) -> String:
 	if PaddlerStory.is_read(letter_id):
 		return tr("E  再读一遍")
 	match kind:
+		"envelope":
+			return tr("E  拆开信")
 		"book":
 			return tr("E  翻开旧书")
 		"crate":
@@ -76,6 +78,13 @@ func _build() -> void:
 			hit = Vector3(0.7, 0.55, 0.6)
 		"chart":
 			hit = Vector3(0.62, 0.12, 0.45)
+		"envelope":
+			# 叠好的信纸，压着一枚红色火漆印，旁边一颗湖边捡的白石子
+			var env := _box(Vector3(0.22, 0.012, 0.15), Vector3(0.0, 0.006, 0.0), paper)
+			env.rotation.y = deg_to_rad(-8.0)
+			_box(Vector3(0.045, 0.01, 0.045), Vector3(0.0, 0.016, 0.0), ArtMaterials.flat(Color(0.66, 0.12, 0.1), 0.4))
+			_box(Vector3(0.05, 0.03, 0.04), Vector3(0.15, 0.015, 0.05), ArtMaterials.flat(Color(0.86, 0.85, 0.8), 0.7))
+			hit = Vector3(0.4, 0.12, 0.32)
 		_:
 			var stone := ArtMaterials.named("M_Stone")
 			_box(Vector3(0.62, 0.16, 0.5), Vector3(0.0, 0.08, 0.0), stone)

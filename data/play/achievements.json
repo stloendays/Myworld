@@ -25,6 +25,8 @@
     {"id": "chef", "name": "小厨师", "name_en": "Little Chef", "desc": "在炉火边做 3 道菜", "desc_en": "Cook 3 dishes by the fire", "type": "dishes", "count": 3},
     {"id": "feast", "name": "海鲜大餐", "name_en": "Seafood Feast", "desc": "做一盘海鲜拼盘", "desc_en": "Cook a seafood platter", "type": "flag", "key": "cooked_seafood_platter"},
     {"id": "photographer", "name": "随手拍", "name_en": "Snapshot", "desc": "摄影清单拍到 10 样", "desc_en": "Photograph 10 things on the photo list", "type": "photos", "count": 10},
+    {"id": "star_chart", "name": "补全星图", "name_en": "The Finished Chart", "desc": "让天鲸座、石拱座、蝠鲼座都出现在湖畔夜空", "desc_en": "Bring the Sky Whale, the Stone Arch and the Manta into the lake sky", "type": "flag", "key": "star_chart_done"},
+    {"id": "ember_night", "name": "暮烬之夜", "name_en": "The Night of Embers", "desc": "听老图腾讲完最后一个故事，读到书桌上的信", "desc_en": "Hear the Old Totem's last story and read the letter on the desk", "type": "flag", "key": "farewell_read"},
     {"id": "totem_friend", "name": "图腾的朋友", "name_en": "Friend of the Totem", "desc": "完成老图腾的全部任务", "desc_en": "Finish every task from the Old Totem", "type": "quests", "count": 0}
   ]
 }

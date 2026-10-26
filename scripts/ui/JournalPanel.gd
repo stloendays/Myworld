@@ -352,6 +352,14 @@ func _refresh_lore() -> void:
 			_lore_box.add_child(body)
 		else:
 			_lore_box.add_child(_label(tr("？？？（还没找到这封信）"), 18, Color(0.6, 0.58, 0.56)))
+	# 暮烬之夜以后书桌上的第四封信：读过才列出来（之前不提示还有一封）
+	if PaddlerStory.is_read(PaddlerStory.FAREWELL):
+		var f := PaddlerStory.letter(PaddlerStory.FAREWELL)
+		_lore_box.add_child(_label(PaddlerStory.text(f, "title"), 20, Color(1.0, 0.75, 0.5)))
+		var fb := _label(PaddlerStory.text(f, "text") + "\n" + PaddlerStory.signature(), 18, Color(0.92, 0.9, 0.86))
+		fb.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		fb.custom_minimum_size = Vector2(820.0, 0.0)
+		_lore_box.add_child(fb)
 	_lore_box.add_child(_label(" ", 12, Color.WHITE))
 	var lore: Dictionary = MiniWorld.data_for("world_04").get("lore", {})
 	var read: Array = WorldState.journal_list("lore")

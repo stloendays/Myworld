@@ -3,7 +3,7 @@ extends Node3D
 ## 南部草地上的石头小屋（world_layout.json → cottage；地形 pads 里的 cottage_pad 把地压平）：前一位旅人“划船的人”的家。
 ## 外面：毛石墙、木门（三环转锁，CottageDoor）、三扇玻璃窗、石板坡屋顶、烟囱、门前两级石阶（碰撞是一道缓坡）和一盏挂灯。
 ## 三封信都读过以后门能打开（PaddlerStory）。屋里：木地板、靠后墙的书桌和椅子、桌上没画完的星图（能看）和台灯（能开关）、
-## 靠左墙的床、右墙书架、左墙挂着一把船桨、中间一块地毯。屋里是室内区域 cottage_interior（不下雨）。
+## 靠左墙的床、右墙书架、左墙挂着一把船桨、中间一块地毯。暮烬之夜以后，台灯自己亮了，书桌上多了一封信（place_farewell）。屋里是室内区域 cottage_interior（不下雨）。
 ## 本地坐标：原点在地面中心，门在 +Z 面（yaw 让门朝向西边的步道），地板顶面 y = FLOOR。
 
 const SIZE := Vector3(6.4, 3.0, 5.2)       ## 墙体外廓（宽、檐口高、深）
@@ -31,13 +31,16 @@ const PROPS := [
 	{"asset": "rugRectangle", "center": [0.1, FLOOR + 0.005, 0.1], "yaw": 0.0, "scale": 1.5},
 ]
 const CHART := Vector3(1.32, FLOOR + 0.775, -1.86)   ## 桌上星图的中心
+const FAREWELL := Vector3(1.9, FLOOR + 0.775, -1.68)  ## 暮烬之夜以后书桌上那封信的位置
 
 var door: CottageDoor = null
 var lamp: InteractableToggle = null
 var chart: LetterSpot = null
+var farewell: LetterSpot = null   ## 暮烬之夜以后才有（PaddlerStory 的第四封信）
 var bed: Bed = null
 var seat: Seat = null
 var _lamp_light: OmniLight3D = null
+var _chart_vp: SubViewport = null
 var _stone: Material
 
 
@@ -134,6 +137,9 @@ func _ready() -> void:
 	add_child(Precipitation.leaf_blocker(Vector3(SIZE.x + 1.0, 0.6, SIZE.z + 1.2), Transform3D(Basis(), Vector3(0.0, SIZE.y + ROOF_RISE * 0.5, 0.0))))
 	add_child(ZoneArea.create_box(&"cottage", Vector3(SIZE.x + 6.0, 4.0, SIZE.z + 6.0), Vector3(0.0, 2.0, 0.0), false))
 	add_child(ZoneArea.create_box(&"cottage_interior", Vector3(SIZE.x - 2.0 * WALL, 2.6, SIZE.z - 2.0 * WALL), Vector3(0.0, FLOOR + 1.3, 0.0), true))
+	if bool(WorldState.flags.get("ember_night_heard", false)):
+		place_farewell()
+	QuestLog.changed.connect(refresh_chart)
 
 
 ## 屋里能走到的地面范围（本地 xz），自动检查用。
@@ -144,6 +150,23 @@ static func interior_rect() -> Rect2:
 
 func is_lamp_on() -> bool:
 	return lamp != null and lamp.on
+
+
+## 星图重画一次（新星座放出来以后，桌上那张纸补上空位）。
+func refresh_chart() -> void:
+	if _chart_vp != null and is_inside_tree():
+		_chart_vp.render_target_update_mode = SubViewport.UPDATE_ONCE
+		(_chart_vp.get_child(0) as Control).queue_redraw()
+
+
+## 书桌上放上划船人的第四封信（暮烬之夜，老图腾讲完最后一个故事以后）。
+func place_farewell() -> void:
+	if farewell != null:
+		return
+	farewell = LetterSpot.create(PaddlerStory.FAREWELL, "envelope")
+	farewell.position = FAREWELL
+	farewell.rotation.y = deg_to_rad(-12.0)
+	add_child(farewell)
 
 
 # ---------------------------------------------------------------- 屋里
@@ -161,6 +184,7 @@ func _build_interior(body: StaticBody3D) -> void:
 	add_child(bed)
 	# 桌上那张没画完的星图：用读信界面的 ChartView 画在一张贴图上
 	var vp := SubViewport.new()
+	_chart_vp = vp
 	vp.name = "ChartViewport"
 	vp.size = Vector2i(512, 352)
 	vp.render_target_update_mode = SubViewport.UPDATE_ONCE
