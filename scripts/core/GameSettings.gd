@@ -73,6 +73,7 @@ const DEFAULTS := {
 	"emote_third_person": true,       ## 挥手 / 跳舞 / 鼓掌时自动切到第三人称看自己，做完切回
 	"auto_update_check": true,        ## 启动时到 GitHub 检查新版本（只在导出的游戏里）
 	"language": "auto",               ## 界面语言：auto（默认，跟随系统）/ en / zh
+	"renderer": "auto",               ## 渲染方式：auto（Vulkan，起不来引擎自动换）/ compatibility（OpenGL）/ angle；下次启动生效（StartupGuard）
 }
 
 var fov := 75.0
@@ -98,6 +99,7 @@ var fly_speed := 10.0
 var emote_third_person := true
 var auto_update_check := true
 var language := "auto"
+var renderer := "auto"
 
 var developer_mode := false
 var _window_user_set := false   ## 只有玩家改过（或设置文件里有）才去动垂直同步与全屏，命令行 --disable-vsync 不被覆盖
@@ -124,7 +126,8 @@ func _ready() -> void:
 func _park_dev_window() -> void:
 	if DisplayServer.get_name() == "headless" or OS.get_environment("DUSK_SHOW_WINDOW") == "1":
 		return
-	if not Array(OS.get_cmdline_args()).any(func(a: String) -> bool: return a.begins_with("res://devtools/")):
+	# DUSK_PARK_WINDOW=1：导出的 exe 冒烟测试（启动保护、换渲染方式）也停在屏幕外
+	if OS.get_environment("DUSK_PARK_WINDOW") != "1" and not Array(OS.get_cmdline_args()).any(func(a: String) -> bool: return a.begins_with("res://devtools/")):
 		return
 	dev_window_parked = true
 	var win := get_window()
@@ -189,6 +192,8 @@ func set_value(key: String, value: Variant, save := true) -> void:
 			value = clampf(float(value), 0.4, 1.0)
 		"language":
 			value = value if str(value) in LANGUAGES else "auto"
+		"renderer":
+			value = value if str(value) in StartupGuard.RENDERERS else "auto"
 	set(key, value)
 	if key in ["vsync", "fullscreen"]:
 		_window_user_set = true

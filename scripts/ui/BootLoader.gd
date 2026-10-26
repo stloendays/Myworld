@@ -78,6 +78,7 @@ func _run() -> void:
 	for i in WARMUP_FRAMES:
 		screen.set_progress(0.85 + 0.15 * float(i + 1) / WARMUP_FRAMES)
 		await get_tree().process_frame
+	StartupGuard.mark_stable()   # 世界画出来了：这次启动算成功（崩在这之前，下次自动换兼容渲染）
 	screen.set_stage("准备好了")
 	while screen.shown_progress < 0.999:
 		await get_tree().process_frame

@@ -90,7 +90,7 @@ func _build() -> void:
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
 	environment.reflected_light_source = Environment.REFLECTION_SOURCE_SKY
 	environment.tonemap_mode = Environment.TONE_MAPPER_AGX
-	environment.ssr_enabled = true
+	environment.ssr_enabled = PerformanceDirector.forward_plus()
 	environment.ssr_max_steps = 128
 	environment.ssr_fade_in = 0.1
 	environment.ssr_fade_out = 2.5
