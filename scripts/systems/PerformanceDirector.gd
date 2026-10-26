@@ -53,7 +53,7 @@ func apply_quality() -> void:
 	var env := get_tree().get_first_node_in_group("environment_director") as EnvironmentDirector
 	if env != null and env.environment != null:
 		var e := env.environment
-		e.ssr_enabled = int(p["ssr"]) > 0
+		e.ssr_enabled = int(p["ssr"]) > 0 and forward_plus()
 		e.ssr_max_steps = maxi(int(p["ssr"]), 8)
 		e.ssao_enabled = p["ssao"]
 		RenderingServer.environment_set_ssao_quality(RenderingServer.ENV_SSAO_QUALITY_MEDIUM, p["ssao_half"], 0.5, 2, 50.0, 300.0)
@@ -68,7 +68,7 @@ func apply_quality() -> void:
 	get_viewport().positional_shadow_atlas_size = p["pos_atlas"]
 	get_viewport().mesh_lod_threshold = p["lod"]
 	# 中 / 高 / 极高画质用时间抗锯齿（TAA）（v0.5 起中画质也用：走动时溪边、林道闪烁约减半）：走动时细草、栏杆、木板缝、阴影边的锯齿闪烁约减半（devtools/FlickerProbe 的 jiggle 测试）
-	get_viewport().use_taa = bool(p.get("taa", false))
+	get_viewport().use_taa = bool(p.get("taa", false)) and forward_plus()
 	var cover := get_tree().get_first_node_in_group("ground_cover")
 	if cover != null:
 		for mmi: MultiMeshInstance3D in cover.find_children("*", "MultiMeshInstance3D", true, false):
@@ -146,7 +146,7 @@ func _apply_scale() -> void:
 	var vp := get_viewport()
 	vp.scaling_3d_scale = s
 	# 开着动态分辨率就一直用 FSR（100% 时只做锐化）：比例在 100% 上下变动时不在两种缩放之间来回切，画面不跳
-	var fsr := s < 0.99 or (GameSettings.dynamic_resolution and DisplayServer.get_name() != "headless")
+	var fsr := (s < 0.99 or (GameSettings.dynamic_resolution and DisplayServer.get_name() != "headless")) and forward_plus()
 	vp.scaling_3d_mode = Viewport.SCALING_3D_MODE_FSR if fsr else Viewport.SCALING_3D_MODE_BILINEAR
 	vp.fsr_sharpness = fsr_sharpness_for(s)
 
@@ -168,3 +168,8 @@ func _update_underground() -> void:
 		if z in UNDERGROUND_ZONES:
 			underground = true
 	env.sun_shadows_allowed = not underground
+
+
+## 屏幕空间反射、TAA、FSR 只有 Forward+ 有；老显卡上跑的兼容渲染（OpenGL，见 StartupGuard）里不开。
+static func forward_plus() -> bool:
+	return RenderingServer.get_current_rendering_method() == "forward_plus"

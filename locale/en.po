@@ -2139,3 +2139,21 @@ msgstr "Kelp Forest"
 msgid "蝠鲼礁"
 msgstr "Manta Reef"
 
+msgid "渲染方式"
+msgstr "Renderer"
+
+msgid "自动（推荐）"
+msgstr "Auto (recommended)"
+
+msgid "兼容（旧显卡、打不开时）"
+msgstr "Compatibility (old GPUs, if the game will not start)"
+
+msgid "兼容 ANGLE（兼容也不行时）"
+msgstr "Compatibility ANGLE (if Compatibility fails too)"
+
+msgid "重启生效"
+msgstr "Restart to apply"
+
+msgid "现在：%s / %s"
+msgstr "Now: %s / %s"
+

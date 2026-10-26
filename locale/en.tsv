@@ -710,3 +710,9 @@ E  转动雕像（45°）	E  Turn the statue (45°)
 沉船	Sunken Ship
 海带林	Kelp Forest
 蝠鲼礁	Manta Reef
+渲染方式	Renderer
+自动（推荐）	Auto (recommended)
+兼容（旧显卡、打不开时）	Compatibility (old GPUs, if the game will not start)
+兼容 ANGLE（兼容也不行时）	Compatibility ANGLE (if Compatibility fails too)
+重启生效	Restart to apply
+现在：%s / %s	Now: %s / %s

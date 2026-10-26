@@ -141,6 +141,25 @@ func _build_settings() -> Control:
 	_option(display, "max_fps", "帧率上限", ["不限", "30", "60", "120", "144", "165", "240"], FPS_CHOICES)
 	_check(display, "vsync", "垂直同步")
 	_check(display, "fullscreen", "全屏（F11 或 Alt + Enter 随时切换）")
+	_option(display, "renderer", "渲染方式", ["自动（推荐）", "兼容（旧显卡、打不开时）", "兼容 ANGLE（兼容也不行时）"], StartupGuard.RENDERERS)
+	var render_row := HBoxContainer.new()
+	render_row.add_theme_constant_override("separation", 10)
+	display.add_child(render_row)
+	var render_info := Label.new()
+	render_info.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
+	render_info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	render_row.add_child(render_info)
+	var restart_btn := Button.new()
+	restart_btn.text = "重启生效"
+	restart_btn.pressed.connect(func() -> void: StartupGuard.restart_with(GameSettings.renderer))
+	render_row.add_child(restart_btn)
+	var start_renderer := GameSettings.renderer
+	var sync_render := func() -> void:
+		render_info.text = tr("现在：%s / %s") % [RenderingServer.get_current_rendering_method(), RenderingServer.get_current_rendering_driver_name()]
+		restart_btn.visible = GameSettings.renderer != start_renderer   # 改了才显示，重启后生效
+	GameSettings.changed.connect(sync_render)
+	render_row.tree_exiting.connect(func() -> void: GameSettings.changed.disconnect(sync_render))
+	sync_render.call()
 
 	var view := _tab(tabs, "视角")
 	_option(view, "third_person_default", "启动时视角", ["第一人称", "第三人称"], [false, true])

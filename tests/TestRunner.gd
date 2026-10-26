@@ -109,6 +109,7 @@ func _run() -> void:
 	await _test_new_game_menu()
 	await _test_play_lake()
 	await _test_world_travel()
+	_test_startup_guard()
 	_report()
 
 
@@ -3336,3 +3337,25 @@ func _statue_cfg(w: World04, st: LightStatue) -> Dictionary:
 		if StringName(s["id"]) == st.uid:
 			return s
 	return {}
+
+
+## 启动保护：上次加载途中崩了就降一级渲染（标准 → 兼容 → ANGLE），选了兼容就带参数重启；Forward+ 才开的效果在兼容渲染下不开。
+func _test_startup_guard() -> void:
+	var step_ok: bool = StartupGuard.next_renderer("auto", "vulkan") == "compatibility" \
+		and StartupGuard.next_renderer("auto", "d3d12") == "compatibility" \
+		and StartupGuard.next_renderer("auto", "opengl3") == "angle" \
+		and StartupGuard.next_renderer("compatibility", "opengl3") == "angle" \
+		and StartupGuard.next_renderer("angle", "opengl3_angle") == "angle"
+	var relaunch_ok: bool = StartupGuard.needs_relaunch("compatibility", "vulkan", false) \
+		and not StartupGuard.needs_relaunch("compatibility", "opengl3", false) \
+		and not StartupGuard.needs_relaunch("compatibility", "vulkan", true) \
+		and StartupGuard.needs_relaunch("angle", "opengl3", false) \
+		and not StartupGuard.needs_relaunch("auto", "opengl3", false)
+	var args_ok: bool = Array(StartupGuard.launch_args("compatibility")) == ["--rendering-method", "gl_compatibility", "--rendering-driver", "opengl3"] \
+		and Array(StartupGuard.launch_args("angle")).has("opengl3_angle") and StartupGuard.launch_args("auto").is_empty()
+	GameSettings.set_value("renderer", "nonsense", false)
+	var setting_ok := GameSettings.renderer == "auto"
+	GameSettings.set_value("renderer", "auto", false)
+	var off_in_tests := not StartupGuard.active
+	_check("启动保护：崩溃后降一级渲染、兼容渲染带参数重启、自动检查里不动", step_ok and relaunch_ok and args_ok and setting_ok and off_in_tests,
+		"降级 %s · 重启 %s · 参数 %s · 设置 %s · 检查中关闭 %s" % [step_ok, relaunch_ok, args_ok, setting_ok, off_in_tests])
