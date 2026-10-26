@@ -45,11 +45,18 @@ static func weather_profile(id: StringName) -> Dictionary:
 
 
 static func season_days() -> int:
+	var rules := _rules()
+	if rules != null:
+		return int(rules.call("season_days"))
 	return int(seasons().get("season_days", 12))
 
 
 ## 现实 1 秒对应的游戏分钟数（默认一天 = 现实 48 分钟 → 0.5）。
+## 本局规则（GameRules）可以改一天的长度，0 = 时间静止。
 static func game_minutes_per_real_second() -> float:
+	var rules := _rules()
+	if rules != null:
+		return float(rules.call("game_minutes_per_real_second"))
 	return MINUTES_PER_DAY / (float(seasons().get("day_length_real_minutes", 48.0)) * 60.0)
 
 
@@ -100,3 +107,11 @@ static func colors(value: Variant) -> Array:
 		for c in value:
 			out.append(color(c))
 	return out
+
+
+## 本局规则（Autoload GameRules）；编辑器里预览时没有 Autoload，返回 null 用数据文件的默认值。
+static func _rules() -> Node:
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null or Engine.is_editor_hint():
+		return null
+	return tree.root.get_node_or_null("GameRules")

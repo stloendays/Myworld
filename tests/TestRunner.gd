@@ -55,6 +55,7 @@ func _run() -> void:
 		_report()
 		return
 	_test_structure()
+	_test_world_anchor()
 	_test_heightmap_alignment()
 	await _test_spawn_settles()
 	await _test_qa01()
@@ -67,6 +68,7 @@ func _run() -> void:
 	await _test_character()
 	_house = _main.get_node("PoolHouse") as PoolHouse
 	_test_signs()
+	await _test_scrolls()
 	await _test_chat()
 	_test_release()
 	await _test_poolhouse_walk()
@@ -100,6 +102,11 @@ func _run() -> void:
 	await _test_cottage()
 	await _test_nature()
 	_test_cover_fade()
+	await _test_flicker_sources()
+	await _test_dune_gate_and_photos()
+	await _test_game_rules()
+	await _test_save_v4()
+	await _test_new_game_menu()
 	await _test_world_travel()
 	_report()
 
@@ -118,7 +125,7 @@ func _test_cave() -> void:
 	# 从洞外步道沿中线走进石厅，再走到传送门前：一路连续、没被岩壁挡住，进洞后属于室内区域 cave
 	await _setup_at(Vector2(-8.0, -84.0), 0.0)
 	_begin_track()
-	var ok := true
+	var ok: bool = true
 	for p: Vector2 in centers.slice(0, centers.size() - 1):
 		ok = await _walk_to(p, 25.0) and ok
 	_track = false
@@ -375,7 +382,7 @@ func _test_nature() -> void:
 func _test_cover_fade() -> void:
 	var cover := get_tree().get_first_node_in_group("ground_cover")
 	var fading := 0
-	var ok := true
+	var ok: bool = true
 	for mmi: MultiMeshInstance3D in cover.find_children("*", "MultiMeshInstance3D", true, false):
 		var m := mmi.multimesh.mesh
 		var mat := m.surface_get_material(0)
@@ -392,32 +399,172 @@ func _test_world_travel() -> void:
 	var nodes_lake := Performance.get_monitor(Performance.OBJECT_NODE_COUNT)
 	var mem_lake := Performance.get_monitor(Performance.MEMORY_STATIC)
 	var blocked_here := WorldTravel.blocked_reason("dusk_lake") != ""
-	var blocked_planned := WorldTravel.blocked_reason("world_03") != ""
-	var ok_go := WorldRegistry.enter("world_02")
-	await WorldTravel.travel_finished
-	var w2 := get_tree().get_first_node_in_group("world_root")
-	var only_one := get_tree().get_nodes_in_group("world_root").size() == 1 and w2 is World02 and not is_instance_valid(_main) \
-		and get_tree().get_first_node_in_group("cave") == null
-	var r: Dictionary = WorldTravel.last_report
-	var nodes_w2 := Performance.get_monitor(Performance.OBJECT_NODE_COUNT)
-	var mem_w2 := Performance.get_monitor(Performance.MEMORY_STATIC)
-	var lighter := nodes_w2 < nodes_lake * 0.2 and mem_w2 < mem_lake * 0.85
-	var current_ok := WorldRegistry.current_id() == "world_02"
-	# 回去：光门对面站着
-	var back := WorldRegistry.enter("dusk_lake")
-	await WorldTravel.travel_finished
-	_main = get_tree().get_first_node_in_group("world_root") as Node3D
-	_player = get_tree().get_first_node_in_group("local_player") as FirstPersonController
-	await _seconds(1.0)
-	var arrive: Dictionary = (WorldRegistry.get_world("dusk_lake")["arrivals"] as Dictionary)["world_02"]
-	var at_gate := Vector2(_player.global_position.x, _player.global_position.z).distance_to(Vector2(float(arrive["pos"][0]), float(arrive["pos"][2]))) < 1.0
-	var mem_back := Performance.get_monitor(Performance.MEMORY_STATIC)
-	var no_leak := mem_back < mem_lake * 1.15
+	var planned := 0
+	for w in WorldRegistry.worlds():
+		if not WorldRegistry.is_open(str(w["id"])):
+			planned += 1
+	var notes := PackedStringArray()
+	var all_ok: bool = blocked_here and planned == 0
+	for target in ["world_02", "world_03"]:
+		var ok_go := WorldRegistry.enter(target)
+		await WorldTravel.travel_finished
+		var w := get_tree().get_first_node_in_group("world_root") as MiniWorld
+		var only_one: bool = get_tree().get_nodes_in_group("world_root").size() == 1 and w != null and w.world_id == target \
+			and not is_instance_valid(_main) and get_tree().get_first_node_in_group("cave") == null
+		var r: Dictionary = WorldTravel.last_report
+		var nodes_w := Performance.get_monitor(Performance.OBJECT_NODE_COUNT)
+		var mem_w := Performance.get_monitor(Performance.MEMORY_STATIC)
+		var lighter := nodes_w < nodes_lake * 0.3 and mem_w < mem_lake
+		_player = w.player if w != null else null
+		await _seconds(1.0)
+		var mm := w.get_node("Minimap") as Minimap
+		var wm := w.get_node("WorldMap") as WorldMap
+		var maps_ok := mm._world == w and mm.map_texture != null and wm._rect() == w.map_rect() and w.get_node_or_null("CompassBar") != null
+		if target == "world_02":
+			await _check_cloudsea(w as World02)
+		else:
+			await _check_dunes(w as World03)
+		var back := WorldRegistry.enter("dusk_lake")
+		await WorldTravel.travel_finished
+		_main = get_tree().get_first_node_in_group("world_root") as Node3D
+		_player = get_tree().get_first_node_in_group("local_player") as FirstPersonController
+		await _seconds(1.0)
+		var arrive: Dictionary = (WorldRegistry.get_world("dusk_lake")["arrivals"] as Dictionary)[target]
+		var at_gate := Vector2(_player.global_position.x, _player.global_position.z).distance_to(Vector2(float(arrive["pos"][0]), float(arrive["pos"][2]))) < 1.0
+		var mem_back := Performance.get_monitor(Performance.MEMORY_STATIC)
+		var no_leak := mem_back < mem_lake * 1.15
+		var ok: bool = ok_go and only_one and lighter and maps_ok and back and at_gate and no_leak
+		all_ok = all_ok and ok
+		notes.append("%s：节点 %d → %d（卸载后 %d）· 静态内存 %.0f → %.0f → 回湖畔 %.0f MB · 小地图/世界地图 %s · 回到门前 %s · %d ms" % [target, nodes_lake, nodes_w,
+			int(r.get("nodes_unloaded", 0)), mem_lake / 1048576.0, mem_w / 1048576.0, mem_back / 1048576.0, maps_ok, at_gate, int(r.get("ms", 0))])
 	var lobby := _main.get_node_or_null("LobbyMenu") as LobbyMenu
-	_check("跨世界：图腾山洞的光门通往第二个世界，先卸载湖畔再加载（不同时存在），世界二节点数和内存大降；回来站在光门前，内存不涨",
-		ok_go and blocked_here and blocked_planned and only_one and lighter and current_ok and back and at_gate and no_leak and (lobby == null or not lobby.is_open()),
-		"节点 %d → %d（卸载后 %d）· 静态内存 %.0f → %.0f MB → 回来 %.0f MB · 只有一个世界 %s · 到光门前 %s · 用时 %d ms" % [
-			nodes_lake, nodes_w2, int(r.get("nodes_unloaded", 0)), mem_lake / 1048576.0, mem_w2 / 1048576.0, mem_back / 1048576.0, only_one, at_gate, int(r.get("ms", 0))])
+	_check("跨世界：图腾山洞的光门去云海浮岛、南部草甸的沙之门去琥珀沙丘，每次先卸载再加载（只有一个世界），新世界有自己的小地图、世界地图和罗盘；回湖畔站在门前，内存不涨",
+		all_ok and (lobby == null or not lobby.is_open()), "；".join(notes))
+
+
+func _mw_setup(w: MiniWorld, xz: Vector2, yaw: float) -> void:
+	_track = false
+	_player.autopilot_enabled = false
+	_player.global_position = Vector3(xz.x, w.height_at(xz.x, xz.y) + 0.3, xz.y)
+	_player.velocity = Vector3.ZERO
+	_player.rotation.y = yaw
+	await _seconds(0.6)
+
+
+func _check_cloudsea(w: World02) -> void:
+	var notes := PackedStringArray()
+	var scrolls := w.find_children("*", "SignBoard", true, false).size()
+	var counts_ok := w.islands.size() == 5 and w.bridges.size() == 3 and w.stones.size() == 12 and w.beacons.size() == 4 \
+		and w.items_total() == 8 and (w.data["pois"] as Array).size() == 6 and scrolls == 6
+	notes.append("岛 %d · 桥 %d · 跳台 %d · 风灯 %d · 云珠 %d · 卷轴 %d" % [w.islands.size(), w.bridges.size(), w.stones.size(), w.beacons.size(), w.items_total(), scrolls])
+	# 从主岛走过绳桥去西岛：一路不掉、到了西岛
+	var falls0 := w.falls
+	var walked := true
+	for b in w.bridges.size():
+		var pts: PackedVector3Array = w.bridges[b]
+		var head := Vector2(pts[0].x, pts[0].z)
+		var c0: Vector2 = w.islands[0]["c"]
+		await _mw_setup(w, head + (c0 - head).normalized() * 2.0, 0.0)
+		_begin_track()
+		for k in range(0, pts.size(), 3):
+			walked = await _walk_to(Vector2(pts[k].x, pts[k].z), 12.0) and walked
+		walked = await _walk_to(Vector2(pts[-1].x, pts[-1].z), 12.0) and walked
+		var far_c: Vector2 = Vector2(pts[-1].x, pts[-1].z) + (Vector2(pts[-1].x, pts[-1].z) - head).normalized() * 3.0
+		walked = await _walk_to(far_c, 10.0) and walked
+		_track = false
+		var isl := w.island_at(_player.global_position.x, _player.global_position.z)
+		walked = walked and not isl.is_empty() and str(isl["id"]) != "main" and _max_step < MAX_STEP
+		notes.append("桥 %d → %s（%.1f, %.1f, %.1f）" % [b, isl.get("id", "?"), _player.global_position.x, _player.global_position.y, _player.global_position.z])
+	var no_fall := w.falls == falls0
+	# 西岛：发现风车、捡到云珠 4
+	var mill := false
+	await _mw_setup(w, Vector2(-55.0, -4.0), 0.0)
+	await _seconds(0.6)
+	mill = WorldState.discoveries.has(&"cs_mill")
+	var before := WorldState.collected("world_02").size()
+	await _walk_to(Vector2(-61.0, -1.0), 10.0)
+	await _seconds(0.6)
+	var picked := WorldState.collected("world_02").size() == before + 1 and WorldState.collected("world_02").has("pearl_04")
+	notes.append("发现风车 %s · 捡到云珠 %s" % [mill, picked])
+	# 四座风灯：看着按 E 点亮，四座都亮后天鲸游近
+	var lit := 0
+	for b in w.beacons:
+		var bp := b.global_position
+		await _mw_setup(w, Vector2(bp.x, bp.z) + Vector2(0.0, 1.7), 0.0)
+		_player.look_at_point(bp + Vector3(0.0, 1.5, 0.0))
+		await _frames(3)
+		if _player.try_interact() and b.lit:
+			lit += 1
+	await _seconds(1.0)
+	var whale_ok: bool = lit == 4 and w.whale_near and WorldState.flags.get("cloudsea_beacons", false) \
+		and WorldState.get_interactable_state(&"cs_beacon_main") == "lit"
+	notes.append("点亮 %d / 4 · 天鲸游近 %s" % [lit, whale_ok])
+	# 掉出世界：从主岛边上走进云海，几秒后回到最后站稳的地方
+	await _mw_setup(w, Vector2(0.0, 12.0), 0.0)
+	await _seconds(1.0)
+	var falls1 := w.falls
+	_player.global_position = Vector3(0.0, 2.0, 45.0)
+	_player.velocity = Vector3.ZERO
+	await _seconds(4.0)
+	var back_on := not w.island_at(_player.global_position.x, _player.global_position.z).is_empty() and _player.global_position.y > -2.0
+	var fall_ok := w.falls == falls1 + 1 and back_on
+	notes.append("掉下云海回到岛上 %s" % fall_ok)
+	# 跳台：每一跳水平空隙不超过 1.6 m、高差不超过 0.6 m（跑起来跳得过去，跳高约 0.9 m）
+	var hop_ok := true
+	var worst := Vector2.ZERO
+	var chain: Array[Vector3] = []
+	chain.append(Vector3(w.stones[0].x, w.stones[0].y, w.stones[0].z))
+	for k in range(1, w.stones.size()):
+		var a := w.stones[k - 1]
+		var b := w.stones[k]
+		var gap := Vector2(b.x - a.x, b.z - a.z).length() - 1.5
+		worst = Vector2(maxf(worst.x, gap), maxf(worst.y, b.y - a.y))
+		hop_ok = hop_ok and gap < 1.6 and b.y - a.y < 0.6
+	notes.append("跳台最大空隙 %.2f m、最大高差 %.2f m" % [worst.x, worst.y])
+	# 池塘能游两下
+	await _mw_setup(w, Vector2(9.0, 7.0), 0.0)
+	await _seconds(1.0)
+	var swim_ok := _player.swimming
+	_check("云海浮岛：5 座岛、3 座绳桥、12 块跳台（每跳空隙 < 1.6 m、高差 < 0.6 m）；走过三座绳桥都不掉，西岛发现风车并捡到云珠，四座风灯按 E 点亮后天鲸游近，掉进云海会回到岸上，池塘能游",
+		counts_ok and walked and no_fall and mill and picked and whale_ok and fall_ok and swim_ok and hop_ok, "；".join(notes) + " · 游泳 %s" % swim_ok)
+
+
+func _check_dunes(w: World03) -> void:
+	var notes := PackedStringArray()
+	var scrolls := w.find_children("*", "SignBoard", true, false).size()
+	var counts_ok := w.items_total() == 6 and (w.data["pois"] as Array).size() == 6 and scrolls == 6 and w.altar != null
+	notes.append("碎片 %d · 探索点 %d · 卷轴 %d" % [w.items_total(), (w.data["pois"] as Array).size(), scrolls])
+	# 从光门前走到绿洲，下水能游泳，发现绿洲
+	var oc := MiniWorld.v2(w.data["oasis"]["center"])
+	await _mw_setup(w, Vector2(0.0, 70.5), 0.0)
+	_begin_track()
+	var walked := await _walk_to(oc + Vector2(-17.0, 8.0), 40.0)
+	walked = await _walk_to(oc, 15.0) and walked
+	_track = false
+	await _seconds(0.8)
+	var swim := _player.swimming and WorldState.discoveries.has(&"du_oasis")
+	notes.append("走到绿洲 %s · 游泳 %s" % [walked, swim])
+	# 碎片：捡齐 6 块（直接调 pick，一块块走太久），再从坡道底走上神殿顶，看着祭坛按 E 嵌回去
+	for it in w.items:
+		w.pick(str(it["id"]))
+	var have := WorldState.collected("world_03").size() == 6
+	await _mw_setup(w, Vector2(w.ramp[0].x, w.ramp[0].z + 2.0), 0.0)
+	_begin_track()
+	var climbed := await _walk_to(Vector2(w.ramp[0].x, w.ramp[0].z), 6.0)
+	var climb1 := climbed
+	climbed = await _walk_to(Vector2(w.ramp[1].x, w.ramp[1].z - 1.6), 20.0) and climbed
+	notes.append("坡道底 %s → 顶（%.1f, %.1f, %.1f）" % [climb1, _player.global_position.x, _player.global_position.y, _player.global_position.z])
+	_track = false
+	var on_top := _player.global_position.y > w.ramp[1].y - 0.4
+	var ap := w.altar.global_position
+	_player.look_at_point(ap + Vector3(0.0, 1.0, 0.0))
+	await _frames(3)
+	var placed := _player.try_interact() and w.altar.is_complete()
+	await _frames(3)
+	var beam_ok: bool = w.beam.visible and WorldState.get_interactable_state(&"du_altar") == "placed:6" and WorldState.flags.get("dunes_altar", false)
+	notes.append("碎片 %s · 爬上神殿 %s（y %.1f / 顶 %.1f，最大单步 %.2f）· 嵌回 %s · 光柱 %s" % [have, climbed and on_top, _player.global_position.y, w.ramp[1].y, _max_step, placed, beam_ok])
+	_check("琥珀沙丘：6 块古代碎片、6 个探索点、6 幅卷轴；从光门走到绿洲能下水游泳，捡齐碎片后从坡道走上神殿顶，看着祭坛按 E 嵌回，光柱升起并存档",
+		counts_ok and walked and swim and have and climbed and on_top and placed and beam_ok and _max_step < MAX_STEP, "；".join(notes))
 
 
 # ---------------------------------------------------------------- 国际象棋
@@ -557,10 +704,10 @@ func _test_performance() -> void:
 	var ultra_ok := get_viewport().msaa_3d == Viewport.MSAA_2X and get_viewport().screen_space_aa == Viewport.SCREEN_SPACE_AA_DISABLED and get_viewport().use_taa
 	GameSettings.set_value("graphics_quality", "medium", false)
 	await _frames(2)
-	var medium_ok := not get_viewport().use_taa and get_viewport().screen_space_aa == Viewport.SCREEN_SPACE_AA_SMAA
+	var medium_ok := get_viewport().use_taa and get_viewport().screen_space_aa == Viewport.SCREEN_SPACE_AA_DISABLED   # v0.5：中画质也用 TAA（走动时闪烁约减半）
 	GameSettings.set_value("graphics_quality", "high", false)
 	await _frames(2)
-	notes.append("画质 低 %s / 中 %s / 高 %s（TAA）/ 极高 %s" % [low_ok, medium_ok, high_ok, ultra_ok])
+	notes.append("画质 低 %s / 中 %s（TAA）/ 高 %s（TAA）/ 极高 %s" % [low_ok, medium_ok, high_ok, ultra_ok])
 	# 动态分辨率防抖：只超预算一次不降
 	var once := perf.update_dynamic_scale(25.0)
 	perf.update_dynamic_scale(10.0)
@@ -722,7 +869,7 @@ func _test_structure() -> void:
 	var names := PackedStringArray()
 	for child in _main.get_children():
 		names.append(child.name)
-	var ok := _main.has_node("World") and _main.has_node("Cabin") and _main.has_node("Player")
+	var ok: bool = _main.has_node("World") and _main.has_node("Cabin") and _main.has_node("Player")
 	_check("Main 同时常驻 World / Cabin / Player", ok, ", ".join(names))
 	var forest := _main.get_node("World/Forest") as ForestBuilder
 	var cover := _main.get_node("World/GroundCover") as GroundCoverBuilder
@@ -831,7 +978,7 @@ func _test_qa02() -> void:
 	_track = false
 
 	var same_scene := is_instance_valid(_main) and _main.get_instance_id() == main_id and get_tree().current_scene == scene_before
-	var ok := opened and inside_ok and indoors_after_enter and closed and closed_state == "closed" and still_inside \
+	var ok: bool = opened and inside_ok and indoors_after_enter and closed and closed_state == "closed" and still_inside \
 		and reopened and out_ok and outdoors_after_exit and same_scene and _max_step < MAX_STEP
 	_check("QA-02 门外开门 → 进屋 → 屋内关门 → 再开门出屋，位置连续、场景未重载", ok,
 		"%s；单帧最大位移 %.3f m；Main 实例未变 = %s" % ["；".join(notes), _max_step, same_scene])
@@ -863,7 +1010,7 @@ func _test_dock_rails() -> void:
 	await _walk_for(Vector3(1.0, 0.0, 0.0), 3.0)
 	var tip := _player.global_position
 	_track = false
-	var ok := walked and side.y > top - 0.05 and absf(side.z - a.y) < float(dock["width"]) * 0.5 \
+	var ok: bool = walked and side.y > top - 0.05 and absf(side.z - a.y) < float(dock["width"]) * 0.5 \
 		and tip.y > top - 0.05 and tip.x < b.x
 	_check("码头可走到尽头，侧面与末端栏杆挡住落水", ok,
 		"侧推后 (%.1f, %.2f, %.1f)，末端推后 (%.1f, %.2f, %.1f)" % [side.x, side.y, side.z, tip.x, tip.y, tip.z])
@@ -876,7 +1023,7 @@ func _test_map_edges() -> void:
 		[Vector2(0, -95), Vector3(0, 0, -1)], [Vector2(100, 60), Vector3(1, 0, 0)]]
 	var mx := WorldLayout.world_max()
 	var details := PackedStringArray()
-	var ok := true
+	var ok: bool = true
 	for s in starts:
 		await _setup_at(s[0], 0.0)
 		_begin_track()
@@ -1404,10 +1551,10 @@ func _test_exploration_save() -> void:
 	var snap := WorldState.snapshot()
 	var migrated := WorldState.migrate({"schema_version": 1, "world_day": 3})
 	var ok: bool = found == [&"dock_end"] and again.is_empty() and WorldState.discoveries.size() == before + 1 \
-		and toast.contains("码头尽头") and snap["schema_version"] == 3 and (snap["discoveries"] as Array).has("dock_end") \
-		and snap.has("vehicles") and snap.has("quests") and snap.has("journal") and migrated["schema_version"] == 3 \
+		and toast.contains("码头尽头") and snap["schema_version"] == 4 and (snap["discoveries"] as Array).has("dock_end") \
+		and snap.has("vehicles") and snap.has("quests") and snap.has("journal") and snap.has("rules") and migrated["schema_version"] == 4 \
 		and migrated["discoveries"] == [] and migrated["vehicles"] == {} and migrated["quests"] == {} and migrated["journal"] == {}
-	_check("探索：走到码头尽头记为新发现（不重复）、弹出提示；存档快照含发现、船位置、任务与图鉴，v1 存档能升级到 v3",
+	_check("探索：走到码头尽头记为新发现（不重复）、弹出提示；存档快照含发现、船位置、任务、图鉴与本局规则，v1 存档能升级到 v4",
 		ok, "新发现 %s，提示「%s」，快照版本 %d，发现列表 %s" % [str(found), toast, snap["schema_version"], str(snap["discoveries"])])
 
 
@@ -1444,7 +1591,7 @@ func _test_poolhouse_walk() -> void:
 	var door_state := WorldState.get_interactable_state(&"poolhouse_front_door")
 	notes.append("开门 %s → %s" % [opened, door_state])
 	_begin_track()
-	var ok := opened and door_state == "open"
+	var ok: bool = opened and door_state == "open"
 	for p in [Vector2(-10.0, 0.0), Vector2(-4.3, 0.0), Vector2(-4.3, 6.4)]:
 		ok = await _walk_to(_ph_xz(p), 20.0) and ok
 	var in_hall := WorldState.zones_of(_player.entity_id).has(&"poolhouse")
@@ -1484,7 +1631,7 @@ func _test_poolhouse_swim() -> void:
 		[Vector3(0.6, -10.4, 0.5), true, "游到坡道脚下"],
 		[Vector3(5.0, -7.0, 0.0), true, "坡道上岸"],
 	]
-	var ok := floating
+	var ok: bool = floating
 	_waters_seen.clear()
 	for leg in legs:
 		var target: Vector3 = leg[0]
@@ -1972,13 +2119,13 @@ func _test_fullscreen_and_world_map() -> void:
 	for w in WorldRegistry.worlds():
 		if not WorldRegistry.is_open(str(w["id"])):
 			planned += 1
-	# 世界三还在规划中：进不去、只提示；世界二是“建设中可进入”（真正的往返在 _test_world_travel 里测）
-	var blocked := not WorldRegistry.enter("world_03") and not WorldRegistry.can_enter("world_03") and WorldRegistry.can_enter("world_02")
+	# v0.5：三个世界都开放了。当前所在的世界进不去（只提示）；另外两个能去（真正的往返在 _test_world_travel 里测）
+	var blocked := not WorldRegistry.enter("dusk_lake") and WorldRegistry.can_enter("world_02") and WorldRegistry.can_enter("world_03")
 	wm.toggle()
 	await _frames(2)
-	_check("F11 / Alt+Enter 全屏切换（不误开聊天）；Tab 打开世界地图，世界注册表含规划中的其他世界", f11 and on and opened and not wm.open \
-		and str(cur.get("id", "")) == "dusk_lake" and planned >= 1 and blocked,
-		"F11 %s，全屏 %s，地图打开 %s，当前 %s，规划中 %d 个，规划中的世界不能进、建设中的能进 %s" % [f11, on, opened, cur.get("name", "?"), planned, blocked])
+	_check("F11 / Alt+Enter 全屏切换（不误开聊天）；Tab 打开世界地图，世界注册表里三个世界都开放（所在的世界不能再进）", f11 and on and opened and not wm.open \
+		and str(cur.get("id", "")) == "dusk_lake" and planned == 0 and WorldRegistry.worlds().size() == 3 and blocked,
+		"F11 %s，全屏 %s，地图打开 %s，当前 %s，未开放 %d 个，所在世界不能进、另两个能去 %s" % [f11, on, opened, cur.get("name", "?"), planned, blocked])
 
 # ---------------------------------------------------------------- 工具
 
@@ -2197,6 +2344,38 @@ func _mouse_button(button: MouseButton, pressed: bool) -> InputEventMouseButton:
 	return ev
 
 
+# ---------------------------------------------------------------- 世界根节点不带位移旋转
+
+## 编辑器里误拖根节点再保存会让整个世界倾斜（立牌飘在天上、船埋进地里、桥闪烁）：
+## 场景文件里 Main 下的节点都不该写 transform，根节点和地形在编辑器里锁定；运行时也会放回原点。
+func _test_world_anchor() -> void:
+	var st := (load(MAIN_SCENE) as PackedScene).get_state()
+	var with_transform := PackedStringArray()
+	var locked := PackedStringArray()
+	for i in st.get_node_count():
+		for j in st.get_node_property_count(i):
+			var prop := st.get_node_property_name(i, j)
+			if prop == "transform" or prop == "position" or prop == "rotation":
+				with_transform.append(str(st.get_node_path(i)))
+			if prop == "metadata/_edit_lock_" and st.get_node_property_value(i, j) == true:
+				locked.append(str(st.get_node_path(i)))
+	# 运行时放回原点：拿一棵倾斜的假场景树试
+	var root := Node3D.new()
+	root.name = "TiltedRoot"
+	root.transform = Transform3D(Basis(Vector3.RIGHT, deg_to_rad(37.6)), Vector3(0.0, 1.0, 0.0))
+	var child := Node3D.new()
+	child.name = "MovedChild"
+	child.position = Vector3(3.0, 0.0, 0.0)
+	root.add_child(child)
+	var moved := Main.anchor_to_origin(root)
+	var reset_ok := moved.size() == 2 and root.transform == Transform3D.IDENTITY and child.transform == Transform3D.IDENTITY
+	root.free()
+	_check("世界根节点在原点：Main.tscn 里不写位移旋转、根节点和地形在编辑器里锁定、运行时误存的倾斜会放回原点",
+		with_transform.is_empty() and locked.has(".") and locked.has("./World") and reset_ok \
+			and _main.transform.is_equal_approx(Transform3D.IDENTITY),
+		"带 transform 的节点：%s · 锁定：%s · 放回 %s" % [", ".join(with_transform) if not with_transform.is_empty() else "无", ", ".join(locked), ", ".join(moved)])
+
+
 func _cabin_xz(local_x: float, local_z: float) -> Vector2:
 	var p := _cabin.to_global(Vector3(local_x, 0.0, local_z))
 	return Vector2(p.x, p.z)
@@ -2313,7 +2492,7 @@ func _test_fairy_glade() -> void:
 	# 沿新步道走进林地
 	await _setup_at(Vector2(50.0, 84.0), -PI * 0.5)
 	_begin_track()
-	var ok := true
+	var ok: bool = true
 	for p in [Vector2(62.0, 88.0), Vector2(68.0, 88.0), Vector2(72.0, 88.0)]:
 		ok = await _walk_to(p, 25.0) and ok
 	_track = false
@@ -2366,7 +2545,7 @@ func _test_snow_peak() -> void:
 	# 沿步道折返上山
 	await _setup_at(Vector2(58.0, -92.0), 0.0)
 	_begin_track()
-	var ok := true
+	var ok: bool = true
 	for p in [Vector2(64.0, -101.0), Vector2(74.0, -97.0), Vector2(82.0, -106.0), Vector2(92.0, -104.0), Vector2(100.0, -107.0)]:
 		ok = await _walk_to(p, 40.0) and ok
 	_track = false
@@ -2384,3 +2563,373 @@ func _test_snow_peak() -> void:
 	var flurry_ok := peak.flurry != null and peak.flurry.emitting
 	_check("山顶长椅可以坐，周围常年飘小雪", sat and flurry_ok, "坐下 %s · 小雪 %s" % [sat, flurry_ok])
 	await _setup_at(Vector2(-50.0, 29.0), 0.0)
+
+
+# ---------------------------------------------------------------- 卷轴（v0.5：解说立牌换成走近才展开的卷轴）
+
+func _sign_by_text(id: String) -> SignBoard:
+	for s in get_tree().get_nodes_in_group("sign_boards"):
+		if (s as SignBoard).text_id == id:
+			return s as SignBoard
+	return null
+
+
+func _test_scrolls() -> void:
+	var font := GameSettings.ui_theme().default_font
+	var signs := get_tree().get_nodes_in_group("sign_boards")
+	# 每幅卷轴的文字逐行拼回去和 signs.json 一字不差；每一行都不超出纸面
+	var text_bad := PackedStringArray()
+	var overflow := PackedStringArray()
+	for s: SignBoard in signs:
+		var t: Dictionary = SignBoard.texts().get(s.text_id, {})
+		for key in ["title_zh", "title_en", "body_zh", "body_en"]:
+			var joined := ""
+			for i in s.lines.size():
+				if s.line_keys[i] == key:
+					joined += s.lines[i].text
+			if joined.replace(" ", "") != str(t.get(key, "")).replace(" ", ""):
+				text_bad.append("%s.%s" % [s.text_id, key])
+		for l: Label3D in s.lines:
+			if l != null and font.get_string_size(l.text, HORIZONTAL_ALIGNMENT_LEFT, -1, l.font_size).x * l.pixel_size > s.panel_size.x - SignBoard.MARGIN * 2.0 + 0.01:
+				overflow.append("%s「%s」" % [s.text_id, l.text.left(8)])
+	var sign := _sign_by_text("trail_poolhouse")
+	var front := sign.global_basis.z
+	front.y = 0.0
+	front = front.normalized()
+	var at := Vector2(sign.global_position.x, sign.global_position.z)
+	var f2 := Vector2(front.x, front.z)
+	# 远处：卷起，纸面上的字一行都不显示，木签标题在
+	await _setup_at(at + f2 * 12.0, 0.0)
+	await _seconds(1.2)
+	var rolled := sign.unroll == 0.0 and sign.lines.all(func(l: Label3D) -> bool: return l == null or not l.visible) \
+		and sign.title_tag != null and sign.title_tag.visible
+	# 走到正前方 2.5 m：平滑展开（中途是半开），全部文字露出来
+	var near := at + f2 * 2.5
+	_player.global_position = Vector3(near.x, WorldTerrain.height_at(near.x, near.y) + 0.05, near.y)
+	_player.velocity = Vector3.ZERO
+	await _frames(16)
+	var midway := sign.unroll > 0.05 and sign.unroll < 0.95
+	await _seconds(1.0)
+	var opened := sign.is_open() and sign.lines.all(func(l: Label3D) -> bool: return l == null or l.visible)
+	# 退到半径和回差之间：保持展开；再走远：卷回去
+	await _setup_at(at + f2 * (SignBoard.RADIUS + 0.4), 0.0)
+	await _seconds(1.0)
+	var held := sign.is_open()
+	await _setup_at(at + f2 * 7.0, 0.0)
+	await _seconds(1.2)
+	var rolled_back := sign.unroll == 0.0
+	_check("卷轴：远处卷起不显示字，走近 0.6 s 平滑展开、全部文字露出，在回差区保持展开，走远卷回；文字逐行拼回与原文一致、不出纸面",
+		signs.size() >= 18 and rolled and midway and opened and held and rolled_back and text_bad.is_empty() and overflow.is_empty(),
+		"卷轴 %d 幅 · 卷起 %s · 半开 %s · 展开 %s · 回差保持 %s · 卷回 %s · 文字不一致 %s · 出纸 %s" % [signs.size(), rolled, midway, opened, held, rolled_back,
+			", ".join(text_bad) if not text_bad.is_empty() else "无", ", ".join(overflow) if not overflow.is_empty() else "无"])
+	# 第三人称：面朝展开的卷轴时镜头拉近到肩后，转身恢复
+	var heading := rad_to_deg(atan2(-f2.x, -f2.y))
+	await _setup_at(at + f2 * 2.6, 0.0)
+	_player.rotation.y = atan2(f2.x, f2.y)
+	_player.set_third_person(true)
+	await _seconds(1.5)
+	var reading := _player.reading_sign == sign and _player.camera_boom.spring_length < 1.5
+	_player.rotation.y += PI
+	await _seconds(1.5)
+	var released := _player.reading_sign == null and _player.camera_boom.spring_length > GameSettings.third_person_distance - 0.4
+	_player.set_third_person(false)
+	_check("第三人称读卷轴：面朝展开的卷轴时镜头拉近到肩后（%.2f m），转身恢复" % FirstPersonController.READ_BOOM, reading and released,
+		"拉近 %s · 恢复 %s（朝向 %.0f°）" % [reading, released, heading])
+
+
+# ---------------------------------------------------------------- 新建游戏：玩法与设定（GameRules）、存档 v4、设定页
+
+func _test_game_rules() -> void:
+	var climate := _main.get_node("Systems") as ClimateSystem
+	var spawner := _main.get_node("World/Fauna") as FaunaSpawner
+	var notes := PackedStringArray()
+	# 合法化与模式、预设
+	var clean := GameRules.sanitize({"mode": "photo", "animals": "lots", "bogus": 1, "day_length": 24})
+	var sanitize_ok: bool = clean["mode"] == "photo" and clean["animals"] == "normal" and not clean.has("bogus") and clean["day_length"] == 24 \
+		and clean.size() == GameRules.OPTIONS.size()
+	var ch := GameRules.with_mode(GameRules.defaults(), "challenge")
+	var mode_ok: bool = ch["stamina"] and ch["swim_stamina"] and not ch["hud_minimap"] and not ch["poi_markers"] and ch["weather_change"] == "frequent"
+	var winter := GameRules.preset_rules("winter")
+	var preset_ok: bool = winter["start_season"] == "WINTER" and winter["season_length"] == 0 and winter["start_weather"] == "SNOW" \
+		and GameRules.PRESETS.size() >= 7
+	notes.append("合法化 %s · 模式 %s · 预设 %s" % [sanitize_ok, mode_ok, preset_ok])
+	# 开局：冬天清晨下雪
+	GameRules.set_all(winter)
+	var start := GameRules.apply_start()
+	GameRules.apply_ongoing()
+	await _frames(3)
+	var start_ok: bool = WorldState.season_id == &"WINTER" and absf(WorldState.time_minutes - 390.0) < 1.0 and WorldState.weather_id == &"SNOW" \
+		and WorldState.ground_snow > 0.5 and WorldState.season_override == &"WINTER"
+	notes.append("开局 %s %s %.0f 分 → %s" % [start["season"], start["weather"], start["minutes"], start_ok])
+	# 锁定季节：跳过 40 天还是冬天；锁定天气：不再安排变天
+	climate.skip_hours(40.0 * 24.0)
+	await _frames(2)
+	var season_lock := WorldState.season_id == &"WINTER"
+	GameRules.set_rule("weather_change", "locked")
+	climate.weather._schedule_next()
+	var weather_lock := WorldState.weather_next_change > 1.0e14
+	notes.append("季节锁定 %s · 天气锁定 %s" % [season_lock, weather_lock])
+	# 一天长度：12 分钟 → 每秒 2 游戏分钟；时间静止 → 1 秒后时刻不变
+	GameRules.set_rule("day_length", 12)
+	var rate_ok := is_equal_approx(ClimateData.game_minutes_per_real_second(), 2.0)
+	GameRules.set_rule("day_length", 0)
+	var t0 := WorldState.time_minutes
+	await _seconds(1.0)
+	var frozen := is_equal_approx(WorldState.time_minutes, t0)
+	notes.append("12 分钟一天 %s · 时间静止 %s" % [rate_ok, frozen])
+	# 小动物数量：没有 / 多 / 正常
+	var normal_rabbits := spawner.count("rabbit")
+	GameRules.set_rule("animals", "none")
+	GameRules.apply_ongoing()
+	var none_ok := spawner.count("rabbit") == 0 and get_tree().get_nodes_in_group("fauna").is_empty()
+	GameRules.set_rule("animals", "many")
+	GameRules.apply_ongoing()
+	var many_ok := spawner.count("rabbit") == normal_rabbits * 2
+	GameRules.set_rule("animals", "normal")
+	GameRules.apply_ongoing()
+	var back_ok := spawner.count("rabbit") == normal_rabbits
+	notes.append("兔子 正常 %d · 没有 %s · 多 %s · 恢复 %s" % [normal_rabbits, none_ok, many_ok, back_ok])
+	# 动物亲人：站到兔子旁边它不跑
+	GameRules.set_rule("friendly_animals", true)
+	climate.jump_to_season(&"SUMMER")
+	climate.set_hour(10.0)
+	climate.set_weather(&"CLEAR", 0.0)
+	var rabbit: Animal = null
+	for a in spawner.animals:
+		if a.species_id == "rabbit" and a.is_in_group("fauna"):
+			rabbit = a
+			break
+	await _setup_at(Vector2(rabbit.global_position.x + 1.2, rabbit.global_position.z), 0.0)
+	await _seconds(0.6)
+	var friendly_ok := not rabbit.fleeing
+	GameRules.set_rule("friendly_animals", false)
+	await _setup_at(Vector2(rabbit.global_position.x + 1.2, rabbit.global_position.z), 0.0)
+	await _seconds(0.3)
+	var shy_ok := rabbit.fleeing
+	notes.append("亲人 %s · 默认怕人 %s" % [friendly_ok, shy_ok])
+	# 仙境频率
+	GameRules.set_rule("fairy", "never")
+	var never_ok := not FairyGlade.should_appear(22.0 * 60.0, &"CLEAR")
+	GameRules.set_rule("fairy", "every")
+	var every_ok := FairyGlade.should_appear(22.0 * 60.0, &"LIGHT_RAIN") and not FairyGlade.should_appear(12.0 * 60.0, &"CLEAR")
+	GameRules.set_rule("fairy", "clear")
+	var clear_ok := FairyGlade.should_appear(22.0 * 60.0, &"CLEAR") and not FairyGlade.should_appear(22.0 * 60.0, &"LIGHT_RAIN")
+	notes.append("仙境 从不 %s · 每晚 %s · 晴夜 %s" % [never_ok, every_ok, clear_ok])
+	# 任务、图鉴开关
+	QuestLog.reset()
+	GameRules.set_rule("quests", false)
+	var no_quest := QuestLog.next_offer().is_empty()
+	GameRules.set_rule("journal", false)
+	var no_journal := not QuestLog.record("species", "rabbit", "兔子")
+	GameRules.set_rule("quests", true)
+	GameRules.set_rule("journal", true)
+	var quest_back := not QuestLog.next_offer().is_empty()
+	notes.append("关任务 %s · 关图鉴 %s · 恢复 %s" % [no_quest, no_journal, quest_back])
+	# 界面：小地图、罗盘
+	var mm := _main.get_node("Minimap") as Minimap
+	GameRules.set_rule("hud_minimap", false)
+	var mm_hidden := not (mm.get_node("MinimapRoot") as Control).visible
+	GameRules.set_rule("hud_minimap", true)
+	var mm_shown := (mm.get_node("MinimapRoot") as Control).visible
+	var compass := _main.get_node("CompassBar") as CompassBar
+	GameRules.set_rule("hud_compass", false)
+	await _frames(2)
+	var cb_hidden := not compass._bar.visible
+	GameRules.set_rule("hud_compass", true)
+	await _frames(2)
+	var cb_shown := compass._bar.visible
+	notes.append("小地图 关 %s 开 %s · 罗盘 关 %s 开 %s" % [mm_hidden, mm_shown, cb_hidden, cb_shown])
+	# 体力：开着规则一直跑，体力耗尽后跑不动（速度掉到走路），停下来慢慢回满
+	GameRules.set_rule("day_length", 48)
+	GameRules.set_rule("stamina", true)
+	await _setup_at(Vector2(-60.0, 10.0), 0.0)
+	_player.stamina = 1.0
+	_player.autopilot_enabled = true
+	_player.autopilot_direction = Vector3(0.3, 0.0, -1.0)
+	_player.autopilot_run = true
+	await _seconds(8.0)
+	var tired := _player.exhausted and _player.stamina < 0.2
+	var slow := Vector2(_player.velocity.x, _player.velocity.z).length() < _player.walk_speed + 0.3
+	_player.autopilot_direction = Vector3.ZERO
+	await _seconds(3.0)
+	_player.autopilot_enabled = false
+	var regen := _player.stamina > 0.5 and not _player.exhausted
+	GameRules.set_rule("stamina", false)
+	notes.append("体力 耗尽 %s · 跑不动 %s · 回复 %s" % [tired, slow, regen])
+	# 夜晚更亮
+	climate.set_hour(23.0)
+	await _frames(3)
+	var env := _main.get_node("World/Environment") as EnvironmentDirector
+	var dark := env.environment.ambient_light_energy
+	GameRules.set_rule("bright_nights", true)
+	await _frames(3)
+	var bright := env.environment.ambient_light_energy
+	GameRules.set_rule("bright_nights", false)
+	notes.append("夜晚环境光 %.2f → %.2f" % [dark, bright])
+	# 恢复默认，回到秋季黄昏，别影响后面的检查
+	GameRules.set_all(GameRules.defaults())
+	GameRules.apply_ongoing()
+	WorldState.season_override = null
+	climate.apply_preset("Autumn_Dusk_Clear")
+	var all_ok: bool = sanitize_ok and mode_ok and preset_ok and start_ok and season_lock and weather_lock and rate_ok and frozen \
+		and none_ok and many_ok and back_ok and friendly_ok and shy_ok and never_ok and every_ok and clear_ok and no_quest and no_journal \
+		and quest_back and mm_hidden and mm_shown and cb_hidden and cb_shown and tired and slow and regen and bright > dark + 0.3
+	_check("新建游戏的规则都真正生效：开局季节时刻天气、锁定季节和天气、一天长度和时间静止、小动物数量和亲人、仙境频率、任务图鉴开关、小地图罗盘、体力、夜晚亮度（%d 个选项、%d 个预设）" % [GameRules.OPTIONS.size(), GameRules.PRESETS.size()],
+		all_ok, "；".join(notes))
+
+
+func _test_save_v4() -> void:
+	var notes := PackedStringArray()
+	# 快照带规则、收集品、玩家位置；v3（v0.4 的 journal.json）迁移到 v4 用默认规则
+	GameRules.set_rule("mode", "photo")
+	WorldState.collect("world_02", "pearl_test")
+	var snap := SaveManager.snapshot()
+	var snap_ok: bool = snap["schema_version"] == 4 and (snap["rules"] as Dictionary)["mode"] == "photo" \
+		and ((snap["collections"] as Dictionary)["world_02"] as Array).has("pearl_test") and (snap["player"] as Dictionary).has("pos")
+	var old := WorldState.migrate({"schema_version": 3, "quests": {"fireside": {"state": "done"}}, "journal": {"species": ["rabbit"]}})
+	var migrate_ok: bool = old["schema_version"] == 4 and (old["rules"] as Dictionary) == GameRules.defaults() and old["collections"] == {} \
+		and (old["quests"] as Dictionary).has("fireside")
+	var v1 := WorldState.migrate({"schema_version": 1, "world_day": 5})
+	var v1_ok: bool = v1["schema_version"] == 4 and v1["discoveries"] == [] and (v1["rules"] as Dictionary).size() == GameRules.OPTIONS.size()
+	notes.append("快照 %s · v3 迁移 %s · v1 迁移 %s" % [snap_ok, migrate_ok, v1_ok])
+	# 真的写一次盘再读回来（换到测试专用的文件，不碰玩家的存档）
+	var keep_path := SaveManager.path
+	var keep_persist := SaveManager.persist
+	var keep_active := SaveManager.active
+	SaveManager.path = "user://test_world_save.json"
+	SaveManager.persist = true
+	SaveManager.active = true
+	var wrote := SaveManager.save()
+	GameRules.set_rule("mode", "explore")
+	WorldState.collections.clear()
+	var back := SaveManager.read()
+	var read_ok: bool = wrote and not back.is_empty() and (back["rules"] as Dictionary)["mode"] == "photo" \
+		and ((back["collections"] as Dictionary).get("world_02", []) as Array).has("pearl_test")
+	WorldState.restore(back)
+	GameRules.set_all(back["rules"])
+	var restore_ok := GameRules.mode() == "photo" and WorldState.collected("world_02").has("pearl_test")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(SaveManager.path))
+	SaveManager.path = keep_path
+	SaveManager.persist = keep_persist
+	SaveManager.active = keep_active
+	notes.append("写盘 %s · 读回 %s · 恢复 %s" % [wrote, read_ok, restore_ok])
+	WorldState.collections.clear()
+	GameRules.set_all(GameRules.defaults())
+	_check("存档 v4：快照带本局规则、收集品和玩家位置，写盘（临时文件 + 原子替换）再读回一致；v1 / v3 旧档都能迁移",
+		snap_ok and migrate_ok and v1_ok and read_ok and restore_ok, "；".join(notes))
+
+
+func _test_new_game_menu() -> void:
+	var lobby := _main.get_node("LobbyMenu") as LobbyMenu
+	lobby.open_new_game(false)
+	await _frames(3)
+	var page_ok := lobby.is_open() and lobby._page == LobbyMenu.Page.NEWGAME
+	var widgets := lobby._widgets.size()
+	var presets := lobby.find_children("Preset_*", "Button", true, false).size()
+	(lobby.find_child("Preset_winter", true, false) as Button).pressed.emit()
+	await _frames(2)
+	var preset_ok: bool = lobby._draft["start_season"] == "WINTER" and (lobby._widgets["start_season"] as OptionButton).get_selected_metadata() == "WINTER"
+	lobby._set_draft("mode", "challenge")
+	await _frames(2)
+	var mode_ok: bool = lobby._draft["stamina"] and (lobby._widgets["stamina"] as CheckButton).button_pressed
+	lobby._set_draft("spawn_world", "world_02")
+	await _frames(2)
+	var spawn_items := (lobby._widgets["spawn_point"] as OptionButton).item_count
+	lobby._set_draft("spawn_world", "dusk_lake")
+	lobby._set_draft("spawn_point", "码头尽头")
+	lobby._set_draft("start_time", "noon")
+	await _frames(2)
+	# 开始：规则生效、时间按设定、人在码头尽头
+	await lobby._start_new()
+	await _seconds(0.5)
+	var applied := GameRules.mode() == "challenge" and GameRules.flag("stamina") and WorldState.season_id == &"WINTER" \
+		and absf(WorldState.time_minutes - 720.0) < 2.0 and not lobby.is_open()
+	var at_dock := Vector2(_player.global_position.x, _player.global_position.z).distance_to(Vector2(-2.0, 26.0)) < 1.5
+	_check("新建游戏设定页：%d 个选项、%d 个一键预设，套预设和换模式会改对应选项，出生点随出生世界变化（云海浮岛 %d 个），开始后规则、季节时刻和出生点都按设定" % [widgets, presets, spawn_items],
+		page_ok and widgets == GameRules.OPTIONS.size() and presets == GameRules.PRESETS.size() and preset_ok and mode_ok and spawn_items >= 5 and applied and at_dock,
+		"页面 %s · 预设 %s · 模式 %s · 生效 %s · 码头 %s（%.1f, %.1f）" % [page_ok, preset_ok, mode_ok, applied, at_dock, _player.global_position.x, _player.global_position.z])
+	SaveManager.active = false
+	GameRules.set_all(GameRules.defaults())
+	GameRules.apply_ongoing()
+	WorldState.season_override = null
+	(_main.get_node("Systems") as ClimateSystem).apply_preset("Autumn_Dusk_Clear")
+
+
+# ---------------------------------------------------------------- v0.5：闪动的根因、沙之门、摄影清单
+
+func _test_flicker_sources() -> void:
+	var env := _main.get_node("World/Environment") as EnvironmentDirector
+	var climate := _main.get_node("Systems") as ClimateSystem
+	climate.apply_preset("Autumn_Dusk_Clear")
+	await _frames(3)
+	# 太阳方向按小步更新：走 0.2 游戏分钟（太阳挪 0.05°）阴影方向不变；走 1 分钟（0.25°）才跟上；跳时间立刻到位
+	var b0 := env.sun.basis
+	climate.clock.advance(0.2)
+	await _frames(2)
+	var held := env.sun.basis.is_equal_approx(b0)
+	climate.clock.advance(1.0)
+	await _frames(2)
+	var stepped := not env.sun.basis.is_equal_approx(b0)
+	climate.set_hour(9.0)
+	await _frames(2)
+	var want := EnvironmentDirector._direction(env.sun_elevation, env.sun_azimuth)
+	var jumped := rad_to_deg((-env.sun.global_basis.z).angle_to(-want)) < 0.2
+	# FSR：100 % 比例不锐化；比例往下降时锐化连续加上（没有跳变）
+	var sharp_full := PerformanceDirector.fsr_sharpness_for(1.0)
+	var continuous := true
+	var prev := sharp_full
+	for i in 41:
+		var s := 1.0 - i * 0.01
+		var v := PerformanceDirector.fsr_sharpness_for(s)
+		continuous = continuous and absf(v - prev) < 0.05
+		prev = v
+	(_main.get_node("Performance") as PerformanceDirector)._apply_scale()
+	var vp_sharp := get_viewport().fsr_sharpness
+	# 方块人物和小动物的像素噪点贴图带 mipmap（远处不闪砂点）
+	var bm := BlockyMesh.material(0.06)
+	var mip := bm.texture_filter == BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS and bm.albedo_texture.get_image().has_mipmaps()
+	climate.apply_preset("Autumn_Dusk_Clear")
+	_check("闪动的根因已修：太阳阴影方向按 0.15° 小步更新（静止时阴影边不再来回跳）、动态分辨率降比例时 FSR 只轻锐化（100 % 不锐化、连续变化）、方块人物动物的噪点贴图有 mipmap",
+		held and stepped and jumped and is_equal_approx(sharp_full, 2.0) and continuous and is_equal_approx(vp_sharp, 2.0) and mip,
+		"小步不动 %s · 超过一步跟上 %s · 跳时间到位 %s · 100%% 锐化 %.1f（关）· 连续 %s · 视口 %.1f · mipmap %s" % [held, stepped, jumped, sharp_full, continuous, vp_sharp, mip])
+
+
+func _test_dune_gate_and_photos() -> void:
+	var gate := get_tree().get_first_node_in_group("dune_gate") as DuneGate
+	var cfg := WorldLayout.section("dune_gate")
+	var c := WorldLayout.v2(cfg["center"])
+	var placed := gate != null and Vector2(gate.global_position.x, gate.global_position.z).distance_to(c) < 0.1 \
+		and absf(gate.global_position.y - WorldTerrain.height_at(c.x, c.y)) < 0.3 and gate.portal.target_world == "world_03"
+	# 从步道那边走到门前，看着门：对准的是光门，提示能进去
+	await _setup_at(c + Vector2(2.0, 0.0), deg_to_rad(90.0))
+	_player.look_at_point(gate.portal.global_position)
+	await _frames(3)
+	var focused := _player.focused_target() == gate.portal and WorldTravel.blocked_reason("world_03") == ""
+	var no_trees := Vegetation.tree_density(c.x, c.y) == 0.0
+	_check("沙之门：南部草甸的砂岩石拱立在地上，门前没有树，看着光门能对准、通往琥珀沙丘", placed and focused and no_trees,
+		"摆放 %s · 对准 %s · 没有树 %s" % [placed, focused, no_trees])
+	# 摄影清单：看着木屋拍到「湖边木屋」；夜里抬头拍到「星空」；背对着就认不出；记进图鉴并存档
+	var climate := _main.get_node("Systems") as ClimateSystem
+	climate.apply_preset("Autumn_Dusk_Clear")
+	WorldState.journal.erase("photos")
+	await _setup_at(Vector2(-48.0, 41.0), 0.0)
+	_player.look_at_point(Vector3(-69.0, 5.0, 37.0))
+	await _frames(3)
+	var cabin := PhotoList.recognize(_player.camera, get_tree()).has("cabin")
+	_player.look_at_point(Vector3(-30.0, 5.0, 45.0))
+	await _frames(3)
+	var away := not PhotoList.recognize(_player.camera, get_tree()).has("cabin")
+	_player.look_at_point(Vector3(-69.0, 5.0, 37.0))
+	await _frames(3)
+	var got := PhotoList.capture(_player.camera, get_tree())
+	climate.set_hour(23.0)
+	climate.set_weather(&"CLEAR", 0.0)
+	await _frames(5)
+	_player.head.rotation.x = deg_to_rad(60.0)
+	await _frames(3)
+	var stars := PhotoList.recognize(_player.camera, get_tree()).has("stars")
+	_player.head.rotation.x = 0.0
+	var journal_ok := WorldState.journal_list("photos").has("cabin") and got == ["cabin"]
+	climate.apply_preset("Autumn_Dusk_Clear")
+	_check("摄影清单（%d 样）：看着木屋拍照认出「湖边木屋」并记进图鉴，背对着认不出；夜里抬头能拍到星空" % PhotoList.subjects().size(),
+		cabin and away and stars and journal_ok, "木屋 %s · 背对 %s · 记下 %s · 星空 %s" % [cabin, away, journal_ok, stars])

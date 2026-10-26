@@ -52,6 +52,10 @@ const SHOTS := [
 	{"name": "m2b_17_pool_sign", "climate": DUSK, "house": true, "eye": [-1.6, 1.75, -5.4], "look": [-1.6, 0.85, -3.6]},
 	{"name": "m2b_18_tank_sign", "climate": DUSK, "house": true, "eye": [-1.2, -5.25, -2.4], "look": [-2.6, -6.0, -4.8]},
 	{"name": "m2b_19_trail_sign", "climate": DUSK, "eye": [-47.3, 1.65, 29.4], "ground": true, "look": [-47.0, 2.0, 32.0]},
+	{"name": "fix_01_trail_sign", "climate": DUSK, "eye": [-47.3, 1.65, 29.4], "ground": true, "look": [-47.0, 2.0, 32.0]},
+	{"name": "fix_02_canoe_dock", "climate": DUSK, "eye": [-34.0, 2.4, 19.0], "look": [-28.0, 0.2, 24.0]},
+	{"name": "fix_03_creek_bridge", "climate": {"season": "SUMMER", "hour": 16.0, "weather": "CLEAR"}, "eye": [-77.5, 1.7, -8.5], "ground": true, "look": [-84.0, 2.6, -1.5]},
+	{"name": "fix_04_gorge_bridge", "climate": {"season": "SUMMER", "hour": 15.0, "weather": "CLEAR"}, "eye": [-83.5, 15.5, -93.5], "look": [-89.8, 11.5, -89.0]},
 	{"name": "m2c_01_first_person_hands", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "pitch": -6.0},
 	{"name": "v04_06_hands", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "pitch": -6.0},
 	{"name": "v04_07_hand_wave", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "pitch": 4.0, "wave": true},
@@ -118,6 +122,19 @@ const SHOTS := [
 	{"name": "m2k_10_journal_quests", "climate": {"season": "SUMMER", "hour": 16.0, "weather": "CLEAR"}, "state": {"quests": {"fireside": "done", "lake_survey": "active", "summit": "active"}, "species": ["rabbit", "fox", "duck", "bird", "clownfish"], "constellations": ["canoe", "fox"]}, "player": [-49.0, 27.0], "heading": 75.0, "pitch": -4.0, "journal": 0},
 	{"name": "m2k_12_journal_dex", "climate": {"season": "SUMMER", "hour": 16.0, "weather": "CLEAR"}, "state": {"quests": {"fireside": "done", "lake_survey": "active", "summit": "active"}, "species": ["rabbit", "fox", "duck", "bird", "clownfish"], "constellations": ["canoe", "fox"]}, "player": [-49.0, 27.0], "heading": 75.0, "pitch": -4.0, "journal": 1},
 	{"name": "m2k_13_quest_tracker", "climate": {"season": "SUMMER", "hour": 16.0, "weather": "CLEAR"}, "state": {"quests": {"fireside": "done", "lake_survey": "active", "summit": "active"}}, "player": [-49.0, 27.0], "heading": 75.0, "pitch": -4.0},
+	{"name": "v05_01_scroll_rolled", "climate": DUSK, "eye": [-46.2, 1.65, 23.5], "ground": true, "look": [-47.0, 2.2, 32.0]},
+	{"name": "v05_02_scroll_open", "climate": DUSK, "eye": [-47.1, 1.65, 29.4], "ground": true, "look": [-47.0, 1.75, 32.0]},
+	{"name": "v05_03_scroll_lectern", "climate": DUSK, "house": true, "eye": [-1.6, 1.75, -5.6], "look": [-1.6, 0.85, -3.6]},
+	{"name": "v05_04_scroll_wall", "climate": DUSK, "house": true, "eye": [-19.0, 1.8, -1.5], "look": [-12.0, 2.6, 0.5]},
+	{"name": "v05_05_scroll_third_person", "climate": DUSK, "player": [-46.3, 22.6], "heading": 90.0, "pitch": -4.0, "third_person": true},
+	{"name": "v05_06_scroll_night", "climate": {"season": "SUMMER", "hour": 22.0, "weather": "CLEAR"}, "eye": [-47.1, 1.65, 29.4], "ground": true, "look": [-47.0, 1.75, 32.0]},
+	{"name": "v05_07_dune_gate", "climate": DUSK, "eye": [-83.5, 1.7, 89.0], "ground": true, "look": [-94.0, 3.0, 86.0]},
+	{"name": "v05_08_lobby_home", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "lobby": true},
+	{"name": "v05_09_new_game", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "lobby": true, "newgame": ""},
+	{"name": "v05_10_new_game_winter", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "lobby": true, "newgame": "winter"},
+	{"name": "v05_11_new_game_en", "lang": "en", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "lobby": true, "newgame": "hardcore"},
+	{"name": "v05_12_compass_stamina", "climate": DUSK, "player": [-60.0, 10.0], "heading": 20.0, "pitch": -3.0, "stamina": 0.45},
+	{"name": "v05_13_journal_collection", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "journal": 2},
 ]
 
 const OUTFITS := [
@@ -268,32 +285,86 @@ func _apply_quest_state(d: Dictionary) -> void:
 
 
 ## 第二个世界（占位浮岛）：先把湖畔整个移出场景树，单独放进世界二拍一张，再放回来。
+## 其他世界的机位：world 为世界 id；eye / look 为那个世界的坐标，"ground": true 时 eye.y 加地面高度；
+## "player": [x, z] 用玩家自己的相机（看得到 HUD、小地图、罗盘），"world_map": true 打开 Tab 世界地图；
+## "beacons": true 先点亮云海浮岛的四座风灯（天鲸游近），"altar": true 先把琥珀沙丘的碎片全部嵌回祭坛（光柱）。
 const WORLD_SHOTS := [
-	{"name": "m2k_11_world02", "eye": [9.0, 3.2, 13.0], "look": [-1.0, 1.0, 1.0]},
+	{"name": "v05_w2_01_overview", "world": "world_02", "eye": [46.0, 26.0, 52.0], "look": [-4.0, -2.0, -26.0]},
+	{"name": "v05_w2_02_main_island", "world": "world_02", "eye": [7.0, 1.8, 15.0], "ground": true, "look": [-9.0, 4.5, -7.0]},
+	{"name": "v05_w2_03_bridge", "world": "world_02", "eye": [-22.5, 1.8, -3.0], "ground": true, "look": [-52.0, 4.0, -6.0]},
+	{"name": "v05_w2_04_falls", "world": "world_02", "eye": [12.0, 3.0, 24.0], "look": [29.0, -8.0, 12.0]},
+	{"name": "v05_w2_05_sky_steps", "world": "world_02", "eye": [2.0, 10.5, -64.0], "look": [10.0, 13.0, -96.0]},
+	{"name": "v05_w2_06_whale", "world": "world_02", "beacons": true, "eye": [50.0, 1.8, 8.0], "ground": true, "look": [10.0, 14.0, -30.0]},
+	{"name": "v05_w2_07_hud", "world": "world_02", "player": [0.0, 12.0], "heading": 350.0, "pitch": -2.0},
+	{"name": "v05_w2_08_world_map", "world": "world_02", "player": [0.0, 12.0], "heading": 0.0, "world_map": true},
+	{"name": "v05_w3_01_overview", "world": "world_03", "eye": [55.0, 34.0, 95.0], "look": [-5.0, 2.0, 0.0]},
+	{"name": "v05_w3_02_oasis", "world": "world_03", "eye": [3.0, 1.8, 33.0], "ground": true, "look": [27.0, 1.0, 22.0]},
+	{"name": "v05_w3_03_temple", "world": "world_03", "eye": [-19.0, 2.2, -35.0], "ground": true, "look": [-30.0, 7.0, -66.0]},
+	{"name": "v05_w3_04_ruins", "world": "world_03", "eye": [-35.0, 1.8, 5.0], "ground": true, "look": [-50.0, 3.0, -10.0]},
+	{"name": "v05_w3_05_arch", "world": "world_03", "eye": [-68.0, 1.8, 52.0], "ground": true, "look": [-80.0, 6.0, 40.0]},
+	{"name": "v05_w3_06_altar_beam", "world": "world_03", "altar": true, "eye": [-6.0, 14.0, -28.0], "look": [-30.0, 22.0, -68.0]},
+	{"name": "v05_w3_07_hud", "world": "world_03", "player": [0.0, 66.0], "heading": 10.0, "pitch": -2.0},
+	{"name": "v05_w3_08_world_map", "world": "world_03", "player": [0.0, 66.0], "heading": 0.0, "world_map": true},
 ]
 
 
 func _shoot_worlds(prefix: String) -> void:
+	var world: MiniWorld = null
+	var world_id := ""
 	for shot: Dictionary in WORLD_SHOTS:
 		if not str(shot["name"]).begins_with(prefix):
 			continue
-		remove_child(_main)
-		var world := (load("res://scenes/worlds/World02.tscn") as PackedScene).instantiate()
-		add_child(world)
-		await _wait(60)
-		(world.get_node("HUD") as CanvasLayer).visible = false
-		var cam := Camera3D.new()
-		cam.fov = 70.0
-		world.add_child(cam)
-		cam.global_position = _vec(shot["eye"])
-		cam.look_at(_vec(shot["look"]), Vector3.UP)
-		cam.current = true
-		await _wait(20)
+		if str(shot["world"]) != world_id:
+			if world != null:
+				world.queue_free()
+				await _wait(2)
+			if _main.is_inside_tree():
+				remove_child(_main)
+			world_id = str(shot["world"])
+			world = (load(str(WorldRegistry.get_world(world_id)["scene"])) as PackedScene).instantiate() as MiniWorld
+			add_child(world)
+			await _wait(90)
+		var player_view := shot.has("player")
+		for layer_name in ["HUD", "Minimap", "CompassBar", "ActionBar", "JournalPanel"]:
+			(world.get_node(layer_name) as CanvasLayer).visible = player_view
+		var wm := world.get_node("WorldMap") as WorldMap
+		if wm.open != shot.get("world_map", false):
+			wm.toggle()
+		if shot.get("beacons", false) and world is World02:
+			for b in (world as World02).beacons:
+				b.set_lit(true)
+			await _wait(30)
+			(world as World02).whale.position = Vector3(World02.WHALE_NEAR.x, World02.WHALE_NEAR.y, 0.0)
+			(world as World02).whale_pivot.rotation.y = deg_to_rad(-40.0)
+		if shot.get("altar", false) and world is World03:
+			(world as World03).altar.apply_state("placed:6")
+		if player_view:
+			var a: Array = shot["player"]
+			world.player.teleport_to(Vector3(float(a[0]), world.height_at(float(a[0]), float(a[1])) + 0.1, float(a[1])), float(shot.get("heading", 0.0)))
+			world.player.head.rotation.x = deg_to_rad(float(shot.get("pitch", 0.0)))
+			world.player.camera.current = true
+			await _wait(60)
+		else:
+			var cam := Camera3D.new()
+			cam.fov = 70.0
+			cam.far = 2000.0
+			cam.cull_mask = 0xFFFFF & ~FirstPersonController.BODY_LAYER & ~FirstPersonArms.FP_ARMS_LAYER
+			world.add_child(cam)
+			var eye := _vec(shot["eye"])
+			if shot.get("ground", false):
+				eye.y += world.height_at(eye.x, eye.z)
+			cam.global_position = eye
+			cam.look_at(_vec(shot["look"]), Vector3.UP)
+			cam.current = true
+			await _wait(40)
+			cam.queue_free()
 		var path := ProjectSettings.globalize_path("%s/%s.png" % [OUT_DIR, shot["name"]])
 		get_viewport().get_texture().get_image().save_png(path)
 		print("saved ", path)
+	if world != null:
 		world.queue_free()
 		await _wait(2)
+	if not _main.is_inside_tree():
 		add_child(_main)
 
 
@@ -439,6 +510,12 @@ func _setup_player_view(shot: Dictionary) -> void:
 			lobby.open()
 		else:
 			lobby.close()
+	if lobby != null and shot.has("newgame"):
+		lobby.open_new_game(false)
+		if str(shot["newgame"]) != "":
+			lobby._apply_preset(str(shot["newgame"]))
+	elif lobby != null and lobby.is_open() and lobby._page == LobbyMenu.Page.NEWGAME:
+		lobby._show(LobbyMenu.Page.HOME)
 	var world_map := _main.get_node("WorldMap") as WorldMap
 	if world_map.open != shot.get("world_map", false):
 		world_map.toggle()
@@ -483,6 +560,11 @@ func _setup_player_view(shot: Dictionary) -> void:
 	await _wait(30)
 	if shot.has("settings"):
 		pause.open_settings(int(shot["settings"]))
+	if shot.has("stamina"):
+		GameRules.set_rule("stamina", true)
+		_player.stamina = float(shot["stamina"])
+		WorldState.journal["photos"] = ["cabin", "rabbit", "rainbow"]
+		await _wait(4)
 	if shot.get("open_chess", false):
 		table.interact(_player)
 		table.panel.click_square(ChessGame.square_from_name("d2"))

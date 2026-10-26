@@ -93,12 +93,6 @@
     "body_zh": "门锁着，屋里暂时进不去。窗台上落了一层灰，好像很久没人回来过。",
     "body_en": "The door is locked, so you cannot go in yet. Dust lies on the windowsill, as if no one has been back for a long time."
   },
-  "world_02_wip": {
-    "title_zh": "第二个世界 · 建设中",
-    "title_en": "World II · Under Construction",
-    "body_zh": "这里以后会是一整片新的世界，现在只长出了这座浮岛。身后的光门通回暮色湖畔。",
-    "body_en": "A whole new world will grow here. For now there is only this floating island. The gate behind you leads back to Dusk Lake."
-  },
   "west_falls": {
     "title_zh": "西岭小瀑布",
     "title_en": "West Falls",
@@ -110,5 +104,83 @@
     "title_en": "North Gorge",
     "body_zh": "观景小山被一道七米多深的裂缝劈开，林道从原木桥上跨过去。裂谷两头渐渐变浅，可以从东西两端走下谷底。",
     "body_en": "A crack more than seven metres deep splits the lookout hill, and the forest trail crosses it on a log bridge. The gorge grows shallow at both ends, so you can walk down to its floor from the east or the west."
+  },
+  "dune_gate": {
+    "title_zh": "沙之门",
+    "title_en": "The Sand Gate",
+    "body_zh": "石拱里的光门通往琥珀沙丘：落日下的沙海、月牙绿洲和一座阶梯神殿。看着光门按 E 进去，那边的光门能带你回来。",
+    "body_en": "The light in this arch leads to the Amber Dunes: a sea of sand under the setting sun, a crescent oasis and a step temple. Look at the gate and press E to go through; the gate on the other side brings you back."
+  },
+  "cs_welcome": {
+    "title_zh": "云海浮岛",
+    "title_en": "Cloudsea Isles",
+    "body_zh": "五座浮岛漂在黄昏的云海上。绳桥连着西岛、北岛和东岛；北岛尽头的跳台通往最高的灯塔岛。岛上藏着 8 颗云珠，四座风灯等着被点亮。掉下云海也不要紧，风会把你托回岸上。",
+    "body_en": "Five islands float on a sea of sunset clouds. Rope bridges lead to the west, north and east isles, and stepping stones at the end of the north isle climb to the lighthouse, the highest of them all. Eight cloud pearls are hidden here and four wind beacons wait to be lit. If you fall into the clouds, the wind will carry you back."
+  },
+  "cs_bridges": {
+    "title_zh": "绳桥",
+    "title_en": "Rope Bridges",
+    "body_zh": "三座绳桥从主岛通往西岛的风车、北岛的石阵和东岛的观鲸台。桥身会微微下垂，两边有扶绳，放心走。",
+    "body_en": "Three rope bridges lead from the main island to the windmill on the west isle, the stone ring on the north isle and the whale watch on the east isle. The planks sag a little, and there are hand ropes on both sides."
+  },
+  "cs_beacons": {
+    "title_zh": "四座风灯",
+    "title_en": "The Four Wind Beacons",
+    "body_zh": "古树下、西岛、北岛和东岛各有一座风灯。看着灯按 E 点亮它。四座都亮起来的时候，绕着群岛游的天鲸会游过来。",
+    "body_en": "There is a wind beacon under the old tree and on the west, north and east isles. Look at one and press E to light it. When all four are lit, the sky whale circling the islands will swim in close."
+  },
+  "cs_stones": {
+    "title_zh": "空中跳台",
+    "title_en": "Sky Steps",
+    "body_zh": "十二块石头一块比一块高，通往灯塔岛。跑起来按空格跳过去。挑战模式下踩上第一块就开始计时。",
+    "body_en": "Twelve stones, each a little higher than the last, lead to the lighthouse isle. Run and press Space to jump across. In Challenge mode a timer starts when you step on the first stone."
+  },
+  "cs_whale": {
+    "title_zh": "观鲸台",
+    "title_en": "Whale Watch",
+    "body_zh": "坐在长椅上，看天鲸在云海上慢慢绕圈。它从不落地，只在风灯亮起的时候游近一点。",
+    "body_en": "Sit on the bench and watch the sky whale circle slowly over the clouds. It never lands, and only swims closer when the beacons are lit."
+  },
+  "cs_lighthouse": {
+    "title_zh": "云端灯塔",
+    "title_en": "Sky Lighthouse",
+    "body_zh": "群岛最高的地方。灯塔的光从不熄灭，给夜里迷路的云鸟指路。站在这里能看见所有的岛。",
+    "body_en": "The highest point of the islands. The lighthouse never goes dark, guiding cloud birds lost at night. From here you can see every island."
+  },
+  "du_welcome": {
+    "title_zh": "琥珀沙丘",
+    "title_en": "Amber Dunes",
+    "body_zh": "风把沙子吹成一道道沙脊。往北走是月牙绿洲，西边是石柱废墟和风蚀石拱，东边有驼队营地，最北的阶梯神殿上有一座空着的祭坛。沙子里埋着 6 块古代碎片。",
+    "body_en": "The wind has shaped the sand into long ridges. North is the Crescent Oasis, west are the pillar ruins and the wind arch, east is a caravan camp, and on the step temple in the far north stands an empty altar. Six ancient shards lie buried in the sand."
+  },
+  "du_oasis": {
+    "title_zh": "月牙绿洲",
+    "title_en": "Crescent Oasis",
+    "body_zh": "沙海里唯一的一汪水，四周长着棕榈和青草。水最深两米多，可以下去游一游。",
+    "body_en": "The only water in the sea of sand, ringed by palms and grass. It is over two metres deep at the middle, deep enough for a swim."
+  },
+  "du_ruins": {
+    "title_zh": "石柱废墟",
+    "title_en": "Pillar Ruins",
+    "body_zh": "一圈石柱围着从前的广场，有的还顶着横梁，有的断成半截。那颗半埋在沙里的石像头，一直望着落日的方向。",
+    "body_en": "A ring of pillars surrounds what was once a plaza. Some still carry their beams, others have broken in half. The stone head half buried in the sand has always faced the setting sun."
+  },
+  "du_temple": {
+    "title_zh": "阶梯神殿",
+    "title_en": "Step Temple",
+    "body_zh": "四层石台，南面的台阶通到顶上的祭坛。祭坛上有六个空槽，把捡到的古代碎片带上去按 E 嵌回去。六块都放回去时，神殿会升起一道光。",
+    "body_en": "Four stone tiers, with stairs on the south side up to the altar at the top. The altar has six empty slots. Carry the ancient shards you find up there and press E to set them back in place. When all six are back, a beam of light rises from the temple."
+  },
+  "du_arch": {
+    "title_zh": "风蚀石拱",
+    "title_en": "Wind Arch",
+    "body_zh": "千百年的风把这块岩石掏空，只剩一道石拱。从下面走过去，抬头看看被夕阳照亮的拱顶。",
+    "body_en": "Centuries of wind hollowed this rock until only an arch remained. Walk underneath and look up at the arch lit by the setting sun."
+  },
+  "du_camp": {
+    "title_zh": "驼队营地",
+    "title_en": "Caravan Camp",
+    "body_zh": "穿越沙海的驼队在这里歇脚：两顶帐篷、一堆篝火、几只木箱。驼队早就走了，篝火却一直烧着。",
+    "body_en": "Caravans crossing the sand rest here: two tents, a campfire and a few crates. The caravan left long ago, but the fire still burns."
   }
 }

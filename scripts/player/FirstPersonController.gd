@@ -65,6 +65,21 @@ var _emote_time := 0.0
 var _emote_view_forced := false
 var _pose_head := Vector3.ZERO   ## 坐地 / 躺下时眼睛相对站姿的偏移
 
+## 第三人称时，面朝一幅已经展开的卷轴站在它前面：镜头慢慢拉近到肩后 READ_BOOM 米，字看得清；走开或转身恢复。
+const READ_BOOM := 1.15
+const READ_OFFSET := Vector3(0.75, 0.45, 0.0)   ## 读卷轴时镜头再往右上偏一点，头不挡字
+var reading_sign: SignBoard = null
+var _read_timer := 0.0
+
+## 体力（本局规则“奔跑体力”“游泳体力”打开时才用）：跑步、游泳都耗，停下来慢慢回满。
+## 跑到 0 要歇到 35 % 才能再跑；游泳体力耗尽时游速减半、潜不下去（不会淹死，慢慢游回岸）。
+const STAMINA_RUN_DRAIN := 0.14     ## 每秒（满体力能跑约 7 秒）
+const STAMINA_SWIM_DRAIN := 0.045   ## 每秒（满体力能游约 22 秒，快游再多耗）
+const STAMINA_REGEN := 0.22
+var stamina := 1.0
+var exhausted := false
+var swim_tired := false
+
 
 func _ready() -> void:
 	add_to_group("actors")
@@ -179,9 +194,11 @@ func _physics_process(delta: float) -> void:
 	if arms != null:
 		arms.visible = not third_person and emote != "lie"
 		arms.animate(delta, flat_speed, grounded, swimming, run_speed)
-	var boom_target := third_person_distance if third_person else 0.0
-	camera_boom.spring_length = lerpf(camera_boom.spring_length, boom_target, 1.0 - exp(-12.0 * delta))
-	camera_boom.position = camera_boom.position.lerp(third_person_offset if third_person else Vector3.ZERO, 1.0 - exp(-12.0 * delta))
+	_update_reading(delta)
+	var boom_target := (READ_BOOM if reading_sign != null else third_person_distance) if third_person else 0.0
+	camera_boom.spring_length = lerpf(camera_boom.spring_length, boom_target, 1.0 - exp((-5.0 if reading_sign != null else -12.0) * delta))
+	var boom_offset := (READ_OFFSET if reading_sign != null else third_person_offset) if third_person else Vector3.ZERO
+	camera_boom.position = camera_boom.position.lerp(boom_offset, 1.0 - exp((-5.0 if reading_sign != null else -12.0) * delta))
 	_update_bob(delta, flat_speed if grounded else 0.0)
 
 
@@ -218,8 +235,10 @@ func _fly(delta: float) -> void:
 
 func _swim(delta: float) -> void:
 	var dir := _swim_direction()
-	var running := autopilot_run if autopilot_enabled else Input.is_action_pressed("sprint")
-	var target := dir * (swim_sprint_speed if running else swim_speed)
+	var running := _use_stamina(delta, autopilot_run if autopilot_enabled else Input.is_action_pressed("sprint"), true, dir.length_squared() > 0.01)
+	if swim_tired and dir.y < 0.0:
+		dir.y = 0.0   # 游累了潜不下去，只能慢慢漂着游回岸边
+	var target := dir * (swim_sprint_speed if running else swim_speed) * (0.5 if swim_tired else 1.0)
 	var surface := current_water.surface_y()
 	var diving := dir.y < -0.2
 	if surface < INF and not diving:
@@ -253,7 +272,7 @@ func _swim_direction() -> Vector3:
 
 func _walk(delta: float) -> void:
 	var wish := _wish_direction()
-	var running := autopilot_run if autopilot_enabled else Input.is_action_pressed("sprint")
+	var running := _use_stamina(delta, autopilot_run if autopilot_enabled else Input.is_action_pressed("sprint"), false, wish != Vector3.ZERO)
 	var speed := run_speed if running else walk_speed
 
 	if is_on_floor():
@@ -608,3 +627,57 @@ func _emote_tick(delta: float) -> bool:
 	camera_boom.spring_length = lerpf(camera_boom.spring_length, third_person_distance if third_person else 0.0, 1.0 - exp(-12.0 * delta))
 	_update_bob(delta, 0.0)
 	return true
+
+
+func _update_reading(delta: float) -> void:
+	_read_timer -= delta
+	if _read_timer > 0.0:
+		return
+	_read_timer = 0.2
+	reading_sign = null
+	if not third_person:
+		return
+	var fwd := -global_basis.z
+	fwd.y = 0.0
+	fwd = fwd.normalized()
+	for n in get_tree().get_nodes_in_group("sign_boards"):
+		var sb := n as SignBoard
+		if sb == null or sb.unroll < 0.5:
+			continue
+		var to := sb.global_position - global_position
+		to.y = 0.0
+		var d := to.length()
+		if d > sb.unroll_radius or d < 0.2:
+			continue
+		var dir := to / d
+		# 人朝着卷轴，而且站在卷轴正面（正面朝本地 +Z）
+		if fwd.dot(dir) < 0.55 or sb.global_basis.z.dot(-dir) < 0.2:
+			continue
+		reading_sign = sb
+		return
+
+
+## 这一帧能不能跑（游）快：按规则扣体力或回体力。返回实际是否在跑。
+func _use_stamina(delta: float, wants_run: bool, in_water: bool, moving: bool) -> bool:
+	var run_rule := GameRules.flag("stamina")
+	var swim_rule := GameRules.flag("swim_stamina")
+	var running := wants_run and moving
+	var drain := 0.0
+	if in_water and swim_rule:
+		drain = STAMINA_SWIM_DRAIN * (2.5 if running else (1.0 if moving else 0.3))
+	elif not in_water and run_rule and running and not exhausted:
+		drain = STAMINA_RUN_DRAIN
+	if drain > 0.0:
+		stamina = maxf(0.0, stamina - drain * delta)
+	else:
+		stamina = minf(1.0, stamina + STAMINA_REGEN * delta)
+	if stamina <= 0.0:
+		exhausted = true
+	elif stamina >= 0.35:
+		exhausted = false
+	swim_tired = in_water and swim_rule and exhausted
+	if run_rule and exhausted and not in_water:
+		return false
+	if swim_tired:
+		return false
+	return running

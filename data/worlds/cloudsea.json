@@ -1,0 +1,73 @@
+{
+  "_doc": "世界二「云海浮岛」的布局（World02.gd 读取）。坐标是这个世界自己的（与湖畔无关）。islands：浮岛（中心、半径、顶面高度、小山 [x, z, 半径, 高]、池塘 [x, z, 半径, 深]）；bridges：两座岛之间的绳桥（端点在代码里按岛边算）；stones：跳台小路（从 from 岛到 to 岛）；beacons：风灯；items：云珠（pos 为 [x, z] 时贴地，[x, z, y] 时悬空；\"stone\": n 表示放在第 n 块跳台上）；pois：探索点；signs：卷轴（pos 为 [x, z]）。",
+  "id": "world_02",
+  "map_rect": [-80, -120, 160, 150],
+  "void_y": -30.0,
+  "item_name": "云珠",
+  "item_shape": "pearl",
+  "item_color": [0.62, 0.9, 1.0],
+  "item_shell": [0.98, 0.95, 0.86],
+  "sky": {
+    "top": "#5568a8", "horizon": "#f2b48a", "ground_horizon": "#f3c9ae", "ground_bottom": "#b9a7cc",
+    "sun_elevation": 14.0, "sun_azimuth": 255.0, "sun_color": [1.0, 0.8, 0.62], "sun_energy": 1.25,
+    "fog_color": "#e9c3b4", "fog_density": 0.0028, "fog_height": -12.0, "fog_height_density": 0.06,
+    "ambient": 1.05, "exposure": 1.0
+  },
+  "spawn": {"pos": [0.0, 13.5], "heading": 0.0},
+  "gate": {"pos": [0.0, 0.0, 19.5], "yaw_deg": 0.0, "to": "dusk_lake", "stone": "rock_face_03", "tint": [0.7, 0.66, 0.74]},
+  "spawns": [
+    {"id": "tree", "name": "云顶古树", "pos": [-6.0, -2.5], "heading": 300.0},
+    {"id": "west", "name": "西岛风车", "pos": [-50.0, -2.0], "heading": 270.0},
+    {"id": "north", "name": "北岛石阵", "pos": [6.0, -50.0], "heading": 0.0},
+    {"id": "east", "name": "东岛观鲸台", "pos": [52.0, 10.0], "heading": 90.0}
+  ],
+  "islands": [
+    {"id": "main", "center": [0.0, 0.0], "radius": 30.0, "top": 0.0, "depth": 26.0,
+      "hills": [[-9.0, -7.0, 9.0, 3.2], [12.0, -13.0, 7.0, 1.4], [-15.0, 12.0, 6.0, 1.0]], "pond": [9.0, 7.0, 4.5, 1.4]},
+    {"id": "west", "center": [-55.0, -6.0], "radius": 12.0, "top": 3.5, "depth": 14.0, "hills": [[-57.0, -9.0, 5.0, 1.5]]},
+    {"id": "north", "center": [6.0, -56.0], "radius": 13.0, "top": 7.0, "depth": 15.0, "hills": [[2.0, -58.0, 6.0, 1.0]]},
+    {"id": "east", "center": [57.0, 10.0], "radius": 11.0, "top": -3.0, "depth": 12.0, "hills": [[59.0, 13.0, 5.0, 0.8]]},
+    {"id": "light", "center": [10.0, -101.0], "radius": 8.0, "top": 12.0, "depth": 11.0, "hills": []}
+  ],
+  "bridges": [["main", "west"], ["main", "north"], ["main", "east"]],
+  "stones": {"from": "north", "to": "light", "count": 12, "size": 1.5, "zigzag": 1.0},
+  "beacons": [
+    {"id": "main", "pos": [-3.5, -10.5]},
+    {"id": "west", "pos": [-58.0, -10.0]},
+    {"id": "north", "pos": [10.0, -60.0]},
+    {"id": "east", "pos": [59.0, 14.0]}
+  ],
+  "items": [
+    {"id": "pearl_01", "pos": [15.0, -3.0]},
+    {"id": "pearl_02", "pos": [19.0, 15.0]},
+    {"id": "pearl_03", "pos": [-17.0, 13.0]},
+    {"id": "pearl_04", "pos": [-61.0, -1.0]},
+    {"id": "pearl_05", "pos": [0.0, -63.0]},
+    {"id": "pearl_06", "pos": [62.0, 5.0]},
+    {"id": "pearl_07", "stone": 7},
+    {"id": "pearl_08", "pos": [10.0, -104.0]}
+  ],
+  "pois": [
+    {"id": "cs_tree", "name": "云顶古树", "name_en": "Cloudtop Tree", "center": [-9.0, -7.0], "radius": 7.0},
+    {"id": "cs_falls", "name": "云瀑", "name_en": "Cloud Falls", "center": [24.0, 11.0], "radius": 6.0},
+    {"id": "cs_mill", "name": "西岛风车", "name_en": "West Isle Windmill", "center": [-55.0, -6.0], "radius": 8.0},
+    {"id": "cs_ring", "name": "北岛石阵", "name_en": "North Isle Stone Ring", "center": [6.0, -56.0], "radius": 8.0},
+    {"id": "cs_whale", "name": "东岛观鲸台", "name_en": "Whale Watch", "center": [57.0, 10.0], "radius": 7.0},
+    {"id": "cs_light", "name": "云端灯塔", "name_en": "Sky Lighthouse", "center": [10.0, -101.0], "radius": 6.0}
+  ],
+  "signs": [
+    {"text": "cs_welcome", "pos": [4.0, 9.5], "yaw_deg": -25.0, "style": "stand", "width": 1.5, "scale": 1.4},
+    {"text": "cs_bridges", "pos": [-22.0, -1.5], "yaw_deg": 70.0, "style": "stand", "width": 1.4, "scale": 1.4},
+    {"text": "cs_beacons", "pos": [-5.0, -3.0], "yaw_deg": 30.0, "style": "lectern", "width": 1.2, "scale": 1.2},
+    {"text": "cs_stones", "pos": [3.0, -64.0], "yaw_deg": 160.0, "style": "stand", "width": 1.4, "scale": 1.4},
+    {"text": "cs_whale", "pos": [53.0, 6.5], "yaw_deg": -60.0, "style": "lectern", "width": 1.2, "scale": 1.2},
+    {"text": "cs_lighthouse", "pos": [7.0, -97.5], "yaw_deg": 200.0, "style": "stand", "width": 1.4, "scale": 1.4}
+  ],
+  "labels": [
+    {"pos": [0.0, 4.0], "text": "主岛"},
+    {"pos": [-55.0, 2.0], "text": "西岛"},
+    {"pos": [6.0, -48.0], "text": "北岛"},
+    {"pos": [57.0, 18.0], "text": "东岛"},
+    {"pos": [10.0, -93.0], "text": "灯塔岛"}
+  ]
+}

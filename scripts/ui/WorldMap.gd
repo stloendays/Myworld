@@ -137,18 +137,34 @@ func _refresh_list() -> void:
 
 ## 世界 (x, z) → 地图控件像素：北朝上，正方形居中。
 func world_to_panel() -> Transform2D:
-	var e := WorldTerrain.extent()
+	var rect := _rect()
+	var span := maxf(rect.size.x, rect.size.y)
 	var side := minf(_map.size.x, _map.size.y)
-	var origin := (_map.size - Vector2(side, side)) * 0.5
-	var k := side / (e * 2.0)
-	return Transform2D(0.0, Vector2(k, k), 0.0, origin + Vector2(e, e) * k)
+	var k := side / span
+	var origin := (_map.size - rect.size * k) * 0.5
+	return Transform2D(0.0, Vector2(k, k), 0.0, origin - rect.position * k)
+
+
+## 当前世界的地图范围：湖畔是整块地形，其他世界按它们的数据文件。
+func _rect() -> Rect2:
+	var w := _mini()
+	if w != null:
+		return w.map_rect()
+	var e := WorldTerrain.extent()
+	return Rect2(-e, -e, e * 2.0, e * 2.0)
+
+
+func _mini() -> MiniWorld:
+	return get_tree().get_first_node_in_group("world_root") as MiniWorld
 
 
 func _draw_map() -> void:
 	var t := world_to_panel()
-	var e := WorldTerrain.extent()
-	var rect := Rect2(-e, -e, e * 2.0, e * 2.0)
+	var rect := _rect()
 	var font := GameSettings.ui_theme().default_font
+	if _mini() != null:
+		_draw_mini_world(t, rect, font)
+		return
 	var mm := get_tree().get_first_node_in_group("minimap") as Minimap
 	_map.draw_set_transform_matrix(t)
 	_map.draw_rect(rect, Color(0.14, 0.2, 0.14))
@@ -191,7 +207,7 @@ func _draw_map() -> void:
 			_map.draw_circle(p, 6.0, Color(1.0, 0.82, 0.35))
 			_map.draw_arc(p, 6.0, 0.0, TAU, 24, Color(0.15, 0.1, 0.05), 1.4, true)
 			_label(font, p + Vector2(0.0, 22.0), tr(str(poi["name"])), 15, Color(1.0, 0.9, 0.65))
-		else:
+		elif GameRules.flag("poi_markers"):
 			_map.draw_circle(p, 8.0, Color(0.12, 0.12, 0.14, 0.8))
 			_map.draw_string(font, p + Vector2(-4.5, 6.0), "?", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color(0.9, 0.9, 0.9))
 	for v in get_tree().get_nodes_in_group("vehicles"):
@@ -199,7 +215,11 @@ func _draw_map() -> void:
 		if canoe != null and canoe.rider == null:
 			_map.draw_circle(t * canoe.world_position_2d(), 4.0, Color(0.85, 0.3, 0.2))
 	_draw_player(t)
-	# 指北与比例尺（50 m）
+	_draw_north_and_scale(t, rect, font)
+
+
+## 指北与比例尺（50 m）。
+func _draw_north_and_scale(t: Transform2D, rect: Rect2, font: Font) -> void:
 	var corner := t * rect.position + Vector2(26.0, 30.0)
 	_map.draw_circle(corner, 15.0, Color(0.1, 0.09, 0.08, 0.85))
 	_map.draw_string(font, corner + Vector2(-6.5, 7.0), "N", HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Color(1.0, 0.86, 0.55))
@@ -269,3 +289,45 @@ func _draw_atlas() -> void:
 		_atlas.draw_string(font, p + Vector2(-text_w * 0.5, 48.0), label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, INK if open_world else MUTED)
 		if not open_world:
 			_atlas.draw_string(font, p + Vector2(-5.0, 7.0), "?", HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color(0.9, 0.9, 0.9))
+
+
+## 云海浮岛、琥珀沙丘：底图、桥和建筑（世界自己画）、地名、探索点、收集品、光门、玩家。
+func _draw_mini_world(t: Transform2D, rect: Rect2, font: Font) -> void:
+	var w := _mini()
+	_map.draw_set_transform_matrix(t)
+	_map.draw_rect(rect, Color(0.2, 0.2, 0.24))
+	if w.map_texture != null:
+		_map.draw_texture_rect(w.map_texture, rect, false)
+	w.draw_map(_map)
+	_map.draw_set_transform_matrix(Transform2D.IDENTITY)
+	_map.draw_rect(Rect2(t * rect.position, t.basis_xform(rect.size)), Color(0.08, 0.07, 0.06), false, 3.0)
+	for l: Dictionary in w.map_labels():
+		_label(font, t * (l["pos"] as Vector2), tr(str(l["text"])), 18, INK)
+	var pois: Dictionary = {}
+	for poi: Dictionary in w.data.get("pois", []):
+		pois[MiniWorld.v2(poi["center"])] = poi
+	for m: Dictionary in w.map_markers():
+		var p := t * (m["pos"] as Vector2)
+		match str(m["kind"]):
+			"item":
+				if not m["done"]:
+					_map.draw_circle(p, 5.0, Color(0.55, 0.9, 1.0))
+					_map.draw_arc(p, 5.0, 0.0, TAU, 16, Color(0.1, 0.15, 0.2), 1.2, true)
+			"gate":
+				_map.draw_arc(p, 8.0, 0.0, TAU, 24, Color(0.85, 0.7, 1.0), 3.0, true)
+				_label(font, p + Vector2(0.0, 24.0), tr("光门"), 15, Color(0.9, 0.82, 1.0))
+			_:
+				if m["done"]:
+					_map.draw_circle(p, 6.0, Color(1.0, 0.82, 0.35))
+					_map.draw_arc(p, 6.0, 0.0, TAU, 24, Color(0.15, 0.1, 0.05), 1.4, true)
+					var poi: Dictionary = pois.get(m["pos"], {})
+					_label(font, p + Vector2(0.0, 22.0), MiniWorld._poi_label(poi) if not poi.is_empty() else "", 15, Color(1.0, 0.9, 0.65))
+				elif GameRules.flag("poi_markers"):
+					_map.draw_circle(p, 8.0, Color(0.12, 0.12, 0.14, 0.8))
+					_map.draw_string(font, p + Vector2(-4.5, 6.0), "?", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color(0.9, 0.9, 0.9))
+	var got := WorldState.collected(w.world_id).size()
+	if GameRules.flag("collectibles") and w.items_total() > 0:
+		_map.draw_string(font, t * rect.position + Vector2(56.0, 36.0), tr("%s：%d / %d") % [tr(str(w.data.get("item_name", "收集品"))), got, w.items_total()],
+			HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color(0.7, 0.92, 1.0))
+	_draw_player(t)
+	_draw_north_and_scale(t, rect, font)

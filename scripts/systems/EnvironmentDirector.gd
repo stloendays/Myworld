@@ -45,6 +45,9 @@ var _snow_overlay_on := false
 var _last_reflection_el := 999.0
 var _last_reflection_weather: StringName = &""
 var _reflection_cooldown := 0.0
+var _sun_dir := Vector3.ZERO
+var _moon_dir := Vector3.ZERO
+var sun_step_deg := 0.15   ## 太阳阴影方向的更新步长（度）；0 = 每帧都转（闪动探针对比用）
 
 
 func _ready() -> void:
@@ -203,18 +206,27 @@ func _apply(season: StringName, minutes: float, w: Dictionary) -> void:
 	sky_material.set_shader_parameter("rainbow", rainbow)
 
 	var to_sun := _direction(sun_elevation, sun_azimuth)
-	sun.basis = Basis.looking_at(-to_sun, Vector3.UP)
+	# 太阳方向按小步更新：每帧连续转动会让平行光阴影图每帧重画，阴影边在像素之间来回跳（静止时也一闪一闪）。
+	# 一步 sun_step_deg（默认 0.15°，约 1.2 秒一步，影子尖端只挪 2–3 cm）；跳时间、换季这类大跳变立刻跟上。
+	if _sun_dir == Vector3.ZERO or sun_step_deg <= 0.0 or rad_to_deg(_sun_dir.angle_to(to_sun)) >= sun_step_deg:
+		_sun_dir = to_sun
+		sun.basis = Basis.looking_at(-to_sun, Vector3.UP)
 	sun.light_color = _key(SUN_COLOR, sun_elevation)
 	sun.light_energy = _keyf(SUN_ENERGY, sun_elevation) * float(w["sun"])
 	sun.shadow_enabled = sun_elevation > -2.0 and sun_shadows_allowed
 	sun.shadow_opacity = 1.0 - overcast * 0.75
 	var moon_el := clampf(-sun_elevation, 12.0, 50.0)
-	moon.basis = Basis.looking_at(-_direction(moon_el, sun_azimuth + 180.0), Vector3.UP)
+	var to_moon := _direction(moon_el, sun_azimuth + 180.0)
+	if _moon_dir == Vector3.ZERO or sun_step_deg <= 0.0 or rad_to_deg(_moon_dir.angle_to(to_moon)) >= sun_step_deg:
+		_moon_dir = to_moon
+		moon.basis = Basis.looking_at(-to_moon, Vector3.UP)
 	moon.light_energy = 0.22 * night * (1.0 - overcast * 0.7)
 	moon.shadow_enabled = night > 0.6
 
-	environment.ambient_light_energy = _keyf(AMBIENT, sun_elevation) * lerpf(1.0, 0.85, overcast) + flash * 0.8
-	environment.tonemap_exposure = lerpf(1.05, 1.35, night)
+	# 本局规则“夜晚更亮”：夜里环境光和曝光再提一些（月光下也看得清路）
+	var bright := 0.0 if Engine.is_editor_hint() else (1.0 if GameRules.flag("bright_nights") else 0.0)
+	environment.ambient_light_energy = _keyf(AMBIENT, sun_elevation) * lerpf(1.0, 0.85, overcast) + flash * 0.8 + bright * night * 0.5
+	environment.tonemap_exposure = lerpf(1.05, 1.35 + bright * 0.45, night)
 	environment.fog_light_color = horizon.lerp(top, 0.35) * 0.8
 	environment.fog_density = 0.0024 + float(w["fog"])
 	environment.fog_sun_scatter = 0.25 * (1.0 - overcast)

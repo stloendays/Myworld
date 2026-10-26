@@ -5,6 +5,8 @@ extends Node
 ## move：相机每帧沿视线横向平移 3 cm（走路时的闪动：远处植被淡出、Z 冲突、阴影抖动）。
 ## jiggle：相机左右来回转 1/3 像素（画面内容不变）：前后两帧差得越多，锯齿闪烁越重（flicker_report.py --jiggle 统计）。
 ## smaa / taa：对比用的抗锯齿方案（单帧 SMAA / Godot 自带 TAA）。
+## dynres：按玩家默认开着动态分辨率（一直走 FSR）；legacy：v0.5 修复前的做法（FSR 锐化 0.2、太阳每帧转动），对比用；
+## quality=low/medium/high/ultra：画质档；spots=a,b：只拍这几个机位；bias= / sharp=：试验贴图 mip 偏移和 FSR 锐化。
 ## 画质按玩家默认（高），只关动态分辨率和帧率上限（动态分辨率另有自动检查）。
 
 const MAIN_SCENE := "res://scenes/main/Main.tscn"
@@ -18,6 +20,8 @@ const SPOTS := [
 	{"name": "f06_cave_mouth", "climate": {"season": "SUMMER", "hour": 15.0, "weather": "CLEAR"}, "eye": [-5.5, 3.9, -80.5], "look": [-7.5, 4.0, -96]},
 	{"name": "f07_meadow", "climate": {"season": "SUMMER", "hour": 15.0, "weather": "CLEAR"}, "eye": [-84, 3.8, 82], "look": [-70, 2.5, 100]},
 	{"name": "f08_poolhouse", "climate": {"season": "SUMMER", "hour": 15.0, "weather": "CLEAR"}, "eye": [-20, 3.8, 66], "look": [4, 2.0, 84]},
+	{"name": "fb1_creek_bridge", "climate": {"season": "SUMMER", "hour": 16.0, "weather": "CLEAR"}, "eye": [-77.5, 3.2, -8.5], "look": [-84.0, 2.6, -1.5]},
+	{"name": "fb2_gorge_bridge", "climate": {"season": "SUMMER", "hour": 15.0, "weather": "CLEAR"}, "eye": [-83.5, 15.5, -93.5], "look": [-89.8, 11.5, -89.0]},
 ]
 
 var _camera: Camera3D
@@ -35,6 +39,12 @@ func _run() -> void:
 	var jiggle := false
 	var smaa := false
 	var taa := false
+	var dynres := false
+	var legacy := false   ## v0.5 修复前的做法：FSR 锐化 0.2、太阳每帧转（对比用）
+	var bias := INF
+	var sharp := -1.0
+	var quality := ""
+	var only := PackedStringArray()
 	for a: String in OS.get_cmdline_user_args():
 		if a.begins_with("out="):
 			_out = a.substr(4)
@@ -46,10 +56,26 @@ func _run() -> void:
 			smaa = true
 		elif a == "taa":
 			taa = true
+		elif a == "dynres":
+			dynres = true
+		elif a.begins_with("bias="):
+			bias = a.substr(5).to_float()
+		elif a == "legacy":
+			legacy = true
+		elif a.begins_with("sharp="):
+			sharp = a.substr(6).to_float()
+		elif a.begins_with("scale="):
+			GameSettings.set_value("render_scale", a.substr(6).to_float(), false)
+		elif a.begins_with("quality="):
+			quality = a.substr(8)
+		elif a.begins_with("spots="):
+			only = a.substr(6).split(",")
 		else:
 			prefix = a
 	GameSettings.set_value("fullscreen", false, false)
-	GameSettings.set_value("dynamic_resolution", false, false)
+	GameSettings.set_value("dynamic_resolution", dynres, false)
+	if quality != "":
+		GameSettings.set_value("graphics_quality", quality, false)
 	GameSettings.set_value("max_fps", 0, false)
 	_main = (load(MAIN_SCENE) as PackedScene).instantiate()
 	add_child(_main)
@@ -78,8 +104,15 @@ func _run() -> void:
 	if chat != null:
 		chat.visible = false
 	for spot: Dictionary in SPOTS:
-		if not str(spot["name"]).begins_with(prefix):
+		if not str(spot["name"]).begins_with(prefix) or (not only.is_empty() and not only.has(str(spot["name"]))):
 			continue
+		if not is_inf(bias):
+			get_viewport().texture_mipmap_bias = bias
+		if sharp >= 0.0:
+			get_viewport().fsr_sharpness = sharp
+		if legacy:
+			get_viewport().fsr_sharpness = 0.2
+			(_main.get_node("World/Environment") as EnvironmentDirector).sun_step_deg = 0.0
 		var climate := _main.get_node("Systems") as ClimateSystem
 		var c: Dictionary = spot["climate"]
 		if c.has("preset"):

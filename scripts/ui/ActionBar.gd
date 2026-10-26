@@ -223,6 +223,7 @@ func take_photo() -> String:
 		EventBus.toast_requested.emit(tr("照片没存下来"))
 		return ""
 	last_photo = path
+	PhotoList.capture(get_viewport().get_camera_3d(), get_tree())
 	_flash.color.a = 0.75
 	create_tween().tween_property(_flash, "color:a", 0.0, 0.45)
 	EventBus.toast_requested.emit(tr("已拍照，存在图片文件夹的 %s 里") % PHOTO_DIR)

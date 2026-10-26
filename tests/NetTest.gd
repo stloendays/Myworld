@@ -48,6 +48,9 @@ func _host() -> void:
 	var climate := get_tree().get_first_node_in_group("climate_system") as ClimateSystem
 	climate.apply_preset("Autumn_Dusk_Clear")
 	_remove_result()
+	# 房主的本局规则（新建游戏页选的）：访客加入后照它走
+	GameRules.set_rule("day_length", 96)
+	GameRules.set_rule("animals", "few")
 	var err := Net.host_room(PORT)
 	_check("房主建房", err == "" and Net.is_host(), err)
 	_spawn_client([])
@@ -97,6 +100,7 @@ func _host() -> void:
 	_check("房主的天气、时间同步到访客；访客改天气被拦下；泳池馆门在访客那边也被改回",
 		reported and r.contains("weather=OVERCAST") and r.contains("blocked=true") and r.contains("pool=closed") \
 			and r.contains("cabin=open") and _time_ok(r), r)
+	_check("房主的本局规则同步到访客（一天 96 分钟、小动物少；协议 %d）" % Net.PROTOCOL, r.contains("rules=96/few"), r)
 
 	# 房主关房 → 访客回到单人
 	Net.leave_room()
@@ -197,9 +201,9 @@ func _client() -> void:
 		var before := WorldState.weather_id
 		chat.submit("/weather fog")
 		var blocked: bool = WorldState.weather_id == before and chat.messages[-1]["kind"] == "error"
-		Net.send_chat("player", "REPORT weather=%s time=%.1f blocked=%s pool=%s cabin=%s" % [WorldState.weather_id,
+		Net.send_chat("player", "REPORT weather=%s time=%.1f blocked=%s pool=%s cabin=%s rules=%d/%s" % [WorldState.weather_id,
 			WorldState.time_minutes, blocked, pool_door.get_state() if pool_door != null else "?",
-			cabin_door.get_state() if cabin_door != null else "?"])
+			cabin_door.get_state() if cabin_door != null else "?", int(GameRules.get_rule("day_length")), str(GameRules.get_rule("animals"))])
 	var left := await _until(func() -> bool: return Net.state == Net.State.OFFLINE, 60.0)
 	result["host_left"] = left
 	result["offline"] = Net.state == Net.State.OFFLINE and _weather_running()

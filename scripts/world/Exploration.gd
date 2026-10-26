@@ -48,7 +48,9 @@ func check(at: Vector2) -> Array[StringName]:
 		var id := StringName(poi["id"])
 		if at.distance_to(WorldLayout.v2(poi["center"])) <= float(poi["radius"]) and WorldState.discover(id):
 			found.append(id)
-			EventBus.toast_requested.emit(tr("发现：%s（%d / %d）") % [poi_label(poi), WorldState.discoveries.size(), list.size()])
+			# 只数湖畔的探索点（云海浮岛、琥珀沙丘的发现也记在同一个列表里）
+			var found_here := list.filter(func(q: Dictionary) -> bool: return StringName(q["id"]) in WorldState.discoveries).size()
+			EventBus.toast_requested.emit(tr("发现：%s（%d / %d）") % [poi_label(poi), found_here, list.size()])
 	return found
 
 

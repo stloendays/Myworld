@@ -11,6 +11,7 @@ var _firefly_timer := 0.0
 func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
+	add_to_group("fauna_spawner")
 	var spawns: Array = FaunaData.data().get("spawns", [])
 	var serial := {}
 	for s in spawns:
@@ -26,6 +27,7 @@ func _ready() -> void:
 		var p := _make_fireflies(WorldLayout.v2(f["center"]), float(f["radius"]), int(f["amount"]))
 		add_child(p)
 		fireflies.append(p)
+	apply_density(GameRules.animal_factor(), GameRules.world_seed())
 
 
 func _process(delta: float) -> void:
@@ -42,7 +44,7 @@ func _process(delta: float) -> void:
 func count(species: String) -> int:
 	var n := 0
 	for a in animals:
-		if a.species_id == species:
+		if a.species_id == species and a.is_in_group("fauna"):
 			n += 1
 	return n
 
@@ -87,3 +89,32 @@ func _make_fireflies(center: Vector2, radius: float, amount: int) -> GPUParticle
 	p.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	p.position = Vector3(center.x, WorldTerrain.height_at(center.x, center.y), center.y)
 	return p
+
+
+## 本局规则的小动物数量：factor = 0 / 0.5 / 1 / 2 倍（按 spawns 每一行的数量算）。多出来的就地新建（种子不同，
+## 分布不同），少的那些停用（隐藏、不更新、退出 "fauna" 组，图鉴和自动检查都不再算它们）。可以在游戏中途改。
+func apply_density(factor: float, seed_value: int) -> void:
+	var serial := {}
+	var keep := {}
+	for s in FaunaData.data().get("spawns", []):
+		var sp := str(s["species"])
+		var want := int(round(float(s["count"]) * factor))
+		for i in want:
+			serial[sp] = int(serial.get(sp, 0)) + 1
+			var id := "%s_%02d" % [sp, serial[sp]]
+			keep[id] = true
+			if has_node(id):
+				continue
+			var a := Animal.new()
+			a.name = id
+			add_child(a)
+			a.setup(StringName(id), sp, WorldLayout.v2(s["center"]), float(s["radius"]), hash([sp, serial[sp], seed_value]))
+			animals.append(a)
+	for a in animals:
+		var on := keep.has(String(a.name))
+		a.visible = on and a.active
+		a.process_mode = Node.PROCESS_MODE_INHERIT if on else Node.PROCESS_MODE_DISABLED
+		if on and not a.is_in_group("fauna"):
+			a.add_to_group("fauna")
+		elif not on and a.is_in_group("fauna"):
+			a.remove_from_group("fauna")

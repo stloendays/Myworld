@@ -1,0 +1,68 @@
+{
+  "_doc": "世界三「琥珀沙丘」的布局（World03.gd 读取）。坐标是这个世界自己的。pads：压平的场地（中心、半径、过渡宽度、高度）；oasis：绿洲水潭（中心、水面半径、最深处高度，水面在 y = 0）；hills：沙丘上额外隆起的大沙山；temple：阶梯神殿（中心、各层边长、每层高、南侧坡道）；items：古代碎片（pos 为 [x, z] 时贴地）。",
+  "id": "world_03",
+  "map_rect": [-120, -120, 240, 240],
+  "void_y": -20.0,
+  "item_name": "古代碎片",
+  "item_shape": "shard",
+  "item_color": [1.0, 0.72, 0.32],
+  "item_shell": [0.85, 0.7, 0.5],
+  "sky": {
+    "top": "#3f5b9a", "horizon": "#f6a86a", "ground_horizon": "#e9b07c", "ground_bottom": "#9a6f50",
+    "sun_elevation": 10.0, "sun_azimuth": 262.0, "sun_color": [1.0, 0.72, 0.48], "sun_energy": 1.35,
+    "fog_color": "#efb27e", "fog_density": 0.0028, "fog_height": 0.0, "fog_height_density": 0.0,
+    "ambient": 0.95, "exposure": 1.0
+  },
+  "boundary": {"start": 98.0, "end": 117.0, "height": 22.0},
+  "pads": [
+    {"id": "gate", "center": [0.0, 74.0], "radius": 9.0, "blend": 8.0, "height": 3.4},
+    {"id": "oasis", "center": [22.0, 26.0], "radius": 24.0, "blend": 12.0, "height": 1.0},
+    {"id": "ruins", "center": [-48.0, -8.0], "radius": 16.0, "blend": 10.0, "height": 4.2},
+    {"id": "temple", "center": [-30.0, -64.0], "radius": 20.0, "blend": 10.0, "height": 4.6},
+    {"id": "camp", "center": [58.0, -30.0], "radius": 9.0, "blend": 8.0, "height": 3.6},
+    {"id": "arch", "center": [-80.0, 40.0], "radius": 9.0, "blend": 8.0, "height": 4.0}
+  ],
+  "hills": [[70.0, 52.0, 16.0, 11.0]],
+  "oasis": {"center": [22.0, 26.0], "radius": 13.5, "floor": -2.3},
+  "temple": {"center": [-30.0, -68.0], "tiers": [22.0, 17.0, 12.0, 7.0], "tier_height": 1.6, "base": 4.6},
+  "spawn": {"pos": [0.0, 70.5], "heading": 0.0},
+  "gate": {"pos": [0.0, 0.0, 78.0], "yaw_deg": 0.0, "to": "dusk_lake", "stone": "rustic_stone_wall", "tint": [0.95, 0.78, 0.58]},
+  "spawns": [
+    {"id": "oasis", "name": "月牙绿洲", "pos": [6.0, 28.0], "heading": 90.0},
+    {"id": "ruins", "name": "石柱废墟", "pos": [-40.0, -4.0], "heading": 250.0},
+    {"id": "temple", "name": "阶梯神殿", "pos": [-30.0, -44.0], "heading": 0.0},
+    {"id": "camp", "name": "驼队营地", "pos": [54.0, -26.0], "heading": 120.0}
+  ],
+  "items": [
+    {"id": "shard_01", "pos": [-53.0, -13.0]},
+    {"id": "shard_02", "pos": [31.0, 41.0]},
+    {"id": "shard_03", "pos": [70.0, 52.0]},
+    {"id": "shard_04", "pos": [-80.0, 40.0]},
+    {"id": "shard_05", "pos": [61.0, -27.0]},
+    {"id": "shard_06", "pos": [-12.0, -36.0]}
+  ],
+  "pois": [
+    {"id": "du_oasis", "name": "月牙绿洲", "name_en": "Crescent Oasis", "center": [22.0, 26.0], "radius": 17.0},
+    {"id": "du_ruins", "name": "石柱废墟", "name_en": "Pillar Ruins", "center": [-48.0, -8.0], "radius": 12.0},
+    {"id": "du_temple", "name": "阶梯神殿", "name_en": "Step Temple", "center": [-30.0, -68.0], "radius": 15.0},
+    {"id": "du_arch", "name": "风蚀石拱", "name_en": "Wind Arch", "center": [-80.0, 40.0], "radius": 8.0},
+    {"id": "du_dune", "name": "落日沙山", "name_en": "Sunset Dune", "center": [70.0, 52.0], "radius": 8.0},
+    {"id": "du_camp", "name": "驼队营地", "name_en": "Caravan Camp", "center": [58.0, -30.0], "radius": 8.0}
+  ],
+  "signs": [
+    {"text": "du_welcome", "pos": [5.5, 67.5], "yaw_deg": -20.0, "style": "stand", "width": 1.5, "scale": 1.4},
+    {"text": "du_oasis", "pos": [4.0, 24.0], "yaw_deg": -95.0, "style": "stand", "width": 1.4, "scale": 1.4},
+    {"text": "du_ruins", "pos": [-37.0, -3.0], "yaw_deg": 70.0, "style": "stand", "width": 1.4, "scale": 1.4},
+    {"text": "du_temple", "pos": [-24.0, -46.0], "yaw_deg": 15.0, "style": "stand", "width": 1.5, "scale": 1.4},
+    {"text": "du_arch", "pos": [-73.0, 45.5], "yaw_deg": 50.0, "style": "stand", "width": 1.4, "scale": 1.4},
+    {"text": "du_camp", "pos": [53.0, -24.0], "yaw_deg": -40.0, "style": "lectern", "width": 1.2, "scale": 1.2}
+  ],
+  "labels": [
+    {"pos": [22.0, 12.0], "text": "月牙绿洲"},
+    {"pos": [-48.0, 6.0], "text": "石柱废墟"},
+    {"pos": [-30.0, -86.0], "text": "阶梯神殿"},
+    {"pos": [-80.0, 54.0], "text": "风蚀石拱"},
+    {"pos": [70.0, 68.0], "text": "落日沙山"},
+    {"pos": [58.0, -42.0], "text": "驼队营地"}
+  ]
+}

@@ -4,7 +4,8 @@ extends Node
 ## 角色所在区域（按 entity_id）、探索发现的地点、载具（独木舟）位置。M4 由 SaveManager 把 snapshot() 写成 user://saves/ 的版本化 JSON。
 ## 改动存档字段时必须同时升级 SCHEMA_VERSION 并写迁移。
 
-const SCHEMA_VERSION := 3   ## v2：加入 discoveries 与 vehicles；v3：加入 quests（图腾任务）与 journal（图鉴）
+const SCHEMA_VERSION := 4   ## v2：加入 discoveries 与 vehicles；v3：加入 quests（图腾任务）与 journal（图鉴）；
+                            ## v4：加入 rules（新建游戏的玩法与设定）、collections（各世界的收集品）、player（所在世界、位置、朝向）
 
 var world_seed: int = 0
 
@@ -36,6 +37,8 @@ var discoveries: Array[StringName] = []   ## 已发现的探索点 id（world_la
 var vehicles: Dictionary = {}             ## 载具 id -> {"pos": [x, z], "yaw_deg": 角度}
 var quests: Dictionary = {}               ## 任务 id -> {state: active / done, progress: 已完成目标数, thanked: 图腾说过谢谢}
 var journal: Dictionary = {}              ## 图鉴：kind（species / constellations）-> 按记录顺序的 id 列表
+var collections: Dictionary = {}          ## 收集品：世界 id -> 按收集顺序的 id 列表（云珠、古代碎片……）
+var player_spot: Dictionary = {}          ## 存档时玩家所在：{world, pos: [x, y, z], heading}（SaveManager 写入，读档时用来放人）
 
 var _actor_zones: Dictionary = {}    ## actor_id -> { zone_id: is_indoor }
 
@@ -83,6 +86,9 @@ func snapshot() -> Dictionary:
 		"vehicles": vehicles.duplicate(true),
 		"quests": quests.duplicate(true),
 		"journal": journal.duplicate(true),
+		"collections": collections.duplicate(true),
+		"rules": GameRules.to_dict(),
+		"player": player_spot.duplicate(true),
 	}
 
 
@@ -96,6 +102,11 @@ static func migrate(data: Dictionary) -> Dictionary:
 	if v < 3:
 		d["quests"] = {}
 		d["journal"] = {}
+	if v < 4:
+		d["rules"] = GameRules.defaults()
+		d["collections"] = {}
+		d["player"] = {}
+	d["rules"] = GameRules.sanitize(d.get("rules", {}))
 	d["schema_version"] = SCHEMA_VERSION
 	return d
 
@@ -169,3 +180,58 @@ func journal_add(kind: String, id: String) -> bool:
 
 func journal_list(kind: String) -> Array:
 	return journal.get(kind, [])
+
+
+## 读档：把迁移到当前版本的存档写回各字段（世界里已有的门、灯等由 SaveManager 随后逐个恢复）。
+func restore(data: Dictionary) -> void:
+	var d := migrate(data)
+	world_seed = int(d.get("world_seed", world_seed))
+	world_day = maxi(int(d.get("world_day", world_day)), 1)
+	time_minutes = float(d.get("time_minutes", time_minutes))
+	season_override = d.get("season_override")
+	weather_id = StringName(str(d.get("weather_id", weather_id)))
+	weather_from = StringName(str(d.get("weather_from", weather_id)))
+	weather_progress = float(d.get("weather_progress", 1.0))
+	weather_seed = int(d.get("weather_seed", weather_seed))
+	weather_change_count = int(d.get("weather_change_count", 0))
+	weather_next_change = float(d.get("weather_next_change", 0.0))
+	ground_snow = float(d.get("ground_snow", 0.0))
+	ground_wetness = float(d.get("ground_wetness", 0.0))
+	rain_recent = float(d.get("rain_recent", 0.0))
+	interactables = (d.get("interactables", {}) as Dictionary).duplicate()
+	flags = (d.get("flags", {}) as Dictionary).duplicate()
+	discoveries.clear()
+	for x in d.get("discoveries", []):
+		discoveries.append(StringName(str(x)))
+	vehicles = (d.get("vehicles", {}) as Dictionary).duplicate(true)
+	quests = (d.get("quests", {}) as Dictionary).duplicate(true)
+	journal = (d.get("journal", {}) as Dictionary).duplicate(true)
+	collections = (d.get("collections", {}) as Dictionary).duplicate(true)
+	player_spot = (d.get("player", {}) as Dictionary).duplicate(true)
+
+
+## 新局：清掉上一局的进度（发现、任务、图鉴、收集品、门灯状态、船、标记）。时间天气由 GameRules.apply_start 设。
+func reset_progress() -> void:
+	interactables.clear()
+	flags.clear()
+	discoveries.clear()
+	vehicles.clear()
+	quests.clear()
+	journal.clear()
+	collections.clear()
+	player_spot.clear()
+
+
+## 收集一件收集品；已经收过返回 false。
+func collect(world_id: String, item_id: String) -> bool:
+	var list: Array = collections.get(world_id, [])
+	if item_id in list:
+		return false
+	list.append(item_id)
+	collections[world_id] = list
+	EventBus.collected.emit(world_id, item_id)
+	return true
+
+
+func collected(world_id: String) -> Array:
+	return collections.get(world_id, [])

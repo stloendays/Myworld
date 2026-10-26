@@ -97,7 +97,7 @@ func _ground(delta: float) -> void:
 	var pos := global_position
 	var player: Variant = _player_pos()
 	var flee_r := float(def.get("flee_radius", 0.0))
-	fleeing = player != null and Vector2(pos.x - player.x, pos.z - player.z).length() < flee_r
+	fleeing = player != null and not GameRules.flag("friendly_animals") and Vector2(pos.x - player.x, pos.z - player.z).length() < flee_r
 	if fleeing:
 		var away := Vector2(pos.x - player.x, pos.z - player.z).normalized()
 		var t := Vector2(pos.x, pos.z) + away * 6.0
@@ -129,7 +129,7 @@ func _ground(delta: float) -> void:
 func _duck(delta: float) -> void:
 	var pos := global_position
 	var player: Variant = _player_pos()
-	fleeing = player != null and Vector2(pos.x - player.x, pos.z - player.z).length() < float(def.get("flee_radius", 4.0))
+	fleeing = player != null and not GameRules.flag("friendly_animals") and Vector2(pos.x - player.x, pos.z - player.z).length() < float(def.get("flee_radius", 4.0))
 	if fleeing:
 		var away := Vector2(pos.x - player.x, pos.z - player.z).normalized()
 		var t := Vector2(pos.x, pos.z) + away * 5.0

@@ -1,0 +1,23 @@
+{
+  "_doc": "摄影清单（PhotoList 读取）：按 F12 拍照时，画面中央（视线 22° 以内）有清单上的东西就记下来。kind：species = 那种小动物（离相机 max_dist 米内、正在活动）；place = 某个世界里的地点（pos 为 [x, y, z]，max_dist 内、没被挡住）；group = 场景里某个组的节点（例如天鲸）；sky = 天空里的现象（rainbow 彩虹、lightning 闪电、stars 抬头看星空）；event = 出现中的仙境林地。",
+  "subjects": [
+    {"id": "rabbit", "kind": "species", "name": "兔子", "name_en": "Rabbit", "max_dist": 22.0},
+    {"id": "fox", "kind": "species", "name": "狐狸", "name_en": "Fox", "max_dist": 25.0},
+    {"id": "duck", "kind": "species", "name": "鸭子", "name_en": "Duck", "max_dist": 30.0},
+    {"id": "squirrel", "kind": "species", "name": "松鼠", "name_en": "Squirrel", "max_dist": 18.0},
+    {"id": "butterfly", "kind": "species", "name": "蝴蝶", "name_en": "Butterfly", "max_dist": 12.0},
+    {"id": "cabin", "kind": "place", "world": "dusk_lake", "name": "湖边木屋", "name_en": "Lakeside Cabin", "pos": [-69.0, 5.0, 37.0], "max_dist": 70.0},
+    {"id": "poolhouse", "kind": "place", "world": "dusk_lake", "name": "玻璃泳池馆", "name_en": "Glass Pool House", "pos": [4.0, 4.0, 84.0], "max_dist": 70.0},
+    {"id": "snow_peak", "kind": "place", "world": "dusk_lake", "name": "雪山", "name_en": "Snow Peak", "pos": [102.0, 38.0, -108.0], "max_dist": 260.0},
+    {"id": "totem", "kind": "place", "world": "dusk_lake", "name": "老图腾", "name_en": "Old Totem", "pos": [8.0, 4.5, -105.6], "max_dist": 15.0},
+    {"id": "cloud_tree", "kind": "place", "world": "world_02", "name": "云顶古树", "name_en": "Cloudtop Tree", "pos": [-9.0, 8.0, -7.0], "max_dist": 60.0},
+    {"id": "lighthouse", "kind": "place", "world": "world_02", "name": "云端灯塔", "name_en": "Sky Lighthouse", "pos": [10.0, 18.0, -101.0], "max_dist": 140.0},
+    {"id": "sky_whale", "kind": "group", "group": "sky_whale", "name": "天鲸", "name_en": "Sky Whale", "max_dist": 130.0},
+    {"id": "temple", "kind": "place", "world": "world_03", "name": "阶梯神殿", "name_en": "Step Temple", "pos": [-30.0, 8.0, -68.0], "max_dist": 120.0},
+    {"id": "oasis", "kind": "place", "world": "world_03", "name": "月牙绿洲", "name_en": "Crescent Oasis", "pos": [22.0, 0.5, 26.0], "max_dist": 70.0},
+    {"id": "rainbow", "kind": "sky", "sky": "rainbow", "name": "彩虹", "name_en": "Rainbow"},
+    {"id": "lightning", "kind": "sky", "sky": "lightning", "name": "闪电", "name_en": "Lightning"},
+    {"id": "stars", "kind": "sky", "sky": "stars", "name": "星空", "name_en": "Starry Sky"},
+    {"id": "fairy_glade", "kind": "event", "name": "仙境林地", "name_en": "Fairy Glade", "max_dist": 60.0}
+  ]
+}

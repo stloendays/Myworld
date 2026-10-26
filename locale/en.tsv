@@ -460,3 +460,138 @@ E  点燃篝火	E  Light the campfire
 图腾石厅	Totem hall
 正在收拾行囊…	Packing up…
 正在读取新世界…	Reading the new world…
+%s · 第 %d 天 %02d:%02d · %s	%s · day %d %02d:%02d · %s
+%s：%d / %d	%s: %d / %d
+0 = 世界自带的种子	0 = the world's own seed
+12 分钟	12 minutes
+24 分钟	24 minutes
+48 分钟	48 minutes
+96 分钟	96 minutes
+3 天	3 days
+6 天	6 days
+12 天	12 days
+E  放上古代碎片（带着 %d 块）	E  Set the ancient shards (carrying %d)
+E  点亮风灯	E  Light the wind beacon
+一天长度	Day length
+一键预设	Presets
+世界与出生	World and start
+世界种子	World seed
+云海浮岛	Cloudsea Isles
+云端旅人	Cloud Wanderer
+从不	Never
+仙境林地出现	Fairy glade appears
+任务冒险	Adventure
+任务追踪	Quest tracker
+光门	Gate
+光门前	At the gate
+冬日仙境	Winter Wonderland
+出生世界	Starting world
+动物亲人（不躲人）	Friendly animals (don't run away)
+四座风灯都亮了——天鲸游过来了！	All four beacons are lit. The sky whale is swimming over!
+图腾任务	Totem quests
+图腾的任务、风灯和古代碎片一个接一个，任务追踪一直开着。	The totem's quests, the beacons and the ancient shards one after another, with the quest tracker always on.
+图鉴记录	Field guide
+多	Many
+多云	Cloudy
+夜晚 22:00	Night 22:00
+夜晚更亮	Brighter nights
+天气变化	Weather changes
+奔跑体力	Sprint stamina
+奔跑和游泳都要体力，没有小地图和问号，浮岛跳台计时。	Sprinting and swimming use stamina, no minimap or question marks, and the sky steps are timed.
+小动物数量	Animals
+少	Few
+嵌回了 %d 块碎片（%d / %d）	Set %d shards back (%d / %d)
+开始并创建房间	Start and host a room
+开始游戏	Start
+很少	Rare
+悠闲度假	Holiday
+悠闲漫步	Stroll
+挑战	Challenge
+捡到%s（%d / %d）	Found a %s (%d / %d)
+探索收集	Explore
+探险家	Explorer
+摄影	Photography
+摄影师	Photographer
+收集品	Collectibles
+收集品（云珠、古代碎片）	Collectibles (cloud pearls, ancient shards)
+新建游戏	New game
+新建游戏 · 开局后创建房间	New game · host a room after starting
+时间与天气	Time and weather
+时间静止	Frozen time
+晴朗的夜晚	Clear nights
+未发现地点的问号	Question marks for undiscovered places
+林道出生点	Forest path start
+欢迎来到%s。按 T 聊天，输入 /help 查看命令。	Welcome to %s. Press T to chat; type /help for commands.
+正午 12:00	Noon 12:00
+正常	Normal
+每个夜晚	Every night
+每季天数	Days per season
+沙海寻宝	Desert Treasure
+没有	None
+没有任务和体力，小动物不怕人，适合散步、看风景。	No quests or stamina, and the animals are not shy. Good for walks and views.
+清晨 6:30	Dawn 6:30
+游泳体力	Swim stamina
+玩法	Play
+玩法模式	Play mode
+琥珀沙丘	Amber Dunes
+生物与事件	Creatures and events
+界面与难度	Interface and difficulty
+界面最简，时间走得慢；按 F12 拍下摄影清单上的东西。	A minimal interface and slow time; press F12 to photograph the things on the photo list.
+登上灯塔岛：%.1f 秒（最好 %.1f 秒）	Reached the lighthouse isle: %.1f s (best %.1f s)
+硬核挑战	Hardcore
+碎片全部嵌回祭坛——神殿升起了一道光！	Every shard is back in the altar. A beam of light rises from the temple!
+神殿之光已经点亮	The temple light is already shining
+祭坛	Altar
+祭坛上有 %d / %d 块碎片，去沙丘里找找	The altar holds %d / %d shards. Search the dunes for more
+继续上次的世界	Continue your world
+罗盘和问号指路，找齐每个世界的探索点和收集品。	The compass and question marks show the way. Find every place and collectible in each world.
+罗盘条	Compass
+联机房间目前都在暮色湖畔	Rooms are always at Dusk Lake for now
+落日下的沙海：月牙绿洲、石柱废墟和阶梯神殿。从南部草甸的沙之门进去。	A sea of sand under the setting sun: the Crescent Oasis, the pillar ruins and the step temple. Enter through the Sand Gate in the south meadow.
+被风托回了岸上	The wind carried you back to land
+观星之夜	Stargazing
+起始天气	Starting weather
+起始季节	Starting season
+起始时刻	Starting time
+跳台计时开始！	Sky steps timer started!
+这一局关掉了小地图（新建游戏时的设定）	The minimap is off in this game (a new-game setting)
+锁定不变	Locked
+锁定季节	Locked season
+随机	Random
+雨季	Rainy Season
+雪（冬季）	Snow (winter)
+频繁	Frequent
+风灯	Wind beacon
+风灯亮了（%d / %d）	Beacon lit (%d / %d)
+风灯已经亮了	This beacon is already lit
+黄昏 17:20	Dusk 17:20
+黄昏云海上的五座浮岛：绳桥、风灯、跳台和一头天鲸。从图腾山洞尽头的光门进去。	Five floating islands on a sea of sunset clouds: rope bridges, wind beacons, sky steps and a sky whale. Enter through the gate at the end of the totem cave.
+（上次的存档会先备份再开新局）	(Your last save is backed up before the new game starts)
+主岛	Main Isle
+西岛	West Isle
+北岛	North Isle
+东岛	East Isle
+灯塔岛	Lighthouse Isle
+月牙绿洲	Crescent Oasis
+石柱废墟	Pillar Ruins
+阶梯神殿	Step Temple
+风蚀石拱	Wind Arch
+落日沙山	Sunset Dune
+驼队营地	Caravan Camp
+云顶古树	Cloudtop Tree
+西岛风车	West Isle Windmill
+北岛石阵	North Isle Stone Ring
+东岛观鲸台	Whale Watch
+云瀑	Cloud Falls
+云端灯塔	Sky Lighthouse
+云珠	cloud pearl
+古代碎片	ancient shard
+收藏	Collection
+云海浮岛：云珠 %d / %d · 风灯 %d / %d	Cloudsea Isles: cloud pearls %d / %d · beacons %d / %d
+琥珀沙丘：古代碎片 %d / %d · 祭坛 %d / %d	Amber Dunes: ancient shards %d / %d · altar %d / %d
+摄影清单  %d / %d（F12 拍照时画面中央的东西）	Photo list  %d / %d (whatever is in the middle of the frame when you press F12)
+摄影清单：拍到了「%s」（%d / %d）	Photo list: you photographed the %s (%d / %d)
+探索点	Places
+已传送到光门前。	Teleported to the gate.
+那里没有地面	there is no ground there
+接着 v0.4 的任务和图鉴，从秋天黄昏的湖畔开始	Picks up your v0.4 quests and field guide, starting at the lake on an autumn evening

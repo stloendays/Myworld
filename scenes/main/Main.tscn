@@ -27,6 +27,7 @@
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_main")
+metadata/_edit_lock_ = true
 
 [node name="Systems" type="Node" parent="."]
 script = ExtResource("8_climate")
@@ -41,6 +42,7 @@ script = ExtResource("10_season")
 script = ExtResource("11_weather")
 
 [node name="World" parent="." instance=ExtResource("2_world")]
+metadata/_edit_lock_ = true
 
 [node name="Cabin" parent="." instance=ExtResource("3_cabin")]
 

@@ -1389,3 +1389,408 @@ msgstr "Packing up…"
 msgid "正在读取新世界…"
 msgstr "Reading the new world…"
 
+msgid "%s · 第 %d 天 %02d:%02d · %s"
+msgstr "%s · day %d %02d:%02d · %s"
+
+msgid "%s：%d / %d"
+msgstr "%s: %d / %d"
+
+msgid "0 = 世界自带的种子"
+msgstr "0 = the world's own seed"
+
+msgid "12 分钟"
+msgstr "12 minutes"
+
+msgid "24 分钟"
+msgstr "24 minutes"
+
+msgid "48 分钟"
+msgstr "48 minutes"
+
+msgid "96 分钟"
+msgstr "96 minutes"
+
+msgid "3 天"
+msgstr "3 days"
+
+msgid "6 天"
+msgstr "6 days"
+
+msgid "12 天"
+msgstr "12 days"
+
+msgid "E  放上古代碎片（带着 %d 块）"
+msgstr "E  Set the ancient shards (carrying %d)"
+
+msgid "E  点亮风灯"
+msgstr "E  Light the wind beacon"
+
+msgid "一天长度"
+msgstr "Day length"
+
+msgid "一键预设"
+msgstr "Presets"
+
+msgid "世界与出生"
+msgstr "World and start"
+
+msgid "世界种子"
+msgstr "World seed"
+
+msgid "云海浮岛"
+msgstr "Cloudsea Isles"
+
+msgid "云端旅人"
+msgstr "Cloud Wanderer"
+
+msgid "从不"
+msgstr "Never"
+
+msgid "仙境林地出现"
+msgstr "Fairy glade appears"
+
+msgid "任务冒险"
+msgstr "Adventure"
+
+msgid "任务追踪"
+msgstr "Quest tracker"
+
+msgid "光门"
+msgstr "Gate"
+
+msgid "光门前"
+msgstr "At the gate"
+
+msgid "冬日仙境"
+msgstr "Winter Wonderland"
+
+msgid "出生世界"
+msgstr "Starting world"
+
+msgid "动物亲人（不躲人）"
+msgstr "Friendly animals (don't run away)"
+
+msgid "四座风灯都亮了——天鲸游过来了！"
+msgstr "All four beacons are lit. The sky whale is swimming over!"
+
+msgid "图腾任务"
+msgstr "Totem quests"
+
+msgid "图腾的任务、风灯和古代碎片一个接一个，任务追踪一直开着。"
+msgstr "The totem's quests, the beacons and the ancient shards one after another, with the quest tracker always on."
+
+msgid "图鉴记录"
+msgstr "Field guide"
+
+msgid "多"
+msgstr "Many"
+
+msgid "多云"
+msgstr "Cloudy"
+
+msgid "夜晚 22:00"
+msgstr "Night 22:00"
+
+msgid "夜晚更亮"
+msgstr "Brighter nights"
+
+msgid "天气变化"
+msgstr "Weather changes"
+
+msgid "奔跑体力"
+msgstr "Sprint stamina"
+
+msgid "奔跑和游泳都要体力，没有小地图和问号，浮岛跳台计时。"
+msgstr "Sprinting and swimming use stamina, no minimap or question marks, and the sky steps are timed."
+
+msgid "小动物数量"
+msgstr "Animals"
+
+msgid "少"
+msgstr "Few"
+
+msgid "嵌回了 %d 块碎片（%d / %d）"
+msgstr "Set %d shards back (%d / %d)"
+
+msgid "开始并创建房间"
+msgstr "Start and host a room"
+
+msgid "开始游戏"
+msgstr "Start"
+
+msgid "很少"
+msgstr "Rare"
+
+msgid "悠闲度假"
+msgstr "Holiday"
+
+msgid "悠闲漫步"
+msgstr "Stroll"
+
+msgid "挑战"
+msgstr "Challenge"
+
+msgid "捡到%s（%d / %d）"
+msgstr "Found a %s (%d / %d)"
+
+msgid "探索收集"
+msgstr "Explore"
+
+msgid "探险家"
+msgstr "Explorer"
+
+msgid "摄影"
+msgstr "Photography"
+
+msgid "摄影师"
+msgstr "Photographer"
+
+msgid "收集品"
+msgstr "Collectibles"
+
+msgid "收集品（云珠、古代碎片）"
+msgstr "Collectibles (cloud pearls, ancient shards)"
+
+msgid "新建游戏"
+msgstr "New game"
+
+msgid "新建游戏 · 开局后创建房间"
+msgstr "New game · host a room after starting"
+
+msgid "时间与天气"
+msgstr "Time and weather"
+
+msgid "时间静止"
+msgstr "Frozen time"
+
+msgid "晴朗的夜晚"
+msgstr "Clear nights"
+
+msgid "未发现地点的问号"
+msgstr "Question marks for undiscovered places"
+
+msgid "林道出生点"
+msgstr "Forest path start"
+
+msgid "欢迎来到%s。按 T 聊天，输入 /help 查看命令。"
+msgstr "Welcome to %s. Press T to chat; type /help for commands."
+
+msgid "正午 12:00"
+msgstr "Noon 12:00"
+
+msgid "正常"
+msgstr "Normal"
+
+msgid "每个夜晚"
+msgstr "Every night"
+
+msgid "每季天数"
+msgstr "Days per season"
+
+msgid "沙海寻宝"
+msgstr "Desert Treasure"
+
+msgid "没有"
+msgstr "None"
+
+msgid "没有任务和体力，小动物不怕人，适合散步、看风景。"
+msgstr "No quests or stamina, and the animals are not shy. Good for walks and views."
+
+msgid "清晨 6:30"
+msgstr "Dawn 6:30"
+
+msgid "游泳体力"
+msgstr "Swim stamina"
+
+msgid "玩法"
+msgstr "Play"
+
+msgid "玩法模式"
+msgstr "Play mode"
+
+msgid "琥珀沙丘"
+msgstr "Amber Dunes"
+
+msgid "生物与事件"
+msgstr "Creatures and events"
+
+msgid "界面与难度"
+msgstr "Interface and difficulty"
+
+msgid "界面最简，时间走得慢；按 F12 拍下摄影清单上的东西。"
+msgstr "A minimal interface and slow time; press F12 to photograph the things on the photo list."
+
+msgid "登上灯塔岛：%.1f 秒（最好 %.1f 秒）"
+msgstr "Reached the lighthouse isle: %.1f s (best %.1f s)"
+
+msgid "硬核挑战"
+msgstr "Hardcore"
+
+msgid "碎片全部嵌回祭坛——神殿升起了一道光！"
+msgstr "Every shard is back in the altar. A beam of light rises from the temple!"
+
+msgid "神殿之光已经点亮"
+msgstr "The temple light is already shining"
+
+msgid "祭坛"
+msgstr "Altar"
+
+msgid "祭坛上有 %d / %d 块碎片，去沙丘里找找"
+msgstr "The altar holds %d / %d shards. Search the dunes for more"
+
+msgid "继续上次的世界"
+msgstr "Continue your world"
+
+msgid "罗盘和问号指路，找齐每个世界的探索点和收集品。"
+msgstr "The compass and question marks show the way. Find every place and collectible in each world."
+
+msgid "罗盘条"
+msgstr "Compass"
+
+msgid "联机房间目前都在暮色湖畔"
+msgstr "Rooms are always at Dusk Lake for now"
+
+msgid "落日下的沙海：月牙绿洲、石柱废墟和阶梯神殿。从南部草甸的沙之门进去。"
+msgstr "A sea of sand under the setting sun: the Crescent Oasis, the pillar ruins and the step temple. Enter through the Sand Gate in the south meadow."
+
+msgid "被风托回了岸上"
+msgstr "The wind carried you back to land"
+
+msgid "观星之夜"
+msgstr "Stargazing"
+
+msgid "起始天气"
+msgstr "Starting weather"
+
+msgid "起始季节"
+msgstr "Starting season"
+
+msgid "起始时刻"
+msgstr "Starting time"
+
+msgid "跳台计时开始！"
+msgstr "Sky steps timer started!"
+
+msgid "这一局关掉了小地图（新建游戏时的设定）"
+msgstr "The minimap is off in this game (a new-game setting)"
+
+msgid "锁定不变"
+msgstr "Locked"
+
+msgid "锁定季节"
+msgstr "Locked season"
+
+msgid "随机"
+msgstr "Random"
+
+msgid "雨季"
+msgstr "Rainy Season"
+
+msgid "雪（冬季）"
+msgstr "Snow (winter)"
+
+msgid "频繁"
+msgstr "Frequent"
+
+msgid "风灯"
+msgstr "Wind beacon"
+
+msgid "风灯亮了（%d / %d）"
+msgstr "Beacon lit (%d / %d)"
+
+msgid "风灯已经亮了"
+msgstr "This beacon is already lit"
+
+msgid "黄昏 17:20"
+msgstr "Dusk 17:20"
+
+msgid "黄昏云海上的五座浮岛：绳桥、风灯、跳台和一头天鲸。从图腾山洞尽头的光门进去。"
+msgstr "Five floating islands on a sea of sunset clouds: rope bridges, wind beacons, sky steps and a sky whale. Enter through the gate at the end of the totem cave."
+
+msgid "（上次的存档会先备份再开新局）"
+msgstr "(Your last save is backed up before the new game starts)"
+
+msgid "主岛"
+msgstr "Main Isle"
+
+msgid "西岛"
+msgstr "West Isle"
+
+msgid "北岛"
+msgstr "North Isle"
+
+msgid "东岛"
+msgstr "East Isle"
+
+msgid "灯塔岛"
+msgstr "Lighthouse Isle"
+
+msgid "月牙绿洲"
+msgstr "Crescent Oasis"
+
+msgid "石柱废墟"
+msgstr "Pillar Ruins"
+
+msgid "阶梯神殿"
+msgstr "Step Temple"
+
+msgid "风蚀石拱"
+msgstr "Wind Arch"
+
+msgid "落日沙山"
+msgstr "Sunset Dune"
+
+msgid "驼队营地"
+msgstr "Caravan Camp"
+
+msgid "云顶古树"
+msgstr "Cloudtop Tree"
+
+msgid "西岛风车"
+msgstr "West Isle Windmill"
+
+msgid "北岛石阵"
+msgstr "North Isle Stone Ring"
+
+msgid "东岛观鲸台"
+msgstr "Whale Watch"
+
+msgid "云瀑"
+msgstr "Cloud Falls"
+
+msgid "云端灯塔"
+msgstr "Sky Lighthouse"
+
+msgid "云珠"
+msgstr "cloud pearl"
+
+msgid "古代碎片"
+msgstr "ancient shard"
+
+msgid "收藏"
+msgstr "Collection"
+
+msgid "云海浮岛：云珠 %d / %d · 风灯 %d / %d"
+msgstr "Cloudsea Isles: cloud pearls %d / %d · beacons %d / %d"
+
+msgid "琥珀沙丘：古代碎片 %d / %d · 祭坛 %d / %d"
+msgstr "Amber Dunes: ancient shards %d / %d · altar %d / %d"
+
+msgid "摄影清单  %d / %d（F12 拍照时画面中央的东西）"
+msgstr "Photo list  %d / %d (whatever is in the middle of the frame when you press F12)"
+
+msgid "摄影清单：拍到了「%s」（%d / %d）"
+msgstr "Photo list: you photographed the %s (%d / %d)"
+
+msgid "探索点"
+msgstr "Places"
+
+msgid "已传送到光门前。"
+msgstr "Teleported to the gate."
+
+msgid "那里没有地面"
+msgstr "there is no ground there"
+
+msgid "接着 v0.4 的任务和图鉴，从秋天黄昏的湖畔开始"
+msgstr "Picks up your v0.4 quests and field guide, starting at the lake on an autumn evening"
+
