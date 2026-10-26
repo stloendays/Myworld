@@ -2157,3 +2157,48 @@ msgstr "Restart to apply"
 msgid "现在：%s / %s"
 msgstr "Now: %s / %s"
 
+msgid "E  再读一遍"
+msgstr "E  Read it again"
+
+msgid "E  翻开旧书"
+msgstr "E  Open the old book"
+
+msgid "E  打开旧木盒"
+msgstr "E  Open the old box"
+
+msgid "E  打开铁盒"
+msgstr "E  Open the tin"
+
+msgid "E  看星图"
+msgstr "E  Look at the star chart"
+
+msgid "E  看看门锁"
+msgstr "E  Look at the lock"
+
+msgid "联机做客时，这扇门要房主来开。"
+msgstr "As a guest, the host has to open this door."
+
+msgid "门锁着。锁上有三个刻着图案的转环，不知道该转到哪里。"
+msgstr "The door is locked. The lock has three rings carved with pictures, and you don't know where to turn them."
+
+msgid "门锁着。三个转环里你知道 %d 个：%s。"
+msgstr "The door is locked. You know %d of the three rings: %s."
+
+msgid "划船人的信  %d / %d"
+msgstr "The paddler's letters  %d / %d"
+
+msgid "？？？（还没找到这封信）"
+msgstr "??? (letter not found yet)"
+
+msgid "E / 空格 / Esc  合上"
+msgstr "E / Space / Esc  Close"
+
+msgid "椅子"
+msgstr "Chair"
+
+msgid "石头小屋的门"
+msgstr "Stone cottage door"
+
+msgid "划船人的信"
+msgstr "The paddler's letter"
+

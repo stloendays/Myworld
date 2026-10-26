@@ -99,7 +99,7 @@ func _run() -> void:
 	await _test_cave()
 	await _test_totem_quests()
 	await _test_constellations()
-	await _test_cottage()
+	await _test_cottage_letters()
 	await _test_nature()
 	_test_cover_fade()
 	await _test_flicker_sources()
@@ -259,26 +259,134 @@ func _test_constellations() -> void:
 	QuestLog.reset()
 
 
-func _test_cottage() -> void:
+## 划船人的三封信与石头小屋（世界观落地①）：锁着走不进去 → 木屋旧书、码头木盒、湖心岛铁盒各读一封（顺序随意，
+## 读过记进存档、门前提示已知几个图案）→ 三封读完开锁 → 走进屋里（室内、连续）→ 看星图、开台灯 → 走出来；任务、成就、日志、存档往返。
+func _test_cottage_letters() -> void:
 	var cottage := get_tree().get_first_node_in_group("stone_cottage") as StoneCottage
-	if cottage == null:
-		_check("石头小屋已生成", false)
+	var panel := get_tree().get_first_node_in_group("letter_panel") as LetterPanel
+	if cottage == null or panel == null:
+		_check("石头小屋与读信界面已生成", false)
 		return
+	WorldState.flags.erase("letters")
+	WorldState.flags.erase("cottage_unlocked")
 	var door := cottage.door
-	var front := door.global_position + door.global_basis.z * 1.6
+	door.apply_state("locked")
+	var spots := {}
+	for s in get_tree().get_nodes_in_group("letter_spots"):
+		spots[(s as LetterSpot).letter_id] = s
+	var hud := _main.get_node("HUD")
+	var hd := StoneCottage.SIZE.z * 0.5
+	var door_mid := cottage.to_global(Vector3(StoneCottage.DOOR_X, StoneCottage.FLOOR + 1.0, hd))
+	var front := cottage.to_global(Vector3(StoneCottage.DOOR_X, 0.0, hd + 2.2))
+	# 锁着：按 E 只提示，朝门直走被挡在外面
 	await _setup_at(Vector2(front.x, front.z), 0.0)
-	_player.look_at_point(door.global_position)
+	_player.look_at_point(door_mid)
 	await _frames(2)
-	var prompt_ok := _player.try_interact() and (_main.get_node("HUD").toast_text() as String).contains("门锁着")
-	# 朝门直走 4 秒：被墙挡在外面
-	var inward := -door.global_basis.z
+	var locked_hint := _player.try_interact() and (hud.toast_text() as String).contains("不知道该转到哪里")
+	var inward := -cottage.global_basis.z
 	await _walk_for(Vector3(inward.x, 0.0, inward.z), 4.0)
-	var c := cottage.global_position
-	var local := cottage.to_local(_player.global_position)
-	var outside := absf(local.x) > StoneCottage.SIZE.x * 0.5 or absf(local.z) > StoneCottage.SIZE.z * 0.5
-	var no_trees := Vegetation.tree_density(c.x, c.z) == 0.0
-	_check("石头小屋：门锁着（按 E 只提示），走不进去，屋旁没有树", prompt_ok and outside and no_trees and WorldState.get_interactable_state(&"cottage_door") == "locked",
-		"提示 %s · 在屋外 %s（本地 %.1f, %.1f）· 无树 %s" % [prompt_ok, outside, local.x, local.z, no_trees])
+	var stopped := cottage.to_local(_player.global_position).z > hd - 0.1
+	var no_trees := Vegetation.tree_density(cottage.global_position.x, cottage.global_position.z) == 0.0
+	_check("石头小屋：门上三环锁，一封信都没读时按 E 只提示，走不进去，屋旁没有树",
+		locked_hint and stopped and no_trees and WorldState.get_interactable_state(&"cottage_door") == "locked" and spots.size() == 4,
+		"提示 %s · 挡在外面 %s（本地 z %.2f）· 无树 %s · 信与星图 %d 处" % [locked_hint, stopped, cottage.to_local(_player.global_position).z, no_trees, spots.size()])
+	# 码头木盒 → 湖心岛铁盒 → 木屋旧书（故意不按信里的顺序）
+	var order: Array[bool] = []
+	var stands := {
+		"dock": Vector3(-1.9, 1.1, 25.9),
+		"islet": (spots["islet"] as LetterSpot).global_position + (spots["islet"] as LetterSpot).global_basis.z * 1.0,
+		"cabin": _cabin_point(Vector3(-1.95, 0.05, -2.1)),
+	}
+	var partial_hint := false
+	for id: String in ["dock", "islet", "cabin"]:
+		var spot := spots[id] as LetterSpot
+		var at: Vector3 = stands[id]
+		if id == "islet":
+			at.y = WorldTerrain.height_at(at.x, at.z) + 0.1
+		_player.teleport_to(at)
+		await _seconds(0.4)
+		_player.look_at_point(spot.global_position + Vector3(0.0, 0.12, 0.0))
+		await _frames(2)
+		var opened := _player.try_interact() and panel.is_open() and panel.showing == id and _player.input_locked
+		panel.close()
+		order.append(opened and not _player.input_locked and PaddlerStory.is_read(id) and spot.get_prompt(_player) == tr("E  再读一遍"))
+		if id == "islet":
+			# 读了两封：门前提示知道两个图案，门仍锁着
+			_player.teleport_to(Vector3(front.x, WorldTerrain.height_at(front.x, front.z) + 0.2, front.z))
+			await _seconds(0.4)
+			_player.look_at_point(door_mid)
+			await _frames(2)
+			partial_hint = _player.try_interact() and (hud.toast_text() as String).contains("知道 2 个") and door.is_locked()
+	var titles_ok: bool = str(hud.toast_text()) != "" and PaddlerStory.read_ids() == ["dock", "islet", "cabin"]
+	_check("划船人的信：码头木盒、湖心岛铁盒、木屋书架顶上的旧书各读一封（顺序随意），读过能再读；读了两封时门前提示知道 2 个图案",
+		order == [true, true, true] and partial_hint and titles_ok,
+		"逐封 %s · 两封时提示 %s · 记录 %s" % [order, partial_hint, PaddlerStory.read_ids()])
+	# 三封读完：开锁、门推开，走进屋里
+	_player.teleport_to(Vector3(front.x, WorldTerrain.height_at(front.x, front.z) + 0.2, front.z))
+	await _seconds(0.4)
+	_player.look_at_point(door_mid)
+	await _frames(2)
+	var unlocked := _player.try_interact() and (hud.toast_text() as String).contains("锁开了") and PaddlerStory.unlocked()
+	await _seconds(1.0)
+	var door_open := door.is_open() and WorldState.get_interactable_state(&"cottage_door") == "open"
+	_begin_track()
+	var walked := true
+	for p: Vector3 in [Vector3(StoneCottage.DOOR_X, 0.0, hd + 0.8), Vector3(StoneCottage.DOOR_X, 0.0, hd - 1.0), Vector3(0.2, 0.0, 0.0)]:
+		var g := cottage.to_global(p)
+		walked = await _walk_to(Vector2(g.x, g.z), 12.0) and walked
+	_track = false
+	var inside := WorldState.zones_of(_player.entity_id).has(&"cottage_interior") and WorldState.is_indoors(_player.entity_id)
+	var floor_ok := absf(_player.global_position.y - (cottage.global_position.y + StoneCottage.FLOOR)) < 0.15
+	_check("三封读完按 E 开锁、门推开；从门前走缓坡进屋，一路连续，屋里是室内（不下雨）",
+		unlocked and door_open and walked and inside and floor_ok and _max_step < 0.5,
+		"开锁 %s · 门开 %s · 走到 %s · 室内 %s · 站在地板上 %s · 最大单步 %.2f m" % [unlocked, door_open, walked, inside, floor_ok, _max_step])
+	# 屋里：看星图、开台灯；再走出去
+	var chart_at := cottage.to_global(Vector3(0.95, 0.0, -0.95))
+	await _walk_to(Vector2(chart_at.x, chart_at.z), 8.0)
+	_player.look_at_point(cottage.chart.global_position)
+	await _frames(2)
+	var chart_ok := _player.try_interact() and panel.showing == "chart"
+	panel.close()
+	_player.look_at_point(cottage.lamp.global_position + Vector3(0.0, 0.25, 0.0))
+	await _frames(2)
+	var lamp_ok := _player.try_interact() and cottage.is_lamp_on() and WorldState.get_interactable_state(&"cottage_lamp") == "on"
+	var out_ok := await _walk_to(Vector2(cottage.to_global(Vector3(StoneCottage.DOOR_X, 0.0, hd - 1.0)).x, cottage.to_global(Vector3(StoneCottage.DOOR_X, 0.0, hd - 1.0)).z), 10.0)
+	out_ok = await _walk_to(Vector2(front.x, front.z), 10.0) and out_ok and not WorldState.is_indoors(_player.entity_id)
+	_check("屋里：桌上的星图能看（画着五个星座和三个空位），台灯能开；再从门走出去", chart_ok and lamp_ok and out_ok,
+		"星图 %s · 台灯 %s · 走出来 %s" % [chart_ok, lamp_ok, out_ok])
+	# 任务、成就、日志、存档往返
+	QuestLog.reset()
+	WorldState.quests["paddler_letters"] = {"state": "active", "progress": 0}
+	var quest_ok := QuestLog.evaluate(_player) == ["paddler_letters"] and QuestLog.objective_progress({"type": "letters", "count": 3}, _player) == Vector2i(3, 3)
+	var ach := {}
+	for a: Dictionary in Play.achievements():
+		if str(a["id"]) == "paddler_letters":
+			ach = a
+	var ach_ok := not ach.is_empty() and Play.met(ach)
+	var journal := _main.get_node("JournalPanel") as JournalPanel
+	journal._refresh_lore()
+	var lore_text := ""
+	for c in journal._lore_box.get_children():
+		if c is Label:
+			lore_text += (c as Label).text
+	var journal_ok := lore_text.contains(PaddlerStory.text(PaddlerStory.letter("islet"), "title")) and lore_text.contains("3 / 3")
+	var snap := WorldState.snapshot()
+	var saved_ok := ((snap["flags"] as Dictionary)["letters"] as Array).size() == 3 and bool((snap["flags"] as Dictionary)["cottage_unlocked"]) \
+		and str((snap["interactables"] as Dictionary)["cottage_door"]) == "open"
+	var old := WorldState.migrate({"schema_version": 5, "flags": {}, "interactables": {"cottage_door": "locked"}})
+	var old_ok := not (old["flags"] as Dictionary).has("letters") and str((old["interactables"] as Dictionary)["cottage_door"]) == "locked"
+	door.apply_state("locked")
+	var relock := door.is_locked() and not door.is_open()
+	door.apply_state("closed")
+	var reload_ok := relock and not door.is_locked() and not door.is_open()
+	_check("划船人的信：图腾任务两项目标完成、成就解锁条件满足、旅行日志传说页显示全文；读信与开门写进存档，旧存档里门仍锁着",
+		quest_ok and ach_ok and journal_ok and saved_ok and old_ok and reload_ok,
+		"任务 %s · 成就 %s · 日志 %s · 存档 %s · 旧存档 %s · 读档摆门 %s" % [quest_ok, ach_ok, journal_ok, saved_ok, old_ok, reload_ok])
+	QuestLog.reset()
+	cottage.lamp.apply_state("off")
+	door.apply_state("locked")
+	WorldState.flags.erase("letters")
+	WorldState.flags.erase("cottage_unlocked")
 
 
 # ---------------------------------------------------------------- 自然景观：小溪、瀑布、裂谷、桥
@@ -1938,7 +2046,7 @@ func _test_release() -> void:
 	var missing := PackedStringArray()
 	var re := RegEx.create_from_string(r'"([^"\n]*[^\x00-\x7F][^"\n]*)"')
 	for dir in ["res://scripts/ui", "res://scripts/net", "res://scripts/interactions", "res://scripts/core", "res://scripts/games",
-			"res://scripts/player", "res://scripts/buildings", "res://scripts/world", "res://scripts/systems", "res://scripts/vehicles", "res://scripts/worlds", "res://scripts/play"]:
+			"res://scripts/player", "res://scripts/buildings", "res://scripts/world", "res://scripts/systems", "res://scripts/vehicles", "res://scripts/worlds", "res://scripts/play", "res://scripts/story"]:
 		for path in _list_files(dir, ".gd"):
 			for line in FileAccess.get_file_as_string(path).split("\n"):
 				var s := line.strip_edges()

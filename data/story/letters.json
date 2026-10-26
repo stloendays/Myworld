@@ -1,0 +1,49 @@
+{
+  "_doc": "划船人的三封信与石头小屋（PaddlerStory 读取）。前一位旅人把石头小屋三环锁的三个图案分别写进三封信：木屋书架顶上的旧书（cabin，木屋局部坐标见 CabinLife）、码头尽头的旧木盒（dock）、湖心小岛营火边的铁盒（islet）；后两处的位置在 world_layout.json → letters。顺序随意，读过的 id 记在 WorldState.flags.letters；三封都读过之后，在小屋门前按 E 就能开锁（flags.cottage_unlocked）。symbol 是锁上的图案，对应湖畔夜空的星座。chart 是小屋桌上那张没画完的星图。文字都有中英两份。",
+  "signature": {"zh": "——划船的人", "en": "— the one who paddles"},
+  "letters": [
+    {
+      "id": "cabin",
+      "kind": "book",
+      "symbol": "canoe",
+      "symbol_name": "独木舟",
+      "symbol_name_en": "the canoe",
+      "title": "夹在旧书里的信",
+      "title_en": "A Letter in an Old Book",
+      "text": "给下一个住进木屋的人：\n\n炉子先放细柴，再放松果，火就旺了。下雨时屋顶会响，那是雨在说话，不是漏了。\n\n我在南边草地上盖了一间石头小屋。门上的锁有三个转环，我把三个图案分别写进三封信，留在这片湖我最舍不得的地方：这本书里一封，码头尽头的旧木盒里一封，湖心小岛的营火边还有一封。\n\n第一个环，转到独木舟。",
+      "text_en": "To whoever lives in the cabin next:\n\nLay thin sticks in the stove first, then pinecones, and the fire will take. When it rains the roof sings. That is the rain talking, not a leak.\n\nI built a stone cottage on the meadow to the south. Its lock has three rings, and I wrote one picture into each of three letters, left in the places on this lake I could least bear to leave: one in this book, one in the old box at the end of the dock, one by the campfire on the islet.\n\nThe first ring turns to the canoe."
+    },
+    {
+      "id": "dock",
+      "kind": "crate",
+      "symbol": "fox",
+      "symbol_name": "狐狸",
+      "symbol_name_en": "the fox",
+      "title": "旧木盒里的信",
+      "title_en": "A Letter in the Old Box",
+      "text": "我常坐在这里，等太阳落到湖对岸。它每天都落在同一个地方，像那边有人点了一盏灯，在等谁过去。\n\n后来我真的过去了。山洞里那位老朋友守着火，走不开，我就替它去看了看那些门后面的地方。它们都停在黄昏里，每一处都有一盏熄了很久的灯。\n\n你要是也去了，记得把灯点亮再回来。\n\n第二个环，转到狐狸。",
+      "text_en": "I used to sit here and wait for the sun to set across the lake. It sets in the same place every day, as if someone over there had lit a lamp and was waiting for someone to come.\n\nIn the end I went. Our old friend in the cave keeps the fire and cannot leave it, so I went to look at the places behind the gates for it. They have all stopped at dusk, and each has a lamp that went out long ago.\n\nIf you go too, light the lamp before you come home.\n\nThe second ring turns to the fox."
+    },
+    {
+      "id": "islet",
+      "kind": "tin",
+      "symbol": "lighthouse",
+      "symbol_name": "灯塔",
+      "symbol_name_en": "the lighthouse",
+      "title": "营火边的信",
+      "title_en": "A Letter by the Campfire",
+      "text": "夜里躺在这里，能看见天上的独木舟、狐狸和灯塔。那时候湖边只有我一个人，我就把星星连起来，给它们起了名字。\n\n我还画了一张星图，没画完，留在小屋的桌上。要是你在别的世界看见新的星星，替我补上。\n\n我的第一条船沉在一口很深的水里，旁边有一圈旧石环。我没去捞它，它在那里替我记着路。\n\n第三个环，转到灯塔。",
+      "text_en": "Lying here at night you can see the Canoe, the Fox and the Lighthouse in the sky. Back then I was the only one by the lake, so I joined up the stars and gave them names.\n\nI drew a star chart too. It is not finished; it is on the table in the cottage. If you see new stars in another world, add them for me.\n\nMy first boat sank in very deep water, beside an old ring of stone. I never raised it. It keeps the way for me there.\n\nThe third ring turns to the lighthouse."
+    }
+  ],
+  "lock": {
+    "unlock": "你把三个转环转到独木舟、狐狸、灯塔。咔哒一声，锁开了。",
+    "unlock_en": "You turn the three rings to the canoe, the fox and the lighthouse. With a click, the lock opens."
+  },
+  "chart": {
+    "title": "没画完的星图",
+    "title_en": "The Unfinished Star Chart",
+    "text": "墨点连成湖畔夜空的五个星座。旁边一行小字：「还差三个。云上的、沙里的、海底的。」纸的右边空着，留了三块位置。",
+    "text_en": "Ink dots join up the five constellations of the lake sky. A line of small writing beside them: \"Three still missing. One above the clouds, one in the sand, one under the sea.\" The right side of the sheet is empty, with room left for three more."
+  }
+}

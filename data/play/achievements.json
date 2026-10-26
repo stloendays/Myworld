@@ -4,6 +4,7 @@
     {"id": "wanderer", "name": "四方旅人", "name_en": "Four Worlds", "desc": "去过全部四个世界", "desc_en": "Visit all four worlds", "type": "visit", "count": 4},
     {"id": "explorer", "name": "探路的人", "name_en": "Pathfinder", "desc": "发现 10 个探索点", "desc_en": "Discover 10 places", "type": "discoveries", "count": 10},
     {"id": "cartographer", "name": "绘图师", "name_en": "Cartographer", "desc": "发现全部探索点", "desc_en": "Discover every place", "type": "discoveries", "count": 0},
+    {"id": "paddler_letters", "name": "划船人的信", "name_en": "The Paddler's Letters", "desc": "读完三封信，打开石头小屋", "desc_en": "Read the three letters and open the stone cottage", "type": "flag", "key": "cottage_unlocked"},
     {"id": "light_bringer", "name": "送光的人", "name_en": "Lightbringer", "desc": "点亮亚特兰蒂斯的山铜尖塔", "desc_en": "Light the orichalcum spire of Atlantis", "type": "flag", "key": "atlantis_spire"},
     {"id": "pearl_diver", "name": "采珠人", "name_en": "Pearl Diver", "desc": "找齐亚特兰蒂斯的 8 颗珍珠", "desc_en": "Find all 8 pearls of Atlantis", "type": "collect_kind", "world": "world_04", "kind": "pearl"},
     {"id": "shell_seeker", "name": "拾贝", "name_en": "Shell Seeker", "desc": "找齐亚特兰蒂斯的 8 枚贝壳", "desc_en": "Find all 8 shells of Atlantis", "type": "collect_kind", "world": "world_04", "kind": "shell"},

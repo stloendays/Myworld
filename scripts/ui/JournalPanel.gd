@@ -337,10 +337,22 @@ func _refresh_play() -> void:
 		_play_box.add_child(_label(tr("正在生效：") + "、".join(parts), 18, Color(0.75, 0.95, 0.7)))
 
 
-## 传说页：亚特兰蒂斯的六块古代石板（捡到的才显示全文）。
+## 传说页：划船人的三封信、亚特兰蒂斯的六块古代石板（读到、捡到的才显示全文）。
 func _refresh_lore() -> void:
 	for c in _lore_box.get_children():
 		c.queue_free()
+	var letters := PaddlerStory.letters()
+	_lore_box.add_child(_label(tr("划船人的信  %d / %d") % [PaddlerStory.read_ids().size(), letters.size()], 22, Color(1.0, 0.85, 0.5)))
+	for l: Dictionary in letters:
+		if PaddlerStory.is_read(str(l["id"])):
+			_lore_box.add_child(_label(PaddlerStory.text(l, "title"), 20, Color(1.0, 0.75, 0.5)))
+			var body := _label(PaddlerStory.text(l, "text") + "\n" + PaddlerStory.signature(), 18, Color(0.92, 0.9, 0.86))
+			body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			body.custom_minimum_size = Vector2(820.0, 0.0)
+			_lore_box.add_child(body)
+		else:
+			_lore_box.add_child(_label(tr("？？？（还没找到这封信）"), 18, Color(0.6, 0.58, 0.56)))
+	_lore_box.add_child(_label(" ", 12, Color.WHITE))
 	var lore: Dictionary = MiniWorld.data_for("world_04").get("lore", {})
 	var read: Array = WorldState.journal_list("lore")
 	_lore_box.add_child(_label(tr("亚特兰蒂斯的石板  %d / %d") % [read.size(), lore.size()], 22, Color(1.0, 0.85, 0.5)))
