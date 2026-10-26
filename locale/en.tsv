@@ -716,3 +716,18 @@ E  转动雕像（45°）	E  Turn the statue (45°)
 兼容 ANGLE（兼容也不行时）	Compatibility ANGLE (if Compatibility fails too)
 重启生效	Restart to apply
 现在：%s / %s	Now: %s / %s
+E  再读一遍	E  Read it again
+E  翻开旧书	E  Open the old book
+E  打开旧木盒	E  Open the old box
+E  打开铁盒	E  Open the tin
+E  看星图	E  Look at the star chart
+E  看看门锁	E  Look at the lock
+联机做客时，这扇门要房主来开。	As a guest, the host has to open this door.
+门锁着。锁上有三个刻着图案的转环，不知道该转到哪里。	The door is locked. The lock has three rings carved with pictures, and you don't know where to turn them.
+门锁着。三个转环里你知道 %d 个：%s。	The door is locked. You know %d of the three rings: %s.
+划船人的信  %d / %d	The paddler's letters  %d / %d
+？？？（还没找到这封信）	??? (letter not found yet)
+E / 空格 / Esc  合上	E / Space / Esc  Close
+椅子	Chair
+石头小屋的门	Stone cottage door
+划船人的信	The paddler's letter

@@ -210,6 +210,9 @@ func objective_progress(o: Dictionary, player: FirstPersonController) -> Vector2
 			return Vector2i(1 if _sat.has("swim:" + str(o["volume"])) else 0, 1)
 		"flag":
 			return Vector2i(1 if bool(WorldState.flags.get(str(o["key"]), false)) else 0, 1)
+		"letters":
+			var need_l := int(o["count"])
+			return Vector2i(mini(PaddlerStory.read_ids().size(), need_l), need_l)
 		"emote_at":
 			var key := str(o["id"])
 			if player.emote == key:

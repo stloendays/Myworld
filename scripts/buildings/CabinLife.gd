@@ -7,6 +7,7 @@ extends Node3D
 
 const STOVE := Vector3(-3.9, 0.0, -1.0)        ## 铸铁炉底面中心（与 build_cabin.py 一致）
 const CHIMNEY_TOP := Vector3(-3.9, 7.48, -1.0)
+const OLD_BOOK := Vector3(-1.95, 1.53, -2.93)    ## 左边书架最上面一层隔板（0.85 × 1.8；四根立柱再高出 5 cm）
 
 var stove: InteractableToggle
 var lamps := {}                 ## uid -> InteractableToggle
@@ -15,6 +16,7 @@ var bed: Bed
 var chess: ChessTable
 var pot: CookPot
 var cabinet: TrophyCabinet
+var old_book: LetterSpot
 
 var _lights := {}               ## 名称 -> [OmniLight3D, 亮着时的能量]
 var _fire: GPUParticles3D
@@ -40,6 +42,11 @@ func setup(lights: Dictionary, model: Node) -> void:
 	# 北墙书架和边桌之间的收藏柜（面朝屋里）
 	cabinet = TrophyCabinet.create(Vector3(1.25, 0.0, -3.0))
 	add_child(cabinet)
+	# 左边书架顶上一本落了灰的旧书，夹着划船人的第一封信（PaddlerStory）
+	old_book = LetterSpot.create("cabin", "book")
+	old_book.position = OLD_BOOK
+	old_book.rotation.y = deg_to_rad(8.0)
+	add_child(old_book)
 
 
 func _find_glow_materials(model: Node) -> void:

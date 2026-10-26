@@ -146,6 +146,18 @@ const SHOTS := [
 	{"name": "play_07_cooking", "climate": DUSK, "trophies": true, "player": [-71.6, 36.4], "y": 2.4, "heading": 290.0, "pitch": -12.0, "cooking": true},
 	{"name": "play_08_journal_activities", "climate": DUSK, "trophies": true, "player": [-49.0, 27.0], "heading": 75.0, "journal": 3},
 	{"name": "play_09_journal_lore", "climate": DUSK, "trophies": true, "player": [-49.0, 27.0], "heading": 75.0, "journal": 4},
+	# 划船人的信与石头小屋（letters：read 读过的信、unlocked 门开着、lamp 台灯、open 打开读信界面 = 信 id 或 chart）
+	{"name": "ltr_01_old_book", "climate": DUSK, "letters": {}, "player": [-70.75, 35.1], "y": 2.4, "heading": 345.0, "pitch": -8.0},
+	{"name": "ltr_02_letter_open", "climate": DUSK, "letters": {"open": "cabin"}, "player": [-70.75, 35.1], "y": 2.4, "heading": 345.0, "pitch": -8.0},
+	{"name": "ltr_03_dock_box", "climate": DUSK, "letters": {}, "player": [-4.3, 26.0], "y": 1.0, "heading": 108.0, "pitch": -26.0},
+	{"name": "ltr_04_islet_tin", "climate": DUSK, "letters": {}, "player": [40.4, -2.6], "heading": 60.0, "pitch": -28.0},
+	{"name": "ltr_04b_islet_overview", "climate": DUSK, "letters": {}, "eye": [36.0, 6.5, 1.5], "look": [41.8, 1.2, -3.4]},
+	{"name": "ltr_05_cottage_lock", "climate": {"season": "SUMMER", "hour": 16.0, "weather": "CLEAR"}, "letters": {}, "eye": [-75.8, 1.6, 94.0], "ground": true, "look": [-72.6, 3.2, 95.0]},
+	{"name": "ltr_06_cottage_night", "climate": {"season": "AUTUMN", "hour": 20.6, "weather": "CLEAR"}, "letters": {"read": ["cabin", "dock", "islet"], "unlocked": true, "lamp": true}, "eye": [-80.0, 1.7, 100.5], "ground": true, "look": [-71.5, 2.8, 95.8]},
+	{"name": "ltr_07_interior", "climate": DUSK, "letters": {"read": ["cabin", "dock", "islet"], "unlocked": true, "lamp": true}, "player": [-71.7, 95.0], "y": 2.4, "heading": 126.0, "pitch": -12.0},
+	{"name": "ltr_08_chart_open", "climate": DUSK, "letters": {"read": ["cabin", "dock", "islet"], "unlocked": true, "lamp": true, "open": "chart"}, "player": [-71.7, 95.0], "y": 2.4, "heading": 126.0, "pitch": -12.0},
+	{"name": "ltr_09_journal_letters", "climate": DUSK, "letters": {"read": ["cabin", "dock"]}, "player": [-49.0, 27.0], "heading": 75.0, "journal": 4},
+	{"name": "ltr_10_letter_en", "climate": DUSK, "lang": "en", "letters": {"open": "islet"}, "player": [40.4, -2.6], "heading": 60.0, "pitch": -28.0},
 ]
 
 const OUTFITS := [
@@ -261,6 +273,9 @@ func _run() -> void:
 		if shot.get("dialogue", false):
 			(_main.find_child("Totem", true, false) as CaveTotem).interact(_player)
 			await _wait(150)
+		if shot.has("letters"):
+			_stage_letters(shot["letters"])
+			await _wait(8)
 		if shot.has("journal"):
 			(_main.get_node("JournalPanel") as JournalPanel).open(int(shot["journal"]))
 			await _wait(5)
@@ -279,11 +294,27 @@ func _run() -> void:
 		if shot.has("chat"):
 			chat.close()
 		(_main.get_node("DialoguePanel") as DialoguePanel).close()
+		(_main.get_node("LetterPanel") as LetterPanel).close()
 		var journal := _main.get_node("JournalPanel") as JournalPanel
 		if journal.is_open():
 			journal.close()
 	await _shoot_worlds(prefix)
 	get_tree().quit()
+
+
+## 划船人的信与石头小屋的示例状态："letters": {"read": [信 id], "unlocked": 门开着, "lamp": 台灯亮着, "open": 信 id 或 "chart"}。
+func _stage_letters(d: Dictionary) -> void:
+	var cottage := get_tree().get_first_node_in_group("stone_cottage") as StoneCottage
+	WorldState.flags["letters"] = (d.get("read", []) as Array).duplicate()
+	WorldState.flags["cottage_unlocked"] = bool(d.get("unlocked", false))
+	cottage.door.apply_state("open" if d.get("unlocked", false) else "locked")
+	cottage.lamp.apply_state("on" if d.get("lamp", false) else "off")
+	if d.has("open"):
+		var panel := _main.get_node("LetterPanel") as LetterPanel
+		if str(d["open"]) == "chart":
+			panel.open_chart(_player)
+		else:
+			panel.open_letter(str(d["open"]), _player)
 
 
 ## 任务与图鉴的示例状态："state": {"quests": {id: state}, "species": [...], "constellations": [...]}。

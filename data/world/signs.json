@@ -90,8 +90,8 @@
   "stone_cottage": {
     "title_zh": "石头小屋",
     "title_en": "Stone Cottage",
-    "body_zh": "门锁着，屋里暂时进不去。窗台上落了一层灰，好像很久没人回来过。",
-    "body_en": "The door is locked, so you cannot go in yet. Dust lies on the windowsill, as if no one has been back for a long time."
+    "body_zh": "门上挂着一把三环转锁，每个环上刻着一个图案。窗台上落了一层灰，好像很久没人回来过。也许湖边哪里留着开锁的线索。",
+    "body_en": "A lock with three turning rings hangs on the door, each ring carved with a picture. Dust lies on the windowsill, as if no one has been back for a long time. Perhaps a clue to the lock was left somewhere by the lake."
   },
   "west_falls": {
     "title_zh": "西岭小瀑布",

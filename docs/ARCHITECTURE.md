@@ -36,7 +36,7 @@ Main (Main.gd)
 ├── ChatBox（Main 启动时创建）           左下角聊天框与 / 命令
 ├── ActionBar（G 动作轮盘，快捷键 1–4，F12 拍照）/ WorldMap（Tab 世界地图）
 ├── Cave (Cave.gd)                       北缘岩脊里的图腾山洞：洞道与岩丘、石厅、老图腾 CaveTotem、篝火、尽头光门
-├── StoneCottage (StoneCottage.gd)       南部草地的石头小屋（LockedDoor，进不去）
+├── StoneCottage (StoneCottage.gd)       南部草地的石头小屋（CottageDoor 三环转锁；读完三封信能进，屋里是室内区域 cottage_interior）
 ├── StarField (StarField.gd)             夜空里的五个星座，跟着相机走
 ├── Streams (Streams.gd)                 小溪水面、瀑布水雾、溪边石头芦苇、木板桥与原木桥（河床、裂谷本身是地形沟槽）
 ├── DialoguePanel / JournalPanel（Main 启动时创建）  图腾对话框；J 旅行日志与左上角任务追踪
@@ -92,8 +92,9 @@ Main (Main.gd)
 | `Fade`（Autoload） | 已实现 | 盖在所有界面上的转场黑幕：`fade_out` / `fade_in` / `flash`；启动交接、进出房间、传送时用 |
 | `QuestLog`（Autoload）/ `CaveTotem` / `DialoguePanel` / `JournalPanel` | M2 扩展已实现 | 任务内容在 `data/quests/quests.json`；状态在 `WorldState.quests`、图鉴在 `WorldState.journal`；每 0.4 秒只读世界状态检查目标；有变化时请 SaveManager 存档（旧的 `user://journal.json` 作为 v3 存档迁移读取）；规则关掉任务 / 图鉴时不发任务、不记图鉴 |
 | `WorldTerrain` 沟槽 / `Streams` | M2 扩展已实现 | `terrain.channels`：小溪（沟底只降不升、跌水成瀑布）与裂谷（陡壁窄底、两头渐浅）；沟底高度首次调用时按原地形算好，碰撞、网格、植被共用；`Streams` 画水面、水雾、桥（桥头引坡贴地） |
-| `Cave` / `StoneCottage` / `StarField` | M2 扩展已实现 | 图腾山洞（世界坐标生成的洞道网格与双面三角网碰撞，室内区域 `cave`）；锁着门的石头小屋；星座（`data/sky/constellations.json`） |
+| `Cave` / `StoneCottage` / `StarField` | M2 扩展已实现 | 图腾山洞（世界坐标生成的洞道网格与双面三角网碰撞，室内区域 `cave`）；划船人的石头小屋（墙按门洞、窗洞切块，缓坡进门，屋里桌上的星图用 SubViewport 画）；星座（`data/sky/constellations.json`） |
 | `Precipitation` 季节飘落物 | 已实现 | 方案在 `data/weather/seasonal_fx.json`（落叶、花瓣、保留的原版红点）；`profile_override` 供开发者面板临时切换 |
+| `PaddlerStory` / `LetterSpot` / `LetterPanel` / `CottageDoor` | 世界观落地①（2026-10-26） | 划船人的三封信：内容在 `data/story/letters.json`，湖边两处的位置在 `world_layout.json → letters`，木屋那本旧书在 `CabinLife`（木屋局部坐标）；读过的信记 `WorldState.flags.letters`（本机玩家的记录，不同步），开锁记 `flags.cottage_unlocked`，门的 locked / closed / open 按 uid 存档并联机同步；访客不能开锁；任务目标 `letters`、成就 `paddler_letters` |
 | `AudioDirector` | M3 接口占位 | 订阅区域与天气事件做室内外混音 |
 | `SaveManager`（Autoload） | v0.5 已实现 | `user://saves/world.json`（v5，临时文件 + 原子替换）：新建（旧档先备份）/ 继续 / 每 60 s、换世界、退出时自动存；读档后按 uid 恢复门灯、船位，回到存档时的世界与位置；联机做客和自动检查里不写盘 |
 | `Interactable` 状态延续 | v0.5 | 读过档或从别的世界回来时，可交互物按 `WorldState.interactables` 里存下的状态摆（不再被新建的初始状态覆盖） |

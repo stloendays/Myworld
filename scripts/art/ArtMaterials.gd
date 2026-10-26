@@ -154,6 +154,14 @@ static func fabric(color: Color) -> StandardMaterial3D:
 	return m
 
 
+## 运行时画出来的图（石头小屋桌上的星图，SubViewport 贴图）：普通受光的纸面，不缓存（每张图一份）。
+static func picture(tex: Texture2D) -> StandardMaterial3D:
+	var m := StandardMaterial3D.new()
+	m.albedo_texture = tex
+	m.roughness = 0.92
+	return m
+
+
 ## 木屋玻璃：带雨痕的透明玻璃（glass.gdshader，雨量来自全局参数 rain_amount）。
 static func glass() -> ShaderMaterial:
 	if _cache.has("glass"):

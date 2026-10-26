@@ -135,10 +135,16 @@
   },
 
   "cottage": {
-    "_doc": "南部草地上的石头小屋：门锁着，暂时进不去。yaw_deg 让门（本地 +Z）朝向西边的草地步道。",
+    "_doc": "南部草地上的石头小屋（前一位旅人“划船的人”的家）：门上三环转锁，三封信都读过才能打开（data/story/letters.json）。yaw_deg 让门（本地 +Z）朝向西边的草地步道。",
     "zone_id": "cottage",
     "center": [-70, 96],
     "yaw_deg": -90.0
+  },
+
+  "letters": {
+    "_doc": "划船人的信放在湖边的哪里（PaddlerStory 摆放；内容在 data/story/letters.json）。dock：码头尽头的旧木盒（y = 码头面板高度，正面朝码头中线）；islet：湖心小岛营火东边石头上的铁盒（y 取地面；帐篷前有一棵树，别放在树下）。第三封在木屋书架顶上的旧书里，是室内物件，位置在 CabinLife（木屋局部坐标）。",
+    "dock": {"pos": [-1.9, 26.95], "y": 1.0, "yaw_deg": 180.0},
+    "islet": {"pos": [41.8, -3.4], "yaw_deg": -60.0}
   },
 
   "lake_pois": [

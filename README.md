@@ -4,7 +4,7 @@
 
 - 引擎：**Godot 4.7.2 Standard**（GDScript，Forward+，Jolt Physics），Windows 单机优先
 - 需求规格：[docs/DEVELOPMENT_SPEC.md](docs/DEVELOPMENT_SPEC.md)（唯一需求来源）；阶段指令：[docs/AGENT_HANDOFF.md](docs/AGENT_HANDOFF.md)
-- 当前进度：**M0、M1、第一轮正式美术、M2 天气系统、方块人物、泳池馆与地下水族馆、小动物、雷暴/彩虹/风、聊天框、小地图、开发者模式、第一人称双手、木屋生活、独木舟与湖上探索、性能优化、可潜水的海洋大缸、木屋国际象棋、动作轮盘、世界地图与全屏、联机（最多 4 人）与中英界面、自动更新、新立牌、夜里的仙境林地、东北角雪山、内存与卡顿优化、图腾山洞与任务、星座与图鉴、石头小屋、跨世界旅行、画面闪动优化、小溪瀑布与裂谷已完成**，自动检查 88/88、联机检查 10/10 通过。见 [docs/QA_M0_M1.md](docs/QA_M0_M1.md)、[docs/ART_PASS.md](docs/ART_PASS.md)、[docs/M2_WEATHER_CHARACTER.md](docs/M2_WEATHER_CHARACTER.md)、[docs/POOLHOUSE_FAUNA.md](docs/POOLHOUSE_FAUNA.md)、[docs/CHAT.md](docs/CHAT.md)、[docs/MINIMAP_DEVMODE.md](docs/MINIMAP_DEVMODE.md)、[docs/CABIN_LIFE_CANOE.md](docs/CABIN_LIFE_CANOE.md)、[docs/PERFORMANCE.md](docs/PERFORMANCE.md)、[docs/AQUARIUM_DIVE.md](docs/AQUARIUM_DIVE.md)、[docs/CHESS.md](docs/CHESS.md)、[docs/INTERACTIONS_WORLDMAP.md](docs/INTERACTIONS_WORLDMAP.md)、[docs/COOP.md](docs/COOP.md)、[docs/V0_3.md](docs/V0_3.md)、[docs/SNOW_PEAK.md](docs/SNOW_PEAK.md)、[docs/MEMORY_STUTTER.md](docs/MEMORY_STUTTER.md)、[docs/CAVE_QUESTS.md](docs/CAVE_QUESTS.md)、[docs/NATURE_FLICKER.md](docs/NATURE_FLICKER.md)
+- 当前进度：**M0、M1、第一轮正式美术、M2 天气系统、方块人物、泳池馆与地下水族馆、小动物、雷暴/彩虹/风、聊天框、小地图、开发者模式、第一人称双手、木屋生活、独木舟与湖上探索、性能优化、可潜水的海洋大缸、木屋国际象棋、动作轮盘、世界地图与全屏、联机（最多 4 人）与中英界面、自动更新、新立牌、夜里的仙境林地、东北角雪山、内存与卡顿优化、图腾山洞与任务、星座与图鉴、石头小屋、跨世界旅行、画面闪动优化、小溪瀑布与裂谷、启动画面与开场过场、云海浮岛与琥珀沙丘、解说卷轴、新建游戏设定与存档、亚特兰蒂斯与六个新玩法、划船人的信与石头小屋已完成**，自动检查 118/118、启动流程 6/6、联机检查 12/12 通过。见 [docs/QA_M0_M1.md](docs/QA_M0_M1.md)、[docs/ART_PASS.md](docs/ART_PASS.md)、[docs/M2_WEATHER_CHARACTER.md](docs/M2_WEATHER_CHARACTER.md)、[docs/POOLHOUSE_FAUNA.md](docs/POOLHOUSE_FAUNA.md)、[docs/CHAT.md](docs/CHAT.md)、[docs/MINIMAP_DEVMODE.md](docs/MINIMAP_DEVMODE.md)、[docs/CABIN_LIFE_CANOE.md](docs/CABIN_LIFE_CANOE.md)、[docs/PERFORMANCE.md](docs/PERFORMANCE.md)、[docs/AQUARIUM_DIVE.md](docs/AQUARIUM_DIVE.md)、[docs/CHESS.md](docs/CHESS.md)、[docs/INTERACTIONS_WORLDMAP.md](docs/INTERACTIONS_WORLDMAP.md)、[docs/COOP.md](docs/COOP.md)、[docs/V0_3.md](docs/V0_3.md)、[docs/SNOW_PEAK.md](docs/SNOW_PEAK.md)、[docs/MEMORY_STUTTER.md](docs/MEMORY_STUTTER.md)、[docs/CAVE_QUESTS.md](docs/CAVE_QUESTS.md)、[docs/NATURE_FLICKER.md](docs/NATURE_FLICKER.md)、[docs/BOOT_INTRO_HANDS.md](docs/BOOT_INTRO_HANDS.md)、[docs/V0_5.md](docs/V0_5.md)、[docs/ATLANTIS.md](docs/ATLANTIS.md)、[docs/LETTERS_COTTAGE.md](docs/LETTERS_COTTAGE.md)
 
 ![湖岸出生点](docs/screenshots/m1_01_spawn_dusk.png)
 
@@ -70,14 +70,14 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | 奔跑 | Shift（步行 3.2 m/s，奔跑 5.2 m/s） |
 | 跳跃 | 空格（水中：上浮；靠池壁按空格爬上岸） |
 | 下潜 | C 或 Ctrl（水中） |
-| 交互 | E（准星中心射线 2.5 m）：开关门、生火 / 熄火、开关灯、坐下 / 站起、睡觉、上 / 下独木舟 |
+| 交互 | E（准星中心射线 2.5 m）：开关门、生火 / 熄火、开关灯、坐下 / 站起、睡觉、上 / 下独木舟、读信、看石头小屋的门锁 |
 | 右键 | 用手：准星对着东西就和 E 一样去用；什么都没对着就挥挥右手（联机时别人看得到） |
 | 划独木舟 | W / S 划、A / D 转向、Shift 用力划、E 下船（靠码头或岸边） |
 | 国际象棋 | 看着木屋茶几上的棋盘按 E；鼠标点子再点格子；Esc 关闭 |
 | 动作轮盘 | G（按住往方向推、松开选中；或轻点后用鼠标点）：休息（坐下 → 躺下 → 起身）、挥手、跳舞、鼓掌；快捷键 1–4 |
 | 拍照 | F12（存到“图片\Dusk Lake”）；画面中央有摄影清单上的东西（小动物、地标、天鲸、彩虹、星空……）就记进旅行日志 |
 | 世界地图 | Tab（当前世界的整张地图 + 世界总览，列表里点另一个世界可以直接前往；Esc 或 Tab 关闭） |
-| 旅行日志 | J（任务、图鉴、收藏、活动（鱼、纪录、寻宝线索）、传说（亚特兰蒂斯的石板）、成就；Esc 或 J 关闭） |
+| 旅行日志 | J（任务、图鉴、收藏、活动（鱼、纪录、寻宝线索）、传说（划船人的信、亚特兰蒂斯的石板）、成就；Esc 或 J 关闭） |
 | 和老图腾说话 | 北边山洞里看着图腾按 E；E / 空格继续，1–3 选选项，Esc 离开 |
 | 解说卷轴 | 走近 3.6 m 自动展开、走远卷起；第三人称面朝展开的卷轴时镜头拉近到肩后 |
 | 全屏 | F11 或 Alt + Enter |
@@ -182,7 +182,8 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | `scripts/world/Cave.gd`、`scripts/interactions/CaveTotem.gd` | 图腾山洞：沿中线生成的洞道与岩丘、石厅、篝火、水晶、尽头光门；会说话的老图腾 |
 | `scripts/core/QuestLog.gd`、`data/quests/quests.json`、`scripts/ui/DialoguePanel.gd`、`scripts/ui/JournalPanel.gd` | 任务与图鉴（Autoload）：任务目标检查、图鉴记录、`user://journal.json`；图腾对话框；J 旅行日志与左上角任务追踪 |
 | `scripts/world/StarField.gd`、`data/sky/constellations.json` | 夜空里的五个原创星座，盯着看就认出 |
-| `scripts/buildings/StoneCottage.gd`、`scripts/interactions/LockedDoor.gd` | 南部草地的石头小屋（门锁着，暂时进不去） |
+| `scripts/buildings/StoneCottage.gd`、`scripts/interactions/CottageDoor.gd` | 南部草地的石头小屋（划船人的家）：三环转锁的门，读完三封信才能打开；屋里书桌、星图、台灯、床、书架、船桨 |
+| `scripts/story/PaddlerStory.gd`、`scripts/story/LetterSpot.gd`、`scripts/ui/LetterPanel.gd`、`data/story/letters.json` | 划船人的三封信（世界观落地①）：信的内容与开锁规则、湖边两处放信的地方（`world_layout.json → letters`）、读信界面和没画完的星图 |
 | `scripts/world/Streams.gd`、`shaders/stream_water.gdshader`、布局 `terrain.channels` 与 `nature.bridges` | 西岭小溪（河床是地形沟槽）、小瀑布与水雾、溪边石头芦苇；北岭裂谷；木板桥和原木桥 |
 | `shaders/cover_flat.gdshader`、`foliage.gdshader` 的 fade 参数 | 草、花、蘑菇远处逐株缩小消失（不再整块抖动淡出） |
 | `devtools/FlickerProbe.tscn`、`devtools/flicker_report.py` | 画面闪动探针：固定机位连续渲染，逐像素统计闪烁、画热力图；jiggle 模式比较抗锯齿方案；dynres / legacy / quality= / scale= 按玩家设置对比修复前后 |

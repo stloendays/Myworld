@@ -1,5 +1,5 @@
 {
-  "_doc": "图腾山洞的任务（QuestLog 读取）。图腾按顺序一次给一个新任务（同时最多 3 个进行中）。objectives 的 type：sit（坐到 uid 以 prefix 开头的座位上）、discover（湖边探索点，ids 全部找到）、reach（走到 pos 半径 radius 米内）、zone_event（在仙境出现时进入 zone）、rainbow（在室外看见彩虹）、constellations（发现 count 个星座）、species（图鉴记下 count 种动物）、swim（在 volume 水里游过）、emote_at（在 pos 附近做动作 id）、flag（WorldState.flags 里 key 为真，例如点亮亚特兰蒂斯的尖塔）。文字都有中英两份。",
+  "_doc": "图腾山洞的任务（QuestLog 读取）。图腾按顺序一次给一个新任务（同时最多 3 个进行中）。objectives 的 type：sit（坐到 uid 以 prefix 开头的座位上）、discover（湖边探索点，ids 全部找到）、reach（走到 pos 半径 radius 米内）、zone_event（在仙境出现时进入 zone）、rainbow（在室外看见彩虹）、constellations（发现 count 个星座）、species（图鉴记下 count 种动物）、swim（在 volume 水里游过）、emote_at（在 pos 附近做动作 id）、flag（WorldState.flags 里 key 为真，例如点亮亚特兰蒂斯的尖塔）、letters（读过 count 封划船人的信，PaddlerStory）。文字都有中英两份。",
   "giver": {"name": "老图腾", "name_en": "Old Totem"},
   "greeting": {
     "zh": "……火还旺着。旅人，你走进我的山洞了。我守在这里很久了，湖边的事，我都想听你讲讲。",
@@ -23,6 +23,16 @@
       "offer": "湖上有三处我惦记的地方：湖心小岛、北岸的芦苇湾、东岸的睡莲湾。划船去看看它们还好不好。", "offer_en": "There are three places on the lake I think of: the islet, the reed bay in the north and the lily cove in the east. Paddle out and see that they are well.",
       "done": "芦苇还在，睡莲也开着。谢谢你替我看了一眼。", "done_en": "The reeds stand and the lilies bloom. Thank you for looking for me.",
       "objectives": [{"type": "discover", "ids": ["lake_islet", "north_reed_bay", "east_lily_cove"], "text": "找到湖心小岛、北岸芦苇湾、东岸睡莲湾", "text_en": "Find the islet, North Reed Bay and East Lily Cove"}]
+    },
+    {
+      "id": "paddler_letters",
+      "title": "划船人的信", "title_en": "The Paddler's Letters",
+      "offer": "南边草地上那间石头小屋，从前住着一个爱划船的人。走之前留了三封信：木屋里一封，码头上一封，湖心岛上一封。找来读读，就知道那扇门怎么开了。", "offer_en": "The stone cottage on the southern meadow once belonged to someone who loved to paddle. Before leaving they left three letters: one in the cabin, one on the dock, one on the islet. Read them and you will know how to open that door.",
+      "done": "门开了？那个划船的还是老样子，什么都写下来，就是不写自己去了哪儿。", "done_en": "The door is open? The paddler never changed: wrote everything down, except where they were going.",
+      "objectives": [
+        {"type": "letters", "count": 3, "text": "找到并读完划船人的三封信", "text_en": "Find and read the paddler's three letters"},
+        {"type": "flag", "key": "cottage_unlocked", "text": "打开石头小屋的门", "text_en": "Open the door of the stone cottage"}
+      ]
     },
     {
       "id": "summit",
