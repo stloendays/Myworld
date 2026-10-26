@@ -7,6 +7,8 @@ extends Node
 ## smaa / taa：对比用的抗锯齿方案（单帧 SMAA / Godot 自带 TAA）。
 ## dynres：按玩家默认开着动态分辨率（一直走 FSR）；legacy：v0.5 修复前的做法（FSR 锐化 0.2、太阳每帧转动），对比用；
 ## quality=low/medium/high/ultra：画质档；spots=a,b：只拍这几个机位；bias= / sharp=：试验贴图 mip 偏移和 FSR 锐化。
+## hide=cover,water,bridges,forest,fauna,shadows：藏掉一类东西再测（看它占多少）；step=0.01：move 每帧横移的米数。
+## 注意：move 时近处 1–3 m 的草叶每帧会跑十几个像素，判定会把这种快速运动也算成闪；先用 hide= 和 step= 拆开再改（docs/FLICKER_BRIDGE.md）。
 ## 画质按玩家默认（高），只关动态分辨率和帧率上限（动态分辨率另有自动检查）。
 
 const MAIN_SCENE := "res://scenes/main/Main.tscn"
@@ -22,6 +24,9 @@ const SPOTS := [
 	{"name": "f08_poolhouse", "climate": {"season": "SUMMER", "hour": 15.0, "weather": "CLEAR"}, "eye": [-20, 3.8, 66], "look": [4, 2.0, 84]},
 	{"name": "fb1_creek_bridge", "climate": {"season": "SUMMER", "hour": 16.0, "weather": "CLEAR"}, "eye": [-77.5, 3.2, -8.5], "look": [-84.0, 2.6, -1.5]},
 	{"name": "fb2_gorge_bridge", "climate": {"season": "SUMMER", "hour": 15.0, "weather": "CLEAR"}, "eye": [-83.5, 15.5, -93.5], "look": [-89.8, 11.5, -89.0]},
+	# 站在桥头顺着桥面看（走上桥时眼前就是一块块木板和板缝）
+	{"name": "fb3_on_creek_bridge", "climate": {"season": "SUMMER", "hour": 16.0, "weather": "CLEAR"}, "eye": [-83.09, 4.62, -5.51], "look": [-84.8, 3.66, 1.9]},
+	{"name": "fb4_on_gorge_bridge", "climate": {"season": "SUMMER", "hour": 15.0, "weather": "CLEAR"}, "eye": [-91.02, 16.86, -93.6], "look": [-88.45, 10.15, -84.0]},
 ]
 
 var _camera: Camera3D
@@ -45,6 +50,8 @@ func _run() -> void:
 	var sharp := -1.0
 	var quality := ""
 	var only := PackedStringArray()
+	var hide := PackedStringArray()   ## 找闪烁来源时先藏掉一类东西再测：cover 地被、water 溪水、bridges 桥、forest 树林、fauna 小动物、shadows 太阳阴影
+	var step := 0.03                  ## move 每帧横移多少米（默认 3 cm ≈ 30 fps 下 0.9 m/s 的步行）
 	for a: String in OS.get_cmdline_user_args():
 		if a.begins_with("out="):
 			_out = a.substr(4)
@@ -70,6 +77,10 @@ func _run() -> void:
 			quality = a.substr(8)
 		elif a.begins_with("spots="):
 			only = a.substr(6).split(",")
+		elif a.begins_with("hide="):
+			hide = a.substr(5).split(",")
+		elif a.begins_with("step="):
+			step = a.substr(5).to_float()
 		else:
 			prefix = a
 	GameSettings.set_value("fullscreen", false, false)
@@ -92,6 +103,24 @@ func _run() -> void:
 	add_child(_camera)
 	_camera.current = true
 	await _wait(120)
+	for what in hide:
+		match what:
+			"cover":
+				for n in get_tree().get_nodes_in_group("ground_cover"):
+					(n as Node3D).visible = false
+			"water":
+				for n in _main.find_children("Water_*", "MeshInstance3D", true, false):
+					(n as Node3D).visible = false
+			"bridges":
+				for n in _main.find_children("Bridge_*", "Node3D", true, false):
+					(n as Node3D).visible = false
+			"forest":
+				(_main.get_node("World/Forest") as Node3D).visible = false
+			"fauna":
+				(_main.get_node("World/Fauna") as Node3D).visible = false
+			"shadows":
+				for n in _main.find_children("*", "DirectionalLight3D", true, false):
+					(n as DirectionalLight3D).shadow_enabled = false
 	if smaa:
 		var perf := _main.get_node("Performance") as PerformanceDirector
 		perf.temporal = false
@@ -132,7 +161,7 @@ func _run() -> void:
 		var side := _camera.global_basis.x
 		for i in FRAMES:
 			if move:
-				_camera.global_position = eye + side * 0.03 * i
+				_camera.global_position = eye + side * step * i
 			elif jiggle:
 				_camera.look_at(look, Vector3.UP)
 				_camera.rotate_y(0.0004 if i % 2 == 0 else -0.0004)
