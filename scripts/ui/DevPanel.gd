@@ -85,6 +85,7 @@ func teleport(index: int) -> void:
 	if spot.get("fly", false):
 		p.set_flying(true)
 	p.teleport_to(spot_position(spot), float(spot.get("heading", 0.0)))
+	Fade.flash(tr(str(spot.get("name", ""))), 0.7)
 
 
 static func spot_position(spot: Dictionary) -> Vector3:

@@ -92,6 +92,7 @@ func _apply_settings() -> void:
 	third_person_offset.x = absf(third_person_offset.x) * (-1.0 if GameSettings.shoulder_left else 1.0)
 	if arms != null:
 		arms.set_mode(GameSettings.first_person_arms)
+		arms.set_size(GameSettings.hand_size)
 
 
 func _on_developer_mode(enabled: bool) -> void:
@@ -138,6 +139,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		head.rotation.x = clampf(head.rotation.x - dy, -limit, limit)
 	elif event.is_action_pressed("interact"):
 		try_interact()
+	elif event.is_action_pressed("use_hand") and (Input.mouse_mode == Input.MOUSE_MODE_CAPTURED or DisplayServer.get_name() == "headless"):
+		use_hand()
 	elif event.is_action_pressed("toggle_view"):
 		set_third_person(not third_person)
 	elif event.is_action_pressed("toggle_fly") and GameSettings.developer_mode:
@@ -373,6 +376,20 @@ func try_interact() -> bool:
 	return true
 
 
+## 右键“用手”：准星对着能用的东西（门、灯、座位、船、棋盘……）就和按 E 一样去用，手往前一伸；
+## 什么都没对着就挥挥右手（第一人称看得到自己的手在挥，联机时别人看到方块人挥手，不切换视角）。
+func use_hand() -> bool:
+	if try_interact():
+		return true
+	if is_riding() or swimming or flying:
+		return false
+	if arms != null:
+		arms.wave()
+	if emote == "wave":
+		return true
+	return do_emote("wave", false)
+
+
 ## 让视线看向世界坐标中的一点（测试、过场、出生朝向使用）。
 func look_at_point(point: Vector3) -> void:
 	var eye := head.global_position
@@ -505,7 +522,7 @@ func _ride(_delta: float) -> void:
 # ---------------------------------------------------------------- 动作（动作栏 / 数字键 1–5）
 
 ## 开始一个动作；正在做同一个动作时再按一次 = 结束。返回是否有变化。
-func do_emote(id: String) -> bool:
+func do_emote(id: String, switch_view := true) -> bool:
 	if not id in EMOTES:
 		return false
 	if emote == id:
@@ -525,7 +542,7 @@ func do_emote(id: String) -> bool:
 			head.rotation.x = deg_to_rad(55.0)   # 躺下就抬眼看天
 	else:
 		body.set_gesture(id)
-		if GameSettings.emote_third_person and not third_person and is_local_controlled:
+		if switch_view and GameSettings.emote_third_person and not third_person and is_local_controlled:
 			set_third_person(true)
 			_emote_view_forced = true
 	_place_body()

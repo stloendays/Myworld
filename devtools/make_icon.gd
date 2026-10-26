@@ -1,7 +1,7 @@
 extends SceneTree
 ## 生成游戏图标：暮色天空、落日、对岸林线、湖面倒影、A 字形木屋剪影与暖色窗光。
 ##   Godot_console.exe --headless --path . -s res://devtools/make_icon.gd
-## 输出 res://icon.png（256，窗口与工程图标）和 res://installer/icon.ico（256/64/48/32/16，可执行文件与安装包）。
+## 输出 res://icon.png（256，窗口与工程图标）、res://boot_splash.png（320，引擎启动图）和 res://installer/icon.ico（256/64/48/32/16，可执行文件与安装包）。
 
 const S := 256
 
@@ -9,6 +9,10 @@ const S := 256
 func _init() -> void:
 	var img := _draw()
 	img.save_png("res://icon.png")
+	# 引擎自带的启动图（加载界面出现之前那一两秒）：同一张图放大，四周是 boot_splash/bg_color
+	var splash := img.duplicate() as Image
+	splash.resize(320, 320, Image.INTERPOLATE_LANCZOS)
+	splash.save_png("res://boot_splash.png")
 	var sizes := [256, 64, 48, 32, 16]
 	var pngs: Array[PackedByteArray] = []
 	for s in sizes:

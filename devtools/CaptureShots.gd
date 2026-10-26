@@ -5,6 +5,7 @@ extends Node
 ## climate：preset（weather.json 预设）或 season/hour/weather；截图期间时间暂停，光照固定。
 ## character：front / back 为玩家人物特写（第三人称），lineup 为多套外观并排。
 ## chat：open / recent 为聊天框（输入中 / 关闭后最近消息）；其他机位隐藏聊天框。
+## arms：{"size", "shoulder", "pose"} 调第一人称手；wave：拍右键挥手的那一下。
 
 const MAIN_SCENE := "res://scenes/main/Main.tscn"
 const OUT_DIR := "res://docs/screenshots"
@@ -52,6 +53,8 @@ const SHOTS := [
 	{"name": "m2b_18_tank_sign", "climate": DUSK, "house": true, "eye": [-1.2, -5.25, -2.4], "look": [-2.6, -6.0, -4.8]},
 	{"name": "m2b_19_trail_sign", "climate": DUSK, "eye": [-47.3, 1.65, 29.4], "ground": true, "look": [-47.0, 2.0, 32.0]},
 	{"name": "m2c_01_first_person_hands", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "pitch": -6.0},
+	{"name": "v04_06_hands", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "pitch": -6.0},
+	{"name": "v04_07_hand_wave", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "pitch": 4.0, "wave": true},
 	{"name": "m2c_02_minimap_poolhouse", "climate": DUSK, "player": [-12.0, 80.0], "heading": 95.0, "pitch": -4.0},
 	{"name": "m2c_03_dev_panel", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "pitch": -2.0, "dev": true},
 	{"name": "m2c_04_settings_view", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "settings": 1},
@@ -229,6 +232,9 @@ func _run() -> void:
 		if shot.has("journal"):
 			(_main.get_node("JournalPanel") as JournalPanel).open(int(shot["journal"]))
 			await _wait(5)
+		if shot.get("wave", false) and _player.arms != null:
+			_player.arms.wave()
+			await _wait(24)
 		if shot.get("lightning", false):
 			var env := _main.get_node("World/Environment") as EnvironmentDirector
 			env._flash_t = 0.0
@@ -448,6 +454,12 @@ func _setup_player_view(shot: Dictionary) -> void:
 	_player.teleport_to(Vector3(x, y + 0.05, z), float(shot.get("heading", 0.0)))
 	_player.head.rotation.x = deg_to_rad(float(shot.get("pitch", 0.0)))
 	_player.set_third_person(shot.get("third_person", false))
+	# "arms": {"size", "shoulder", "pose"} 调第一人称手的大小和姿势（调参用）；没有就用设置里的值
+	if _player.arms != null:
+		var arm_cfg: Dictionary = shot.get("arms", {})
+		_player.arms.shoulder = _vec(arm_cfg["shoulder"]) if arm_cfg.has("shoulder") else FirstPersonArms.SHOULDER
+		_player.arms.pose = _vec(arm_cfg["pose"]) if arm_cfg.has("pose") else FirstPersonArms.POSE
+		_player.arms.set_size(float(arm_cfg.get("size", GameSettings.hand_size)))
 	_player.camera.current = true
 	_player.autopilot_enabled = shot.get("walk", false)
 	if shot.has("canoe"):
