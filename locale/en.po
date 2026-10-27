@@ -2337,3 +2337,9 @@ msgstr "Game mode"
 msgid "Direct3D 12（内存占用更少）"
 msgstr "Direct3D 12 (uses less memory)"
 
+msgid "已把旧版本 %s 移到回收站"
+msgstr "Moved old version %s to the Recycle Bin"
+
+msgid "自动把电脑上的旧版本移到回收站"
+msgstr "Move old versions of the game on this PC to the Recycle Bin"
+

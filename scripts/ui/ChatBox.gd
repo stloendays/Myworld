@@ -214,6 +214,8 @@ func _on_season_changed(from_id: StringName, to_id: StringName) -> void:
 # ---------------------------------------------------------------- 显示
 
 func _process(_delta: float) -> void:
+	# 日志、地图、暂停这些面板开着时，没在打字的聊天记录不露在面板边上
+	_log.visible = _open or not UiStyle.cover_open(get_tree())
 	if not _open and not messages.is_empty() and _now() - float(messages[-1]["time"]) < VISIBLE_SECONDS + 0.1:
 		_refresh()
 

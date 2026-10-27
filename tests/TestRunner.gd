@@ -115,6 +115,8 @@ func _run() -> void:
 	await _test_draw_call_diet()
 	await _test_play_lake()
 	await _test_world_travel()
+	_test_old_versions()
+	await _test_map_art()
 	_test_startup_guard()
 	_report()
 
@@ -4048,6 +4050,74 @@ func _test_draw_call_diet() -> void:
 		merged_ok and dangling.is_empty() and far_off and near_on and cover_ok and kept and rebuilt and behind and front,
 		"合批 %s · 悬空 %s · 卷轴 远 %s 近 %s · 地被 近 %d 远 %d · 日志 关着保留 %s 打开重建 %s · 小动物 背后 %s 前面 %s" % [merged_ok,
 			", ".join(dangling) if not dangling.is_empty() else "无", far_off, near_on, near_cast, far_cast, kept, rebuilt, behind, front])
+
+
+## 旧版本清理：只认官方发布过的 exe（大小 + SHA-256 都对上、而且比现在旧），别的文件一概不碰；运行记录去掉移走的路径。
+func _test_old_versions() -> void:
+	var known := OldVersions.releases()
+	var table_ok := known.size() >= 8 and known.any(func(r: Dictionary) -> bool: return str(r["version"]) == "0.5.1" and int(r["size"]) == 169788304)
+	var dir := ProjectSettings.globalize_path("user://test_old_versions")
+	_wipe_dir("user://test_old_versions")
+	DirAccess.make_dir_recursive_absolute(dir)
+	var write := func(name: String, text: String) -> String:
+		var p := dir.path_join(name)
+		var f := FileAccess.open(p, FileAccess.WRITE)
+		f.store_string(text)
+		f.close()
+		return p
+	var old_exe: String = write.call("DuskLake.exe", "old release bytes")
+	var newer: String = write.call("DuskLake (1).exe", "a newer release")
+	var changed: String = write.call("DuskLake (2).exe", "old release byteS")   # 一样大、内容不同
+	var other: String = write.call("Other.exe", "old release bytes")           # 内容一样、名字不像
+	var current: String = write.call("DuskLake (3).exe", "old release bytes")   # 正在运行的这个
+	write.call("DuskLake notes.txt", "old release bytes")
+	var fake := [
+		{"version": "0.1.0", "size": 17, "sha256": FileAccess.get_sha256(old_exe)},
+		{"version": "99.0.0", "size": 15, "sha256": FileAccess.get_sha256(newer)},
+	]
+	var found := OldVersions.scan(PackedStringArray([dir]), PackedStringArray(), current, "0.6.0", fake)
+	var only_old: bool = found.size() == 1 and OldVersions._same(str(found[0]["path"]), old_exe) and str(found[0]["version"]) == "0.1.0"
+	var names := OldVersions.candidates(PackedStringArray([dir]), PackedStringArray([old_exe]), current)
+	var cand_ok := names.size() == 3 and not names.has(other) and not Array(names).any(func(p: String) -> bool: return OldVersions._same(p, current))
+	# 运行记录：记下现在这个，忘掉移走的那个
+	var keep_path := OldVersions.installs_path
+	OldVersions.installs_path = "user://test_old_versions/installs.json"
+	OldVersions.record(old_exe, "0.1.0")
+	OldVersions.record(current, "0.6.0", PackedStringArray([old_exe]))
+	var rec := OldVersions.recorded()
+	var record_ok := rec.size() == 1 and OldVersions._same(str(rec[0]["path"]), current)
+	OldVersions.installs_path = keep_path
+	# 大厅里的那一句
+	var keep_removed := Updater.removed_old
+	Updater.removed_old = [{"path": old_exe, "version": "0.5.1"}, {"path": changed, "version": "0.5.1"}]
+	var note: String = Updater.old_versions_note()
+	Updater.removed_old = keep_removed
+	_wipe_dir("user://test_old_versions")
+	_check("旧版本清理：只把大小和哈希都对上的旧官方版本挑出来（新版本、改过的、别的名字、正在运行的都不碰），运行记录去掉移走的路径",
+		table_ok and only_old and cand_ok and record_ok and note.contains("v0.5.1") and note.count("v0.5.1") == 1,
+		"发布表 %s · 只挑旧的 %s · 候选 %s · 记录 %s · 提示「%s」" % [table_ok, only_old, cand_ok, record_ok, note])
+
+
+## 地图画法：底图 512 像素，湖蓝、林绿、等高线和树冠点；世界地图打开后各层都画得出来。
+func _test_map_art() -> void:
+	var mm := _main.get_node("Minimap") as Minimap
+	var img := mm.map_texture.get_image() if mm.is_ready() else null
+	var size_ok := img != null and img.get_width() == Minimap.BAKE_RES and Minimap.BAKE_RES >= 512
+	var lines_ok := MapArt.contour(4.9, 5.1, 4.9, 2.5, 4) == 1 and MapArt.contour(9.9, 10.1, 9.9, 2.5, 4) == 2 and MapArt.contour(6.0, 6.2, 6.1, 2.5) == 0
+	var shade_ok := MapArt.hillshade(1.0, 1.0, 1.0) > 1.0 and MapArt.hillshade(-1.0, -1.0, 1.0) < 1.0 and absf(MapArt.hillshade(0.0, 0.0, 1.0) - 1.0) < 0.01   # 往东南升高的坡面朝西北迎光
+	var trees := 0
+	for k in 400:
+		if MapArt.canopy(k * 7 % 97, k * 13 % 89, 0.9).x > 0.0:
+			trees += 1
+	var canopy_ok := trees > 80 and MapArt.canopy(10, 10, 0.0).x == 0.0
+	var wm := _main.get_node("WorldMap")
+	wm.call("toggle")
+	await _frames(3)
+	var drawn: bool = wm.call("is_open")
+	wm.call("toggle")
+	await _frames(2)
+	_check("地图画法：%d 像素底图（等高线、山体明暗、树冠点），世界地图打开正常" % Minimap.BAKE_RES, size_ok and lines_ok and shade_ok and canopy_ok and drawn,
+		"底图 %s · 等高线 %s · 明暗 %s · 树冠 %d · 打开 %s" % [size_ok, lines_ok, shade_ok, trees, drawn])
 
 
 ## 启动保护：上次加载途中崩了就降一级渲染（标准 → 兼容 → ANGLE），选了兼容就带参数重启；Forward+ 才开的效果在兼容渲染下不开。

@@ -5,8 +5,6 @@ extends CanvasLayer
 ## 右侧的世界来自 data/worlds/worlds.json（WorldRegistry）：目前只有暮色湖畔开放，其他世界显示“规划中”，
 ## 以后加新世界只改 JSON 和对应场景。打开地图时鼠标放出，世界照常运行。
 
-const INK := UiStyle.TEXT
-const MUTED := UiStyle.TEXT_DIM
 
 var open := false
 var _root: Control
@@ -49,6 +47,7 @@ func _set_open(on: bool) -> void:
 func _process(_delta: float) -> void:
 	if open:
 		_map.queue_redraw()
+		_atlas.queue_redraw()   # 现在所在的世界外圈在呼吸
 
 
 func _build() -> void:
@@ -91,7 +90,7 @@ func _build() -> void:
 	var head := UiStyle.title("世界总览", 24)
 	col.add_child(head)
 	_atlas = Control.new()
-	_atlas.custom_minimum_size = Vector2(0.0, 220.0)
+	_atlas.custom_minimum_size = Vector2(0.0, 250.0)
 	_atlas.draw.connect(_draw_atlas)
 	col.add_child(_atlas)
 	_list = VBoxContainer.new()
@@ -99,7 +98,7 @@ func _build() -> void:
 	col.add_child(_list)
 	var foot := Label.new()
 	foot.text = "Tab / Esc 关闭"
-	foot.add_theme_color_override("font_color", MUTED)
+	foot.add_theme_color_override("font_color", UiStyle.TEXT_DIM)
 	foot.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	foot.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
 	col.add_child(foot)
@@ -125,7 +124,7 @@ func _refresh_list() -> void:
 		_list.add_child(b)
 		var s := Label.new()
 		s.text = "    " + tr(str(w.get("summary", "")))
-		s.add_theme_color_override("font_color", MUTED)
+		s.add_theme_color_override("font_color", UiStyle.TEXT_DIM)
 		s.add_theme_font_size_override("font_size", 15)
 		_list.add_child(s)
 	_atlas.queue_redraw()
@@ -160,71 +159,93 @@ func _draw_map() -> void:
 	var t := world_to_panel()
 	var rect := _rect()
 	var font := GameSettings.ui_theme().default_font
+	var screen := Rect2(t * rect.position, t.basis_xform(rect.size))
 	if _mini() != null:
 		_draw_mini_world(t, rect, font)
 		return
 	var mm := get_tree().get_first_node_in_group("minimap") as Minimap
+	_map.draw_rect(screen.grow(12.0), Color(0.05, 0.04, 0.035, 0.6))
 	_map.draw_set_transform_matrix(t)
-	_map.draw_rect(rect, Color(0.14, 0.2, 0.14))
+	_map.draw_rect(rect, Color(0.32, 0.36, 0.24))
 	if mm != null and mm.map_texture != null:
 		_map.draw_texture_rect(mm.map_texture, rect, false)
+	MapArt.draw_channels(_map)
 	for pts in WorldLayout.path_polylines():
-		_map.draw_polyline(pts, Minimap.PATH_COLOR, 1.6, true)
+		MapArt.draw_path(_map, pts, 1.8)
 	var dock := WorldLayout.section("dock")
 	if not dock.is_empty():
-		_map.draw_line(WorldLayout.v2(dock["from"]), WorldLayout.v2(dock["to"]), Minimap.DOCK_COLOR, float(dock.get("width", 2.6)))
-	_building(WorldLayout.section("cabin"), Vector2(Cabin.LENGTH + Cabin.DECK_DEPTH, Cabin.HALF_SPAN * 2.0), Vector2(Cabin.DECK_DEPTH * 0.5, 0.0), Color(0.62, 0.33, 0.22))
-	_building(WorldLayout.section("poolhouse"), Vector2(PoolHouse.HX * 2.0, PoolHouse.HZ * 2.0), Vector2.ZERO, Color(0.55, 0.74, 0.84))
-	_building(WorldLayout.section("cottage"), Vector2(StoneCottage.SIZE.x, StoneCottage.SIZE.z), Vector2.ZERO, Color(0.6, 0.58, 0.55))
-	# 图腾山洞：沿洞道画一条粗的岩石色带
+		var a := WorldLayout.v2(dock["from"])
+		var b := WorldLayout.v2(dock["to"])
+		var wd := float(dock.get("width", 2.6))
+		_map.draw_line(a, b, MapArt.INK, wd + 1.0)
+		_map.draw_line(a, b, Minimap.DOCK_COLOR, wd)
+	# 图腾山洞：沿洞道一条岩石带
 	var cave := WorldLayout.section("cave")
 	if not cave.is_empty():
 		var line := PackedVector2Array()
 		for p: Array in cave["centerline"]:
 			line.append(Vector2(float(p[0]), float(p[1])))
-		_map.draw_polyline(line, Color(0.42, 0.38, 0.34), 7.0, true)
-		_map.draw_polyline(line, Color(0.16, 0.13, 0.11), 2.4, true)
+		_map.draw_polyline(line, Color(0.45, 0.41, 0.36), 7.0, true)
+		_map.draw_polyline(line, Color(0.12, 0.1, 0.08), 3.0, true)
 	var glade := get_tree().get_first_node_in_group("fairy_glade") as FairyGlade
 	if glade != null and glade.active:
-		_map.draw_circle(Vector2(glade.position.x, glade.position.z), glade.radius, Color(0.86, 0.66, 1.0, 0.6))
+		var gc := Vector2(glade.position.x, glade.position.z)
+		_map.draw_circle(gc, glade.radius * 1.15, Color(0.86, 0.66, 1.0, 0.18))
+		_map.draw_circle(gc, glade.radius, Color(0.86, 0.66, 1.0, 0.4))
 	_map.draw_set_transform_matrix(Transform2D.IDENTITY)
-	_map.draw_rect(Rect2(t * rect.position, t.basis_xform(rect.size)), Color(0.08, 0.07, 0.06), false, 3.0)
+	# 建筑：带投影的图标
+	_building(t, WorldLayout.section("cabin"), Vector2(Cabin.LENGTH + Cabin.DECK_DEPTH, Cabin.HALF_SPAN * 2.0), Vector2(Cabin.DECK_DEPTH * 0.5, 0.0), Color(0.66, 0.36, 0.24))
+	var pool := _building(t, WorldLayout.section("poolhouse"), Vector2(PoolHouse.HX * 2.0, PoolHouse.HZ * 2.0), Vector2.ZERO, Color(0.80, 0.86, 0.88), false)
+	if pool.size() == 4:
+		# 馆里的泳池：一块蓝
+		var inner := PackedVector2Array()
+		for q in pool:
+			inner.append(q.lerp((pool[0] + pool[2]) * 0.5, 0.45))
+		_map.draw_colored_polygon(inner, Color(0.36, 0.68, 0.86))
+	_building(t, WorldLayout.section("cottage"), Vector2(StoneCottage.SIZE.x, StoneCottage.SIZE.z), Vector2.ZERO, Color(0.66, 0.64, 0.60))
+	MapArt.draw_frame(_map, screen)
 	# 地名
 	var lake := WorldLayout.section("lake")
 	if not lake.is_empty():
-		_label(font, t * WorldLayout.v2(lake["center"]) + Vector2(0.0, 40.0), tr("暮色湖"), 20, Color(0.9, 0.96, 1.0))
+		MapArt.label(_map, font, t * WorldLayout.v2(lake["center"]) + Vector2(0.0, 40.0), tr("暮色湖"), 22, Color(0.88, 0.96, 1.0))
 	for item in [["cabin", "木屋"], ["poolhouse", "泳池馆"], ["fairy_glade", "仙境林地"], ["snow_peak", "雪山"], ["cave", "图腾山洞"], ["cottage", "石头小屋"]]:
 		var cfg := WorldLayout.section(item[0])
 		if item[0] == "fairy_glade" and (glade == null or not glade.active):
 			continue
 		if not cfg.is_empty():
-			_label(font, t * WorldLayout.v2(cfg["center"]) + Vector2(0.0, -22.0), tr(item[1]), 17, INK)
+			MapArt.label(_map, font, t * WorldLayout.v2(cfg["center"]) + Vector2(0.0, -24.0), tr(item[1]), 17)
+	# 光门、探索点、独木舟
+	var root := get_tree().get_first_node_in_group("world_root")
+	if root != null and root.has_method("map_markers"):
+		for m: Dictionary in root.call("map_markers"):
+			if str(m["kind"]) == "gate":
+				var gp := t * (m["pos"] as Vector2)
+				MapArt.draw_gate(_map, gp)
+				MapArt.label(_map, font, gp + Vector2(0.0, 24.0), tr(str(m["label"])), 14, Color(0.92, 0.85, 1.0))
 	for poi in Exploration.pois():
 		var p := t * WorldLayout.v2(poi["center"])
-		if StringName(poi["id"]) in WorldState.discoveries:
-			_map.draw_circle(p, 6.0, Color(1.0, 0.82, 0.35))
-			_map.draw_arc(p, 6.0, 0.0, TAU, 24, Color(0.15, 0.1, 0.05), 1.4, true)
-			_label(font, p + Vector2(0.0, 22.0), tr(str(poi["name"])), 15, Color(1.0, 0.9, 0.65))
+		var found := StringName(poi["id"]) in WorldState.discoveries
+		if found:
+			MapArt.draw_pin(_map, p, true, font)
+			MapArt.label(_map, font, p + Vector2(0.0, 16.0), tr(str(poi["name"])), 14, Color(1.0, 0.9, 0.66))
 		elif GameRules.flag("poi_markers"):
-			_map.draw_circle(p, 8.0, Color(0.12, 0.12, 0.14, 0.8))
-			_map.draw_string(font, p + Vector2(-4.5, 6.0), "?", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color(0.9, 0.9, 0.9))
+			MapArt.draw_pin(_map, p, false, font)
 	for v in get_tree().get_nodes_in_group("vehicles"):
 		var canoe := v as Canoe
 		if canoe != null and canoe.rider == null:
-			_map.draw_circle(t * canoe.world_position_2d(), 4.0, Color(0.85, 0.3, 0.2))
+			var cp := t * canoe.world_position_2d()
+			var fwd := Vector2(-sin(canoe.heading), -cos(canoe.heading))
+			var side := Vector2(-fwd.y, fwd.x)
+			_map.draw_colored_polygon(PackedVector2Array([cp + fwd * 9.0, cp + side * 3.2, cp - fwd * 9.0, cp - side * 3.2]), Color(0.86, 0.3, 0.2))
 	_draw_player(t)
 	_draw_north_and_scale(t, rect, font)
 
 
-## 指北与比例尺（50 m）。
+## 八角指北针（左上角）和分段比例尺（右下角，50 m）。
 func _draw_north_and_scale(t: Transform2D, rect: Rect2, font: Font) -> void:
-	var corner := t * rect.position + Vector2(26.0, 30.0)
-	_map.draw_circle(corner, 15.0, Color(0.1, 0.09, 0.08, 0.85))
-	_map.draw_string(font, corner + Vector2(-6.5, 7.0), "N", HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Color(1.0, 0.86, 0.55))
-	var bar_len := t.basis_xform(Vector2(50.0, 0.0)).x
-	var bar := t * Vector2(rect.end.x, rect.end.y) - Vector2(bar_len + 20.0, 22.0)
-	_map.draw_line(bar, bar + Vector2(bar_len, 0.0), INK, 3.0)
-	_map.draw_string(font, bar + Vector2(bar_len * 0.5 - 18.0, -8.0), "50 m", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, INK)
+	MapArt.draw_compass(_map, t * rect.position + Vector2(42.0, 48.0), 22.0, font)
+	var px_per_m := t.basis_xform(Vector2(1.0, 0.0)).x
+	MapArt.draw_scale_bar(_map, t * rect.end - Vector2(50.0 * px_per_m + 52.0, 26.0), px_per_m, font)
 
 
 func _draw_player(t: Transform2D) -> void:
@@ -232,35 +253,25 @@ func _draw_player(t: Transform2D) -> void:
 	if player == null:
 		return
 	var c := t * Vector2(player.global_position.x, player.global_position.z)
-	var arrow := PackedVector2Array([Vector2(0, -11), Vector2(8, 8), Vector2(0, 4), Vector2(-8, 8)])
-	var pts := PackedVector2Array()
-	for p in arrow:
-		pts.append(c + p.rotated(-player.rotation.y))
-	_map.draw_colored_polygon(pts, Color(1.0, 0.97, 0.9))
-	pts.append(pts[0])
-	_map.draw_polyline(pts, Color(0.1, 0.08, 0.06), 1.8, true)
+	MapArt.draw_player(_map, c, -player.rotation.y, Time.get_ticks_msec() / 1000.0, t.basis_xform(Vector2(18.0, 0.0)).x)
 
 
-func _building(cfg: Dictionary, size: Vector2, offset: Vector2, color: Color) -> void:
+## 建筑图标（世界坐标的布局 → 画面），返回画面上的四个角。
+func _building(t: Transform2D, cfg: Dictionary, size: Vector2, offset: Vector2, color: Color, ridge := true) -> PackedVector2Array:
 	if cfg.is_empty():
-		return
+		return PackedVector2Array()
 	var c := WorldLayout.v2(cfg["center"])
 	var yaw := -deg_to_rad(float(cfg.get("yaw_deg", 0.0)))
 	var pts := PackedVector2Array()
 	for corner in [Vector2(-1, -1), Vector2(1, -1), Vector2(1, 1), Vector2(-1, 1)]:
-		pts.append(c + (offset + corner * size * 0.5).rotated(yaw))
-	_map.draw_colored_polygon(pts, color)
-
-
-func _label(font: Font, center: Vector2, text: String, size: int, color: Color) -> void:
-	var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
-	var p := center - Vector2(w * 0.5, -size * 0.35)
-	_map.draw_string_outline(font, p, text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, 5, Color(0.0, 0.0, 0.0, 0.75))
-	_map.draw_string(font, p, text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, color)
+		pts.append(t * (c + (offset + corner * size * 0.5).rotated(yaw)))
+	MapArt.draw_building(_map, pts, color, ridge)
+	return pts
 
 
 # ---------------------------------------------------------------- 世界总览
 
+## 世界总览：每个世界一颗发光的球，开放的世界之间用虚线连起来，现在所在的那颗外面一圈金环。
 func _draw_atlas() -> void:
 	var size := _atlas.size
 	var font := GameSettings.ui_theme().default_font
@@ -271,36 +282,44 @@ func _draw_atlas() -> void:
 	for link in WorldRegistry.links():
 		var a: Vector2 = pos.get(str(link[0]), Vector2.ZERO)
 		var b: Vector2 = pos.get(str(link[1]), Vector2.ZERO)
-		_atlas.draw_dashed_line(a, b, Color(0.8, 0.78, 0.7, 0.6), 2.0, 8.0)
+		_atlas.draw_dashed_line(a, b, Color(UiStyle.ACCENT, 0.45), 2.0, 7.0)
+	var t := Time.get_ticks_msec() / 1000.0
 	for w in WorldRegistry.worlds():
 		var id := str(w["id"])
 		var p: Vector2 = pos[id]
 		var open_world := WorldRegistry.is_open(id)
 		var col := Color.html(str(w.get("color", "#cccccc")))
 		if not open_world:
-			col = col.darkened(0.45)
-		_atlas.draw_circle(p, 26.0 if open_world else 20.0, col)
+			col = col.darkened(0.55)
+		var r := 25.0 if open_world else 19.0
+		for k in 4:
+			_atlas.draw_circle(p, r + 14.0 - k * 4.0, Color(col, 0.05 + k * 0.03))
+		_atlas.draw_circle(p, r, col.darkened(0.25))
+		_atlas.draw_circle(p + Vector2(-r * 0.12, -r * 0.12), r * 0.82, col)
+		_atlas.draw_circle(p + Vector2(-r * 0.35, -r * 0.38), r * 0.28, Color(1, 1, 1, 0.35))
+		_atlas.draw_arc(p, r, 0.0, TAU, 48, Color(0, 0, 0, 0.35), 1.2, true)
 		if id == WorldRegistry.current_id():
-			_atlas.draw_arc(p, 32.0, 0.0, TAU, 48, Color(1.0, 0.9, 0.6), 2.5, true)
-		var label_text := tr(str(w["name"]))
-		var text_w := font.get_string_size(label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
-		_atlas.draw_string(font, p + Vector2(-text_w * 0.5, 48.0), label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, INK if open_world else MUTED)
+			var pulse := 0.5 + 0.5 * sin(t * 2.5)
+			_atlas.draw_arc(p, r + 7.0 + pulse * 2.0, 0.0, TAU, 56, Color(UiStyle.ACCENT, 0.9), 2.5, true)
+		MapArt.label(_atlas, font, p + Vector2(0.0, r + 22.0), tr(str(w["name"])), 15, UiStyle.TEXT if open_world else UiStyle.TEXT_DIM)
 		if not open_world:
-			_atlas.draw_string(font, p + Vector2(-5.0, 7.0), "?", HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color(0.9, 0.9, 0.9))
+			MapArt.label(_atlas, font, p, "?", 20, Color(0.9, 0.9, 0.9))
 
 
-## 云海浮岛、琥珀沙丘：底图、桥和建筑（世界自己画）、地名、探索点、收集品、光门、玩家。
+## 云海浮岛、琥珀沙丘、亚特兰蒂斯：底图、桥和建筑（世界自己画）、地名、探索点、收集品、光门、玩家。
 func _draw_mini_world(t: Transform2D, rect: Rect2, font: Font) -> void:
 	var w := _mini()
+	var screen := Rect2(t * rect.position, t.basis_xform(rect.size))
+	_map.draw_rect(screen.grow(12.0), Color(0.05, 0.04, 0.035, 0.6))
 	_map.draw_set_transform_matrix(t)
 	_map.draw_rect(rect, Color(0.2, 0.2, 0.24))
 	if w.map_texture != null:
 		_map.draw_texture_rect(w.map_texture, rect, false)
 	w.draw_map(_map)
 	_map.draw_set_transform_matrix(Transform2D.IDENTITY)
-	_map.draw_rect(Rect2(t * rect.position, t.basis_xform(rect.size)), Color(0.08, 0.07, 0.06), false, 3.0)
+	MapArt.draw_frame(_map, screen)
 	for l: Dictionary in w.map_labels():
-		_label(font, t * (l["pos"] as Vector2), tr(str(l["text"])), 18, INK)
+		MapArt.label(_map, font, t * (l["pos"] as Vector2), tr(str(l["text"])), 18)
 	var pois: Dictionary = {}
 	for poi: Dictionary in w.data.get("pois", []):
 		pois[MiniWorld.v2(poi["center"])] = poi
@@ -309,23 +328,20 @@ func _draw_mini_world(t: Transform2D, rect: Rect2, font: Font) -> void:
 		match str(m["kind"]):
 			"item":
 				if not m["done"]:
-					_map.draw_circle(p, 5.0, Color(0.55, 0.9, 1.0))
-					_map.draw_arc(p, 5.0, 0.0, TAU, 16, Color(0.1, 0.15, 0.2), 1.2, true)
+					_map.draw_circle(p, 6.0, Color(0.1, 0.15, 0.2, 0.8))
+					_map.draw_circle(p, 4.2, Color(0.55, 0.9, 1.0))
 			"gate":
-				_map.draw_arc(p, 8.0, 0.0, TAU, 24, Color(0.85, 0.7, 1.0), 3.0, true)
-				_label(font, p + Vector2(0.0, 24.0), tr("光门"), 15, Color(0.9, 0.82, 1.0))
+				MapArt.draw_gate(_map, p)
+				MapArt.label(_map, font, p + Vector2(0.0, 24.0), tr("光门"), 15, Color(0.92, 0.85, 1.0))
 			_:
 				if m["done"]:
-					_map.draw_circle(p, 6.0, Color(1.0, 0.82, 0.35))
-					_map.draw_arc(p, 6.0, 0.0, TAU, 24, Color(0.15, 0.1, 0.05), 1.4, true)
+					MapArt.draw_pin(_map, p, true, font)
 					var poi: Dictionary = pois.get(m["pos"], {})
-					_label(font, p + Vector2(0.0, 22.0), MiniWorld._poi_label(poi) if not poi.is_empty() else "", 15, Color(1.0, 0.9, 0.65))
+					MapArt.label(_map, font, p + Vector2(0.0, 16.0), MiniWorld._poi_label(poi) if not poi.is_empty() else "", 14, Color(1.0, 0.9, 0.66))
 				elif GameRules.flag("poi_markers"):
-					_map.draw_circle(p, 8.0, Color(0.12, 0.12, 0.14, 0.8))
-					_map.draw_string(font, p + Vector2(-4.5, 6.0), "?", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color(0.9, 0.9, 0.9))
+					MapArt.draw_pin(_map, p, false, font)
 	var got := WorldState.collected(w.world_id).size()
 	if GameRules.flag("collectibles") and w.items_total() > 0:
-		_map.draw_string(font, t * rect.position + Vector2(56.0, 36.0), tr("%s：%d / %d") % [tr(str(w.data.get("item_name", "收集品"))), got, w.items_total()],
-			HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color(0.7, 0.92, 1.0))
+		MapArt.label(_map, font, screen.position + Vector2(screen.size.x * 0.5, 26.0), tr("%s：%d / %d") % [tr(str(w.data.get("item_name", "收集品"))), got, w.items_total()], 17, Color(0.72, 0.93, 1.0))
 	_draw_player(t)
 	_draw_north_and_scale(t, rect, font)

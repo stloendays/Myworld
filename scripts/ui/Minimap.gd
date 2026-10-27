@@ -1,22 +1,27 @@
 class_name Minimap
 extends CanvasLayer
 ## 右上角圆形小地图：玩家在圆心，默认随朝向旋转（设置里可改成北朝上），M 键或设置里开关。
-## 底图由地形高度函数、植被密度烘焙成 256×256 贴图（后台线程，结果缓存在 user://，布局不变就直接读缓存）；
+## 底图由地形高度函数、植被密度烘焙成 512×512 的手绘风贴图（线程池并行，画法见 MapArt；结果缓存在 user://，布局不变就直接读缓存）；
 ## 步道、码头、建筑、玩家箭头、北方标记每帧用矢量画，放大也清楚。下面一行显示当前区域名。
 
 const SIZE := 210.0
 const MARGIN := 18.0
-const BAKE_RES := 256
+const BAKE_RES := 512
+const BAKE_BANDS := 16
 const CACHE_PATH := "user://minimap_%s.png"
-const MAP_VERSION := 2   ## 2：雪线以上画成雪
+const MAP_VERSION := 3   ## 2：雪线以上画成雪；3：512 像素手绘风（MapArt）
 
-const WATER_SHALLOW := Color(0.40, 0.66, 0.74)
-const WATER_DEEP := Color(0.13, 0.31, 0.47)
-const SAND := Color(0.80, 0.74, 0.58)
-const GRASS := Color(0.50, 0.60, 0.34)
-const FOREST := Color(0.18, 0.34, 0.21)
-const ROCK := Color(0.56, 0.53, 0.49)
-const SNOW := Color(0.93, 0.95, 0.98)
+const WATER_SHALLOW := Color(0.42, 0.68, 0.74)
+const WATER_DEEP := Color(0.12, 0.29, 0.46)
+const SAND := Color(0.86, 0.79, 0.60)
+const MEADOW := Color(0.66, 0.70, 0.42)
+const GRASS := Color(0.52, 0.63, 0.36)
+const UPLAND := Color(0.47, 0.52, 0.37)
+const FOREST := Color(0.36, 0.48, 0.29)
+const CANOPY := Color(0.13, 0.27, 0.17)
+const CANOPY_LIT := Color(0.30, 0.47, 0.26)
+const ROCK := Color(0.60, 0.56, 0.50)
+const SNOW := Color(0.95, 0.96, 0.98)
 const PATH_COLOR := Color(0.88, 0.80, 0.62)
 const DOCK_COLOR := Color(0.55, 0.38, 0.24)
 
@@ -30,6 +35,8 @@ var _overlay: Control
 var _zone_label: Label
 var _task := -1
 var _image: Image = null
+var _bands: Array = []
+var _band_mutex := Mutex.new()
 var _zone_names := {}
 var _world: MiniWorld = null   ## 在云海浮岛、琥珀沙丘等世界里：底图、图形和标记都由那个世界提供
 var _covered := false   ## 大厅、日志、地图等面板开着时收起来
@@ -124,10 +131,23 @@ func _build() -> void:
 	_root.add_child(_zone_label)
 
 
-func _process(delta: float) -> void:
-	if _task >= 0 and WorkerThreadPool.is_task_completed(_task):
-		WorkerThreadPool.wait_for_task_completion(_task)
+## 底图还没烘完就离开（换世界）：等线程池把这一组做完，线程里还在用本节点。
+func _exit_tree() -> void:
+	if _task >= 0:
+		WorkerThreadPool.wait_for_group_task_completion(_task)
 		_task = -1
+
+
+func _process(delta: float) -> void:
+	if _task >= 0 and WorkerThreadPool.is_group_task_completed(_task):
+		WorkerThreadPool.wait_for_group_task_completion(_task)
+		_task = -1
+		var data := PackedByteArray()
+		for b: PackedByteArray in _bands:
+			data.append_array(b)
+		_bands.clear()
+		_image = Image.create_from_data(BAKE_RES, BAKE_RES, false, Image.FORMAT_RGB8, data)
+		_image.generate_mipmaps()
 		map_texture = ImageTexture.create_from_image(_image)
 		_image.save_png(_cache_path())
 	if UiStyle.cover_open(get_tree()) != _covered:
@@ -193,8 +213,9 @@ func _draw_map() -> void:
 		_world.draw_map(_canvas)
 		_canvas.draw_set_transform_matrix(Transform2D.IDENTITY)
 		return
+	MapArt.draw_channels(_canvas)
 	for pts in WorldLayout.path_polylines():
-		_canvas.draw_polyline(pts, PATH_COLOR, 2.4, true)
+		MapArt.draw_path(_canvas, pts, 2.4)
 	var dock := WorldLayout.section("dock")
 	if not dock.is_empty():
 		_canvas.draw_line(WorldLayout.v2(dock["from"]), WorldLayout.v2(dock["to"]), DOCK_COLOR, float(dock.get("width", 2.6)))
@@ -267,44 +288,81 @@ func _load_or_bake() -> void:
 		if img != null and not img.is_empty():
 			map_texture = ImageTexture.create_from_image(img)
 			return
-	_image = Image.create(BAKE_RES, BAKE_RES, false, Image.FORMAT_RGB8)
-	_task = WorkerThreadPool.add_task(_bake.bind(_image), true, "minimap bake")
+	# 地形高度、植被密度的缓存第一次调用时才建：先在主线程建好，线程里只读
+	WorldTerrain.height_at(0.0, 0.0)
+	Vegetation.tree_density(0.0, 0.0)
+	_bands.resize(BAKE_BANDS)
+	_task = WorkerThreadPool.add_group_task(_bake_band, BAKE_BANDS, -1, true, "minimap bake")
 
 
-## 在后台线程里按地形高度、坡度、植被密度上色，并按西北光做山体阴影。
-func _bake(img: Image) -> void:
+## 底图分成 BAKE_BANDS 条，在线程池里并行烘焙（地形高度、植被密度的缓存先在主线程建好，之后只读）。
+## 每条自己多算上下各一行高度，算光照和等高线不用等别的条。画法见 MapArt：高度配色、山体明暗、等高线、
+## 湖水由浅到深加岸边白线、树冠点、纸纹，图外压暗。
+func _bake_band(band: int) -> void:
 	var n := BAKE_RES
+	var rows := n / BAKE_BANDS
+	var j0 := band * rows
 	var cell := world_rect.size.x / n
 	var snowline := float(WorldLayout.section("terrain").get("snowline", 9999.0))
 	var water := WorldLayout.water_level()
-	var heights := PackedFloat32Array()
-	heights.resize(n * n)
-	for j in n:
+	var edge := WorldTerrain.extent() - 3.0
+	# 高度：本条的行加上下各两行（等高线、光照要看邻居）
+	var hs := PackedFloat32Array()
+	hs.resize((rows + 4) * n)
+	for r in rows + 4:
+		var j := clampi(j0 + r - 2, 0, n - 1)
+		for i in n:
+			hs[r * n + i] = WorldTerrain.height_at(world_rect.position.x + (i + 0.5) * cell, world_rect.position.y + (j + 0.5) * cell)
+	var data := PackedByteArray()
+	data.resize(rows * n * 3)
+	for r in rows:
+		var j := j0 + r
+		var hr := r + 2
 		for i in n:
 			var x := world_rect.position.x + (i + 0.5) * cell
 			var z := world_rect.position.y + (j + 0.5) * cell
-			heights[j * n + i] = WorldTerrain.height_at(x, z)
-	var light := Vector3(-0.6, 1.2, -0.6).normalized()
-	for j in n:
-		for i in n:
-			var h := heights[j * n + i]
-			var x := world_rect.position.x + (i + 0.5) * cell
-			var z := world_rect.position.y + (j + 0.5) * cell
+			var h := hs[hr * n + i]
+			var hl := hs[hr * n + maxi(i - 1, 0)]
+			var hri := hs[hr * n + mini(i + 1, n - 1)]
+			var hu := hs[(hr - 1) * n + i]
+			var hd := hs[(hr + 1) * n + i]
 			var col: Color
 			if h < water:
-				col = WATER_SHALLOW.lerp(WATER_DEEP, clampf((water - h) / 3.0, 0.0, 1.0))
+				var depth := water - h
+				col = WATER_SHALLOW.lerp(WATER_DEEP, smoothstep(0.0, 3.5, depth))
+				# 两道浅色的等深线，岸边一道白线
+				if MapArt.contour(depth, water - hri, water - hd, 0.8, 99) > 0 and depth < 2.0:
+					col = col.lerp(Color(0.86, 0.94, 0.95), 0.18)
+				if hl >= water or hri >= water or hu >= water or hd >= water:
+					col = col.lerp(Color(0.92, 0.96, 0.94), 0.75)
 			else:
-				var hx := heights[j * n + mini(i + 1, n - 1)] - heights[j * n + maxi(i - 1, 0)]
-				var hz := heights[mini(j + 1, n - 1) * n + i] - heights[maxi(j - 1, 0) * n + i]
-				var normal := Vector3(-hx, 2.0 * cell, -hz).normalized()
-				var slope := Vector2(hx, hz).length() / (2.0 * cell)
-				col = GRASS.lerp(FOREST, clampf(Vegetation.tree_density(x, z) * 1.3, 0.0, 1.0))
-				if h < water + 0.45:
+				var slope := Vector2(hri - hl, hd - hu).length() / (2.0 * cell)
+				var lift := h - water
+				col = MEADOW.lerp(GRASS, smoothstep(1.0, 6.0, lift)).lerp(UPLAND, smoothstep(10.0, 22.0, lift))
+				var density := Vegetation.tree_density(x, z)
+				col = col.lerp(FOREST, clampf(density * 0.9, 0.0, 0.85))
+				if lift < 0.45:
 					col = SAND
 				col = col.lerp(ROCK, smoothstep(0.7, 1.2, slope))
-				col = col.lerp(SNOW, smoothstep(snowline - 2.0, snowline + 2.0, h) * (1.0 - smoothstep(1.0, 1.4, slope)))
-				col *= clampf(0.55 + normal.dot(light) * 0.55, 0.45, 1.15)
-			img.set_pixel(i, j, Color(col.r, col.g, col.b))
+				var snow := smoothstep(snowline - 2.0, snowline + 2.0, h) * (1.0 - smoothstep(1.0, 1.4, slope))
+				col = col.lerp(SNOW, snow)
+				col *= MapArt.hillshade(hri - hl, hd - hu, cell)
+				var tree := MapArt.canopy(i, j, density * (1.0 - snow) * (1.0 - smoothstep(0.8, 1.1, slope)))
+				if tree.x > 0.0:
+					col = col.lerp(CANOPY.lerp(CANOPY_LIT, tree.y * 0.5 + 0.5), tree.x * 0.9)
+				var line := MapArt.contour(h, hri, hd, 2.5, 4)
+				if line > 0:
+					col *= 0.8 if line == 2 else 0.9
+			col *= MapArt.grain(i, j)
+			# 地图外缘（可活动区以外的山坡）压暗，像图纸的边
+			col = col.lerp(MapArt.PAPER_DARK, smoothstep(edge - 4.0, edge + 4.0, maxf(absf(x), absf(z))) * 0.75)
+			var o := (r * n + i) * 3
+			data[o] = clampi(int(col.r * 255.0), 0, 255)
+			data[o + 1] = clampi(int(col.g * 255.0), 0, 255)
+			data[o + 2] = clampi(int(col.b * 255.0), 0, 255)
+	_band_mutex.lock()
+	_bands[band] = data
+	_band_mutex.unlock()
 
 
 ## 探索点（未发现 = 灰色问号，已发现 = 金色圆点）和独木舟（没人坐时显示船形）。只画在圆内。

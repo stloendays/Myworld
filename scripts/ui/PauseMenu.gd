@@ -215,6 +215,7 @@ func _build_settings() -> Control:
 	ver.add_theme_font_size_override("font_size", 22)
 	about.add_child(ver)
 	_check(about, "auto_update_check", "启动时自动检查更新")
+	_check(about, "remove_old_versions", "自动把电脑上的旧版本移到回收站")
 	var upd_status := Label.new()
 	upd_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	about.add_child(upd_status)

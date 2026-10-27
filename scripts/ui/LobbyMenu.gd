@@ -519,6 +519,7 @@ func _build_update_strip() -> Control:
 	_update_bar.custom_minimum_size = Vector2(0, 8)
 	v.add_child(_update_bar)
 	Updater.status_changed.connect(func(_s: int, _t: String) -> void: _sync_update())
+	Updater.old_versions_removed.connect(func(_l: Array) -> void: _sync_update())
 	_sync_update()
 	return strip
 
@@ -552,6 +553,8 @@ func _sync_update() -> void:
 				action = "check"
 			else:
 				text = tr("即将检查更新")
+	if Updater.old_versions_note() != "":
+		text += "  ·  " + Updater.old_versions_note()
 	_update_label.text = "Dusk Lake " + ver + "  ·  " + text
 	_update_button.visible = action != ""
 	_update_button.set_meta("action", action)

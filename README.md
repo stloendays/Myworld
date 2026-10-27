@@ -4,7 +4,7 @@
 
 - 引擎：**Godot 4.7.2 Standard**（GDScript，Forward+，Jolt Physics），Windows 单机优先
 - 需求规格：[docs/DEVELOPMENT_SPEC.md](docs/DEVELOPMENT_SPEC.md)（唯一需求来源）；阶段指令：[docs/AGENT_HANDOFF.md](docs/AGENT_HANDOFF.md)
-- 当前进度：**M0、M1、第一轮正式美术、M2 天气系统、方块人物、泳池馆与地下水族馆、小动物、雷暴/彩虹/风、聊天框、小地图、开发者模式、第一人称双手、木屋生活、独木舟与湖上探索、性能优化、可潜水的海洋大缸、木屋国际象棋、动作轮盘、世界地图与全屏、联机（最多 4 人）与中英界面、自动更新、新立牌、夜里的仙境林地、东北角雪山、内存与卡顿优化、图腾山洞与任务、星座与图鉴、石头小屋、跨世界旅行、画面闪动优化、小溪瀑布与裂谷、启动画面与开场过场、云海浮岛与琥珀沙丘、解说卷轴、新建游戏设定与存档、亚特兰蒂斯与六个新玩法、划船人的信与石头小屋、第一章收尾（新星座、暮烬之夜、终章与剧情过场）、M3 声音、界面升级与剧情 / 休闲两种模式、CPU 与内存减负已完成**，自动检查 137/137、启动流程 6/6、联机检查 12/12 通过。见 [docs/QA_M0_M1.md](docs/QA_M0_M1.md)、[docs/ART_PASS.md](docs/ART_PASS.md)、[docs/M2_WEATHER_CHARACTER.md](docs/M2_WEATHER_CHARACTER.md)、[docs/POOLHOUSE_FAUNA.md](docs/POOLHOUSE_FAUNA.md)、[docs/CHAT.md](docs/CHAT.md)、[docs/MINIMAP_DEVMODE.md](docs/MINIMAP_DEVMODE.md)、[docs/CABIN_LIFE_CANOE.md](docs/CABIN_LIFE_CANOE.md)、[docs/PERFORMANCE.md](docs/PERFORMANCE.md)、[docs/AQUARIUM_DIVE.md](docs/AQUARIUM_DIVE.md)、[docs/CHESS.md](docs/CHESS.md)、[docs/INTERACTIONS_WORLDMAP.md](docs/INTERACTIONS_WORLDMAP.md)、[docs/COOP.md](docs/COOP.md)、[docs/V0_3.md](docs/V0_3.md)、[docs/SNOW_PEAK.md](docs/SNOW_PEAK.md)、[docs/MEMORY_STUTTER.md](docs/MEMORY_STUTTER.md)、[docs/CAVE_QUESTS.md](docs/CAVE_QUESTS.md)、[docs/NATURE_FLICKER.md](docs/NATURE_FLICKER.md)、[docs/BOOT_INTRO_HANDS.md](docs/BOOT_INTRO_HANDS.md)、[docs/V0_5.md](docs/V0_5.md)、[docs/ATLANTIS.md](docs/ATLANTIS.md)、[docs/LETTERS_COTTAGE.md](docs/LETTERS_COTTAGE.md)、[docs/FLICKER_BRIDGE.md](docs/FLICKER_BRIDGE.md)、[docs/STORY_EMBERS.md](docs/STORY_EMBERS.md)、[docs/AUDIO_M3.md](docs/AUDIO_M3.md)、[docs/UI_MODES.md](docs/UI_MODES.md)、[docs/PERF_CPU_MEMORY.md](docs/PERF_CPU_MEMORY.md)
+- 当前进度：**M0、M1、第一轮正式美术、M2 天气系统、方块人物、泳池馆与地下水族馆、小动物、雷暴/彩虹/风、聊天框、小地图、开发者模式、第一人称双手、木屋生活、独木舟与湖上探索、性能优化、可潜水的海洋大缸、木屋国际象棋、动作轮盘、世界地图与全屏、联机（最多 4 人）与中英界面、自动更新、新立牌、夜里的仙境林地、东北角雪山、内存与卡顿优化、图腾山洞与任务、星座与图鉴、石头小屋、跨世界旅行、画面闪动优化、小溪瀑布与裂谷、启动画面与开场过场、云海浮岛与琥珀沙丘、解说卷轴、新建游戏设定与存档、亚特兰蒂斯与六个新玩法、划船人的信与石头小屋、第一章收尾（新星座、暮烬之夜、终章与剧情过场）、M3 声音、界面升级与剧情 / 休闲两种模式、CPU 与内存减负、v0.6.0（地图重画、自动清理旧版本）已完成**，自动检查 139/139、启动流程 6/6、联机检查 12/12 通过。见 [docs/QA_M0_M1.md](docs/QA_M0_M1.md)、[docs/ART_PASS.md](docs/ART_PASS.md)、[docs/M2_WEATHER_CHARACTER.md](docs/M2_WEATHER_CHARACTER.md)、[docs/POOLHOUSE_FAUNA.md](docs/POOLHOUSE_FAUNA.md)、[docs/CHAT.md](docs/CHAT.md)、[docs/MINIMAP_DEVMODE.md](docs/MINIMAP_DEVMODE.md)、[docs/CABIN_LIFE_CANOE.md](docs/CABIN_LIFE_CANOE.md)、[docs/PERFORMANCE.md](docs/PERFORMANCE.md)、[docs/AQUARIUM_DIVE.md](docs/AQUARIUM_DIVE.md)、[docs/CHESS.md](docs/CHESS.md)、[docs/INTERACTIONS_WORLDMAP.md](docs/INTERACTIONS_WORLDMAP.md)、[docs/COOP.md](docs/COOP.md)、[docs/V0_3.md](docs/V0_3.md)、[docs/SNOW_PEAK.md](docs/SNOW_PEAK.md)、[docs/MEMORY_STUTTER.md](docs/MEMORY_STUTTER.md)、[docs/CAVE_QUESTS.md](docs/CAVE_QUESTS.md)、[docs/NATURE_FLICKER.md](docs/NATURE_FLICKER.md)、[docs/BOOT_INTRO_HANDS.md](docs/BOOT_INTRO_HANDS.md)、[docs/V0_5.md](docs/V0_5.md)、[docs/ATLANTIS.md](docs/ATLANTIS.md)、[docs/LETTERS_COTTAGE.md](docs/LETTERS_COTTAGE.md)、[docs/FLICKER_BRIDGE.md](docs/FLICKER_BRIDGE.md)、[docs/STORY_EMBERS.md](docs/STORY_EMBERS.md)、[docs/AUDIO_M3.md](docs/AUDIO_M3.md)、[docs/UI_MODES.md](docs/UI_MODES.md)、[docs/PERF_CPU_MEMORY.md](docs/PERF_CPU_MEMORY.md)、[docs/V0_6_0.md](docs/V0_6_0.md)
 
 ![湖岸出生点](docs/screenshots/m1_01_spawn_dusk.png)
 
@@ -24,7 +24,7 @@
 
 ## 下载
 
-Windows 版：到 [Releases](https://github.com/stloendays/Myworld/releases/latest) 下载 `DuskLake.exe`，放在任意文件夹双击运行。游戏启动时会自动检查新版本，大厅右下角显示检查结果，有新版本时点“更新并重启”（设置 → 关于 里也可以）。
+Windows 版：到 [Releases](https://github.com/stloendays/Myworld/releases/latest) 下载 `DuskLake.exe`，放在任意文件夹双击运行。游戏启动时会自动检查新版本，大厅右下角显示检查结果，有新版本时点“更新并重启”（设置 → 关于 里也可以）。手动下载了新版本时，新版本第一次启动会把电脑上认出来的旧版本（下载文件夹、桌面、exe 旁边、以前运行过的位置）移到回收站。
 
 ## 运行
 
@@ -156,6 +156,7 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | `scripts/core/PlayerProfile.gd`、`scripts/ui/WardrobePanel.gd` | 本地玩家外观（存 user://appearance.json）、外观编辑面板 |
 | `scripts/ui/ChatBox.gd`、`ChatCommands.gd` | 聊天框（左下角消息记录与输入行、系统消息）与 / 命令 |
 | `scripts/ui/DevPanel.gd` | F2 开发者面板：天气、季节、时间、飞行、穿墙、传送（地点在布局文件 `dev_spots`） |
+| `scripts/ui/MapArt.gd` | 地图的画法（世界地图、小地图、别的世界的地图共用）：底图的山体明暗、等高线、纸纹、树冠点，矢量层的路、小溪、建筑图标、图钉、光门、玩家、边框、指北针、比例尺、地名 |
 | `scripts/ui/Minimap.gd` | 右上角圆形小地图：湖畔底图后台烘焙并缓存，步道和建筑矢量绘制；别的世界由那个世界提供底图、图形和标记 |
 | `scripts/player/FirstPersonArms.gd` | 第一人称的双手（随外观变化，走路、跳跃、交互、游泳都有动作） |
 | `scripts/core/GameSettings.gd` | 设置与按键（Autoload），保存在 `user://settings.json` |
@@ -193,7 +194,8 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | `devtools/FlickerProbe.tscn`、`devtools/flicker_report.py` | 画面闪动探针：固定机位连续渲染，逐像素统计闪烁、画热力图；jiggle 模式比较抗锯齿方案；dynres / legacy / quality= / scale= 按玩家设置对比修复前后 |
 | `data/weather/seasonal_fx.json` | 季节飘落物方案：落叶、花瓣，以及保留的“原版红点”（`legacy_red_motes`） |
 | `tests/TestRunner.tscn` | 自动检查（101 项：卷轴、新建游戏规则、存档 v4、云海浮岛、琥珀沙丘、QA-01、QA-02、QA-10、天气、人物、泳池馆、游泳、动物、聊天框、小地图、开发者模式、设置、国际象棋、动作轮盘、世界地图等；`DUSK_TEST_ONLY=_test_xxx` 只跑某几项） |
-| `scripts/core/Updater.gd` | 自动更新（Autoload）：查 GitHub Releases、下载核对、退出后替换 exe 并重启 |
+| `scripts/core/Updater.gd` | 自动更新（Autoload）：查 GitHub Releases、下载核对、退出后替换 exe 并重启 ；启动后把认出来的旧版本移到回收站 |
+| `scripts/core/OldVersions.gd`、`data/releases.json` | 认旧版本：历次发布 exe 的大小和 SHA-256，下载文件夹、桌面、exe 旁边和以前运行过的位置（`user://installs.json`）里只挑哈希对上、比现在旧的 |
 | `scripts/world/FairyGlade.gd`、`scripts/interactions/FairyPortal.gd`、`shaders/fairy_portal.gdshader` | 仙境林地：只在晴朗夜里出现的特殊事件（仙树、蘑菇圈、水晶、漂浮小岛、月光石门） |
 | `scripts/world/SnowPeak.gd` | 雪山顶：石堆、旗杆、面朝湖的长椅、常年小雪（山体是地形 hills 里的 snow_peak，雪线、林线在布局文件里；远处主峰在 `DistantBackdrop`） |
 | `export_presets.cfg` | Windows 导出设置（单文件 exe，资源打包在里面），输出到 `dist/` |
@@ -244,6 +246,7 @@ pwsh -File devtools/fetch_polyhaven.ps1
 - **画面闪动优化与自然景观**：高画质改用 TAA（走动时锯齿闪烁约减半）、草花远处逐株缩小不再成块闪现、动态分辨率防抖；西边一条从山坡流进湖的小溪，中途一道小瀑布，林道上一座木板桥；西北小山被一道 7.5 m 深的裂谷劈开，林道上架着原木桥，两头能走下谷底
 - **v0.5 新地图、卷轴、新建游戏**：世界二「云海浮岛」（五座浮岛、三座绳桥、十二块跳台、四座风灯和天鲸、八颗云珠、池塘与瀑布）；世界三「琥珀沙丘」（沙丘、能游泳的月牙绿洲、石柱废墟、风蚀石拱、驼队营地、阶梯神殿与六块古代碎片的祭坛），湖畔南部草甸新开沙之门；解说立牌全部换成走近才展开的卷轴；启动大厅加“新建游戏”设定页（23 个选项、9 个预设）和“继续上次的世界”，世界存档 v4；罗盘条、体力、摄影清单、旅行日志收藏页；闪动从根上修（太阳阴影小步更新、100 % 比例不做 FSR 锐化、方块贴图 mipmap）（见 `docs/V0_5.md`）
 - **亚特兰蒂斯与更多玩法**：世界四「亚特兰蒂斯」（泳池馆地下海洋大缸底部的石环潜进去；气泡穹顶下的同心环古城：三圈水环、两圈陆环、山铜神殿与尖塔、柱廊、白石房子、洋流水渠；穹顶外的海底有珊瑚、海带林、沉船、气泡泉、鱼群、蝠鲼、水母和鲸鱼；氧气条、五尊捧镜雕像的光束谜题、珍珠贝壳和六块传说石板、洋流水渠、骑蝠鲼，光照随时刻变）；更多玩法：钓鱼（13 种鱼）、打水漂、按种子寻宝、炉火烹饪（吃了有效果）、五条计时挑战、24 个成就和木屋收藏柜；存档 v5（见 `docs/ATLANTIS.md`）
+- **v0.6.0：地图重画、自动清理旧版本**：世界地图、小地图和三个别的世界的地图换成手绘风（512 像素底图并行烘焙，山体明暗、等高线、树冠点、湖水深浅和岸线，描边的路、小溪、建筑图标、图钉、光门、视野扇形、边框、指北针、比例尺）；新版本启动后把电脑上的旧版本 exe（按历次发布的大小和哈希认）移到回收站，设置里可关（见 `docs/V0_6_0.md`）
 - **CPU 与内存减负**：建筑、码头、小溪、卷轴木架的小网格建好后自动合批，树林改 128 m 分块，远处的地被、卷轴、文字和地下水族馆不再投影，湖面反射探针不拍地被、分辨率减半，旅行日志关着时不重建，第一次下雪的渲染管线在加载时编好，小动物和小地图降频；每帧绘制调用约减半，常见机位帧率约 +45%，下雪和认出新动物时的卡顿没有了；设置里多了“Direct3D 12（内存占用更少）”，进程内存约少一半（见 `docs/PERF_CPU_MEMORY.md`）
 - **界面升级与两种模式**：启动大厅重做（剧情 / 休闲两张模式卡，各显示存档进度；多人只开休闲；右下角显示版本和自动更新检查结果，有新版本时一键“更新并重启”）；单人分剧情模式（老图腾的任务、信、过场和结局）和休闲模式（没有任务，随便玩），两种模式各存一个档；全部界面换成统一的暮色样式（面板、按钮、页签、交互提示的按键帽、勾选框），打开日志、地图、暂停时罗盘小地图和任务栏自动收起；英文界面和字幕补齐；卷轴立牌只写一种语言，跟着界面语言走（见 `docs/UI_MODES.md`）
 - **M3 声音**：游戏有声音了——松风、湖水拍岸、小溪瀑布、雨（进屋后变成屋顶上的雨声，户外的声音 2 秒内变闷）、夏夜虫鸣、林子里的鸟、雷（按闪电距离延迟）、炉火篝火；脚步按草地 / 木板 / 石头 / 雪 / 沙 / 浅水换声音；开门、开灯、生火、坐下、风灯、雕像、祭坛、钓鱼、打水漂、挖宝、划船都有声音；按世界和时段现场生成的轻背景音乐，过场有配乐；设置 → 声音五个音量滑块。全部声音由 `devtools/audio/synth.mjs` 合成（见 `docs/AUDIO_M3.md`）
