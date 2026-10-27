@@ -5,9 +5,8 @@ extends CanvasLayer
 ## 右侧的世界来自 data/worlds/worlds.json（WorldRegistry）：目前只有暮色湖畔开放，其他世界显示“规划中”，
 ## 以后加新世界只改 JSON 和对应场景。打开地图时鼠标放出，世界照常运行。
 
-const PANEL_BG := Color(0.07, 0.08, 0.1, 0.92)
-const INK := Color(0.96, 0.93, 0.86)
-const MUTED := Color(0.72, 0.72, 0.74)
+const INK := UiStyle.TEXT
+const MUTED := UiStyle.TEXT_DIM
 
 var open := false
 var _root: Control
@@ -18,6 +17,7 @@ var _title: Label
 
 
 func _ready() -> void:
+	add_to_group(UiStyle.COVER_GROUP)
 	layer = 15
 	_build()
 	_set_open(false)
@@ -27,6 +27,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("world_map") or (open and event.is_action_pressed("pause")):
 		_set_open(not open)
 		get_viewport().set_input_as_handled()
+
+
+func is_open() -> bool:
+	return open
 
 
 func toggle() -> void:
@@ -54,7 +58,7 @@ func _build() -> void:
 	_root.theme = GameSettings.ui_theme()
 	add_child(_root)
 	var dim := ColorRect.new()
-	dim.color = Color(0.02, 0.03, 0.05, 0.72)
+	dim.color = Color(UiStyle.DIM, 0.8)
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_root.add_child(dim)
 	var margin := MarginContainer.new()
@@ -65,9 +69,7 @@ func _build() -> void:
 	var outer := VBoxContainer.new()
 	outer.add_theme_constant_override("separation", 12)
 	margin.add_child(outer)
-	_title = Label.new()
-	_title.add_theme_font_size_override("font_size", 28)
-	_title.add_theme_color_override("font_color", INK)
+	_title = UiStyle.title("", 30)
 	outer.add_child(_title)
 	var row := HBoxContainer.new()
 	row.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -81,19 +83,12 @@ func _build() -> void:
 	row.add_child(_map)
 	var side := PanelContainer.new()
 	side.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = PANEL_BG
-	sb.set_corner_radius_all(8)
-	sb.set_content_margin_all(18)
-	side.add_theme_stylebox_override("panel", sb)
+	side.add_theme_stylebox_override("panel", UiStyle.panel(0.94, 22))
 	row.add_child(side)
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 10)
 	side.add_child(col)
-	var head := Label.new()
-	head.text = "世界总览"
-	head.add_theme_font_size_override("font_size", 22)
-	head.add_theme_color_override("font_color", INK)
+	var head := UiStyle.title("世界总览", 24)
 	col.add_child(head)
 	_atlas = Control.new()
 	_atlas.custom_minimum_size = Vector2(0.0, 220.0)
@@ -124,6 +119,9 @@ func _refresh_list() -> void:
 		b.text = "%s  ·  %s" % [tr(str(w["name"])), tr(state)]
 		b.tooltip_text = tr(str(w.get("summary", "")))
 		b.pressed.connect(func() -> void: WorldRegistry.enter(id))
+		if id == WorldRegistry.current_id():
+			b.add_theme_stylebox_override("normal", UiStyle.box(Color(UiStyle.HOVER, 0.9), 10, Color(UiStyle.ACCENT, 0.7), 1, Vector4(16, 9, 16, 9)))
+			b.add_theme_color_override("font_color", UiStyle.ACCENT)
 		_list.add_child(b)
 		var s := Label.new()
 		s.text = "    " + tr(str(w.get("summary", "")))

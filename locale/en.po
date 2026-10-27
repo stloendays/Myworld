@@ -2238,3 +2238,99 @@ msgstr "Effects (footsteps, doors)"
 msgid "界面"
 msgstr "Interface"
 
+msgid "休闲模式没有图腾的任务：随便走走、钓钓鱼、看看星星。想跟着老图腾的故事走，回大厅选剧情模式。"
+msgstr "Casual mode has no totem quests: wander, fish, watch the stars. To follow the Old Totem's story, choose Story mode in the lobby."
+
+msgid "剧情模式"
+msgstr "Story mode"
+
+msgid "跟着老图腾的托付，去门后的世界把熄了的光送回去。有任务、信、过场动画和结局。"
+msgstr "Take up the Old Totem's request: go through the gates and carry the lights that went out back home. Quests, letters, cutscenes and an ending."
+
+msgid "继续旅程"
+msgstr "Continue the journey"
+
+msgid "新的旅程"
+msgstr "New journey"
+
+msgid "休闲模式"
+msgstr "Casual mode"
+
+msgid "没有任务，想怎么玩就怎么玩：钓鱼、看星星、换季节，还能和朋友联机。"
+msgstr "No quests, play however you like: fish, watch the stars, change the season, and play online with friends."
+
+msgid "新的世界…"
+msgstr "New world…"
+
+msgid "多人游戏 · 休闲模式"
+msgstr "Multiplayer · Casual mode"
+
+msgid "回到游戏"
+msgstr "Back to the game"
+
+msgid "还没有开始"
+msgstr "Not started yet"
+
+msgid "%s · 第 %d 天 %02d:%02d"
+msgstr "%s · day %d %02d:%02d"
+
+msgid "任务 %d / %d"
+msgstr "Quests %d / %d"
+
+msgid "正在玩"
+msgstr "Playing now"
+
+msgid "已是最新版本"
+msgstr "Up to date"
+
+msgid "正在下载新版本…"
+msgstr "Downloading the new version…"
+
+msgid "开发版本，不检查更新"
+msgstr "Development build, no update check"
+
+msgid "自动检查更新已关闭"
+msgstr "Automatic update check is off"
+
+msgid "即将检查更新"
+msgstr "Checking for updates shortly"
+
+msgid "重试"
+msgstr "Retry"
+
+msgid "输入朋友发来的房间号（例如 K7Q-3MXA），也可以直接输入 IP 地址。联机都在休闲模式里玩。"
+msgstr "Enter the room code a friend sent you (for example K7Q-3MXA), or type an IP address. Online play is always in Casual mode."
+
+msgid "现在是单人游戏。可以创建房间请朋友来，或加入朋友的房间。联机只开休闲模式：正在玩剧情模式的话，会先存好剧情进度，再换到你的休闲世界。"
+msgstr "You are playing alone. Create a room to invite friends, or join a friend's room. Online play is Casual only: if you are in Story mode, your story progress is saved first and you move to your casual world."
+
+msgid "秋天的黄昏，你来到一片湖边。北边的山洞里，守着篝火的老图腾在等一个旅人。"
+msgstr "An autumn dusk, and you come to a lake. In the cave to the north, an old totem keeping a campfire is waiting for a traveller."
+
+msgid "开始新的旅程"
+msgstr "Start a new journey"
+
+msgid "剧情模式已经有一段进度（第 %d 天，任务 %d / %d）。开始新的旅程会先把它备份，再从头开始。"
+msgstr "Story mode already has progress (day %d, quests %d / %d). A new journey backs it up first, then starts from the beginning."
+
+msgid "新的休闲世界"
+msgstr "New casual world"
+
+msgid "新的休闲世界 · 开局后创建房间"
+msgstr "New casual world · the room opens once you start"
+
+msgid "（上次的休闲世界会先备份再开新的）"
+msgstr "(Your last casual world is backed up before the new one starts)"
+
+msgid "暂停"
+msgstr "Paused"
+
+msgid "回到主菜单"
+msgstr "Main menu"
+
+msgid "联机中"
+msgstr "Online"
+
+msgid "游戏模式"
+msgstr "Game mode"
+

@@ -1,6 +1,7 @@
 extends Node
 ## 开发工具：把剧情过场一段一段放出来，每段放到 60 % 时截一张图（带黑边和字幕），输出到 docs/screenshots/story_*.png。
-##   Godot_console.exe --path . --resolution 1600x900 --position 100000,100000 res://devtools/StoryShots.tscn [-- 名称前缀（逗号分隔可多个）]
+##   Godot_console.exe --path . --resolution 1600x900 --position 100000,100000 res://devtools/StoryShots.tscn [-- 名称前缀（逗号分隔可多个）[ en]]
+## 第二个参数写 en：用英文界面拍（英文字幕），文件名加 _en。
 ## 湖畔：new_star（点亮云海后的晴夜）、ember_night（三盏灯都亮后的傍晚）、finale（暮烬之夜图腾讲完故事），
 ## 外加图腾最后一页对话、补完的星图、书桌上的信；然后依次进云海浮岛、琥珀沙丘、亚特兰蒂斯，把那里的光送回去，拍点亮的过场。
 ## 截图期间时间暂停（光照固定）。
@@ -11,6 +12,7 @@ const AT := 0.6
 
 var _main: Node3D
 var _prefix := ""
+var _suffix := ""
 
 
 func _ready() -> void:
@@ -23,6 +25,9 @@ func _run() -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT_DIR))
 	if not OS.get_cmdline_user_args().is_empty():
 		_prefix = OS.get_cmdline_user_args()[0]
+	if OS.get_cmdline_user_args().size() > 1 and OS.get_cmdline_user_args()[1] == "en":
+		GameSettings.set_value("language", "en", false)
+		_suffix = "_en"
 	QuestLog.persist = false
 	_main = (load(MAIN_SCENE) as PackedScene).instantiate()
 	add_child(_main)
@@ -168,7 +173,7 @@ func _shoot(cs: Cutscene, name: String) -> void:
 
 
 func _save(name: String) -> void:
-	var path := ProjectSettings.globalize_path("%s/%s.png" % [OUT_DIR, name])
+	var path := ProjectSettings.globalize_path("%s/%s%s.png" % [OUT_DIR, name, _suffix])
 	get_viewport().get_texture().get_image().save_png(path)
 	print("saved ", path)
 

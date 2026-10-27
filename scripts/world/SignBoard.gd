@@ -1,6 +1,6 @@
 class_name SignBoard
 extends Node3D
-## 中英双语解说卷轴（v0.5 起代替木牌）：木架挂一幅卷轴——纸面、上下两根木轴（黄铜轴头）、轴头垂着红绳穗，
+## 解说卷轴（v0.5 起代替木牌）：木架挂一幅卷轴——纸面、上下两根木轴（黄铜轴头）、轴头垂着红绳穗，
 ## 架子上一块小木签写着标题（远处也知道写的是什么）。正面朝本地 +Z。
 ## 平时卷起；本地玩家（或当前相机）走近到 unroll_radius 以内时平滑展开：下轴往下落，文字随纸面逐行露出；走远卷回去。
 ## 文字在 data/world/signs.json（按 text id），室外卷轴位置在 world_layout.json → signs，建筑与其他世界里的由各自脚本放。
@@ -8,6 +8,8 @@ extends Node3D
 ##   "lectern"：斜面木案（放在鱼缸、泳池边），卷轴沿案面往下铺开；
 ##   "wall"：墙上铜钩挂卷轴（背面贴在本地 z = 0，原点是展开后纸面的中心）。
 ## 纸面先量文字再定尺寸：宽度取 width 与标题宽度中较大者，正文按内宽逐行断好，每行一个 Label3D，永远不会出纸。
+## 纸上只写一种语言：跟着界面语言（设置里选“自动”时就是系统语言）——中文界面写中文，英文界面写英文；
+## 改了语言，所有卷轴按新语言重新写一遍（signs.json 里每幅都有 title_zh / body_zh / title_en / body_en）。
 
 const TEXT_PATH := "res://data/world/signs.json"
 const INK := Color(0.16, 0.11, 0.07)
@@ -20,15 +22,15 @@ const RADIUS := 3.6           ## 走近多少米开始展开
 const WALL_RADIUS := 9.0      ## 挂墙招牌（高处的大字）在远一点就展开
 const HYSTERESIS := 0.8       ## 走远到 半径 + 回差 才卷回去，站在边上不会来回卷
 const TEXT_Z := 0.006         ## 文字离纸面的距离
-## 各段文字的颜色：中文标题深红褐、英文标题暖褐、正文深墨色
-const INKS := {"title_zh": Color(0.36, 0.14, 0.07), "title_en": Color(0.42, 0.28, 0.15)}
+## 各段文字的颜色：标题深红褐、正文深墨色
+const INKS := {"title_zh": Color(0.36, 0.14, 0.07), "title_en": Color(0.36, 0.14, 0.07)}
 const LECTERN_TILT := 40.0    ## 讲台卷轴的案面向后仰的角度，站着低头正好看
 ## 每段文字的字号与段后间距（米）
 const STYLE := {
-	"title_zh": {"px": 56, "gap": 0.01, "align": HORIZONTAL_ALIGNMENT_CENTER},
-	"title_en": {"px": 30, "gap": 0.05, "align": HORIZONTAL_ALIGNMENT_CENTER},
-	"body_zh": {"px": 30, "gap": 0.025, "align": HORIZONTAL_ALIGNMENT_LEFT},
-	"body_en": {"px": 25, "gap": 0.0, "align": HORIZONTAL_ALIGNMENT_LEFT},
+	"title_zh": {"px": 56, "gap": 0.05, "align": HORIZONTAL_ALIGNMENT_CENTER},
+	"title_en": {"px": 46, "gap": 0.05, "align": HORIZONTAL_ALIGNMENT_CENTER},
+	"body_zh": {"px": 30, "gap": 0.0, "align": HORIZONTAL_ALIGNMENT_LEFT},
+	"body_en": {"px": 27, "gap": 0.0, "align": HORIZONTAL_ALIGNMENT_LEFT},
 }
 
 static var _texts: Dictionary = {}
@@ -42,6 +44,7 @@ var force_open := false               ## 截图、自动检查用：不看距离
 var lines: Array[Label3D] = []        ## 纸面上的每一行字（自上而下）
 var line_keys := PackedStringArray()     ## 每一行属于哪一段（title_zh / title_en / body_zh / body_en / rule）
 var title_tag: Label3D = null         ## 木签上的标题（卷起时也看得到）
+var language := ""                    ## 纸上现在写的是哪种语言（zh / en）
 
 var _target := 0.0
 var _check_timer := 0.0
@@ -51,6 +54,8 @@ var _paper_mat: StandardMaterial3D
 var _roll: Node3D                     ## 下轴 + 卷起的纸 + 轴头 + 绳穗
 var _roll_paper: MeshInstance3D
 var _line_bottom: PackedFloat32Array = []   ## 每行字的下沿离上轴多远（米）
+var _width := 1.0
+var _scale := 1.0
 
 
 static func texts() -> Dictionary:
@@ -74,8 +79,28 @@ static func create(id: String, sign_style: String, width: float, scale := 1.0) -
 	var t: Dictionary = texts().get(id, {})
 	if t.is_empty():
 		push_error("SignBoard: signs.json 里没有 %s" % id)
+	sign._width = width
+	sign._scale = scale
 	sign._build(t, width, scale)
 	return sign
+
+
+## 界面现在用的语言（zh / en）：卷轴照它写。
+static func ui_language() -> String:
+	return "en" if TranslationServer.get_locale().begins_with("en") else "zh"
+
+
+## 按现在的界面语言重新写一遍（改了语言时）。
+func rebuild() -> void:
+	for c in get_children():
+		remove_child(c)
+		c.queue_free()
+	lines.clear()
+	line_keys.clear()
+	_line_bottom.clear()
+	title_tag = null
+	_build(texts().get(text_id, {}), _width, _scale)
+	_apply_unroll()
 
 
 ## 一段文字按内宽断成行（与 Label3D 自动换行同样的规则）：返回 [{text, h}]。标题不换行。
@@ -94,16 +119,20 @@ static func split_lines(text: String, font: Font, px: int, wrap_px: int) -> Arra
 func _build(t: Dictionary, width: float, scale: float) -> void:
 	var font := GameSettings.ui_theme().default_font
 	var pixel := PIXEL * scale
+	language = ui_language()
+	if not t.has("title_" + language):
+		language = "zh"
+	var title_key := "title_" + language
 	# 先量：标题不换行，决定最小宽度；正文按内宽断行，累加高度
 	var w := width
-	for key in ["title_zh", "title_en"]:
+	for key in [title_key]:
 		if t.has(key):
 			w = maxf(w, font.get_string_size(str(t[key]), HORIZONTAL_ALIGNMENT_LEFT, -1, STYLE[key]["px"]).x * pixel + MARGIN * 2.0)
 	var inner := w - MARGIN * 2.0
 	var wrap_px := int(inner / pixel)
 	var rows: Array[Dictionary] = []   # {text, px, align, key, y_top, h}
 	var y := MARGIN
-	var keys := ["title_zh", "title_en", "body_zh", "body_en"].filter(func(k: String) -> bool: return t.has(k))
+	var keys := [title_key, "body_" + language].filter(func(k: String) -> bool: return t.has(k))
 	var rule_y := -1.0
 	for i in keys.size():
 		var key: String = keys[i]
@@ -114,7 +143,7 @@ func _build(t: Dictionary, width: float, scale: float) -> void:
 			rows.append({"text": ln["text"], "px": st["px"], "align": st["align"], "key": key, "y": y, "h": lh})
 			y += lh
 		y += float(st["gap"])
-		if key == "title_en" and i + 1 < keys.size():
+		if key == title_key and i + 1 < keys.size():
 			rule_y = y - float(st["gap"]) * 0.55
 	var h := y + MARGIN - (float(STYLE[keys[-1]]["gap"]) if not keys.is_empty() else 0.0)
 	panel_size = Vector2(w, h)
@@ -207,7 +236,7 @@ func _build(t: Dictionary, width: float, scale: float) -> void:
 	# 文字：每行一个 Label3D，居中或左对齐到内边距
 	for r: Dictionary in rows:
 		var l := Label3D.new()
-		l.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED   # 纸面本来就中英双语，不随界面语言替换
+		l.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED   # 文字已经按界面语言选好
 		l.text = r["text"]
 		l.font = font
 		l.font_size = r["px"]
@@ -258,6 +287,13 @@ func _build(t: Dictionary, width: float, scale: float) -> void:
 func _ready() -> void:
 	# 挂墙招牌一开始就按距离决定；其余从卷起开始
 	set_process(not Engine.is_editor_hint())
+	if not Engine.is_editor_hint():
+		GameSettings.changed.connect(_on_settings_changed)
+
+
+func _on_settings_changed() -> void:
+	if is_inside_tree() and ui_language() != language:
+		rebuild()
 
 
 func _process(delta: float) -> void:
@@ -325,10 +361,10 @@ func _apply_unroll() -> void:
 			(_scroll.get_node("Rule") as Node3D).visible = show
 
 
-## 木签：卷起时也看得到的标题（中文大、英文小），远处 30 m 外不画。
+## 木签：卷起时也看得到的标题（界面语言），远处 30 m 外不画。
 func _tag(t: Dictionary, font: Font, scale: float, pos: Vector3, yaw: float, parent: Node3D = null) -> void:
 	var host: Node3D = parent if parent != null else self
-	var zh := str(t.get("title_zh", ""))
+	var zh := str(t.get("title_" + language, t.get("title_zh", "")))
 	if zh == "":
 		return
 	var px := 40

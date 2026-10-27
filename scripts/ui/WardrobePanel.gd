@@ -27,7 +27,7 @@ func _process(delta: float) -> void:
 
 func _build() -> void:
 	var dim := ColorRect.new()
-	dim.color = Color(0.02, 0.02, 0.05, 0.6)
+	dim.color = UiStyle.DIM
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(dim)
 	var center := CenterContainer.new()

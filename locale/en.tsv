@@ -743,3 +743,35 @@ E  拆开信	E  Open the letter
 环境声（风雨鸟虫）	Ambience
 音效（脚步、开门）	Effects (footsteps, doors)
 界面	Interface
+休闲模式没有图腾的任务：随便走走、钓钓鱼、看看星星。想跟着老图腾的故事走，回大厅选剧情模式。	Casual mode has no totem quests: wander, fish, watch the stars. To follow the Old Totem's story, choose Story mode in the lobby.
+剧情模式	Story mode
+跟着老图腾的托付，去门后的世界把熄了的光送回去。有任务、信、过场动画和结局。	Take up the Old Totem's request: go through the gates and carry the lights that went out back home. Quests, letters, cutscenes and an ending.
+继续旅程	Continue the journey
+新的旅程	New journey
+休闲模式	Casual mode
+没有任务，想怎么玩就怎么玩：钓鱼、看星星、换季节，还能和朋友联机。	No quests, play however you like: fish, watch the stars, change the season, and play online with friends.
+新的世界…	New world…
+多人游戏 · 休闲模式	Multiplayer · Casual mode
+回到游戏	Back to the game
+还没有开始	Not started yet
+%s · 第 %d 天 %02d:%02d	%s · day %d %02d:%02d
+任务 %d / %d	Quests %d / %d
+正在玩	Playing now
+已是最新版本	Up to date
+正在下载新版本…	Downloading the new version…
+开发版本，不检查更新	Development build, no update check
+自动检查更新已关闭	Automatic update check is off
+即将检查更新	Checking for updates shortly
+重试	Retry
+输入朋友发来的房间号（例如 K7Q-3MXA），也可以直接输入 IP 地址。联机都在休闲模式里玩。	Enter the room code a friend sent you (for example K7Q-3MXA), or type an IP address. Online play is always in Casual mode.
+现在是单人游戏。可以创建房间请朋友来，或加入朋友的房间。联机只开休闲模式：正在玩剧情模式的话，会先存好剧情进度，再换到你的休闲世界。	You are playing alone. Create a room to invite friends, or join a friend's room. Online play is Casual only: if you are in Story mode, your story progress is saved first and you move to your casual world.
+秋天的黄昏，你来到一片湖边。北边的山洞里，守着篝火的老图腾在等一个旅人。	An autumn dusk, and you come to a lake. In the cave to the north, an old totem keeping a campfire is waiting for a traveller.
+开始新的旅程	Start a new journey
+剧情模式已经有一段进度（第 %d 天，任务 %d / %d）。开始新的旅程会先把它备份，再从头开始。	Story mode already has progress (day %d, quests %d / %d). A new journey backs it up first, then starts from the beginning.
+新的休闲世界	New casual world
+新的休闲世界 · 开局后创建房间	New casual world · the room opens once you start
+（上次的休闲世界会先备份再开新的）	(Your last casual world is backed up before the new one starts)
+暂停	Paused
+回到主菜单	Main menu
+联机中	Online
+游戏模式	Game mode

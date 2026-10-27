@@ -80,7 +80,7 @@ func is_open() -> bool:
 
 func get_prompt(_actor: Node) -> String:
 	match _state:
-		"locked":
+		"locked" when GameRules.is_story():
 			return tr("E  看看门锁")
 		"open":
 			return tr("E  关上木门")
@@ -90,6 +90,10 @@ func get_prompt(_actor: Node) -> String:
 func interact(_actor: Node) -> void:
 	if _state != "locked":
 		set_open(_state != "open")
+		return
+	# 休闲模式没有剧情：门没锁，推开就进
+	if not GameRules.is_story():
+		set_open(true)
 		return
 	if Net.is_client():
 		EventBus.toast_requested.emit(tr("联机做客时，这扇门要房主来开。"))

@@ -5,6 +5,8 @@ extends Node
 ##   时钟（一天长度 / 时间静止）、季节（季节长度 / 锁定）、天气（变天频率 / 锁定）、小动物（数量、亲人）、仙境（出现频率）、
 ##   任务与图鉴开关、HUD（小地图、罗盘、任务追踪、问号标记）、体力、夜晚亮度、世界种子。
 ## 起始季节、时刻、天气、出生世界与出生点只在开局时用一次（apply_start）。
+## 最上面一层是游戏模式 play：剧情（story，图腾的任务、信、新星座、暮烬之夜和过场都在）或休闲（casual，没有任务和剧情，
+## 小屋的门开着、星座全在天上，随便玩；联机只开休闲模式）。大厅的两张模式卡决定它，设定页上不再单独列出。
 
 signal changed
 
@@ -13,6 +15,8 @@ const MODES := ["stroll", "explore", "adventure", "photo", "challenge"]
 ## 设定页上的选项（按分组顺序显示）。kind：choice = 下拉；toggle = 开关；seed = 数字 + 随机按钮。
 ## 名字和选项文字都是中文原文，界面显示时 tr()（英文在 locale/en.po）。
 const OPTIONS := [
+	{"key": "play", "group": "玩法", "label": "游戏模式", "kind": "choice", "default": "story",
+		"choices": [["story", "剧情模式"], ["casual", "休闲模式"]]},
 	{"key": "mode", "group": "玩法", "label": "玩法模式", "kind": "choice", "default": "explore",
 		"choices": [["stroll", "悠闲漫步"], ["explore", "探索收集"], ["adventure", "任务冒险"], ["photo", "摄影"], ["challenge", "挑战"]]},
 	{"key": "spawn_world", "group": "世界与出生", "label": "出生世界", "kind": "choice", "default": "dusk_lake",
@@ -145,7 +149,34 @@ static func sanitize(d: Dictionary) -> Dictionary:
 				for c: Array in o["choices"]:
 					if str(c[0]) == str(v):
 						out[k] = c[0]
+	# 剧情模式离不开任务、图鉴和收集品；休闲模式没有任务（“任务冒险”的玩法风格换成“探索收集”）
+	if out["play"] == "story":
+		for k in ["quests", "journal", "collectibles"]:
+			out[k] = true
+	else:
+		out["quests"] = false
+		if out["mode"] == "adventure":
+			out["mode"] = "explore"
 	return out
+
+
+## 剧情模式开新局的规则：任务冒险的风格，其他按默认。
+static func story_defaults() -> Dictionary:
+	var d := with_mode(defaults(), "adventure")
+	d["play"] = "story"
+	return sanitize(d)
+
+
+## 休闲模式开新局的默认规则（设定页还能再改）。
+static func casual_defaults() -> Dictionary:
+	var d := defaults()
+	d["play"] = "casual"
+	return with_mode(d, "explore")
+
+
+## 剧情模式（有任务、信、新星座、暮烬之夜和剧情过场）。
+func is_story() -> bool:
+	return str(get_rule("play")) == "story"
 
 
 func get_rule(key: String) -> Variant:
@@ -179,11 +210,12 @@ static func with_mode(base: Dictionary, mode: String) -> Dictionary:
 	return sanitize(d)
 
 
+## 设定页的一键预设（都是休闲模式的世界）。
 static func preset_rules(id: String) -> Dictionary:
 	for p: Dictionary in PRESETS:
 		if p["id"] == id:
 			var r: Dictionary = p["rules"]
-			var d := with_mode(defaults(), str(r.get("mode", "explore")))
+			var d := with_mode(casual_defaults(), str(r.get("mode", "explore")))
 			for k in r:
 				d[k] = r[k]
 			return sanitize(d)

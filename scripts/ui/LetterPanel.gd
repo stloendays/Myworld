@@ -17,6 +17,7 @@ var _chart: ChartView
 
 
 func _ready() -> void:
+	add_to_group(UiStyle.COVER_GROUP)
 	layer = 20
 	add_to_group("letter_panel")
 	_build()

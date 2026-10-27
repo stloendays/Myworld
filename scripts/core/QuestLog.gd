@@ -128,6 +128,15 @@ static func requirements_met(q: Dictionary) -> bool:
 	return true
 
 
+## 休闲模式里图腾随口说的一句（按界面语言，每次随机一句）。
+func casual_line() -> String:
+	var lines: Array = _data.get("casual", [])
+	if lines.is_empty():
+		return line("greeting")
+	var d: Dictionary = lines[randi() % lines.size()]
+	return str(d.get("en" if TranslationServer.get_locale().begins_with("en") else "zh", ""))
+
+
 ## 暮烬之夜图腾讲的最后一个故事（按界面语言，一页一句）。
 func finale_lines() -> PackedStringArray:
 	var out := PackedStringArray()

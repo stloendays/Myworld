@@ -172,18 +172,18 @@ func _draw_wheel() -> void:
 			pts.append(center + Vector2(cos(a), sin(a)) * INNER)
 		var id := String(ITEMS[i][0])
 		var active := id == current or (id == "rest" and current in FirstPersonController.EMOTE_POSES)
-		var fill := Color(0.95, 0.78, 0.42, 0.92) if i == hovered else Color(0.08, 0.09, 0.11, 0.78)
+		var fill := Color(UiStyle.ACCENT, 0.92) if i == hovered else Color(UiStyle.BG, 0.82)
 		_wheel.draw_colored_polygon(pts, fill)
 		pts.append(pts[0])
-		_wheel.draw_polyline(pts, Color(1.0, 0.86, 0.5) if active else Color(1.0, 1.0, 1.0, 0.25), 2.5 if active else 1.2, true)
+		_wheel.draw_polyline(pts, UiStyle.ACCENT if active else Color(1.0, 1.0, 1.0, 0.25), 2.5 if active else 1.2, true)
 		var label := tr(String(ITEMS[i][1]))
 		var p := center + Vector2(cos(mid), sin(mid)) * (INNER + RADIUS) * 0.5
-		var ink := Color(0.1, 0.08, 0.05) if i == hovered else Color(0.96, 0.94, 0.88)
+		var ink := Color(0.12, 0.07, 0.05) if i == hovered else UiStyle.TEXT
 		var w := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, 22).x
 		_wheel.draw_string(font, p + Vector2(-w * 0.5, 4.0), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 22, ink)
 		var key := "%d" % (i + 1)
 		_wheel.draw_string(font, p + Vector2(-4.0, 26.0), key, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, ink * Color(1, 1, 1, 0.7))
-	_wheel.draw_circle(center, INNER - 6.0, Color(0.06, 0.07, 0.09, 0.85))
+	_wheel.draw_circle(center, INNER - 6.0, Color(UiStyle.BG, 0.9))
 	# 中央写选中后会做什么（休息格按当前状态显示坐下 / 躺下 / 起身），字号按圆的宽度缩小，英文也放得下
 	var hint := tr("动作")
 	if hovered == 0:
@@ -193,11 +193,11 @@ func _draw_wheel() -> void:
 	var fit := (INNER - 14.0) * 2.0
 	var hs := mini(17, int(17.0 * fit / maxf(1.0, font.get_string_size(hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 17).x)))
 	var hw := font.get_string_size(hint, HORIZONTAL_ALIGNMENT_LEFT, -1, hs).x
-	_wheel.draw_string(font, center + Vector2(-hw * 0.5, hs * 0.35), hint, HORIZONTAL_ALIGNMENT_LEFT, -1, hs, Color(0.96, 0.94, 0.88))
+	_wheel.draw_string(font, center + Vector2(-hw * 0.5, hs * 0.35), hint, HORIZONTAL_ALIGNMENT_LEFT, -1, hs, UiStyle.TEXT)
 	var foot := tr("松开 G 确认") + "  ·  " + tr("拍照 F12  ·  G / Esc 收起") if hovered >= 0 else tr("拍照 F12  ·  G / Esc 收起")
 	var fw := font.get_string_size(foot, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
 	_wheel.draw_string_outline(font, center + Vector2(-fw * 0.5, RADIUS + 34.0), foot, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, 5, Color(0, 0, 0, 0.7))
-	_wheel.draw_string(font, center + Vector2(-fw * 0.5, RADIUS + 34.0), foot, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color(0.96, 0.94, 0.88))
+	_wheel.draw_string(font, center + Vector2(-fw * 0.5, RADIUS + 34.0), foot, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, UiStyle.TEXT)
 
 
 ## 拍照：隐藏界面一帧，截下画面存成 PNG，白光一闪。返回保存路径（无窗口时返回 ""）。

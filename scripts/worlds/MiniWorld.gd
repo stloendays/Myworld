@@ -119,7 +119,7 @@ func story_anchor(name: String) -> Variant:
 
 ## 这个世界的光送回去的那一刻放一段过场（设置里关掉了就不放；回湖畔以后新星座由 StoryDirector 接着放）。
 func play_story(id: String) -> void:
-	if not GameSettings.story_cutscenes or Cutscene.any_playing(get_tree()) or player == null:
+	if not GameSettings.story_cutscenes or not GameRules.is_story() or Cutscene.any_playing(get_tree()) or player == null:
 		return
 	Cutscene.run(self, id, story_anchor)
 

@@ -10,6 +10,7 @@ var _opened_ms := 0
 
 
 func _ready() -> void:
+	add_to_group(UiStyle.COVER_GROUP)
 	layer = 18
 	add_to_group("cooking_panel")
 	_build()
@@ -63,7 +64,7 @@ func _refresh() -> void:
 	var names := PackedStringArray()
 	for id: String in have:
 		names.append("%s ×%d" % [Play.text(Play.fish(id), "name"), int(have[id])])
-	_box.add_child(_label(tr("鱼篓：") + ("、".join(names) if not names.is_empty() else tr("空的（按 R 去钓几条）")), 19, Color(0.92, 0.9, 0.86)))
+	_box.add_child(_label(tr("鱼篓：") + ("、".join(names) if not names.is_empty() else tr("空的（按 R 去钓几条）")), 19, UiStyle.TEXT))
 	var i := 0
 	for r: Dictionary in Play.recipes():
 		i += 1
@@ -72,7 +73,7 @@ func _refresh() -> void:
 		_box.add_child(row)
 		var b: Dictionary = (Play.fish_data.get("buffs", {}) as Dictionary).get(str(r["buff"]), {})
 		var need := tr("%d 条鱼") % int(r["fish"]) + (tr("（%d 种不同的）") % int(r["kinds"]) if int(r["kinds"]) > 1 else "")
-		var l := _label("%d  %s   ·   %s   ·   %s：%s" % [i, Play.text(r, "name"), need, Play.text(b, "name"), Play.text(b, "desc")], 20, Color(1.0, 0.88, 0.6), true)
+		var l := _label("%d  %s   ·   %s   ·   %s：%s" % [i, Play.text(r, "name"), need, Play.text(b, "name"), Play.text(b, "desc")], 20, UiStyle.ACCENT, true)
 		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.add_child(l)
 		var btn := Button.new()
@@ -106,7 +107,7 @@ func _build() -> void:
 	_root.theme = GameSettings.ui_theme()
 	add_child(_root)
 	var dim := ColorRect.new()
-	dim.color = Color(0.03, 0.03, 0.05, 0.45)
+	dim.color = UiStyle.DIM
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_root.add_child(dim)
 	var center := CenterContainer.new()
@@ -124,10 +125,10 @@ func _build() -> void:
 	margin.add_child(col)
 	var head := HBoxContainer.new()
 	col.add_child(head)
-	var title := _label(tr("炉火烹饪"), 28, Color(1.0, 0.92, 0.75))
+	var title := _label(tr("炉火烹饪"), 30, UiStyle.ACCENT)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title)
-	head.add_child(_label(tr("1 / 2 / 3 做菜   ·   E / Esc 关闭"), 16, Color(0.85, 0.82, 0.76)))
+	head.add_child(_label(tr("1 / 2 / 3 做菜   ·   E / Esc 关闭"), 16, UiStyle.TEXT_DIM))
 	_box = VBoxContainer.new()
 	_box.add_theme_constant_override("separation", 10)
 	col.add_child(_box)

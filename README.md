@@ -4,7 +4,7 @@
 
 - 引擎：**Godot 4.7.2 Standard**（GDScript，Forward+，Jolt Physics），Windows 单机优先
 - 需求规格：[docs/DEVELOPMENT_SPEC.md](docs/DEVELOPMENT_SPEC.md)（唯一需求来源）；阶段指令：[docs/AGENT_HANDOFF.md](docs/AGENT_HANDOFF.md)
-- 当前进度：**M0、M1、第一轮正式美术、M2 天气系统、方块人物、泳池馆与地下水族馆、小动物、雷暴/彩虹/风、聊天框、小地图、开发者模式、第一人称双手、木屋生活、独木舟与湖上探索、性能优化、可潜水的海洋大缸、木屋国际象棋、动作轮盘、世界地图与全屏、联机（最多 4 人）与中英界面、自动更新、新立牌、夜里的仙境林地、东北角雪山、内存与卡顿优化、图腾山洞与任务、星座与图鉴、石头小屋、跨世界旅行、画面闪动优化、小溪瀑布与裂谷、启动画面与开场过场、云海浮岛与琥珀沙丘、解说卷轴、新建游戏设定与存档、亚特兰蒂斯与六个新玩法、划船人的信与石头小屋、第一章收尾（新星座、暮烬之夜、终章与剧情过场）、M3 声音已完成**，自动检查 135/135、启动流程 6/6、联机检查 12/12 通过。见 [docs/QA_M0_M1.md](docs/QA_M0_M1.md)、[docs/ART_PASS.md](docs/ART_PASS.md)、[docs/M2_WEATHER_CHARACTER.md](docs/M2_WEATHER_CHARACTER.md)、[docs/POOLHOUSE_FAUNA.md](docs/POOLHOUSE_FAUNA.md)、[docs/CHAT.md](docs/CHAT.md)、[docs/MINIMAP_DEVMODE.md](docs/MINIMAP_DEVMODE.md)、[docs/CABIN_LIFE_CANOE.md](docs/CABIN_LIFE_CANOE.md)、[docs/PERFORMANCE.md](docs/PERFORMANCE.md)、[docs/AQUARIUM_DIVE.md](docs/AQUARIUM_DIVE.md)、[docs/CHESS.md](docs/CHESS.md)、[docs/INTERACTIONS_WORLDMAP.md](docs/INTERACTIONS_WORLDMAP.md)、[docs/COOP.md](docs/COOP.md)、[docs/V0_3.md](docs/V0_3.md)、[docs/SNOW_PEAK.md](docs/SNOW_PEAK.md)、[docs/MEMORY_STUTTER.md](docs/MEMORY_STUTTER.md)、[docs/CAVE_QUESTS.md](docs/CAVE_QUESTS.md)、[docs/NATURE_FLICKER.md](docs/NATURE_FLICKER.md)、[docs/BOOT_INTRO_HANDS.md](docs/BOOT_INTRO_HANDS.md)、[docs/V0_5.md](docs/V0_5.md)、[docs/ATLANTIS.md](docs/ATLANTIS.md)、[docs/LETTERS_COTTAGE.md](docs/LETTERS_COTTAGE.md)、[docs/FLICKER_BRIDGE.md](docs/FLICKER_BRIDGE.md)、[docs/STORY_EMBERS.md](docs/STORY_EMBERS.md)、[docs/AUDIO_M3.md](docs/AUDIO_M3.md)
+- 当前进度：**M0、M1、第一轮正式美术、M2 天气系统、方块人物、泳池馆与地下水族馆、小动物、雷暴/彩虹/风、聊天框、小地图、开发者模式、第一人称双手、木屋生活、独木舟与湖上探索、性能优化、可潜水的海洋大缸、木屋国际象棋、动作轮盘、世界地图与全屏、联机（最多 4 人）与中英界面、自动更新、新立牌、夜里的仙境林地、东北角雪山、内存与卡顿优化、图腾山洞与任务、星座与图鉴、石头小屋、跨世界旅行、画面闪动优化、小溪瀑布与裂谷、启动画面与开场过场、云海浮岛与琥珀沙丘、解说卷轴、新建游戏设定与存档、亚特兰蒂斯与六个新玩法、划船人的信与石头小屋、第一章收尾（新星座、暮烬之夜、终章与剧情过场）、M3 声音、界面升级与剧情 / 休闲两种模式已完成**，自动检查 136/136、启动流程 6/6、联机检查 12/12 通过。见 [docs/QA_M0_M1.md](docs/QA_M0_M1.md)、[docs/ART_PASS.md](docs/ART_PASS.md)、[docs/M2_WEATHER_CHARACTER.md](docs/M2_WEATHER_CHARACTER.md)、[docs/POOLHOUSE_FAUNA.md](docs/POOLHOUSE_FAUNA.md)、[docs/CHAT.md](docs/CHAT.md)、[docs/MINIMAP_DEVMODE.md](docs/MINIMAP_DEVMODE.md)、[docs/CABIN_LIFE_CANOE.md](docs/CABIN_LIFE_CANOE.md)、[docs/PERFORMANCE.md](docs/PERFORMANCE.md)、[docs/AQUARIUM_DIVE.md](docs/AQUARIUM_DIVE.md)、[docs/CHESS.md](docs/CHESS.md)、[docs/INTERACTIONS_WORLDMAP.md](docs/INTERACTIONS_WORLDMAP.md)、[docs/COOP.md](docs/COOP.md)、[docs/V0_3.md](docs/V0_3.md)、[docs/SNOW_PEAK.md](docs/SNOW_PEAK.md)、[docs/MEMORY_STUTTER.md](docs/MEMORY_STUTTER.md)、[docs/CAVE_QUESTS.md](docs/CAVE_QUESTS.md)、[docs/NATURE_FLICKER.md](docs/NATURE_FLICKER.md)、[docs/BOOT_INTRO_HANDS.md](docs/BOOT_INTRO_HANDS.md)、[docs/V0_5.md](docs/V0_5.md)、[docs/ATLANTIS.md](docs/ATLANTIS.md)、[docs/LETTERS_COTTAGE.md](docs/LETTERS_COTTAGE.md)、[docs/FLICKER_BRIDGE.md](docs/FLICKER_BRIDGE.md)、[docs/STORY_EMBERS.md](docs/STORY_EMBERS.md)、[docs/AUDIO_M3.md](docs/AUDIO_M3.md)、[docs/UI_MODES.md](docs/UI_MODES.md)
 
 ![湖岸出生点](docs/screenshots/m1_01_spawn_dusk.png)
 
@@ -24,7 +24,7 @@
 
 ## 下载
 
-Windows 版：到 [Releases](https://github.com/stloendays/Myworld/releases/latest) 下载 `DuskLake.exe`，放在任意文件夹双击运行。游戏启动时会自动检查新版本，在大厅或 设置 → 关于 里一键更新。
+Windows 版：到 [Releases](https://github.com/stloendays/Myworld/releases/latest) 下载 `DuskLake.exe`，放在任意文件夹双击运行。游戏启动时会自动检查新版本，大厅右下角显示检查结果，有新版本时点“更新并重启”（设置 → 关于 里也可以）。
 
 ## 运行
 
@@ -81,7 +81,7 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | 和老图腾说话 | 北边山洞里看着图腾按 E；E / 空格继续，1–3 选选项，Esc 离开 |
 | 解说卷轴 | 走近 3.6 m 自动展开、走远卷起；第三人称面朝展开的卷轴时镜头拉近到肩后 |
 | 全屏 | F11 或 Alt + Enter |
-| 开局 | 启动大厅：“继续上次的世界”；“单人游戏 / 创建房间”先到“新建游戏”设定页（玩法模式、出生世界与出生点、季节时刻天气、一天长度、天气变化、小动物、仙境、任务图鉴、小地图罗盘、体力、夜晚亮度、种子，9 个一键预设） |
+| 开局 | 启动大厅两张单人模式卡：**剧情模式**（老图腾的任务、信、过场和结局；“继续旅程 / 新的旅程”）和**休闲模式**（没有任务，随便玩；“继续 / 新的世界…”到设定页：玩法模式、出生世界与出生点、季节时刻天气、一天长度、天气变化、小动物、仙境、图鉴、小地图罗盘、体力、夜晚亮度、种子，一键预设）。两种模式各存一个档，互不覆盖 |
 | 别的世界 | 图腾山洞尽头的光门 → 云海浮岛；南部草甸西边的沙之门 → 琥珀沙丘；泳池馆地下海洋大缸底部的石环（潜下去游过去）→ 亚特兰蒂斯；那边的光门回湖畔。掉出浮岛会被风托回最后站稳的地方 |
 | 罗盘 / 体力 | 屏幕上方的罗盘条（方位、探索点、收集品、光门）；开了“奔跑体力 / 游泳体力”时下方有体力条 |
 | 钓鱼 | R 甩竿（准星越高甩得越远），鱼漂沉下去时 1.5 秒内再按 R 收竿；湖、绿洲、浮岛池塘、亚特兰蒂斯水环各有自己的鱼 |
@@ -90,11 +90,11 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | 烹饪 | 木屋铸铁炉顶上的铁锅、沙丘营地篝火上的铁锅：看着按 E，1 / 2 / 3 做烤鱼、鱼汤、海鲜拼盘（吃了有效果） |
 | 计时挑战 | 走（游）进金色起点环开始计时：林道奔跑、绳桥穿越、云海跳台、沙丘冲刺、潜水环 |
 | 亚特兰蒂斯 | 穹顶外屏幕下方是氧气条，气泡泉补满；看着捧镜雕像按 E 转 45°；走进漩涡泉坐洋流水渠；看着大蝠鲼按 E 骑上去（E 松手） |
-| 联机 | 启动时的大厅里“创建房间 / 加入房间”（输入房间号）；游戏中 Esc →“多人房间”；访客照房主的本局设定走 |
-| 界面语言 | 默认跟随系统（中文系统显示中文）；大厅或 设置 → 操作 里可改 English / 中文 |
+| 联机 | 只开休闲模式：大厅“多人游戏 · 休闲模式”里“创建房间 / 加入房间”（输入房间号）；游戏中 Esc →“多人房间”；正在玩剧情时创建房间会先存好剧情、换到你的休闲世界；访客照房主的本局设定走 |
+| 界面语言 | 默认跟随系统（中文系统显示中文）；大厅或 设置 → 操作 里可改 English / 中文；卷轴立牌、过场字幕、图腾和信都跟着换 |
 | 第一 / 第三人称 | V（第一人称能看到自己的双手，大小在 设置 → 视角 → 手的大小 里调） |
 | 小地图 | M（右上角圆形小地图，随朝向旋转，下方显示区域名） |
-| 暂停 / 释放鼠标 | Esc（“设置”：画面、视角、操作、小地图、开发者，自动保存；“人物外观”换发型和衣服） |
+| 暂停 / 释放鼠标 | Esc（“设置”：画面、视角、操作、声音、小地图、关于、开发者，自动保存；“人物外观”换发型和衣服；“回到主菜单”先存档再回大厅） |
 | 坐标信息 | F3（日期时间天气、帧率、世界坐标、朝向、所在区域、室内/室外） |
 | 聊天 | T 或 Enter 打开，/ 直接输入命令（/help 查看），↑↓ 翻历史，Esc 取消；/tp 在云海浮岛、琥珀沙丘里用那个世界的坐标 |
 | 开发者模式 | F2（左侧开发者面板：天气、季节、时间、传送；F 飞行，N 穿墙，F4 收起面板） |
@@ -160,8 +160,8 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | `scripts/core/GameSettings.gd` | 设置与按键（Autoload），保存在 `user://settings.json` |
 | `scripts/systems/AudioDirector.gd`（Autoload `Sound`）、`scripts/audio/`、`data/audio/sounds.json`、`music.json` | M3 声音：六条总线、按世界状态混的环境层、进屋 / 水下的衰减与低通、湖水 / 小溪跟随声源、炉火篝火瀑布等定位声源（`SoundEmitter`）、按地面换的脚步、交互与界面音效、生成式背景音乐和过场配乐（`MusicDirector`） |
 | `devtools/audio/synth.mjs`、`assets/audio/` | 全部声音的合成脚本（Node，原创 CC0）和它生成的 102 个 WAV |
-| `scripts/systems/SaveManager.gd` | 世界存档（Autoload）：`user://saves/world.json`（v4，临时文件 + 原子替换），新建 / 继续、自动存、旧档迁移 |
-| `scripts/core/GameRules.gd` | 本局玩法与设定（Autoload）：23 个选项、5 种玩法模式、9 个预设；各系统按它调整，联机以房主为准 |
+| `scripts/systems/SaveManager.gd` | 世界存档（Autoload）：剧情、休闲各一个槽 `user://saves/story.json`、`casual.json`（v5，临时文件 + 原子替换），新建 / 继续、自动存、旧档迁移（v0.5 的 `world.json` 按有无任务分进两个槽） |
+| `scripts/core/GameRules.gd` | 本局玩法与设定（Autoload）：游戏模式（剧情 / 休闲）、玩法模式、开局与世界设定和预设；各系统按它调整（`is_story()` 管剧情内容），联机以房主为准 |
 | `scripts/worlds/MiniWorld.gd`、`World02.gd`、`World03.gd`、`WindBeacon.gd`、`RelicAltar.gd`、`data/worlds/cloudsea.json`、`dunes.json` | 湖畔以外的世界：共用底座（地形、界面、收集品、探索点、掉落回岸）；云海浮岛、琥珀沙丘；风灯、祭坛 |
 | `scripts/worlds/World04.gd`、`LightStatue.gd`、`MantaHandle.gd`、`scripts/world/ShapedWater.gd`、`AtlantisRing.gd`、`data/worlds/atlantis.json`、`shaders/seafloor.gdshader`、`bubble_dome.gdshader`、`water_flow.gdshader` | 亚特兰蒂斯：同心环城、穹顶与海、雕像谜题、蝠鲼、湖畔大缸里的入口石环；海床焦散、气泡穹顶、流动水面 |
 | `scripts/play/Play.gd`、`PlayActivities.gd`、`RailRide.gd`、`CookPot.gd`、`CookingPanel.gd`、`TrophyCabinet.gd`、`data/play/*.json` | 更多玩法：规则与记录（Autoload）、每个世界的钓鱼 / 打水漂 / 挖宝 / 挑战、沿路线带人走（洋流、蝠鲼）、铁锅与烹饪面板、木屋收藏柜；鱼、菜、宝藏点、挑战路线、成就 |
@@ -175,7 +175,7 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | `shaders/pool_tiles.gdshader`、`pool_water.gdshader`、`caustic_sand.gdshader`、`foliage.gdshader`、`include/` | 泳池马赛克与焦散、池水、缸底沙、随风摆动的植被、雨点涟漪与焦散函数 |
 | `scripts/animals/`（FaunaData、FaunaSpawner、Animal、BlockyModel、BlockyMesh、FishSchool） | 小动物：出没规则、生成、行为、方块模型、鱼群 |
 | `data/animals/species.json` | 所有动物的部件、配色、速度、出没规则与生成点、萤火虫 |
-| `scripts/world/SignBoard.gd`、`SignsBuilder.gd`、`data/world/signs.json` | 中英双语解说卷轴（立架 / 斜案 / 挂墙，纸面按文字自动定尺寸、逐行断好；走近展开、走远卷起）；室外卷轴位置在布局文件 `signs` 里 |
+| `scripts/world/SignBoard.gd`、`SignsBuilder.gd`、`data/world/signs.json` | 解说卷轴，只写一种语言、跟界面语言走（立架 / 斜案 / 挂墙，纸面按文字自动定尺寸、逐行断好；走近展开、走远卷起）；室外卷轴位置在布局文件 `signs` 里 |
 | `scripts/ui/ActionBar.gd` | G 动作轮盘（平时不显示）：休息、挥手、跳舞、鼓掌，F12 拍照（动作本身在 `FirstPersonController.do_emote()` 与 `CharacterModel` 的姿势和手势里） |
 | `scripts/ui/WorldMap.gd`、`scripts/core/WorldRegistry.gd`、`data/worlds/worlds.json` | Tab 世界地图；世界注册表（世界列表、状态、根场景、到达位置） |
 | `scripts/core/WorldTravel.gd`、`scenes/worlds/World02.tscn`、`World03.tscn` | 跨世界旅行（Autoload）：先卸载当前世界、清缓存，再在后台线程加载下一个世界 |
@@ -197,7 +197,8 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | `scripts/world/SnowPeak.gd` | 雪山顶：石堆、旗杆、面朝湖的长椅、常年小雪（山体是地形 hills 里的 snow_peak，雪线、林线在布局文件里；远处主峰在 `DistantBackdrop`） |
 | `export_presets.cfg` | Windows 导出设置（单文件 exe，资源打包在里面），输出到 `dist/` |
 | `tests/NetTest.tscn` | 联机检查（两个进程本机回环，11 项：房主规则同步、加入、同步人物与动作、门、聊天、独木舟、天气时间、房主离开、版本不一致） |
-| `scripts/net/`（NetworkManager、RemotePlayer、RemotePlayers、RoomCode）、`scripts/ui/LobbyMenu.gd` | 联机：房主自建房间（ENet）、房间号、远端玩家显示与同步；启动大厅 |
+| `scripts/net/`（NetworkManager、RemotePlayer、RemotePlayers、RoomCode）、`scripts/ui/LobbyMenu.gd` | 联机：房主自建房间（ENet）、房间号、远端玩家显示与同步；启动大厅：剧情 / 休闲两张模式卡、多人只开休闲、右下角版本与自动更新状态 |
+| `scripts/ui/UiStyle.gd` | 全部界面的统一样式：配色、主题（按钮、页签、输入框、下拉、勾选框、滑块、滚动条）、面板 / 卡片 / 提示条 / 按键帽；盖住画面的面板开着时收起罗盘、小地图和任务追踪栏 |
 | `locale/en.tsv`、`locale/en.po`、`devtools/make_po.sh` | 英文翻译表（界面原文是中文） |
 | `devtools/CaptureShots.tscn` | 按预设机位截图到 `docs/screenshots/` |
 | `devtools/Benchmark.tscn` | 固定机位测帧率、帧时、绘制调用与显存 |
@@ -242,6 +243,7 @@ pwsh -File devtools/fetch_polyhaven.ps1
 - **画面闪动优化与自然景观**：高画质改用 TAA（走动时锯齿闪烁约减半）、草花远处逐株缩小不再成块闪现、动态分辨率防抖；西边一条从山坡流进湖的小溪，中途一道小瀑布，林道上一座木板桥；西北小山被一道 7.5 m 深的裂谷劈开，林道上架着原木桥，两头能走下谷底
 - **v0.5 新地图、卷轴、新建游戏**：世界二「云海浮岛」（五座浮岛、三座绳桥、十二块跳台、四座风灯和天鲸、八颗云珠、池塘与瀑布）；世界三「琥珀沙丘」（沙丘、能游泳的月牙绿洲、石柱废墟、风蚀石拱、驼队营地、阶梯神殿与六块古代碎片的祭坛），湖畔南部草甸新开沙之门；解说立牌全部换成走近才展开的卷轴；启动大厅加“新建游戏”设定页（23 个选项、9 个预设）和“继续上次的世界”，世界存档 v4；罗盘条、体力、摄影清单、旅行日志收藏页；闪动从根上修（太阳阴影小步更新、100 % 比例不做 FSR 锐化、方块贴图 mipmap）（见 `docs/V0_5.md`）
 - **亚特兰蒂斯与更多玩法**：世界四「亚特兰蒂斯」（泳池馆地下海洋大缸底部的石环潜进去；气泡穹顶下的同心环古城：三圈水环、两圈陆环、山铜神殿与尖塔、柱廊、白石房子、洋流水渠；穹顶外的海底有珊瑚、海带林、沉船、气泡泉、鱼群、蝠鲼、水母和鲸鱼；氧气条、五尊捧镜雕像的光束谜题、珍珠贝壳和六块传说石板、洋流水渠、骑蝠鲼，光照随时刻变）；更多玩法：钓鱼（13 种鱼）、打水漂、按种子寻宝、炉火烹饪（吃了有效果）、五条计时挑战、24 个成就和木屋收藏柜；存档 v5（见 `docs/ATLANTIS.md`）
+- **界面升级与两种模式**：启动大厅重做（剧情 / 休闲两张模式卡，各显示存档进度；多人只开休闲；右下角显示版本和自动更新检查结果，有新版本时一键“更新并重启”）；单人分剧情模式（老图腾的任务、信、过场和结局）和休闲模式（没有任务，随便玩），两种模式各存一个档；全部界面换成统一的暮色样式（面板、按钮、页签、交互提示的按键帽、勾选框），打开日志、地图、暂停时罗盘小地图和任务栏自动收起；英文界面和字幕补齐；卷轴立牌只写一种语言，跟着界面语言走（见 `docs/UI_MODES.md`）
 - **M3 声音**：游戏有声音了——松风、湖水拍岸、小溪瀑布、雨（进屋后变成屋顶上的雨声，户外的声音 2 秒内变闷）、夏夜虫鸣、林子里的鸟、雷（按闪电距离延迟）、炉火篝火；脚步按草地 / 木板 / 石头 / 雪 / 沙 / 浅水换声音；开门、开灯、生火、坐下、风灯、雕像、祭坛、钓鱼、打水漂、挖宝、划船都有声音；按世界和时段现场生成的轻背景音乐，过场有配乐；设置 → 声音五个音量滑块。全部声音由 `devtools/audio/synth.mjs` 合成（见 `docs/AUDIO_M3.md`）
 - **第一章收尾**：三个世界的光送回去时各放一段过场，湖畔夜空随之多出天鲸座、石拱座、蝠鲼座（第一次一颗颗亮起来），石头小屋的星图补完；三盏灯都亮后的傍晚湖上飘起暮烬（原版红点原样启用），回山洞听老图腾讲最后一个故事，放终章过场，书桌上多了划船人的第四封信；开场多了两行序幕；四个新任务、两个新成就；设置里可关剧情过场（见 `docs/STORY_EMBERS.md`）
 - **启动与过场、双手**：启动图 → 加载画面（进度、阶段、小提示）→ 三段镜头的开场过场（可跳过、可在设置里关）→ 主菜单；进出房间、传送时黑幕转场；第一人称双手缩小一半、分在左右下角并露出拳头；右键用手或挥手（见 `docs/BOOT_INTRO_HANDS.md`）

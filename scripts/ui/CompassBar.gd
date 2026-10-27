@@ -20,6 +20,7 @@ var _redraw_timer := 0.0
 func _ready() -> void:
 	layer = 4
 	add_to_group("compass_bar")
+	add_to_group(UiStyle.CHROME_GROUP)
 	_bar = Control.new()
 	_bar.name = "Compass"
 	_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -55,9 +56,17 @@ func _ready() -> void:
 	add_child(_stamina)
 
 
+## 暂停菜单打开时（世界暂停、_process 不跑）由 UiStyle.sync_cover() 叫来收起罗盘和体力条。
+func sync_cover() -> void:
+	if UiStyle.cover_open(get_tree()):
+		_bar.visible = false
+		_stamina.visible = false
+
+
 func _process(_delta: float) -> void:
 	var player := get_tree().get_first_node_in_group("local_player") as FirstPersonController
-	_bar.visible = GameRules.flag("hud_compass") and player != null
+	var covered := UiStyle.cover_open(get_tree())
+	_bar.visible = GameRules.flag("hud_compass") and player != null and not covered
 	if _bar.visible:
 		# 朝向变了才重画；标记（远近、发现与否）每 0.25 秒刷新一次
 		var h := player_bearing(player)
@@ -67,7 +76,7 @@ func _process(_delta: float) -> void:
 			_redraw_timer = 0.25
 			_bar.queue_redraw()
 	var uses := GameRules.flag("stamina") or GameRules.flag("swim_stamina")
-	_stamina.visible = uses and player != null and player.stamina < 0.999
+	_stamina.visible = uses and player != null and not covered and player.stamina < 0.999
 	if _stamina.visible:
 		_stamina.value = player.stamina
 		var fill := _stamina.get_theme_stylebox("fill") as StyleBoxFlat

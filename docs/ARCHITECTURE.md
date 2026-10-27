@@ -68,8 +68,8 @@ Main (Main.gd)
 | `EventBus`（Autoload） | 已实现 | 只发通知不存状态 |
 | `GameSettings`（Autoload） | 已实现 | FOV、灵敏度、按键表、UI 中文字体主题 |
 | `PlayerProfile`（Autoload） | 已实现 | 本地玩家外观，存 `user://appearance.json` |
-| `Net`（Autoload，NetworkManager）/ `RemotePlayers` / `LobbyMenu` | M2 扩展已实现 | 房主自建房间（ENet），20 Hz 同步人物位置与身体状态（坐、躺、划船、手势），4 Hz 广播房主的时间天气；门等交互由房主核对距离后广播；欢迎包带房主的本局规则（GameRules），房主改了再广播，访客离开房间后换回自己的；协议版本 3。见 `docs/COOP.md` |
-| 界面语言 | 已实现 | 原文中文，`locale/en.po` 英文；`GameSettings.language` = auto（跟随系统）/ en / zh |
+| `Net`（Autoload，NetworkManager）/ `RemotePlayers` / `LobbyMenu` | M2 扩展已实现 | 房主自建房间（ENet），20 Hz 同步人物位置与身体状态（坐、躺、划船、手势），4 Hz 广播房主的时间天气；门等交互由房主核对距离后广播；欢迎包带房主的本局规则（GameRules），房主改了再广播，访客离开房间后换回自己的；协议版本 3。见 `docs/COOP.md`。大厅（2026-10-27 重做）：剧情 / 休闲两张单人模式卡（各显示存档进度）；多人只开休闲（创建房间前先存好剧情、换到休闲世界）；右下角版本号与自动更新状态条 |
+| 界面语言 | 已实现 | 原文中文，`locale/en.po` 英文；`GameSettings.language` = auto（跟随系统）/ en / zh；卷轴立牌只写一种语言（跟界面语言走，换语言时 `SignBoard` 立刻重写）；过场字幕、开场、图腾、信用数据里的 `*_en` |
 | `InteractionSystem` / `Interactable` | 已实现 | 统一 `interact(actor, target)`；子类提供提示、状态、`apply_state()` |
 | `WorldClock` / `SeasonController` / `WeatherController` / `ClimateSystem` | M2 已实现 | 只写 WorldState、只发事件，不碰任何画面节点 |
 | `EnvironmentDirector` | M2 已实现 | 只读 WorldState，把状态合成为画面；通过 `seasonal`、`precipitation`、`lake_reflection` 组通知各生成器 |
@@ -82,7 +82,7 @@ Main (Main.gd)
 | `ActionBar`（动作轮盘）/ 控制器 `do_emote()` / `CharacterModel` 姿势与手势 | 已实现 | 动作：`ground_sit`、`lie` 是姿势（身体放低或放倒，眼睛跟着移动），`wave`、`dance`、`clap` 是叠加在站姿上的手势；状态在 `FirstPersonController.emote` |
 | `WorldRegistry` / `WorldMap` | 已实现 | `data/worlds/worlds.json` 列出所有世界（status、根场景、布局数据、到达位置）；地图画当前世界（湖畔读布局，别的世界问 `MiniWorld`）；`WorldRegistry.enter()` 把能去的世界交给 WorldTravel |
 | `MiniWorld` / `World02`（云海浮岛）/ `World03`（琥珀沙丘） | v0.5 | 湖畔以外的世界的共用底座：按数据文件建天空雾光、地形（解析高度函数 → 网格 + 碰撞）、卷轴、收集品、探索点、光门、玩家与全套界面；掉出世界回到最后站稳的地方；`height_at()`、`map_markers()`、`draw_map()` 供小地图、世界地图、罗盘、自动检查使用。天气季节系统只在湖畔，这两个世界的光照固定（太阳不动，阴影不会爬） |
-| `GameRules`（Autoload） | v0.5 | 新建游戏的玩法与设定（23 个选项、5 种模式、9 个预设）：只记规则、回答查询；时钟、季节、天气、小动物、仙境、任务图鉴、HUD、体力、夜晚亮度各自来问；开局一次性的（季节时刻天气、出生世界与出生点）由 `apply_start()` 设 |
+| `GameRules`（Autoload） | v0.5 | 新建游戏的玩法与设定（23 个选项、5 种模式、9 个预设）：只记规则、回答查询；时钟、季节、天气、小动物、仙境、任务图鉴、HUD、体力、夜晚亮度各自来问；开局一次性的（季节时刻天气、出生世界与出生点）由 `apply_start()` 设；第一个选项“游戏模式”`play`（2026-10-27）：剧情模式任务、图鉴、收集品一定开、用默认设定，休闲模式没有任务、玩法里没有冒险；`is_story()` 给石头小屋门锁、新星座、暮烬之夜与终章、图腾对话、各世界的剧情过场判断 |
 | `CompassBar` / `PhotoList` | v0.5 | 罗盘条与体力条；摄影清单（`data/photo/subjects.json`，F12 拍照时认出画面中央的对象，记进 `WorldState.journal.photos`） |
 | `World04`（亚特兰蒂斯）/ `LightStatue` / `MantaHandle` / `ShapedWater` / `AtlantisRing` | 亚特兰蒂斯 | 世界四：同心环城（`height_at` 按环给高度，石堤是缓坡）、气泡穹顶（`ShapedWater`：整片海减去穹顶球、环形水道），海里没有浮力、游速 ×1.7；氧气、光束谜题（雕像朝向按 uid 存 `dir:N`，每次转动重追光路）、洋流和蝠鲼（`RailRide`）；这里有自己的时钟，光照随时刻变；`AtlantisRing` 是湖畔海洋大缸底的入口（游过环面就去） |
 | `RailRide` | 亚特兰蒂斯 | 沿一条 Curve3D 把玩家带着走（`FirstPersonController.start_rail`，`is_riding()` 为真），头 0.4 秒从站的地方平滑接上路线；可以带一个跟着走的模型（蝠鲼） |
@@ -97,7 +97,8 @@ Main (Main.gd)
 | `PaddlerStory` / `LetterSpot` / `LetterPanel` / `CottageDoor` | 世界观落地①（2026-10-26） | 划船人的三封信：内容在 `data/story/letters.json`，湖边两处的位置在 `world_layout.json → letters`，木屋那本旧书在 `CabinLife`（木屋局部坐标）；读过的信记 `WorldState.flags.letters`（本机玩家的记录，不同步），开锁记 `flags.cottage_unlocked`，门的 locked / closed / open 按 uid 存档并联机同步；访客不能开锁；任务目标 `letters`、成就 `paddler_letters` |
 | `Cutscene` / `StoryDirector` / `EmberField` | 世界观落地②（2026-10-26） | `Cutscene`：通用过场（`IntroCutscene` 是它的子类），镜头与字幕在 `data/story/cutscenes.json`，锚点由播放方给（湖畔 `StoryDirector.anchor`，其他世界 `MiniWorld.story_anchor`），`cue` 信号在某段开头做事；`StoryDirector`（挂在 Main 下，只读世界状态、写 `WorldState.flags`）：新星座（`StarField.reveal`）、暮烬之夜（`EmberField` + `Precipitation.story_profile = legacy_red_motes`）、图腾讲完最后的故事后的终章（`DialoguePanel` 调 `finale_heard`）、小屋台灯与第四封信；各世界点亮的那一刻由世界自己 `play_story`；设置 `story_cutscenes` 关掉时只给结果；联机访客不放 |
 | `AudioDirector`（Autoload `Sound`）/ `SoundBank` / `SoundEmitter` / `MusicDirector` | M3 已实现（2026-10-27） | 只读世界状态（`WorldState`、`WeatherController.blended()`、`EnvironmentDirector.night`、区域、玩家），统一混音，不写状态：总线 MUSIC / AMB_OUTDOOR / AMB_WEATHER / AMB_INDOOR / FOLEY / UI 启动时建；环境层按世界状态 1.5 s 淡入淡出；进屋按 `WorldState.is_indoors` 平滑（时间常数 0.55 s）降户外与天气总线并压低通；交互音效订阅 `EventBus.interactable_state_changed` 等通知；定位声源由建造脚本挂 `SoundEmitter`；声音表 `data/audio/sounds.json`、乐曲 `music.json`；文件由 `devtools/audio/synth.mjs` 合成 |
-| `SaveManager`（Autoload） | v0.5 已实现 | `user://saves/world.json`（v5，临时文件 + 原子替换）：新建（旧档先备份）/ 继续 / 每 60 s、换世界、退出时自动存；读档后按 uid 恢复门灯、船位，回到存档时的世界与位置；联机做客和自动检查里不写盘 |
+| `SaveManager`（Autoload） | v0.5 已实现，两个槽（2026-10-27） | 剧情、休闲各一个存档槽 `user://saves/story.json`、`casual.json`（v5，临时文件 + 原子替换；路径都由 `dir` 推出，自动检查改到别处）：新建（这个槽的旧档先备份成 `*.bak.json`）/ 继续某个槽 / 每 60 s、换世界、退出时自动存；v0.5 的单一存档 `world.json` 第一次启动时按有无任务复制进剧情或休闲槽，v0.4 的 `journal.json` 接进剧情槽；读档后按 uid 恢复门灯、船位，回到存档时的世界与位置；联机做客和自动检查里不写盘 |
+| `UiStyle` | 界面升级（2026-10-27） | 全游戏界面的配色与样式（暮色深蓝紫面板、琥珀强调、奶白文字）：`build_theme()` 建唯一的主题（`GameSettings.ui_theme()` 挂到所有界面），面板、卡片、药丸条、按键帽、主按钮、手画的勾选框与开关图标；`COVER_GROUP`：盖住画面的面板（大厅、暂停、日志、世界地图、信、厨房、棋盘）开着时，`CHROME_GROUP` 里的罗盘、小地图、任务追踪栏收起来 |
 | `Interactable` 状态延续 | v0.5 | 读过档或从别的世界回来时，可交互物按 `WorldState.interactables` 里存下的状态摆（不再被新建的初始状态覆盖） |
 
 已使用的事件：`time_changed`、`season_changed`、`weather_transition_started`、`weather_changed`、`zone_entered`、`zone_exited`、`interactable_state_changed`、`interaction_prompt_changed`。
