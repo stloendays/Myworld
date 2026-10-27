@@ -9,7 +9,7 @@ extends Node3D
 ## 碰撞：每棵树一个树干圆柱，每块大岩石一个盒子。
 
 const GENERATED := "Generated"
-const CHUNK := 64.0   ## 分块边长（米）：太小绘制调用变多，太大剔除失效
+const CHUNK := 128.0   ## 分块边长（米）：太小绘制调用变多，太大剔除失效
 const NATURE := "res://assets/imported/kenney/nature/"
 const BUFFER_META := "instance_buffer"   ## MultiMesh 上 CPU 侧实例数组的 meta 名
 

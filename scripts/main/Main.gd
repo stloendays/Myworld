@@ -6,6 +6,9 @@ extends Node3D
 ## 和大厅菜单（LobbyMenu：作为游戏主程序启动时弹出单人 / 建房 / 加入）。
 
 
+var batch_stats := {}   ## 静态合批的结果：{"meshes": 并掉的网格数, "batches": 合成的网格数}
+
+
 ## 子节点（地形、树林、地被）开始建造之前，先在后台并行读取它们要用的几十个 Kenney 模型。
 func _enter_tree() -> void:
 	add_to_group("world_root")
@@ -66,6 +69,22 @@ func _ready() -> void:
 	var director := StoryDirector.new()
 	director.name = "StoryDirector"
 	add_child(director)
+	_merge_static.call_deferred()
+
+
+## 静态合批（StaticBatch）：等所有建造（包括延后一帧的）做完，把建筑、码头、小溪、卷轴木架这些不会动的小网格并起来。
+## 玩家、其他玩家、小动物、树林和地被（已经是 MultiMesh）、远景（几个大网格，按名字重建）不碰。
+func _merge_static() -> void:
+	await get_tree().process_frame
+	var skip := []
+	for path in ["Player", "World/Fauna", "World/Forest", "World/GroundCover", "World/Backdrop", "RemotePlayers"]:
+		skip.append(get_node_or_null(path))
+	skip.append_array(get_tree().get_nodes_in_group("local_player"))
+	var t := Time.get_ticks_usec()
+	var s := StaticBatch.merge_all(get_tree(), [self], skip)
+	ArtMaterials.warm_snow_overlay()
+	print_verbose("StaticBatch: %d 个网格并成 %d 个，%.0f ms" % [s["meshes"], s["batches"], (Time.get_ticks_usec() - t) / 1000.0])
+	batch_stats = s
 
 
 ## 世界坐标就是 Main 的坐标：Main 自己和它下面的 3D 节点在场景文件里都不该带位移或旋转——

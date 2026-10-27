@@ -112,6 +112,7 @@ func _run() -> void:
 	await _test_save_v4()
 	await _test_new_game_menu()
 	await _test_play_modes()
+	await _test_draw_call_diet()
 	await _test_play_lake()
 	await _test_world_travel()
 	_test_startup_guard()
@@ -1232,9 +1233,9 @@ func _test_performance() -> void:
 			tagged += 1
 			cells[mmi.get_meta("cell")] = true
 	# 分块规则本身：同一方格里的点进同一块
-	var grouped := ForestBuilder._by_cell([{"transform": Transform3D(Basis(), Vector3(1, 0, 1))}, {"transform": Transform3D(Basis(), Vector3(63, 0, 10))}, {"transform": Transform3D(Basis(), Vector3(65, 0, 10))}])
-	var chunk_ok := mmis.size() > 40 and tagged == mmis.size() and cells.size() >= 12 and grouped.size() == 2
-	notes.append("树林 %d 块（%d 个 64 m 方格）" % [mmis.size(), cells.size()])
+	var grouped := ForestBuilder._by_cell([{"transform": Transform3D(Basis(), Vector3(1, 0, 1))}, {"transform": Transform3D(Basis(), Vector3(127, 0, 10))}, {"transform": Transform3D(Basis(), Vector3(129, 0, 10))}])
+	var chunk_ok := mmis.size() > 40 and tagged == mmis.size() and cells.size() >= 4 and grouped.size() == 2
+	notes.append("树林 %d 块（%d 个 %d m 方格）" % [mmis.size(), cells.size(), int(ForestBuilder.CHUNK)])
 	# 遮挡剔除：工程开启 + 地形遮挡体
 	var occ_ok := bool(ProjectSettings.get_setting("rendering/occlusion_culling/use_occlusion_culling")) \
 		and _main.find_child("TerrainOccluder", true, false) != null
@@ -3981,23 +3982,94 @@ func _statue_cfg(w: World04, st: LightStatue) -> Dictionary:
 	return {}
 
 
+## 减负（2026-10-27）：静态合批、远处不投影、日志关着不重建、视野外小动物降频。
+func _test_draw_call_diet() -> void:
+	# 静态合批：建筑、码头、小溪、卷轴木架的小网格并掉了一大半，没有任何脚本变量指向被删掉的节点
+	var stats: Dictionary = _main.get("batch_stats")
+	var merged_ok: bool = int(stats.get("meshes", 0)) >= 800 and int(stats.get("batches", 0)) < int(stats.get("meshes", 0)) * 0.7
+	var dangling := PackedStringArray()
+	var stack: Array[Node] = [get_tree().root]
+	while not stack.is_empty():
+		var n: Node = stack.pop_back()
+		stack.append_array(n.get_children())
+		if n.get_script() == null or n == self:
+			continue
+		for p in n.get_property_list():
+			if int(p["usage"]) & PROPERTY_USAGE_SCRIPT_VARIABLE:
+				var v: Variant = n.get(p["name"])
+				if typeof(v) == TYPE_OBJECT and v != null and not is_instance_valid(v):
+					dangling.append("%s.%s" % [n.name, p["name"]])
+	# 卷轴：离镜头远了整架不投影（文字一直不投影），走近恢复
+	var sign := get_tree().get_nodes_in_group("sign_boards")[0] as SignBoard
+	sign._sync_shadows(false)
+	var far_off := sign.find_children("*", "GeometryInstance3D", true, false).all(func(g: GeometryInstance3D) -> bool: return g.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_OFF)
+	sign._sync_shadows(true)
+	var near_on := sign.find_children("*", "GeometryInstance3D", true, false).all(func(g: GeometryInstance3D) -> bool:
+		return g.cast_shadow == (GeometryInstance3D.SHADOW_CASTING_SETTING_OFF if g is Label3D else GeometryInstance3D.SHADOW_CASTING_SETTING_ON))
+	# 地被：只有镜头附近的块投影
+	var cover := _main.get_node("World/GroundCover") as GroundCoverBuilder
+	cover.update_shadows()
+	var cam := get_viewport().get_camera_3d()
+	var c2 := Vector2(cam.global_position.x, cam.global_position.z)
+	var near_cast := 0
+	var far_cast := 0
+	for chunk in cover.get_node("Generated").get_children():
+		if not chunk.has_meta("center"):
+			continue
+		var d := (chunk.get_meta("center") as Vector2).distance_to(c2)
+		for mmi in chunk.get_children():
+			if mmi.has_meta("casts") and (mmi as GeometryInstance3D).cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_ON:
+				if d < GroundCoverBuilder.SHADOW_NEAR + GroundCoverBuilder.CHUNK * 0.71:
+					near_cast += 1
+				else:
+					far_cast += 1
+	var cover_ok := near_cast > 0 and far_cast == 0
+	# 日志：关着时任务、图鉴有变化不重建各页（只刷新追踪栏），打开时再建
+	var journal := _main.get_node("JournalPanel") as JournalPanel
+	journal.close()
+	var marker := Label.new()
+	journal._dex_box.add_child(marker)
+	QuestLog.changed.emit()
+	await _frames(2)
+	var kept := is_instance_valid(marker) and marker.get_parent() == journal._dex_box
+	journal.open(1)
+	await _frames(2)
+	var rebuilt := not is_instance_valid(marker) or marker.is_queued_for_deletion() or marker.get_parent() == null
+	journal.close()
+	# 视野外的小动物降频：镜头背后 20 m 的那只每 8 帧才更新一次
+	var animal := get_tree().get_nodes_in_group("fauna")[0] as Animal
+	var keep_pos := animal.global_position
+	animal.global_position = cam.global_position + cam.global_basis.z * 20.0
+	var behind := animal._lod_interval() == 8
+	animal.global_position = cam.global_position - cam.global_basis.z * 5.0
+	var front := animal._lod_interval() == 1
+	animal.global_position = keep_pos
+	_check("减负：静态合批（%d 个小网格并成 %d 个、没有悬空的脚本引用）、远处卷轴和地被不投影、日志关着不重建、视野外小动物降频" % [int(stats.get("meshes", 0)), int(stats.get("batches", 0))],
+		merged_ok and dangling.is_empty() and far_off and near_on and cover_ok and kept and rebuilt and behind and front,
+		"合批 %s · 悬空 %s · 卷轴 远 %s 近 %s · 地被 近 %d 远 %d · 日志 关着保留 %s 打开重建 %s · 小动物 背后 %s 前面 %s" % [merged_ok,
+			", ".join(dangling) if not dangling.is_empty() else "无", far_off, near_on, near_cast, far_cast, kept, rebuilt, behind, front])
+
+
 ## 启动保护：上次加载途中崩了就降一级渲染（标准 → 兼容 → ANGLE），选了兼容就带参数重启；Forward+ 才开的效果在兼容渲染下不开。
 func _test_startup_guard() -> void:
 	var step_ok: bool = StartupGuard.next_renderer("auto", "vulkan") == "compatibility" \
 		and StartupGuard.next_renderer("auto", "d3d12") == "compatibility" \
 		and StartupGuard.next_renderer("auto", "opengl3") == "angle" \
 		and StartupGuard.next_renderer("compatibility", "opengl3") == "angle" \
-		and StartupGuard.next_renderer("angle", "opengl3_angle") == "angle"
+		and StartupGuard.next_renderer("angle", "opengl3_angle") == "angle" \
+		and StartupGuard.next_renderer("d3d12", "d3d12") == "compatibility"
 	var relaunch_ok: bool = StartupGuard.needs_relaunch("compatibility", "vulkan", false) \
 		and not StartupGuard.needs_relaunch("compatibility", "opengl3", false) \
 		and not StartupGuard.needs_relaunch("compatibility", "vulkan", true) \
 		and StartupGuard.needs_relaunch("angle", "opengl3", false) \
-		and not StartupGuard.needs_relaunch("auto", "opengl3", false)
+		and not StartupGuard.needs_relaunch("auto", "opengl3", false) \
+		and StartupGuard.needs_relaunch("d3d12", "vulkan", false) and not StartupGuard.needs_relaunch("d3d12", "d3d12", false)
 	var args_ok: bool = Array(StartupGuard.launch_args("compatibility")) == ["--rendering-method", "gl_compatibility", "--rendering-driver", "opengl3"] \
-		and Array(StartupGuard.launch_args("angle")).has("opengl3_angle") and StartupGuard.launch_args("auto").is_empty()
+		and Array(StartupGuard.launch_args("angle")).has("opengl3_angle") and StartupGuard.launch_args("auto").is_empty() \
+		and Array(StartupGuard.launch_args("d3d12")) == ["--rendering-driver", "d3d12"]
 	GameSettings.set_value("renderer", "nonsense", false)
 	var setting_ok := GameSettings.renderer == "auto"
 	GameSettings.set_value("renderer", "auto", false)
 	var off_in_tests := not StartupGuard.active
-	_check("启动保护：崩溃后降一级渲染、兼容渲染带参数重启、自动检查里不动", step_ok and relaunch_ok and args_ok and setting_ok and off_in_tests,
+	_check("启动保护：崩溃后降一级渲染、兼容渲染和 Direct3D 12 带参数重启、自动检查里不动", step_ok and relaunch_ok and args_ok and setting_ok and off_in_tests,
 		"降级 %s · 重启 %s · 参数 %s · 设置 %s · 检查中关闭 %s" % [step_ok, relaunch_ok, args_ok, setting_ok, off_in_tests])

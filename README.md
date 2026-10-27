@@ -4,7 +4,7 @@
 
 - 引擎：**Godot 4.7.2 Standard**（GDScript，Forward+，Jolt Physics），Windows 单机优先
 - 需求规格：[docs/DEVELOPMENT_SPEC.md](docs/DEVELOPMENT_SPEC.md)（唯一需求来源）；阶段指令：[docs/AGENT_HANDOFF.md](docs/AGENT_HANDOFF.md)
-- 当前进度：**M0、M1、第一轮正式美术、M2 天气系统、方块人物、泳池馆与地下水族馆、小动物、雷暴/彩虹/风、聊天框、小地图、开发者模式、第一人称双手、木屋生活、独木舟与湖上探索、性能优化、可潜水的海洋大缸、木屋国际象棋、动作轮盘、世界地图与全屏、联机（最多 4 人）与中英界面、自动更新、新立牌、夜里的仙境林地、东北角雪山、内存与卡顿优化、图腾山洞与任务、星座与图鉴、石头小屋、跨世界旅行、画面闪动优化、小溪瀑布与裂谷、启动画面与开场过场、云海浮岛与琥珀沙丘、解说卷轴、新建游戏设定与存档、亚特兰蒂斯与六个新玩法、划船人的信与石头小屋、第一章收尾（新星座、暮烬之夜、终章与剧情过场）、M3 声音、界面升级与剧情 / 休闲两种模式已完成**，自动检查 136/136、启动流程 6/6、联机检查 12/12 通过。见 [docs/QA_M0_M1.md](docs/QA_M0_M1.md)、[docs/ART_PASS.md](docs/ART_PASS.md)、[docs/M2_WEATHER_CHARACTER.md](docs/M2_WEATHER_CHARACTER.md)、[docs/POOLHOUSE_FAUNA.md](docs/POOLHOUSE_FAUNA.md)、[docs/CHAT.md](docs/CHAT.md)、[docs/MINIMAP_DEVMODE.md](docs/MINIMAP_DEVMODE.md)、[docs/CABIN_LIFE_CANOE.md](docs/CABIN_LIFE_CANOE.md)、[docs/PERFORMANCE.md](docs/PERFORMANCE.md)、[docs/AQUARIUM_DIVE.md](docs/AQUARIUM_DIVE.md)、[docs/CHESS.md](docs/CHESS.md)、[docs/INTERACTIONS_WORLDMAP.md](docs/INTERACTIONS_WORLDMAP.md)、[docs/COOP.md](docs/COOP.md)、[docs/V0_3.md](docs/V0_3.md)、[docs/SNOW_PEAK.md](docs/SNOW_PEAK.md)、[docs/MEMORY_STUTTER.md](docs/MEMORY_STUTTER.md)、[docs/CAVE_QUESTS.md](docs/CAVE_QUESTS.md)、[docs/NATURE_FLICKER.md](docs/NATURE_FLICKER.md)、[docs/BOOT_INTRO_HANDS.md](docs/BOOT_INTRO_HANDS.md)、[docs/V0_5.md](docs/V0_5.md)、[docs/ATLANTIS.md](docs/ATLANTIS.md)、[docs/LETTERS_COTTAGE.md](docs/LETTERS_COTTAGE.md)、[docs/FLICKER_BRIDGE.md](docs/FLICKER_BRIDGE.md)、[docs/STORY_EMBERS.md](docs/STORY_EMBERS.md)、[docs/AUDIO_M3.md](docs/AUDIO_M3.md)、[docs/UI_MODES.md](docs/UI_MODES.md)
+- 当前进度：**M0、M1、第一轮正式美术、M2 天气系统、方块人物、泳池馆与地下水族馆、小动物、雷暴/彩虹/风、聊天框、小地图、开发者模式、第一人称双手、木屋生活、独木舟与湖上探索、性能优化、可潜水的海洋大缸、木屋国际象棋、动作轮盘、世界地图与全屏、联机（最多 4 人）与中英界面、自动更新、新立牌、夜里的仙境林地、东北角雪山、内存与卡顿优化、图腾山洞与任务、星座与图鉴、石头小屋、跨世界旅行、画面闪动优化、小溪瀑布与裂谷、启动画面与开场过场、云海浮岛与琥珀沙丘、解说卷轴、新建游戏设定与存档、亚特兰蒂斯与六个新玩法、划船人的信与石头小屋、第一章收尾（新星座、暮烬之夜、终章与剧情过场）、M3 声音、界面升级与剧情 / 休闲两种模式、CPU 与内存减负已完成**，自动检查 137/137、启动流程 6/6、联机检查 12/12 通过。见 [docs/QA_M0_M1.md](docs/QA_M0_M1.md)、[docs/ART_PASS.md](docs/ART_PASS.md)、[docs/M2_WEATHER_CHARACTER.md](docs/M2_WEATHER_CHARACTER.md)、[docs/POOLHOUSE_FAUNA.md](docs/POOLHOUSE_FAUNA.md)、[docs/CHAT.md](docs/CHAT.md)、[docs/MINIMAP_DEVMODE.md](docs/MINIMAP_DEVMODE.md)、[docs/CABIN_LIFE_CANOE.md](docs/CABIN_LIFE_CANOE.md)、[docs/PERFORMANCE.md](docs/PERFORMANCE.md)、[docs/AQUARIUM_DIVE.md](docs/AQUARIUM_DIVE.md)、[docs/CHESS.md](docs/CHESS.md)、[docs/INTERACTIONS_WORLDMAP.md](docs/INTERACTIONS_WORLDMAP.md)、[docs/COOP.md](docs/COOP.md)、[docs/V0_3.md](docs/V0_3.md)、[docs/SNOW_PEAK.md](docs/SNOW_PEAK.md)、[docs/MEMORY_STUTTER.md](docs/MEMORY_STUTTER.md)、[docs/CAVE_QUESTS.md](docs/CAVE_QUESTS.md)、[docs/NATURE_FLICKER.md](docs/NATURE_FLICKER.md)、[docs/BOOT_INTRO_HANDS.md](docs/BOOT_INTRO_HANDS.md)、[docs/V0_5.md](docs/V0_5.md)、[docs/ATLANTIS.md](docs/ATLANTIS.md)、[docs/LETTERS_COTTAGE.md](docs/LETTERS_COTTAGE.md)、[docs/FLICKER_BRIDGE.md](docs/FLICKER_BRIDGE.md)、[docs/STORY_EMBERS.md](docs/STORY_EMBERS.md)、[docs/AUDIO_M3.md](docs/AUDIO_M3.md)、[docs/UI_MODES.md](docs/UI_MODES.md)、[docs/PERF_CPU_MEMORY.md](docs/PERF_CPU_MEMORY.md)
 
 ![湖岸出生点](docs/screenshots/m1_01_spawn_dusk.png)
 
@@ -118,8 +118,8 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | `scenes/world/Terrain.tscn` + `scripts/world/TerrainBuilder.gd` | 257×257 高度场网格与碰撞；顶点色写入五层地表的混合权重 |
 | `shaders/terrain.gdshader` | 地形五层 PBR 混合：草地 / 林下落叶 / 土路 / 岩石（三平面）/ 湖岸；预留季节、积雪、湿润参数 |
 | `scenes/world/Lake.tscn` + `scripts/world/LakeBuilder.gd` | 水面（顶点色水深）、湖面反射探针、涉水上限（水下挡墙，码头处压低） |
-| `scenes/world/Forest.tscn` + `scripts/world/ForestBuilder.gd` | 固定种子摆放约 2500 棵 Kenney 针叶树与秋色阔叶树、250 块岩石（每种模型一个 MultiMesh + 树干/岩石碰撞） |
-| `scripts/world/GroundCoverBuilder.gd` | 地被层：草丛、灌木、野花（南部草甸）、蘑菇、树桩倒木、小石块、睡莲；40 m 区块 + 可见距离 |
+| `scenes/world/Forest.tscn` + `scripts/world/ForestBuilder.gd` | 固定种子摆放约 2500 棵 Kenney 针叶树与秋色阔叶树、250 块岩石（128 m 一块、每块每种模型一个 MultiMesh + 树干/岩石碰撞） |
+| `scripts/world/GroundCoverBuilder.gd` | 地被层：草丛、灌木、野花（南部草甸）、蘑菇、树桩倒木、小石块、睡莲；40 m 区块 + 可见距离，只有镜头 48 m 内的块投影，单独的渲染层 6（湖面反射探针不拍） |
 | `scripts/world/Vegetation.gd` | 植被分布规则（林地密度、空地、步道走廊），地形、树木、地被共用 |
 | `scripts/art/ArtMaterials.gd` | 材质库：Poly Haven 贴图按真实尺寸平铺；Kenney 模型与自制 GLB 按材质名换成项目配色 |
 | `scripts/world/DockBuilder.gd` | 码头木板、桩、栏杆与碰撞 |
@@ -141,6 +141,7 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | `scripts/buildings/CabinLife.gd`、`scripts/interactions/`（InteractableToggle、Seat、Bed） | 木屋生活：炉火与炊烟、灯和开关、座位、床 |
 | `scripts/vehicles/Canoe.gd` | 独木舟：划桨、四点取水面高度的浮动、搁浅、上下船、位置存档 |
 | `scripts/systems/PerformanceDirector.gd` | 画质分级、帧率上限、动态分辨率（FSR）、局部灯距离淡出、地下关太阳阴影 |
+| `scripts/world/StaticBatch.gd` | 静态合批：建好世界后把建筑、码头、小溪、卷轴木架里不会动的小网格按材质合成少数几个网格（自动跳过脚本会动、会换材质的部件），绘制调用约减半 |
 | `devtools/Profile.tscn` | 性能剖析：逐项关特性，看帧时、CPU / GPU、绘制调用、三角形 |
 | `devtools/MemProbe.tscn` | 内存与卡顿探针：加载计时、内存 / 显存 / 进程占用、走遍全图的帧时分布和卡顿帧 |
 | `scripts/world/Exploration.gd` | 湖上探索点（`world_layout.json → lake_pois`）：发现记录、营火帐篷芦苇睡莲摆件 |
@@ -243,6 +244,7 @@ pwsh -File devtools/fetch_polyhaven.ps1
 - **画面闪动优化与自然景观**：高画质改用 TAA（走动时锯齿闪烁约减半）、草花远处逐株缩小不再成块闪现、动态分辨率防抖；西边一条从山坡流进湖的小溪，中途一道小瀑布，林道上一座木板桥；西北小山被一道 7.5 m 深的裂谷劈开，林道上架着原木桥，两头能走下谷底
 - **v0.5 新地图、卷轴、新建游戏**：世界二「云海浮岛」（五座浮岛、三座绳桥、十二块跳台、四座风灯和天鲸、八颗云珠、池塘与瀑布）；世界三「琥珀沙丘」（沙丘、能游泳的月牙绿洲、石柱废墟、风蚀石拱、驼队营地、阶梯神殿与六块古代碎片的祭坛），湖畔南部草甸新开沙之门；解说立牌全部换成走近才展开的卷轴；启动大厅加“新建游戏”设定页（23 个选项、9 个预设）和“继续上次的世界”，世界存档 v4；罗盘条、体力、摄影清单、旅行日志收藏页；闪动从根上修（太阳阴影小步更新、100 % 比例不做 FSR 锐化、方块贴图 mipmap）（见 `docs/V0_5.md`）
 - **亚特兰蒂斯与更多玩法**：世界四「亚特兰蒂斯」（泳池馆地下海洋大缸底部的石环潜进去；气泡穹顶下的同心环古城：三圈水环、两圈陆环、山铜神殿与尖塔、柱廊、白石房子、洋流水渠；穹顶外的海底有珊瑚、海带林、沉船、气泡泉、鱼群、蝠鲼、水母和鲸鱼；氧气条、五尊捧镜雕像的光束谜题、珍珠贝壳和六块传说石板、洋流水渠、骑蝠鲼，光照随时刻变）；更多玩法：钓鱼（13 种鱼）、打水漂、按种子寻宝、炉火烹饪（吃了有效果）、五条计时挑战、24 个成就和木屋收藏柜；存档 v5（见 `docs/ATLANTIS.md`）
+- **CPU 与内存减负**：建筑、码头、小溪、卷轴木架的小网格建好后自动合批，树林改 128 m 分块，远处的地被、卷轴、文字和地下水族馆不再投影，湖面反射探针不拍地被、分辨率减半，旅行日志关着时不重建，第一次下雪的渲染管线在加载时编好，小动物和小地图降频；每帧绘制调用约减半，常见机位帧率约 +45%，下雪和认出新动物时的卡顿没有了；设置里多了“Direct3D 12（内存占用更少）”，进程内存约少一半（见 `docs/PERF_CPU_MEMORY.md`）
 - **界面升级与两种模式**：启动大厅重做（剧情 / 休闲两张模式卡，各显示存档进度；多人只开休闲；右下角显示版本和自动更新检查结果，有新版本时一键“更新并重启”）；单人分剧情模式（老图腾的任务、信、过场和结局）和休闲模式（没有任务，随便玩），两种模式各存一个档；全部界面换成统一的暮色样式（面板、按钮、页签、交互提示的按键帽、勾选框），打开日志、地图、暂停时罗盘小地图和任务栏自动收起；英文界面和字幕补齐；卷轴立牌只写一种语言，跟着界面语言走（见 `docs/UI_MODES.md`）
 - **M3 声音**：游戏有声音了——松风、湖水拍岸、小溪瀑布、雨（进屋后变成屋顶上的雨声，户外的声音 2 秒内变闷）、夏夜虫鸣、林子里的鸟、雷（按闪电距离延迟）、炉火篝火；脚步按草地 / 木板 / 石头 / 雪 / 沙 / 浅水换声音；开门、开灯、生火、坐下、风灯、雕像、祭坛、钓鱼、打水漂、挖宝、划船都有声音；按世界和时段现场生成的轻背景音乐，过场有配乐；设置 → 声音五个音量滑块。全部声音由 `devtools/audio/synth.mjs` 合成（见 `docs/AUDIO_M3.md`）
 - **第一章收尾**：三个世界的光送回去时各放一段过场，湖畔夜空随之多出天鲸座、石拱座、蝠鲼座（第一次一颗颗亮起来），石头小屋的星图补完；三盏灯都亮后的傍晚湖上飘起暮烬（原版红点原样启用），回山洞听老图腾讲最后一个故事，放终章过场，书桌上多了划船人的第四封信；开场多了两行序幕；四个新任务、两个新成就；设置里可关剧情过场（见 `docs/STORY_EMBERS.md`）

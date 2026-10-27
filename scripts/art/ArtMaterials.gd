@@ -242,6 +242,14 @@ static func set_snow_overlay(enabled: bool) -> void:
 		m.next_pass = _snow_material() if enabled else null
 
 
+## 预热：第一次挂积雪覆盖层时 Godot 要当场给每个材质编译渲染管线（约 0.2 s，D3D12 上几秒），
+## 在加载画面后面先挂一次再摘掉，真下雪时就不卡了。
+static func warm_snow_overlay() -> void:
+	if not _snow_on:
+		set_snow_overlay(true)
+		set_snow_overlay(false)
+
+
 static func _snow_material() -> ShaderMaterial:
 	if _snow_pass == null:
 		_snow_pass = ShaderMaterial.new()

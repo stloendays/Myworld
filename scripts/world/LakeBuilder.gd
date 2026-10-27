@@ -97,7 +97,7 @@ func _make_reflection_probe() -> ReflectionProbe:
 	probe.max_distance = 600.0
 	probe.enable_shadows = false   ## 重拍是 6 个面一次画完，带阴影那一帧要多约 7 ms；远岸倒影里看不出阴影差别
 	probe.update_mode = ReflectionProbe.UPDATE_ONCE
-	probe.cull_mask = 0xFFFFF & ~WATER_VISUAL_LAYER
+	probe.cull_mask = 0xFFFFF & ~WATER_VISUAL_LAYER & ~GroundCoverBuilder.DETAIL_LAYER   # 水面和地被都不拍
 	return probe
 
 

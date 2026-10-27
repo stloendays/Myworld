@@ -21,6 +21,7 @@ const UNROLL_SECONDS := 0.65
 const RADIUS := 3.6           ## 走近多少米开始展开
 const WALL_RADIUS := 9.0      ## 挂墙招牌（高处的大字）在远一点就展开
 const HYSTERESIS := 0.8       ## 走远到 半径 + 回差 才卷回去，站在边上不会来回卷
+const SHADOW_NEAR := 45.0     ## 离镜头和玩家都超过这么远的卷轴不投影（影子只有几个像素，却要在每一级太阳阴影里各画一遍）
 const TEXT_Z := 0.006         ## 文字离纸面的距离
 ## 各段文字的颜色：标题深红褐、正文深墨色
 const INKS := {"title_zh": Color(0.36, 0.14, 0.07), "title_en": Color(0.36, 0.14, 0.07)}
@@ -48,6 +49,7 @@ var language := ""                    ## 纸上现在写的是哪种语言（zh 
 
 var _target := 0.0
 var _check_timer := 0.0
+var _shadows_on := true
 var _scroll: Node3D                   ## 原点 = 上轴中心；纸面沿本地 -Y 往下展开
 var _paper: MeshInstance3D
 var _paper_mat: StandardMaterial3D
@@ -99,6 +101,7 @@ func rebuild() -> void:
 	line_keys.clear()
 	_line_bottom.clear()
 	title_tag = null
+	_shadows_on = true   # 新建的部件默认投影，下一次距离检查再按远近关掉
 	_build(texts().get(text_id, {}), _width, _scale)
 	_apply_unroll()
 
@@ -246,6 +249,7 @@ func _build(t: Dictionary, width: float, scale: float) -> void:
 		l.shaded = true
 		l.double_sided = false
 		l.alpha_cut = Label3D.ALPHA_CUT_DISCARD
+		l.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		l.horizontal_alignment = r["align"]
 		l.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 		var x := 0.0 if r["align"] == HORIZONTAL_ALIGNMENT_CENTER else -inner * 0.5
@@ -302,6 +306,7 @@ func _process(delta: float) -> void:
 	if _check_timer <= 0.0 or not is_equal_approx(unroll, _target):
 		_check_timer = 0.1
 		_target = 1.0 if force_open else _wanted()
+		_sync_shadows(_camera_distance() < SHADOW_NEAR)
 	if is_equal_approx(unroll, _target):
 		return
 	unroll = move_toward(unroll, _target, delta / UNROLL_SECONDS)
@@ -318,6 +323,25 @@ func set_unrolled(on: bool) -> void:
 
 func is_open() -> bool:
 	return unroll >= 0.999
+
+
+## 到当前相机的水平距离（决定投不投影）。
+func _camera_distance() -> float:
+	var cam := get_viewport().get_camera_3d() if is_inside_tree() else null
+	if cam == null:
+		return 0.0
+	return Vector2(cam.global_position.x - global_position.x, cam.global_position.z - global_position.z).length()
+
+
+## 远了关投影、近了开：整架卷轴（木架、纸、轴；文字本来就不投影）一起换。
+func _sync_shadows(on: bool) -> void:
+	if on == _shadows_on:
+		return
+	_shadows_on = on
+	var mode := GeometryInstance3D.SHADOW_CASTING_SETTING_ON if on else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	for g in find_children("*", "GeometryInstance3D", true, false):
+		if not g is Label3D:
+			(g as GeometryInstance3D).cast_shadow = mode
 
 
 ## 离本地玩家或当前相机较近的那个距离（水平）：近了展开，远过半径 + 回差卷回，中间保持原样。
@@ -386,6 +410,7 @@ func _tag(t: Dictionary, font: Font, scale: float, pos: Vector3, yaw: float, par
 	title_tag.shaded = true
 	title_tag.double_sided = false
 	title_tag.alpha_cut = Label3D.ALPHA_CUT_DISCARD
+	title_tag.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	title_tag.position = pos + Vector3(0.0, 0.0, 0.0075)
 	title_tag.visibility_range_end = 30.0
 	title_tag.visibility_range_end_margin = 4.0
