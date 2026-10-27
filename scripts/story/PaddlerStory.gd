@@ -5,8 +5,10 @@ extends Node
 ## 开过锁记 flags.cottage_unlocked（门的状态另由 CottageDoor 按 uid 存）。
 ## 本节点挂在 Main 下，按 world_layout.json → letters 摆出湖边的两处信（码头木盒、湖心小岛铁盒）；
 ## 木屋里那本旧书是室内物件，由 CabinLife 按木屋局部坐标摆放。
+## 第四封信 farewell 在暮烬之夜、老图腾讲完最后一个故事以后出现在石头小屋的书桌上（StoneCottage 摆放，StoryDirector 决定时机）。
 
 const DATA_PATH := "res://data/story/letters.json"
+const FAREWELL := "farewell"   ## 暮烬之夜以后书桌上的第四封信（不算进三封信，读过记 flags.farewell_read）
 
 static var _data: Dictionary = {}
 
@@ -23,6 +25,8 @@ static func letters() -> Array:
 
 
 static func letter(id: String) -> Dictionary:
+	if id == FAREWELL:
+		return data().get(FAREWELL, {})
 	for l: Dictionary in letters():
 		if str(l["id"]) == id:
 			return l
@@ -44,6 +48,8 @@ static func read_ids() -> Array:
 
 
 static func is_read(id: String) -> bool:
+	if id == FAREWELL:
+		return bool(WorldState.flags.get("farewell_read", false))
 	return id in read_ids()
 
 
@@ -58,6 +64,10 @@ static func all_read() -> bool:
 static func mark_read(id: String) -> bool:
 	if letter(id).is_empty() or is_read(id):
 		return false
+	if id == FAREWELL:
+		WorldState.flags["farewell_read"] = true
+		SaveManager.request_save()
+		return true
 	var list: Array = read_ids().duplicate()
 	list.append(id)
 	WorldState.flags["letters"] = list

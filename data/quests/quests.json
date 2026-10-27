@@ -1,14 +1,22 @@
 {
-  "_doc": "图腾山洞的任务（QuestLog 读取）。图腾按顺序一次给一个新任务（同时最多 3 个进行中）。objectives 的 type：sit（坐到 uid 以 prefix 开头的座位上）、discover（湖边探索点，ids 全部找到）、reach（走到 pos 半径 radius 米内）、zone_event（在仙境出现时进入 zone）、rainbow（在室外看见彩虹）、constellations（发现 count 个星座）、species（图鉴记下 count 种动物）、swim（在 volume 水里游过）、emote_at（在 pos 附近做动作 id）、flag（WorldState.flags 里 key 为真，例如点亮亚特兰蒂斯的尖塔）、letters（读过 count 封划船人的信，PaddlerStory）。文字都有中英两份。",
+  "_doc": "图腾山洞的任务（QuestLog 读取）。图腾按顺序一次给一个新任务（同时最多 3 个进行中）。objectives 的 type：sit（坐到 uid 以 prefix 开头的座位上）、discover（湖边探索点，ids 全部找到）、reach（走到 pos 半径 radius 米内）、zone_event（在仙境出现时进入 zone）、rainbow（在室外看见彩虹）、constellations（发现 count 个星座）、species（图鉴记下 count 种动物）、swim（在 volume 水里游过）、emote_at（在 pos 附近做动作 id）、flag（WorldState.flags 里 key 为真，例如点亮亚特兰蒂斯的尖塔）、letters（读过 count 封划船人的信，PaddlerStory）。constellations 带 ids 时只数这几个星座。requires：这些 WorldState.flags 都为真以前图腾不给这个任务，先说 wait 那句（后面的任务也一起等）。finale：暮烬之夜接着「暮烬之夜」任务去找图腾时，它讲的最后一个故事（一页一句，讲完放终章过场，StoryDirector）。文字都有中英两份。",
   "giver": {"name": "老图腾", "name_en": "Old Totem"},
   "greeting": {
     "zh": "……火还旺着。旅人，你走进我的山洞了。我守在这里很久了，湖边的事，我都想听你讲讲。",
     "en": "...The fire still burns. Traveller, you have walked into my cave. I have kept watch here a long time, and I would hear what you find by the lake."
   },
   "all_done": {
-    "zh": "你替我走遍了这片湖。洞的尽头那道光门已经醒了——下一个世界还在长，等它长好，我会第一个告诉你。",
-    "en": "You have walked the whole lake for me. The gate of light at the end of the cave is awake. The next world is still growing; when it is ready, you will be the first to know."
+    "zh": "火还旺着。往后每个晴朗的秋夜，暮烬都会回来。仙境那道月光石门……最近夜里，好像有人在门那边轻轻敲。等它开了，我第一个告诉你。",
+    "en": "The fire still burns. Every clear autumn night from now on, the embers will come back. And the moonstone gate in the glade... lately, at night, it sounds as if someone is knocking softly on the other side. When it opens, you will be the first to know."
   },
+  "finale": [
+    {"zh": "你看见了吧，湖上那些一点一点的红光。那是暮烬——长明之火里飘出来的火星。", "en": "You saw them, did you not? The little red lights over the lake. Those are the embers: sparks drifting up from the fires that never go out."},
+    {"zh": "很久以前，每个世界都有一个守火人。湖边的火是我守的；云上的风灯、沙里的祭坛、海底的尖塔，也都有人守着。", "en": "Long ago every world had a fire-keeper. The fire by the lake was mine to keep; the wind lamps above the clouds, the altar in the sand and the spire under the sea all had keepers too."},
+    {"zh": "后来他们一个一个走远了。火还烧着，可没有人回去点灯。那些世界就停在了黄昏里，一直在等。", "en": "Then, one by one, they went far away. The fires kept burning, but no one went back to light the lamps. So those worlds stopped at dusk, and waited."},
+    {"zh": "那个划船的走之前跟我说：等三盏灯都亮了，暮烬就会回到湖上。我守着火，等了很久很久。", "en": "Before the paddler left, they told me: when the three lamps are lit, the embers will come back to the lake. I kept the fire and waited a long, long time."},
+    {"zh": "现在灯都亮了，天上也多了三颗星。谢谢你，旅人。我走不了的路，你替我走完了。", "en": "Now the lamps are all lit, and there are three new stars in the sky. Thank you, traveller. The roads I could not walk, you walked for me."},
+    {"zh": "去石头小屋看看吧。今晚，那边的灯好像亮了。", "en": "Go and look at the stone cottage. Tonight, I think, its lamp is lit."}
+  ],
   "quests": [
     {
       "id": "fireside",
@@ -35,6 +43,13 @@
       ]
     },
     {
+      "id": "sky_lamps",
+      "title": "云上的风灯", "title_en": "Lamps Above the Clouds",
+      "offer": "我身后这条洞走到底，有一道光门。门那边是一片云海，云上有四座风灯，熄了很久了。去把它们点亮。", "offer_en": "Follow this cave to its end and you will find a gate of light. Beyond it lies a sea of clouds, and above the clouds stand four wind lamps that went out long ago. Go and light them.",
+      "done": "我在这儿都闻到风了。天鲸游过来了吧？今晚湖上，抬头看看。", "done_en": "I can smell the wind even from here. The Sky Whale came close, did it not? Look up over the lake tonight.",
+      "objectives": [{"type": "flag", "key": "cloudsea_beacons", "text": "点亮云海浮岛的四座风灯", "text_en": "Light the four wind beacons in the Cloudsea Isles"}]
+    },
+    {
       "id": "summit",
       "title": "登高", "title_en": "Up High",
       "offer": "东北角那座雪山，山顶有一堆石头。爬上去，替我看看整片湖。", "offer_en": "The snow peak in the north-east has a cairn on its top. Climb it and look at the whole lake for me.",
@@ -47,6 +62,13 @@
       "offer": "这片林子里住着不少小家伙。走近一点，把它们记进你的图鉴（按 J 打开）。记下五种就好。", "offer_en": "Many small folk live in these woods. Get close and write them into your journal (press J). Five kinds will do.",
       "done": "兔子、狐狸、鸟……它们也认得你了。", "done_en": "Rabbits, foxes, birds... they know you now too.",
       "objectives": [{"type": "species", "count": 5, "text": "图鉴里记下 5 种动物", "text_en": "Record 5 kinds of animals in the journal"}]
+    },
+    {
+      "id": "sand_relics",
+      "title": "沙里的碎片", "title_en": "Shards in the Sand",
+      "offer": "南边草甸的西头有一道沙之门。门那边的沙丘里埋着六块古代碎片，原本嵌在神殿的祭坛上。替我把它们放回去。", "offer_en": "At the west end of the southern meadow stands a gate of sand. In the dunes beyond it lie six ancient shards that once sat in the altar of the temple. Put them back for me.",
+      "done": "那道光柱，我在洞里都看见了。沙里的那盏灯，也亮了。", "done_en": "I saw that pillar of light even from inside the cave. The lamp in the sand is lit as well.",
+      "objectives": [{"type": "flag", "key": "dunes_altar", "text": "把六块古代碎片嵌回琥珀沙丘的祭坛", "text_en": "Return the six ancient shards to the altar in the Amber Dunes"}]
     },
     {
       "id": "deep_dive",
@@ -96,6 +118,25 @@
       "offer": "那座城的尖塔暗了很久了。五尊捧镜的雕像还在，转动它们，把光一尊一尊传到尖塔上。", "offer_en": "The spire of that city has been dark a long time. The five statues with mirrors still stand; turn them and pass the light, one to the next, up to the spire.",
       "done": "我在这儿都看见了，海底亮了一下。", "done_en": "I saw it even from here: the sea floor flashed with light.",
       "objectives": [{"type": "flag", "key": "atlantis_spire", "text": "让光照到亚特兰蒂斯的山铜尖塔", "text_en": "Bring the light to the orichalcum spire of Atlantis"}]
+    },
+    {
+      "id": "new_stars",
+      "title": "补全星图", "title_en": "Finishing the Chart",
+      "offer": "划船的那张星图，还空着三块，对吧？每把一盏灯送回去，湖上的夜空就会多一个星座。晴朗的夜里抬头找找，替那个划船的补上。", "offer_en": "The paddler's star chart still has three empty places, does it not? Each time a lamp is lit again, the sky over the lake gains a constellation. Look up on clear nights and fill them in for the paddler.",
+      "done": "八个星座，一个不少。那张星图，总算画完了。", "done_en": "Eight constellations, not one missing. That chart is finished at last.",
+      "objectives": [{"type": "constellations", "ids": ["sky_whale", "stone_arch", "manta"], "count": 3, "text": "在湖畔夜空找到天鲸座、石拱座、蝠鲼座", "text_en": "Find the Sky Whale, the Stone Arch and the Manta in the lake sky"}]
+    },
+    {
+      "id": "ember_night",
+      "title": "暮烬之夜", "title_en": "The Night of Embers",
+      "requires": ["cloudsea_beacons", "dunes_altar", "atlantis_spire"],
+      "wait": "三盏灯还没有全亮。云上的、沙里的、海底的——等它们都亮了，再回来找我，我有一个故事要讲给你听。", "wait_en": "The three lamps are not all lit yet. Above the clouds, in the sand, under the sea: when they are all burning, come back to me. I have a story to tell you.",
+      "offer": "三盏灯都亮了。今天傍晚，湖上会飘起暮烬。等它们飘起来，回山洞找我，我把最后一个故事讲给你听。", "offer_en": "All three lamps are lit. This evening the embers will rise over the lake. When they do, come back to the cave and I will tell you my last story.",
+      "done": "那个划船的还在路上，对吧？那就好。火我会一直守着。你什么时候回来，湖都在。", "done_en": "The paddler is still on the road, then? Good. I will keep the fire. Whenever you come back, the lake will be here.",
+      "objectives": [
+        {"type": "flag", "key": "ember_night_heard", "text": "暮烬飘起的夜里，回山洞听老图腾讲故事", "text_en": "On the night the embers rise, hear the Old Totem's story in the cave"},
+        {"type": "flag", "key": "farewell_read", "text": "去石头小屋看看", "text_en": "Go and look at the stone cottage"}
+      ]
     }
   ]
 }

@@ -1,5 +1,5 @@
 {
-  "_doc": "划船人的三封信与石头小屋（PaddlerStory 读取）。前一位旅人把石头小屋三环锁的三个图案分别写进三封信：木屋书架顶上的旧书（cabin，木屋局部坐标见 CabinLife）、码头尽头的旧木盒（dock）、湖心小岛营火边的铁盒（islet）；后两处的位置在 world_layout.json → letters。顺序随意，读过的 id 记在 WorldState.flags.letters；三封都读过之后，在小屋门前按 E 就能开锁（flags.cottage_unlocked）。symbol 是锁上的图案，对应湖畔夜空的星座。chart 是小屋桌上那张没画完的星图。文字都有中英两份。",
+  "_doc": "划船人的三封信与石头小屋（PaddlerStory 读取）。前一位旅人把石头小屋三环锁的三个图案分别写进三封信：木屋书架顶上的旧书（cabin，木屋局部坐标见 CabinLife）、码头尽头的旧木盒（dock）、湖心小岛营火边的铁盒（islet）；后两处的位置在 world_layout.json → letters。顺序随意，读过的 id 记在 WorldState.flags.letters；三封都读过之后，在小屋门前按 E 就能开锁（flags.cottage_unlocked）。symbol 是锁上的图案，对应湖畔夜空的星座。chart 是小屋桌上那张没画完的星图，chart_done 是三个新星座都补上以后它的说明。farewell 是暮烬之夜以后出现在小屋书桌上的第四封信（老图腾讲完最后一个故事、小屋的台灯自己亮了之后），读过记 flags.farewell_read，不算进三封信。文字都有中英两份。",
   "signature": {"zh": "——划船的人", "en": "— the one who paddles"},
   "letters": [
     {
@@ -45,5 +45,19 @@
     "title_en": "The Unfinished Star Chart",
     "text": "墨点连成湖畔夜空的五个星座。旁边一行小字：「还差三个。云上的、沙里的、海底的。」纸的右边空着，留了三块位置。",
     "text_en": "Ink dots join up the five constellations of the lake sky. A line of small writing beside them: \"Three still missing. One above the clouds, one in the sand, one under the sea.\" The right side of the sheet is empty, with room left for three more."
+  },
+  "chart_done": {
+    "title": "补完的星图",
+    "title_en": "The Finished Star Chart",
+    "text": "湖畔的五个星座旁边，三个空位都补上了：天鲸座、石拱座、蝠鲼座。新墨是金色的，比旧墨亮一些。那行「还差三个」被轻轻划掉了。",
+    "text_en": "Beside the five constellations of the lake, the three empty places are filled: the Sky Whale, the Stone Arch and the Manta. The new ink is gold, a little brighter than the old. The line \"Three still missing\" has been gently crossed out."
+  },
+  "farewell": {
+    "id": "farewell",
+    "kind": "envelope",
+    "title": "书桌上的信",
+    "title_en": "A Letter on the Desk",
+    "text": "给替我点灯的人：\n\n我在很远的地方看见湖上飘起了暮烬，就知道三盏灯都亮了。我回来过一趟，点了台灯，坐了一会儿，没敢等你——我怕一见面，就舍不得再走。\n\n星图你替我补完了。天鲸、石拱、蝠鲼，画得比我好。\n\n我要去月光石门后面了。听说那边的星星掉了一地，没有人捡。等我捡够了，就一颗一颗挂回天上，你抬头就能看见。\n\n别等我。好好住在湖边，替我常去码头坐坐。",
+    "text_en": "To the one who lit the lamps for me:\n\nFrom very far away I saw the embers rise over the lake, and I knew the three lamps were lit. I came back once. I lit the desk lamp and sat a while, but I did not dare to wait for you. I was afraid that if we met, I could not bring myself to leave again.\n\nYou finished the star chart for me. The Sky Whale, the Stone Arch, the Manta: you drew them better than I would have.\n\nNow I am going through the moonstone gate. They say the stars over there have fallen all over the ground, and no one picks them up. When I have gathered enough, I will hang them back in the sky one by one, and you will see them when you look up.\n\nDo not wait for me. Live well by the lake, and sit on the dock for me now and then."
   }
 }

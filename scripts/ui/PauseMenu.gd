@@ -166,6 +166,7 @@ func _build_settings() -> Control:
 	_option(view, "first_person_arms", "第一人称的手", ["显示双手", "只显示右手", "不显示"], ARMS_CHOICES)
 	_slider(view, "hand_size", "手的大小", 0.4, 1.0, 0.05, "%d%%", 100.0)
 	_check(view, "play_intro", "启动时播放开场动画")
+	_check(view, "story_cutscenes", "剧情过场动画")
 	_check(view, "view_bob", "走路时镜头晃动")
 	_slider(view, "third_person_distance", "第三人称距离", 1.5, 8.0, 0.1, "%.1f m")
 	_option(view, "shoulder_left", "第三人称肩位", ["右肩", "左肩"], [false, true])

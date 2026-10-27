@@ -24,6 +24,9 @@ const SPOTS := [
 	{"name": "西岭小瀑布", "eye": [-93.2, 1.25, 2.2], "look": [-99.6, 4.4, 2.8]},
 	{"name": "北岭裂谷", "eye": [-79.0, 1.7, -92.0], "look": [-90.0, 11.0, -89.2]},
 	{"name": "沙之门", "eye": [-84.0, 1.7, 89.0], "look": [-94.0, 3.0, 86.0]},
+	# 暮烬之夜（湖面暮烬 + 原版红点）与同一机位不开暮烬的对照
+	{"name": "码头望湖·秋日暮色", "eye": [-2, 2.65, 26], "look": [35, 3, -2], "abs": true, "preset": "Autumn_Dusk_Clear"},
+	{"name": "暮烬之夜·码头望湖", "eye": [-2, 2.65, 26], "look": [35, 3, -2], "abs": true, "preset": "Autumn_Dusk_Clear", "embers": true},
 ]
 ## v0.5 的两个新世界和亚特兰蒂斯（world：那个世界的 id；eye.y 为离地高度，abs 时为绝对高度）
 const WORLD_SPOTS := [
@@ -81,6 +84,9 @@ func _run() -> void:
 			var glade := get_tree().get_first_node_in_group("fairy_glade") as FairyGlade
 			if glade != null:
 				glade._apply(true, true)
+		var story := main.get_node("StoryDirector") as StoryDirector
+		story.set_process(false)    # 暮烬由机位决定，不按剧情标记自己开关
+		story._set_embers(spot.get("embers", false), true)
 		var e: Array = spot["eye"]
 		var y := float(e[1]) + (0.0 if spot.get("abs", false) else WorldTerrain.height_at(float(e[0]), float(e[2])))
 		cam.global_position = Vector3(float(e[0]), y, float(e[2]))

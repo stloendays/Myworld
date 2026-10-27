@@ -2202,3 +2202,21 @@ msgstr "Stone cottage door"
 msgid "划船人的信"
 msgstr "The paddler's letter"
 
+msgid "湖上飘起了暮烬"
+msgstr "Embers are rising over the lake"
+
+msgid "湖畔的夜空里多了一个星座：%s"
+msgstr "A new constellation in the lake sky: %s"
+
+msgid "湖上飘起了暮烬——山洞里的火，好像在叫你回去"
+msgstr "Embers are rising over the lake. The fire in the cave seems to be calling you back"
+
+msgid "任务更新：去石头小屋看看"
+msgstr "Quest updated: go and look at the stone cottage"
+
+msgid "E  拆开信"
+msgstr "E  Open the letter"
+
+msgid "剧情过场动画"
+msgstr "Story cutscenes"
+

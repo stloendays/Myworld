@@ -99,7 +99,7 @@ func done_count() -> int:
 	return n
 
 
-## 图腾下一个能给的任务（按顺序第一个没接过的）；进行中已满 MAX_ACTIVE 个或全部接过返回空字典。
+## 图腾下一个能给的任务（按顺序第一个没接过的）；进行中已满 MAX_ACTIVE 个、全部接过、或下一个的前提（requires）还没满足时返回空字典。
 func next_offer() -> Dictionary:
 	if not GameRules.flag("quests"):
 		return {}
@@ -107,8 +107,34 @@ func next_offer() -> Dictionary:
 		return {}
 	for q: Dictionary in quests():
 		if state_of(str(q["id"])) == "":
-			return q
+			return q if requirements_met(q) else {}
 	return {}
+
+
+## 按顺序第一个没接过、但前提（requires 里的 flags）还没满足的任务：图腾先说它的 wait 那句。
+func waiting_quest() -> Dictionary:
+	if not GameRules.flag("quests"):
+		return {}
+	for q: Dictionary in quests():
+		if state_of(str(q["id"])) == "":
+			return {} if requirements_met(q) else q
+	return {}
+
+
+static func requirements_met(q: Dictionary) -> bool:
+	for key in q.get("requires", []):
+		if not bool(WorldState.flags.get(str(key), false)):
+			return false
+	return true
+
+
+## 暮烬之夜图腾讲的最后一个故事（按界面语言，一页一句）。
+func finale_lines() -> PackedStringArray:
+	var out := PackedStringArray()
+	var en := TranslationServer.get_locale().begins_with("en")
+	for d: Dictionary in _data.get("finale", []):
+		out.append(str(d.get("en" if en else "zh", "")))
+	return out
 
 
 ## 完成了但图腾还没说过谢谢的任务（对话里先说这些）。
@@ -198,7 +224,10 @@ func objective_progress(o: Dictionary, player: FirstPersonController) -> Vector2
 			return Vector2i(1 if seen else 0, 1)
 		"constellations":
 			var need := int(o["count"])
-			return Vector2i(mini(WorldState.journal_list("constellations").size(), need), need)
+			var stars_seen: Array = WorldState.journal_list("constellations")
+			if o.has("ids"):
+				stars_seen = stars_seen.filter(func(c: Variant) -> bool: return str(c) in o["ids"])
+			return Vector2i(mini(stars_seen.size(), need), need)
 		"species":
 			var need_s := int(o["count"])
 			return Vector2i(mini(WorldState.journal_list("species").size(), need_s), need_s)

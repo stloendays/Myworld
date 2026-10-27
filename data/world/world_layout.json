@@ -273,12 +273,14 @@
   },
 
   "intro": {
-    "_doc": "开场过场的镜头：每段从 from 移到 to，同时视线从 look_from 移到 look_to；\"player\" 表示玩家当前的眼睛 / 视线。title_shot 段显示标题。",
+    "_doc": "开场过场的镜头：每段从 from 移到 to，同时视线从 look_from 移到 look_to；\"player\" / \"player_look\" 表示玩家当前的眼睛 / 视线前方。title_shot 段显示标题。captions 是这一段的序幕字幕（中英，不加句号）。",
     "title_shot": 0,
     "shots": [
       {"from": [-62, 34, -58], "to": [-38, 16, -30], "look_from": [70, 2, 10], "look_to": [60, 2, 6], "seconds": 9.0, "fov": 58},
-      {"from": [22, 3.2, 21], "to": [-22, 3.6, 22.5], "look_from": [-50, 3, 30], "look_to": [-69, 4.5, 37], "seconds": 7.0, "fov": 62},
-      {"from": [-55, 6.5, 34], "to": "player", "look_from": [20, 1, 4], "look_to": "player", "seconds": 5.0, "fov": 70}
+      {"from": [22, 3.2, 21], "to": [-22, 3.6, 22.5], "look_from": [-50, 3, 30], "look_to": [-69, 4.5, 37], "seconds": 7.0, "fov": 62,
+       "captions": [{"text": "湖边有几道很老的门，门后面的世界，都停在黄昏里", "text_en": "By the lake stand a few very old gates. The worlds behind them have all stopped at dusk"}]},
+      {"from": [-55, 6.5, 34], "to": "player", "look_from": [20, 1, 4], "look_to": "player_look", "seconds": 6.0, "fov": 70,
+       "captions": [{"text": "北边的山洞里，守火的老图腾在等一个旅人", "text_en": "In the cave to the north, the old totem who keeps the fire is waiting for a traveller"}]}
     ]
   }
 }

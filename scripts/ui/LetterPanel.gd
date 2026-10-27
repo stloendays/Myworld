@@ -2,6 +2,7 @@ class_name LetterPanel
 extends CanvasLayer
 ## 读信的界面：屏幕中间一张信纸（标题、正文、落款），第一次读到时记进 PaddlerStory 并提示“划船人的信 n / 3”。
 ## 也用来看石头小屋桌上那张没画完的星图（open_chart：上面画湖畔的五个星座，右边留三个空位）。
+## 三个新星座都在湖畔夜空放出来以后，星图补完，说明换成 chart_done。暮烬之夜以后书桌上的第四封信也用这里读。
 ## E / 空格 / 回车 / 点击 / Esc 合上，打开时人物不动、鼠标可见（与 DialoguePanel 相同）。
 
 signal closed
@@ -37,12 +38,13 @@ func open_letter(id: String, player: FirstPersonController) -> void:
 	_sign.visible = true
 	_chart.visible = false
 	_open(id, player)
-	if first:
+	if first and id != PaddlerStory.FAREWELL:
 		EventBus.toast_requested.emit(tr("划船人的信  %d / %d") % [PaddlerStory.read_ids().size(), PaddlerStory.letters().size()])
 
 
 func open_chart(player: FirstPersonController) -> void:
-	var c: Dictionary = PaddlerStory.data().get("chart", {})
+	var done := StarField.extras().all(func(e: Dictionary) -> bool: return StarField.shown(e))
+	var c: Dictionary = PaddlerStory.data().get("chart_done" if done else "chart", {})
 	_title.text = PaddlerStory.text(c, "title")
 	_body.text = PaddlerStory.text(c, "text")
 	_sign.visible = false
@@ -157,6 +159,7 @@ func _build() -> void:
 
 
 ## 没画完的星图：深蓝纸上用浅色墨点画湖畔的五个星座（data/sky/constellations.json），右边三个虚线空位写着“？”。
+## 三个新星座在湖畔夜空放出来以后（StarField.shown），用新一点的金色墨迹补进对应的空位，下面写上名字。
 ## 小屋桌上的那张纸用同一个控件画在 SubViewport 里当贴图（StoneCottage）。
 class ChartView extends Control:
 	func _draw() -> void:
@@ -165,7 +168,8 @@ class ChartView extends Control:
 		draw_rect(r.grow(-6.0), Color(0.62, 0.55, 0.4, 0.55), false, 2.0)
 		var font := get_theme_default_font()
 		var ink := Color(0.93, 0.9, 0.78)
-		var list := StarField.constellations()
+		var new_ink := Color(1.0, 0.82, 0.48)
+		var list := StarField.base_list()
 		var left := r.size.x * 0.68
 		var cols := 3
 		var cell := Vector2(left / cols, r.size.y / 2.0)
@@ -173,20 +177,29 @@ class ChartView extends Control:
 		for i in list.size():
 			var c: Dictionary = list[i]
 			var center := Vector2(cell.x * (float(i % cols) + 0.5), cell.y * (float(i / cols) + 0.45))
-			var stars: Array = c["stars"]
-			var pts: Array[Vector2] = []
-			for s: Array in stars:
-				pts.append(center + Vector2(float(s[0]), -float(s[1])) * deg)
-			for ln: Array in c["lines"]:
-				draw_line(pts[int(ln[0])], pts[int(ln[1])], Color(ink, 0.55), 1.5, true)
-			for k in pts.size():
-				draw_circle(pts[k], 1.5 + float((stars[k] as Array)[2]) * 2.2, ink)
+			_figure(c, center, deg, ink)
 			var name := PaddlerStory.text(c, "name")
 			draw_string(font, center + Vector2(-cell.x * 0.5, cell.y * 0.47), name, HORIZONTAL_ALIGNMENT_CENTER, cell.x, 15, Color(ink, 0.85))
+		var extra := StarField.extras()
 		for j in 3:
-			var p := Vector2(left + (r.size.x - left) * 0.5, r.size.y * (0.2 + 0.3 * j))
+			var p := Vector2(left + (r.size.x - left) * 0.5, r.size.y * (0.18 + 0.3 * j))
 			var rad := minf(r.size.y * 0.11, (r.size.x - left) * 0.32)
+			if j < extra.size() and StarField.shown(extra[j]):
+				_figure(extra[j], p, rad / 11.0, new_ink)
+				draw_string(font, p + Vector2(-rad * 1.6, rad + 16.0), PaddlerStory.text(extra[j], "name"), HORIZONTAL_ALIGNMENT_CENTER, rad * 3.2, 14, Color(new_ink, 0.9))
+				continue
 			for a in 16:
 				if a % 2 == 0:
 					draw_arc(p, rad, TAU * a / 16.0, TAU * (a + 1) / 16.0, 4, Color(ink, 0.6), 1.5, true)
 			draw_string(font, p + Vector2(-rad, 8.0), "?", HORIZONTAL_ALIGNMENT_CENTER, rad * 2.0, 24, Color(ink, 0.7))
+
+	## 一个星座：星按 [右, 上] 偏移（度）× deg 像素画成墨点，连线淡一点。
+	func _figure(c: Dictionary, center: Vector2, deg: float, ink: Color) -> void:
+		var stars: Array = c["stars"]
+		var pts: Array[Vector2] = []
+		for s: Array in stars:
+			pts.append(center + Vector2(float(s[0]), -float(s[1])) * deg)
+		for ln: Array in c["lines"]:
+			draw_line(pts[int(ln[0])], pts[int(ln[1])], Color(ink, 0.55), 1.5, true)
+		for k in pts.size():
+			draw_circle(pts[k], 1.5 + float((stars[k] as Array)[2]) * 2.2, ink)

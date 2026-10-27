@@ -3,6 +3,7 @@ extends CanvasLayer
 ## 和老图腾说话的对话框：屏幕下方一块半透明面板，上面是说话人的名字，字一个一个打出来；
 ## 没有选项的一页按 E / 空格 / 回车 / 点击继续，有选项时按 1–3 或点按钮。Esc 随时离开。
 ## 对话内容由 QuestLog 决定：第一次见面先打招呼 → 谢谢你完成的任务 → 给下一个任务（接 / 稍后）→ 道别。
+## 暮烬之夜（StoryDirector.finale_ready）谢完任务后讲最后一个故事，最后一页合上时放终章过场。
 ## 参考了 GitHub 上 nathanhoad/godot_dialogue_manager 的“台词页 + 选项”结构，只保留本项目用得到的部分。
 
 signal closed
@@ -56,7 +57,18 @@ func build_pages() -> Array[Dictionary]:
 		out.append({"text": QuestLog.line("greeting"), "choices": []})
 	for q: Dictionary in QuestLog.unthanked():
 		out.append({"text": QuestLog.text(q, "done"), "choices": [], "thank": str(q["id"])})
+	# 暮烬之夜：图腾讲最后一个故事，讲完放终章过场
+	var story := get_tree().get_first_node_in_group("story_director") as StoryDirector
+	if story != null and story.finale_ready():
+		var lines := QuestLog.finale_lines()
+		for i in lines.size():
+			var page := {"text": lines[i], "choices": []}
+			if i == lines.size() - 1:
+				page["after"] = "finale"
+			out.append(page)
+		return out
 	var offer := QuestLog.next_offer()
+	var waiting := QuestLog.waiting_quest()
 	if not offer.is_empty():
 		out.append({"text": QuestLog.text(offer, "offer"), "choices": [
 			{"label": tr("好，我这就去。"), "action": "accept", "quest": str(offer["id"])},
@@ -64,6 +76,8 @@ func build_pages() -> Array[Dictionary]:
 		]})
 	elif QuestLog.done_count() >= QuestLog.quests().size():
 		out.append({"text": QuestLog.line("all_done"), "choices": [{"label": tr("再见。"), "action": "close"}]})
+	elif not waiting.is_empty():
+		out.append({"text": QuestLog.text(waiting, "wait"), "choices": [{"label": tr("好。"), "action": "close"}]})
 	else:
 		var names := PackedStringArray()
 		for id: String in QuestLog.active_ids():
@@ -100,6 +114,10 @@ func advance() -> void:
 	page_index += 1
 	if page_index >= pages.size():
 		close()
+		if p.get("after", "") == "finale":
+			var story := get_tree().get_first_node_in_group("story_director") as StoryDirector
+			if story != null:
+				story.finale_heard()
 	else:
 		_show_page()
 

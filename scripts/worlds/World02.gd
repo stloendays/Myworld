@@ -21,6 +21,7 @@ var whale: Node3D = null
 var whale_pivot: Node3D = null
 var whale_near := false
 var parkour_best := 0.0                       ## 跳台挑战最好成绩（秒）
+var last_beacon: WindBeacon = null            ## 最后点亮的风灯（过场从它开始拍）
 
 var _blades: Node3D = null
 var _parkour_start := -1.0
@@ -682,7 +683,9 @@ func _build_whale() -> void:
 	_check_beacons(true)
 
 
-func _on_beacon(_b: WindBeacon) -> void:
+func _on_beacon(b: WindBeacon) -> void:
+	if b.lit:
+		last_beacon = b
 	_check_beacons(false)
 
 
@@ -711,9 +714,12 @@ func _check_beacons(instant: bool) -> void:
 	var tw := whale.create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	tw.tween_property(whale, "position", Vector3(target.x, target.y, 0.0), 8.0)
 	if all:
+		var first := not bool(WorldState.flags.get("cloudsea_beacons", false))
 		WorldState.flags["cloudsea_beacons"] = true
 		EventBus.toast_requested.emit(tr("四座风灯都亮了——天鲸游过来了！"))
 		SaveManager.request_save()
+		if first:
+			play_story("cloudsea_light")
 
 
 func _process(delta: float) -> void:
@@ -807,3 +813,14 @@ func water_at(x: float, z: float) -> Dictionary:
 	if Vector2(x, z).distance_to(Vector2(float(pond[0]), float(pond[1]))) < float(pond[2]) * 0.85:
 		return {"id": "pond", "y": float(main["top"]) - 0.35, "fish": "pond"}
 	return {}
+
+
+## 过场锚点：beacon 刚点亮的风灯，whale 天鲸（正在游近），其余见 MiniWorld。
+func story_anchor(name: String) -> Variant:
+	match name:
+		"beacon":
+			var b: WindBeacon = last_beacon if last_beacon != null else (beacons[0] if not beacons.is_empty() else null)
+			return b.global_position if b != null else null
+		"whale":
+			return whale.global_position if whale != null else null
+	return super(name)

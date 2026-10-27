@@ -1,5 +1,5 @@
 {
-  "_doc": "暮色湖畔天上的星座（StarField 读取，原创）。az：方位角（度，北 = 0，顺时针，东 = 90）；el：仰角（度）。stars：每颗星相对中心的偏移 [右, 上]（度）与亮度；lines：连线（星的序号对）。晴朗的夜里在室外盯着一个星座看 1.5 秒，连线会亮起来并记进图鉴。",
+  "_doc": "暮色湖畔天上的星座（StarField 读取，原创）。az：方位角（度，北 = 0，顺时针，东 = 90）；el：仰角（度）。stars：每颗星相对中心的偏移 [右, 上]（度）与亮度；lines：连线（星的序号对）。晴朗的夜里在室外盯着一个星座看 1.5 秒，连线会亮起来并记进图鉴。带 requires 的三个是“把光送回去”以后才出现的新星座：requires 是那个世界点亮时记下的 WorldState.flags 键，第一次在晴朗的夜里看见时放一段剧情过场（StoryDirector），story 是过场里的那行字；它们正好补上石头小屋那张星图的三个空位。",
   "constellations": [
     {
       "id": "canoe", "name": "独木舟座", "name_en": "The Canoe",
@@ -30,6 +30,30 @@
       "az": 100, "el": 72,
       "stars": [[0, -6, 0.8], [0, -2, 0.9], [0, 2, 0.9], [0, 6, 1.1], [-5, 4, 0.8], [5, 4, 0.8]],
       "lines": [[0, 1], [1, 2], [2, 3], [2, 4], [2, 5]]
+    },
+    {
+      "id": "sky_whale", "name": "天鲸座", "name_en": "The Sky Whale",
+      "requires": "cloudsea_beacons", "world": "world_02",
+      "story": "天鲸座——云海里那只从不落地的天鲸", "story_en": "The Sky Whale: the whale of the Cloudsea that never comes down to land",
+      "az": 255, "el": 28,
+      "stars": [[-10, 0, 1.0], [-7, 3, 0.8], [-1, 4, 0.9], [6, 2, 0.7], [10, 5, 0.9], [10, -1, 0.8], [-2, -2.5, 0.7], [-7, 8, 0.6]],
+      "lines": [[0, 1], [1, 2], [2, 3], [3, 4], [3, 5], [3, 6], [6, 0], [1, 7]]
+    },
+    {
+      "id": "stone_arch", "name": "石拱座", "name_en": "The Stone Arch",
+      "requires": "dunes_altar", "world": "world_03",
+      "story": "石拱座——琥珀沙丘里那道被风吹了很久的石拱", "story_en": "The Stone Arch: the arch in the Amber Dunes that the wind has worn for ages",
+      "az": 345, "el": 56,
+      "stars": [[-6, -7, 0.9], [-6, -1, 0.7], [-4.5, 4, 0.8], [0, 6.5, 1.1], [4.5, 4, 0.8], [6, -1, 0.7], [6, -7, 0.9]],
+      "lines": [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6]]
+    },
+    {
+      "id": "manta", "name": "蝠鲼座", "name_en": "The Manta",
+      "requires": "atlantis_spire", "world": "world_04",
+      "story": "蝠鲼座——海底古城里那只比老图腾还老的蝠鲼", "story_en": "The Manta: the manta of the sunken city, older even than the Totem",
+      "az": 70, "el": 30,
+      "stars": [[0, 4, 1.0], [-9, 0.5, 0.9], [9, 0.5, 0.9], [0, -2.5, 0.8], [0.8, -6.5, 0.6], [2, -10, 0.6], [-1.6, 5.5, 0.6], [1.6, 5.5, 0.6]],
+      "lines": [[0, 1], [1, 3], [3, 2], [2, 0], [3, 4], [4, 5], [0, 6], [0, 7]]
     }
   ]
 }
