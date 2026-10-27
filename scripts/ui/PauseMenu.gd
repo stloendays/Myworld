@@ -157,7 +157,7 @@ func _build_settings() -> Control:
 	_option(display, "max_fps", "帧率上限", ["不限", "30", "60", "120", "144", "165", "240"], FPS_CHOICES)
 	_check(display, "vsync", "垂直同步")
 	_check(display, "fullscreen", "全屏（F11 或 Alt + Enter 随时切换）")
-	_option(display, "renderer", "渲染方式", ["自动（推荐）", "兼容（旧显卡、打不开时）", "兼容 ANGLE（兼容也不行时）"], StartupGuard.RENDERERS)
+	_option(display, "renderer", "渲染方式", ["自动（推荐）", "Direct3D 12（内存占用更少）", "兼容（旧显卡、打不开时）", "兼容 ANGLE（兼容也不行时）"], StartupGuard.RENDERERS)
 	var render_row := HBoxContainer.new()
 	render_row.add_theme_constant_override("separation", 10)
 	display.add_child(render_row)

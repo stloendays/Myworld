@@ -33,6 +33,8 @@ var _image: Image = null
 var _zone_names := {}
 var _world: MiniWorld = null   ## 在云海浮岛、琥珀沙丘等世界里：底图、图形和标记都由那个世界提供
 var _covered := false   ## 大厅、日志、地图等面板开着时收起来
+var _pose := Vector3(INF, INF, 0.0)   ## 上次重画时玩家的 (x, z, 朝向)
+var _redraw_timer := 0.0
 
 
 func _ready() -> void:
@@ -122,7 +124,7 @@ func _build() -> void:
 	_root.add_child(_zone_label)
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	if _task >= 0 and WorkerThreadPool.is_task_completed(_task):
 		WorkerThreadPool.wait_for_task_completion(_task)
 		_task = -1
@@ -132,9 +134,16 @@ func _process(_delta: float) -> void:
 		sync_cover()
 	if not _root.visible:
 		return
+	# 底图上的路、建筑轮廓每次重画都要几十条抗锯齿折线：只在人走动、转身时重画，站着不动时每 0.25 秒刷新一次标记
+	var player := _player()
+	var pose := Vector3(player.global_position.x, player.global_position.z, player.rotation.y) if player != null else Vector3.ZERO
+	_redraw_timer -= delta
+	if _redraw_timer > 0.0 and Vector2(pose.x - _pose.x, pose.y - _pose.y).length() < 0.2 and absf(angle_difference(pose.z, _pose.z)) < 0.01:
+		return
+	_pose = pose
+	_redraw_timer = 0.25
 	_canvas.queue_redraw()
 	_overlay.queue_redraw()
-	var player := _player()
 	if player != null:
 		_zone_label.text = _zone_text(player)
 

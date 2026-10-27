@@ -5,13 +5,14 @@ extends Node
 ##   · 所以每次启动先在 user://startup_guard.json 记 state = starting，世界画出来以后（BootLoader 预热完）
 ##     改成 ok，正常退出改成 exited。下次启动看到 starting，说明上次在加载途中崩了，自动降一级渲染：
 ##     标准（Vulkan / D3D12）→ 兼容（OpenGL）→ 兼容 ANGLE（OpenGL 走 Direct3D 11），并带参数重新启动自己。
-##   · 设置 → 画面 → 渲染方式（GameSettings.renderer）可以手动选，下次启动生效。
+##   · 设置 → 画面 → 渲染方式（GameSettings.renderer）可以手动选，下次启动生效；“Direct3D 12”和自动一样是标准画质，
+##     进程内存约少一半（显卡驱动那一侧占得少），第一次见到新材质时编译着色器比 Vulkan 慢一些。
 ##   · 只在导出的游戏里起作用；编辑器、自动检查、开发工具、命令行自己指定了渲染方式时都不动。
 ##   · 每次启动把版本、渲染方式、驱动、显卡写进日志（%APPDATA%\DuskLake\logs\godot.log），方便朋友发来排查。
 
 const GUARD_PATH := "user://startup_guard.json"
 const SETTINGS_PATH := "user://settings.json"
-const RENDERERS := ["auto", "compatibility", "angle"]
+const RENDERERS := ["auto", "d3d12", "compatibility", "angle"]   ## d3d12：标准画质走 Direct3D 12（同样的画面，进程内存约少一半）
 
 var active := false
 var state := {}
@@ -72,7 +73,7 @@ static func next_renderer(setting: String, driver: String) -> String:
 		"opengl3_angle":
 			return setting
 		_:
-			return "compatibility" if setting == "auto" else ("angle" if setting == "compatibility" else setting)
+			return "compatibility" if setting in ["auto", "d3d12"] else ("angle" if setting == "compatibility" else setting)
 
 
 ## 选的渲染方式和实际跑着的驱动不一致时需要带参数重启（命令行自己指定过就不管）。
@@ -80,6 +81,8 @@ static func needs_relaunch(setting: String, driver: String, has_override: bool) 
 	if has_override:
 		return false
 	match setting:
+		"d3d12":
+			return driver != "d3d12"
 		"compatibility":
 			return not driver.begins_with("opengl3")
 		"angle":
@@ -89,6 +92,8 @@ static func needs_relaunch(setting: String, driver: String, has_override: bool) 
 
 static func launch_args(setting: String) -> PackedStringArray:
 	match setting:
+		"d3d12":
+			return PackedStringArray(["--rendering-driver", "d3d12"])
 		"compatibility":
 			return PackedStringArray(["--rendering-method", "gl_compatibility", "--rendering-driver", "opengl3"])
 		"angle":

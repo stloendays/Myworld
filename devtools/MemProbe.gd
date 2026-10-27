@@ -101,6 +101,14 @@ func _run() -> void:
 	var script_ms := 0.0
 	var phys_ms := 0.0
 	var tour_start := Time.get_ticks_usec()
+	var why_last := _why_state()
+	var stamp_a := Stamp.new(true)
+	var stamp_b := Stamp.new(false)
+	stamp_b.marks = stamp_a.marks
+	get_tree().root.add_child(stamp_a)
+	get_tree().root.add_child(stamp_b)
+	var mark_log: Array = []
+	_insert_marks(mark_log)
 	var last := tour_start
 	if OS.get_environment("DUSK_PROBE_SHORT") != "":
 		if OS.get_environment("DUSK_PROBE_SHORT") == "scale":
@@ -127,14 +135,23 @@ func _run() -> void:
 		var t := 0.0
 		while t < dur:
 			await get_tree().process_frame
+			var why_now := _why_state()
+			var why_prev := why_last
+			why_last = why_now
 			var now := Time.get_ticks_usec()
 			var dt := (now - last) / 1000.0
 			last = now
 			frames.append(dt)
 			script_ms += Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0
 			phys_ms += Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000.0
+			var m: Dictionary = stamp_a.marks
+			var scripts_ms := (int(m.get("p1", 0)) - int(m.get("p0", 0))) / 1000.0
+			var phys_frame_ms := int(m.get("phys_sum", 0)) / 1000.0
+			m["phys_sum"] = 0
+			var slowest := _slowest(mark_log)
+			mark_log.clear()
 			if dt > 33.0:
-				var h := {"ms": snappedf(dt, 0.1), "leg": "%d→%d" % [i, i + 1], "pos": [snappedf(cam.global_position.x, 0.1), snappedf(cam.global_position.z, 0.1)], "t": snappedf((now - tour_start) / 1e6, 0.01)}
+				var h := {"ms": snappedf(dt, 0.1), "leg": "%d→%d" % [i, i + 1], "pos": [snappedf(cam.global_position.x, 0.1), snappedf(cam.global_position.z, 0.1)], "t": snappedf((now - tour_start) / 1e6, 0.01), "why": _why(why_prev), "scripts": snappedf(scripts_ms, 0.1), "slowest": slowest, "physics": snappedf(phys_frame_ms, 0.1)}
 				hitches.append(h)
 				print("HITCH ", JSON.stringify(h))
 			t += minf(dt / 1000.0, 0.1)
@@ -174,3 +191,87 @@ func _point(w: Array) -> Vector3:
 	var z := float(w[1])
 	var y: float = float(w[2]) if w[2] != null else WorldTerrain.height_at(x, z) + 1.65
 	return Vector3(x, y, z)
+
+
+## 卡顿那一帧发生了什么：新编译的渲染管线、新读进来的声音、节点数的变化（和上一帧比）。
+func _why_state() -> Dictionary:
+	var s := {"nodes": get_tree().get_node_count(), "sounds": SoundBank._streams.size()}
+	for k in ["CANVAS", "MESH", "SURFACE", "DRAW", "SPECIALIZATION"]:
+		s[k] = RenderingServer.get_rendering_info(ClassDB.class_get_integer_constant("RenderingServer", "RENDERING_INFO_PIPELINE_COMPILATIONS_" + k))
+	return s
+
+
+func _why(prev: Dictionary) -> Dictionary:
+	var now := _why_state()
+	var out := {}
+	for k in now:
+		if int(now[k]) != int(prev.get(k, 0)):
+			out[k] = int(now[k]) - int(prev.get(k, 0))
+	var vp := get_viewport().get_viewport_rid()
+	out["gpu"] = snappedf(RenderingServer.viewport_get_measured_render_time_gpu(vp), 0.1)
+	out["cpu_r"] = snappedf(RenderingServer.viewport_get_measured_render_time_cpu(vp) + RenderingServer.get_frame_setup_time_cpu(), 0.1)
+	out["phys"] = snappedf(Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000.0, 0.1)
+	out["proc"] = snappedf(Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0, 0.1)
+	out["draws"] = RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_DRAW_CALLS_IN_FRAME)
+	return out
+
+
+## 量每帧所有 _process / _physics_process 一共花了多久：一个节点最先跑（优先级最低），一个最后跑。
+class Stamp extends Node:
+	var first := false
+	var marks := {}
+
+	func _init(is_first: bool) -> void:
+		first = is_first
+		process_priority = -100000 if is_first else 100000
+		process_physics_priority = -100000 if is_first else 100000
+
+	func _process(_d: float) -> void:
+		marks["p0" if first else "p1"] = Time.get_ticks_usec()
+
+	func _physics_process(_d: float) -> void:
+		var k := "f0" if first else "f1"
+		if first:
+			marks[k] = Time.get_ticks_usec()
+		else:
+			marks["phys_sum"] = int(marks.get("phys_sum", 0)) + Time.get_ticks_usec() - int(marks.get("f0", Time.get_ticks_usec()))
+
+
+## 插在场景树里某个节点前面的计时标记：处理顺序和树的顺序一样，相邻两个标记之间的时间就是中间那棵子树的 _process。
+class Mark extends Node:
+	var label := ""
+	var log: Array = []
+
+	func _process(_d: float) -> void:
+		log.append([label, Time.get_ticks_usec()])
+
+
+func _insert_marks(log: Array) -> void:
+	var parents: Array[Node] = [get_tree().root]
+	var main := get_tree().root.find_child("Main", false, false)
+	for c in get_children():
+		if c.name == "Main" or c is Node3D:
+			main = c
+	if main != null:
+		parents.append(main)
+		var world := main.get_node_or_null("World")
+		if world != null:
+			parents.append(world)
+	for p in parents:
+		for c in p.get_children():
+			if c is Mark:
+				continue
+			var m := Mark.new()
+			m.label = "%s/%s" % [p.name, c.name]
+			m.log = log
+			p.add_child(m)
+			p.move_child(m, c.get_index())
+
+
+## 这一帧里相邻两个标记之间最长的三段（标记名 = 它后面那棵子树）。
+static func _slowest(log: Array) -> Array:
+	var gaps := []
+	for i in range(log.size() - 1):
+		gaps.append([snappedf((int(log[i + 1][1]) - int(log[i][1])) / 1000.0, 0.1), log[i][0]])
+	gaps.sort_custom(func(a: Array, b: Array) -> bool: return a[0] > b[0])
+	return gaps.slice(0, 3)

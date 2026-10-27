@@ -70,8 +70,12 @@ func _run() -> void:
 	var results := []
 	# -- worlds：只测湖岸出生点（对照）和两个新世界
 	var only_worlds := OS.get_cmdline_user_args().has("worlds")
+	# DUSK_BENCH_ONLY=机位1,机位2：只测这几个湖畔机位（看某个机位单独测时多快）
+	var only := OS.get_environment("DUSK_BENCH_ONLY").split(",", false)
 	for spot in SPOTS:
 		if only_worlds and str(spot["name"]) != "湖岸出生点":
+			continue
+		if not only.is_empty() and not str(spot["name"]) in only:
 			continue
 		if spot.has("preset"):
 			(main.get_node("Systems") as ClimateSystem).apply_preset(str(spot["preset"]))
@@ -112,7 +116,8 @@ func _run() -> void:
 		}
 		print("BENCH ", JSON.stringify(r))
 		results.append(r)
-	results.append_array(await _bench_worlds(main, cam))
+	if only.is_empty():
+		results.append_array(await _bench_worlds(main, cam))
 	var f := FileAccess.open("user://benchmark.json", FileAccess.WRITE)
 	if f != null:
 		f.store_string(JSON.stringify({"adapter": RenderingServer.get_video_adapter_name(), "resolution": str(get_viewport().get_visible_rect().size), "results": results}, "  "))

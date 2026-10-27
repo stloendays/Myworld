@@ -52,7 +52,7 @@ func open(tab := 0) -> void:
 	if GameSettings.can_grab_mouse():
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_tabs.current_tab = tab
-	_refresh()
+	_rebuild_pages()
 	_root.visible = true
 	Sound.play("page")
 
@@ -83,10 +83,18 @@ func _unhandled_input(event: InputEvent) -> void:
 
 # ---------------------------------------------------------------- 内容
 
+## 任务、图鉴、玩法、规则有变化：左上角的任务追踪栏马上刷新；日志各页只在开着时重建，关着时等下次打开再建
+## （几百个文字标签整页重建要几十毫秒，图鉴每认出一种动物都会来一次，日志关着时白白卡一下）。
 func _refresh() -> void:
 	# 世界被移出场景树时（例如截图工具把湖畔先摘下来拍别的世界）不刷新
 	if _quest_box == null or not is_inside_tree():
 		return
+	_refresh_tracker(get_tree().get_first_node_in_group("local_player") as FirstPersonController)
+	if is_open():
+		_rebuild_pages()
+
+
+func _rebuild_pages() -> void:
 	for c in _quest_box.get_children():
 		c.queue_free()
 	for c in _dex_box.get_children():
@@ -131,7 +139,6 @@ func _refresh() -> void:
 	_refresh_play()
 	_refresh_lore()
 	_refresh_achievements()
-	_refresh_tracker(player)
 
 
 func _refresh_tracker(player: FirstPersonController) -> void:

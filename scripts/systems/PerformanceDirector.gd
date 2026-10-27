@@ -69,11 +69,10 @@ func apply_quality() -> void:
 	get_viewport().mesh_lod_threshold = p["lod"]
 	# 中 / 高 / 极高画质用时间抗锯齿（TAA）（v0.5 起中画质也用：走动时溪边、林道闪烁约减半）：走动时细草、栏杆、木板缝、阴影边的锯齿闪烁约减半（devtools/FlickerProbe 的 jiggle 测试）
 	get_viewport().use_taa = bool(p.get("taa", false)) and forward_plus()
-	var cover := get_tree().get_first_node_in_group("ground_cover")
+	var cover := get_tree().get_first_node_in_group("ground_cover") as GroundCoverBuilder
 	if cover != null:
-		for mmi: MultiMeshInstance3D in cover.find_children("*", "MultiMeshInstance3D", true, false):
-			if mmi.visibility_range_end >= 100.0:
-				mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if p["cover_shadows"] else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		cover.shadows_allowed = p["cover_shadows"]
+		cover.update_shadows()
 	applied_quality = q
 	_apply_scale()
 	fade_lights()

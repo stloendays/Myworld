@@ -74,7 +74,7 @@ const DEFAULTS := {
 	"emote_third_person": true,       ## 挥手 / 跳舞 / 鼓掌时自动切到第三人称看自己，做完切回
 	"auto_update_check": true,        ## 启动时到 GitHub 检查新版本（只在导出的游戏里）
 	"language": "auto",               ## 界面语言：auto（默认，跟随系统）/ en / zh
-	"renderer": "auto",               ## 渲染方式：auto（Vulkan，起不来引擎自动换）/ compatibility（OpenGL）/ angle；下次启动生效（StartupGuard）
+	"renderer": "auto",               ## 渲染方式：auto（Vulkan，起不来引擎自动换）/ d3d12 / compatibility（OpenGL）/ angle；下次启动生效（StartupGuard）
 	"volume_master": 1.0,             ## 总音量（0–1）
 	"volume_music": 0.45,             ## 背景音乐（规格：极轻，默认偏低）
 	"volume_ambience": 0.8,           ## 环境声（风、水、雨、鸟虫、炉火）

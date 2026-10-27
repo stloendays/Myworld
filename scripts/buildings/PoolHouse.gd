@@ -105,6 +105,17 @@ func rebuild() -> void:
 	var ring_cfg := WorldLayout.section("atlantis_ring")
 	if not ring_cfg.is_empty():
 		g.add_child(AtlantisRing.create(ring_cfg, REEF_SAND))
+	_no_shadows_below(g, CEIL_B + 0.4)
+
+
+## 水族馆整层在地下，太阳照不到，馆里也没有投影的灯，这一层的东西不必投影：
+## 人在地面上时，太阳阴影的几级级联照样会把缸里的珊瑚、鱼、摆设一件件画进阴影图。
+func _no_shadows_below(root: Node, top_y: float) -> void:
+	var to_local_xf := global_transform.affine_inverse()
+	for node in root.find_children("*", "GeometryInstance3D", true, false):
+		var g := node as GeometryInstance3D
+		if ((to_local_xf * g.global_transform) * g.get_aabb()).end.y < top_y:
+			g.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 
 func _materials() -> void:

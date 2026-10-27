@@ -2334,3 +2334,6 @@ msgstr "Online"
 msgid "游戏模式"
 msgstr "Game mode"
 
+msgid "Direct3D 12（内存占用更少）"
+msgstr "Direct3D 12 (uses less memory)"
+

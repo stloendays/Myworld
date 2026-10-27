@@ -21,8 +21,8 @@ Main (Main.gd)
 │   ├── Precipitation                    雨雪粒子 + 跟随相机的高度场碰撞（屋顶下无雨雪）
 │   ├── Terrain    TerrainBuilder       高度场网格 + HeightMapShape3D，terrain.gdshader 五层 PBR
 │   ├── Lake       LakeBuilder          水面 + 反射探针 + 涉水上限
-│   ├── Forest     ForestBuilder        Kenney 树木 / 岩石 MultiMesh + 碰撞
-│   ├── GroundCover GroundCoverBuilder  地被（40 m 区块，按距离隐藏）
+│   ├── Forest     ForestBuilder        Kenney 树木 / 岩石 MultiMesh（128 m 分块）+ 碰撞
+│   ├── GroundCover GroundCoverBuilder  地被（40 m 区块，按距离隐藏；只有镜头 48 m 内的块投影）
 │   ├── Dock       DockBuilder
 │   ├── Backdrop   DistantBackdrop      远山与地图外台地
 │   └── Zones      ZonesBuilder         室外区域触发器
@@ -99,6 +99,7 @@ Main (Main.gd)
 | `AudioDirector`（Autoload `Sound`）/ `SoundBank` / `SoundEmitter` / `MusicDirector` | M3 已实现（2026-10-27） | 只读世界状态（`WorldState`、`WeatherController.blended()`、`EnvironmentDirector.night`、区域、玩家），统一混音，不写状态：总线 MUSIC / AMB_OUTDOOR / AMB_WEATHER / AMB_INDOOR / FOLEY / UI 启动时建；环境层按世界状态 1.5 s 淡入淡出；进屋按 `WorldState.is_indoors` 平滑（时间常数 0.55 s）降户外与天气总线并压低通；交互音效订阅 `EventBus.interactable_state_changed` 等通知；定位声源由建造脚本挂 `SoundEmitter`；声音表 `data/audio/sounds.json`、乐曲 `music.json`；文件由 `devtools/audio/synth.mjs` 合成 |
 | `SaveManager`（Autoload） | v0.5 已实现，两个槽（2026-10-27） | 剧情、休闲各一个存档槽 `user://saves/story.json`、`casual.json`（v5，临时文件 + 原子替换；路径都由 `dir` 推出，自动检查改到别处）：新建（这个槽的旧档先备份成 `*.bak.json`）/ 继续某个槽 / 每 60 s、换世界、退出时自动存；v0.5 的单一存档 `world.json` 第一次启动时按有无任务复制进剧情或休闲槽，v0.4 的 `journal.json` 接进剧情槽；读档后按 uid 恢复门灯、船位，回到存档时的世界与位置；联机做客和自动检查里不写盘 |
 | `UiStyle` | 界面升级（2026-10-27） | 全游戏界面的配色与样式（暮色深蓝紫面板、琥珀强调、奶白文字）：`build_theme()` 建唯一的主题（`GameSettings.ui_theme()` 挂到所有界面），面板、卡片、药丸条、按键帽、主按钮、手画的勾选框与开关图标；`COVER_GROUP`：盖住画面的面板（大厅、暂停、日志、世界地图、信、厨房、棋盘）开着时，`CHROME_GROUP` 里的罗盘、小地图、任务追踪栏收起来 |
+| `StaticBatch` / `PerformanceDirector` | 性能（2026-10-27） | 建好湖畔一帧后（`Main._merge_static`）把建筑、码头、小溪、卷轴木架这些不会动的小网格按材质、空间格子（24 m）合成少数几个网格：只并没有脚本、没被脚本变量引用、不透明标准材质的部件；合成的网格挂在最近的“单位”（有脚本或被引用的节点）下面，跟着它一起动、一起显隐；玩家、小动物、树林、地被不碰。阴影：地被只有镜头 48 m 内的块投影，卷轴 45 m 外不投影，文字不投影，水族馆那一层不投影 |
 | `Interactable` 状态延续 | v0.5 | 读过档或从别的世界回来时，可交互物按 `WorldState.interactables` 里存下的状态摆（不再被新建的初始状态覆盖） |
 
 已使用的事件：`time_changed`、`season_changed`、`weather_transition_started`、`weather_changed`、`zone_entered`、`zone_exited`、`interactable_state_changed`、`interaction_prompt_changed`。
@@ -138,5 +139,5 @@ v0.5 新增：`collected`（捡到收集品）、`photo_taken`（摄影清单记
 - **太阳方位**：为还原参考图 01 的构图（从木屋/码头望向湖对岸的落日），本世界的太阳在湖对岸落下：`seasons.json → sun_set_azimuth_deg = 79°`，太阳从日出到日落沿正弦弧线转 180°，秋季 17:20 正好位于方位 64°、高度约 10°（与 M1 的暮色构图一致）。
 - **涉水**：MVP 不做游泳，用沿 0.7 m 等深线的水下挡墙限制，码头处压低到甲板以下。
 - **码头栏杆**：入水段加栏杆，碰撞比可见栏杆高 0.45 m，防止跳过后落入深水。
-- **湖面倒影**：屏幕空间反射负责近处（码头、岸边），远岸树林由湖心上方 2 m 处只拍一次的盒投影反射探针提供；水面在可见层 2，不进入探针。反射图集只开 2 个槽（`reflection_count=2`），避免默认 64 槽占用数 GB 显存。
+- **湖面倒影**：屏幕空间反射负责近处（码头、岸边），远岸树林由湖心上方 2 m 处只拍一次的盒投影反射探针提供；水面在可见层 2、地被在可见层 6，都不进入探针。反射图集只开 2 个槽（`reflection_count=2`），避免默认 64 槽占用数 GB 显存；每面 512 像素（`reflection_size=512`，2026-10-27 从 1024 降下来，倒影看不出差别，显存少约 100 MB）。
 - **木屋定位**：木屋在 `_enter_tree()` 中按布局定位。门板是 AnimatableBody3D，进入场景树后不会跟随父节点的后续移动，所以必须先定位再让子节点进树。

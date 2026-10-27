@@ -41,6 +41,13 @@ static func asset_paths() -> PackedStringArray:
 
 var instance_count := 0
 var _collision: StaticBody3D = null
+## 地被只有离镜头这么近的块投影：远处灌木、倒木的影子在画面上只有几个像素，却要在太阳阴影的每一级里各画一遍
+const SHADOW_NEAR := 48.0
+## 地被单独放在渲染层 6：湖面反射探针重拍时不拍它（草丛灌木的倒影看不出来，却要在 6 个面里各画几百次）
+const DETAIL_LAYER := 32
+var shadows_allowed := true   ## 画质档位（PerformanceDirector）：低、中画质地被不投影
+var _shadow_center := Vector2(INF, INF)
+var _shadow_timer := 0.0
 
 
 func _ready() -> void:
@@ -94,11 +101,42 @@ func rebuild() -> void:
 		while cx < mx:
 			var chunk := Node3D.new()
 			chunk.name = "Chunk_%d_%d" % [int(cx), int(cz)]
+			chunk.set_meta("center", Vector2(cx + CHUNK * 0.5, cz + CHUNK * 0.5))
 			root.add_child(chunk)
 			for item in ITEMS:
 				_fill_chunk(chunk, item, rng, Rect2(cx, cz, CHUNK, CHUNK), meadow)
 			cx += CHUNK
 		cz += CHUNK
+
+
+func _process(delta: float) -> void:
+	if Engine.is_editor_hint():
+		return
+	_shadow_timer -= delta
+	if _shadow_timer > 0.0:
+		return
+	_shadow_timer = 0.25
+	var cam := get_viewport().get_camera_3d()
+	if cam != null and Vector2(cam.global_position.x, cam.global_position.z).distance_to(_shadow_center) > 6.0:
+		update_shadows()
+
+
+## 镜头走动或画质改了以后：SHADOW_NEAR 以内的块里能投影的地被开投影，其余关掉。
+func update_shadows() -> void:
+	var root := get_node_or_null(GENERATED)
+	var cam := get_viewport().get_camera_3d()
+	if root == null or cam == null:
+		return
+	_shadow_center = Vector2(cam.global_position.x, cam.global_position.z)
+	var reach := SHADOW_NEAR + CHUNK * 0.71
+	for chunk in root.get_children():
+		if not chunk.has_meta("center"):
+			continue
+		var near: bool = shadows_allowed and (chunk.get_meta("center") as Vector2).distance_to(_shadow_center) < reach
+		var mode := GeometryInstance3D.SHADOW_CASTING_SETTING_ON if near else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		for mmi in chunk.get_children():
+			if mmi.has_meta("casts") and (mmi as GeometryInstance3D).cast_shadow != mode:
+				(mmi as GeometryInstance3D).cast_shadow = mode
 
 
 func _meadow() -> Dictionary:
@@ -159,6 +197,7 @@ func _fill_chunk(chunk: Node3D, item: Dictionary, rng: RandomNumberGenerator, re
 		mmi.name = asset
 		mmi.multimesh = mm
 		mmi.set_meta("palette", str(item["colors"]))
+		mmi.layers = DETAIL_LAYER
 		if fade.is_empty():
 			mmi.visibility_range_end = float(item["view"])
 			mmi.visibility_range_end_margin = 15.0
@@ -166,8 +205,12 @@ func _fill_chunk(chunk: Node3D, item: Dictionary, rng: RandomNumberGenerator, re
 		else:
 			# 草和花在着色器里逐株缩小到 0；整块只在最远一株也缩没之后才剔除（可见距离按块中心算，加半条对角线）
 			mmi.visibility_range_end = float(fade[1]) + CHUNK * 0.75
-		if float(item["view"]) < 100.0:
-			mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		# 灌木、倒木、树桩这些看得远的才投影，而且只有离镜头 SHADOW_NEAR 以内的块投影（update_shadows）
+		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		if float(item["view"]) >= 100.0:
+			mmi.set_meta("casts", true)
+			if Engine.is_editor_hint():
+				mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 		chunk.add_child(mmi)
 		instance_count += entries.size()
 		if item.get("collide", false) and _collision != null:

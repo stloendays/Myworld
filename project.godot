@@ -60,6 +60,7 @@ locale/fallback="zh"
 3d_render/layer_3="player_body"
 3d_render/layer_4="falling_leaves"
 3d_render/layer_5="first_person_arms"
+3d_render/layer_6="ground_cover"
 
 [shader_globals]
 
@@ -105,5 +106,5 @@ renderer/rendering_method="forward_plus"
 anti_aliasing/quality/msaa_3d=2
 lights_and_shadows/directional_shadow/size=4096
 occlusion_culling/use_occlusion_culling=true
-reflections/reflection_atlas/reflection_size=1024
+reflections/reflection_atlas/reflection_size=512
 reflections/reflection_atlas/reflection_count=2

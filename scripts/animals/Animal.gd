@@ -25,6 +25,8 @@ var _rule_timer := 0.0
 var _season: StringName = &""
 var _orbit := 0.0
 var _variant := 0
+var _ground_xz := Vector2(INF, INF)
+var _ground_h := 0.0
 
 
 func setup(id: StringName, species: String, zone_center: Vector2, zone_radius: float, seed_value: int) -> void:
@@ -40,6 +42,12 @@ func setup(id: StringName, species: String, zone_center: Vector2, zone_radius: f
 	add_child(model)
 	_season = WorldState.season_id
 	model.setup(def, FaunaData.palette(def, _variant))
+	# 远处的小动物只有几个像素，不画也不进阴影图（天上的鸟看得远一些）
+	var far := 160.0 if str(def.get("locomotion", "walk")) == "fly" else 95.0
+	for g in model.find_children("*", "GeometryInstance3D", true, false):
+		(g as GeometryInstance3D).visibility_range_end = far
+		(g as GeometryInstance3D).visibility_range_end_margin = 10.0
+		(g as GeometryInstance3D).visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
 	var p := _random_point()
 	global_position = p
 	_target = p
@@ -47,14 +55,20 @@ func setup(id: StringName, species: String, zone_center: Vector2, zone_radius: f
 	add_to_group("fauna")
 
 
-## 更新降频（大作里的“AI LOD”）：离相机 70 m 外每 4 帧更新一次，150 m 外每 12 帧一次，
+## 更新降频（大作里的“AI LOD”）：离相机 30 m 外每 2 帧更新一次，70 m 外每 4 帧，150 m 外每 12 帧，视野外每 8 帧，
 ## 跳过的帧把时间攒起来一起算，所以走动速度不变，只是远处的动画没那么细。
 func _lod_interval() -> int:
 	var cam := get_viewport().get_camera_3d()
 	if cam == null:
 		return 1
 	var d := cam.global_position.distance_squared_to(global_position)
-	return 12 if d > 150.0 * 150.0 else (4 if d > 70.0 * 70.0 else 1)
+	if d > 150.0 * 150.0:
+		return 12
+	# 镜头背后、视野外的没人看得到，慢慢更新就行（摆腿、移动都要把六七个关节的变换推给渲染服务器）；
+	# 离得很近的照常更新，转身时不会看到它顿一下
+	if d > 12.0 * 12.0 and not cam.is_position_in_frustum(global_position):
+		return 8
+	return 4 if d > 70.0 * 70.0 else (2 if d > 30.0 * 30.0 else 1)
 
 
 func _physics_process(delta: float) -> void:
@@ -118,7 +132,7 @@ func _ground(delta: float) -> void:
 		pos.x += step.x
 		pos.z += step.y
 		rotation.y = lerp_angle(rotation.y, atan2(-to.x, -to.y), 1.0 - exp(-8.0 * delta))
-	var ground := WorldTerrain.height_at(pos.x, pos.z)
+	var ground := _ground_y(pos.x, pos.z, 0.05)
 	var hop := 0.0
 	if str(def.get("locomotion")) == "hop" and _speed > 0.1:
 		hop = absf(sin(Time.get_ticks_msec() * 0.001 * (6.0 + _speed * 3.0) + float(_variant % 7))) * 0.16
@@ -162,7 +176,7 @@ func _fly(delta: float) -> void:
 	var r := radius * (0.75 + 0.25 * sin(_orbit * 0.7 + float(_variant % 13)))
 	var p := center + Vector2(cos(_orbit), sin(_orbit)) * r
 	var alt := float(def.get("altitude", 15.0)) + sin(_orbit * 2.3 + float(_variant % 5)) * 2.5
-	var target := Vector3(p.x, WorldTerrain.height_at(p.x, p.y) + alt, p.y)
+	var target := Vector3(p.x, _ground_y(p.x, p.y, 1.5) + alt, p.y)
 	var d := target - global_position
 	if d.length() > 0.01:
 		rotation.y = atan2(-d.x, -d.z)
@@ -180,7 +194,7 @@ func _flutter(delta: float) -> void:
 	var wobble := Vector3(sin(Time.get_ticks_msec() * 0.007 + _variant), cos(Time.get_ticks_msec() * 0.011 + _variant) * 0.6, 0.0) * 0.6
 	var v := to.normalized() * _speed + wobble
 	pos += v * delta
-	pos.y = maxf(pos.y, WorldTerrain.height_at(pos.x, pos.z) + 0.25)
+	pos.y = maxf(pos.y, _ground_y(pos.x, pos.z, 0.3) + 0.25)
 	if v.length() > 0.01:
 		rotation.y = lerp_angle(rotation.y, atan2(-v.x, -v.z), 1.0 - exp(-6.0 * delta))
 	global_position = pos
@@ -209,3 +223,12 @@ func _valid(p: Vector2) -> bool:
 		return false
 	var mx := WorldLayout.world_max() - 18.0
 	return absf(p.x) < mx and absf(p.y) < mx and p.distance_to(center) < radius * 1.3
+
+
+## 地面高度（解析公式，靠近小溪时要遍历几百个中线点，并不便宜）：离上次算的位置不到 tolerance 米就沿用，
+## 站着、慢慢走时大多不用重算。
+func _ground_y(x: float, z: float, tolerance: float) -> float:
+	if absf(x - _ground_xz.x) > tolerance or absf(z - _ground_xz.y) > tolerance:
+		_ground_xz = Vector2(x, z)
+		_ground_h = WorldTerrain.height_at(x, z)
+	return _ground_h
