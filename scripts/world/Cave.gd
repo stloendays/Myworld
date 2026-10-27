@@ -344,6 +344,10 @@ func _build_bonfire(at: Vector2) -> void:
 	bonfire = InteractableToggle.create(&"cave_bonfire", "篝火", true, "E  熄灭篝火", "E  点燃篝火", Vector3(1.4, 1.0, 1.4), Vector3(0.0, 0.5, 0.0))
 	root.add_child(bonfire)
 	bonfire.toggled.connect(_on_bonfire)
+	var crackle := SoundEmitter.create("fire", bonfire.on)
+	crackle.position = Vector3(0.0, 0.5, 0.0)
+	root.add_child(crackle)
+	bonfire.toggled.connect(crackle.set_on)
 	_on_bonfire(bonfire.on)
 	# 三根原木围着火堆，可以坐
 	for i in 3:

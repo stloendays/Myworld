@@ -343,6 +343,9 @@ func _build_camp(c: Vector2) -> void:
 	add_child(ArtMaterials.kenney_prop(NATURE + "tent_smallOpen.glb", Vector3(c.x + 3.5, y, c.y - 1.5), -40.0, 3.2))
 	add_child(ArtMaterials.kenney_prop(NATURE + "campfire_stones.glb", Vector3(c.x, y, c.y + 1.5), 0.0, 2.6))
 	add_child(ArtMaterials.kenney_prop(NATURE + "campfire_logs.glb", Vector3(c.x, y, c.y + 1.5), 20.0, 2.6))
+	var crackle := SoundEmitter.create("campfire")
+	crackle.position = Vector3(c.x, y + 0.5, c.y + 1.5)
+	add_child(crackle)
 	var fire := CPUParticles3D.new()
 	fire.name = "CampFire"
 	fire.amount = 30

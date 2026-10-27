@@ -379,6 +379,10 @@ func plank_bridge(from: Vector3, to: Vector3, width: float, sag: float, name_: S
 		for i in range(0, n + 1, 4):
 			var p := pts[i] + side * s * (width * 0.5 + 0.05)
 			solid_box(g, Vector3(0.1, 1.1, 0.1), Transform3D(Basis(Vector3.UP, yaw), p + Vector3(0.0, 0.5, 0.0)), post_mat, false)
+	# 走在桥上是木板的脚步声（AudioDirector.surface_at）
+	for child in g.get_children():
+		if child is StaticBody3D:
+			child.set_meta("surface", "wood")
 	return pts
 
 

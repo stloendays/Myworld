@@ -93,10 +93,12 @@ func interact(_actor: Node) -> void:
 		return
 	if Net.is_client():
 		EventBus.toast_requested.emit(tr("联机做客时，这扇门要房主来开。"))
+		Sound.play("door_locked", global_position)
 		return
 	if PaddlerStory.all_read():
 		unlock()
 		return
+	Sound.play("door_locked", global_position)
 	var known := PaddlerStory.known_symbols()
 	if known.is_empty():
 		EventBus.toast_requested.emit(tr("门锁着。锁上有三个刻着图案的转环，不知道该转到哪里。"))
@@ -107,6 +109,7 @@ func interact(_actor: Node) -> void:
 ## 开锁并把门推开。
 func unlock() -> void:
 	var lock: Dictionary = PaddlerStory.data().get("lock", {})
+	Sound.play("unlock", global_position)
 	EventBus.toast_requested.emit(PaddlerStory.text(lock, "unlock"))
 	WorldState.flags["cottage_unlocked"] = true
 	SaveManager.request_save()

@@ -51,6 +51,7 @@ func travel(id: String) -> bool:
 
 func _do_travel(id: String) -> void:
 	busy = true
+	Sound.play("portal")
 	progress = 0.0
 	travel_started.emit(id)
 	var w := WorldRegistry.get_world(id)

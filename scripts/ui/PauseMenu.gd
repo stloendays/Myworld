@@ -180,6 +180,13 @@ func _build_settings() -> Control:
 	_check(control, "emote_third_person", "挥手 / 跳舞 / 鼓掌时自动切到第三人称")
 	_option(control, "language", "语言 / Language", GameSettings.LANGUAGE_NAMES, GameSettings.LANGUAGES)
 
+	var sound := _tab(tabs, "声音")
+	_slider(sound, "volume_master", "总音量", 0.0, 1.0, 0.05, "%d%%", 100.0)
+	_slider(sound, "volume_music", "背景音乐", 0.0, 1.0, 0.05, "%d%%", 100.0)
+	_slider(sound, "volume_ambience", "环境声（风雨鸟虫）", 0.0, 1.0, 0.05, "%d%%", 100.0)
+	_slider(sound, "volume_effects", "音效（脚步、开门）", 0.0, 1.0, 0.05, "%d%%", 100.0)
+	_slider(sound, "volume_ui", "界面", 0.0, 1.0, 0.05, "%d%%", 100.0)
+
 	var minimap := _tab(tabs, "小地图")
 	_check(minimap, "minimap_enabled", "显示小地图（M）")
 	_check(minimap, "minimap_rotate", "随朝向旋转（关闭 = 北朝上）")

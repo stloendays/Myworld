@@ -1,7 +1,8 @@
 {
-  "_doc": "剧情过场（Cutscene 播放）。每段镜头：anchor 锚点（湖畔由 StoryDirector.anchor 给出：lake 湖心水面、cave_mouth 洞口、totem 图腾（带朝向，+Z 是它的脸）、cottage 石头小屋（带朝向，+Z 是门）、stargaze / sky / sky_low 看新星座的位置与那片天；其他世界由各自的 story_anchor 给出，见 MiniWorld）。from → to 镜头位置、look_from → look_to 视线目标：数组是相对锚点的偏移（锚点带朝向时按它转），字符串是另一个锚点（每帧重取，跟得住会动的东西）。seconds 秒数，fov 视角，captions 这一段依次出现的字幕（中英，不加句号；{story} 换成新星座那行字），title 居中大标题，cue 这一段开头通知播放方（reveal 星座亮起、embers 暮烬飘满、all_stars 所有星座连线亮起、cottage_lamp 小屋台灯亮），cut 和上一段之间不黑场。",
+  "_doc": "剧情过场（Cutscene 播放）。每段镜头：anchor 锚点（湖畔由 StoryDirector.anchor 给出：lake 湖心水面、cave_mouth 洞口、totem 图腾（带朝向，+Z 是它的脸）、cottage 石头小屋（带朝向，+Z 是门）、stargaze / sky / sky_low 看新星座的位置与那片天；其他世界由各自的 story_anchor 给出，见 MiniWorld）。from → to 镜头位置、look_from → look_to 视线目标：数组是相对锚点的偏移（锚点带朝向时按它转），字符串是另一个锚点（每帧重取，跟得住会动的东西）。seconds 秒数，fov 视角，captions 这一段依次出现的字幕（中英，不加句号；{story} 换成新星座那行字），title 居中大标题，cue 这一段开头通知播放方（reveal 星座亮起、embers 暮烬飘满、all_stars 所有星座连线亮起、cottage_lamp 小屋台灯亮），cut 和上一段之间不黑场。每段过场的 music 是它的配乐（data/audio/music.json → themes）。",
 
   "cloudsea_light": {
+    "music": "light",
     "_doc": "云海浮岛：四座风灯都点亮的那一刻（World02）。beacon 是刚点亮的那座，whale 是天鲸（正在游近），spawn 是主岛出生点（离地 1.6 m），sunset 是从出生点望向云海落日的方向（MiniWorld，所有世界朝着同一轮落日）。",
     "shots": [
       {"anchor": "beacon", "from": [5.0, 3.2, 6.5], "to": [3.4, 2.6, 4.4], "look_from": [0, 1.4, 0], "look_to": [0, 2.0, 0], "seconds": 5.0, "fov": 60,
@@ -14,6 +15,7 @@
   },
 
   "dunes_light": {
+    "music": "light",
     "_doc": "琥珀沙丘：六块碎片嵌回祭坛（World03）。altar 祭坛，head 望着落日的石像头（带朝向），sunset 是石像头前方落日的方向（远处一点）。",
     "shots": [
       {"anchor": "altar", "from": [3.8, 2.6, 5.0], "to": [2.4, 2.0, 3.4], "look_from": [0, 0.9, 0], "look_to": [0, 1.2, 0], "seconds": 5.0, "fov": 58,
@@ -27,6 +29,7 @@
   },
 
   "atlantis_light": {
+    "music": "light",
     "_doc": "亚特兰蒂斯：光照到山铜尖塔（World04）。spire 尖塔底部中心，temple_door 神殿大门中点，whale 城外的老鲸鱼（光回来以后游近穹顶），spawn 神殿前的出生点。",
     "shots": [
       {"anchor": "spire", "from": [14.0, 4.0, 22.0], "to": [10.0, 6.0, 16.0], "look_from": [0, 6.0, 0], "look_to": [0, 12.0, 0], "seconds": 6.0, "fov": 62,
@@ -40,6 +43,7 @@
   },
 
   "new_star": {
+    "music": "stars",
     "_doc": "湖畔：一个世界的光送回去以后，第一个晴朗的夜里（StoryDirector）。镜头站在湖上、隔着湖望向那片天，从地平线抬起来，星一颗一颗亮起来、连上线。",
     "shots": [
       {"anchor": "stargaze", "from": [0, 0, 0], "to": [0, 0.8, 0], "look_from": "sky_low", "look_to": "sky", "seconds": 6.0, "fov": 64,
@@ -50,6 +54,7 @@
   },
 
   "ember_night": {
+    "music": "embers",
     "_doc": "湖畔：三盏灯都亮了以后第一次飘起暮烬（傍晚，StoryDirector）。",
     "shots": [
       {"anchor": "lake", "from": [-36.0, 2.2, 20.0], "to": [-22.0, 2.0, 12.0], "look_from": [10.0, 3.0, -12.0], "look_to": [20.0, 7.0, -18.0], "seconds": 8.0, "fov": 62, "cue": "embers",
@@ -62,6 +67,7 @@
   },
 
   "finale": {
+    "music": "finale",
     "_doc": "湖畔：暮烬之夜，老图腾讲完最后一个故事以后（StoryDirector）。篝火 → 湖上升起的暮烬 → 满天的星座 → 石头小屋自己亮起的台灯 → 第一章的标题。",
     "shots": [
       {"anchor": "totem", "from": [2.6, 2.4, 3.6], "to": [1.4, 2.3, 2.6], "look_from": [0, 2.2, 0], "look_to": [0, 2.8, 0], "seconds": 7.0, "fov": 60,

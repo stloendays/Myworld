@@ -151,6 +151,7 @@ func cook_problem(id: String) -> String:
 func cook(id: String) -> bool:
 	if cook_problem(id) != "":
 		return false
+	Sound.play("sizzle")
 	var r := recipe(id)
 	var need := int(r["fish"])
 	var kinds := int(r["kinds"])
@@ -329,6 +330,7 @@ func check_achievements() -> Array:
 			out.append(id)
 			EventBus.toast_requested.emit(tr("成就解锁：%s——%s") % [text(a, "name"), text(a, "desc")])
 	if not out.is_empty():
+		Sound.play("achievement")
 		_changed()
 	return out
 

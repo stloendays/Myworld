@@ -28,6 +28,7 @@ var active := false            ## 仙境现在是否出现
 var portal: FairyPortal = null
 var islands: Array[Node3D] = []
 var mushrooms: Array[Node3D] = []
+var _chimes: SoundEmitter = null   ## 仙境出现时的铃声（M3）
 var _magic: Node3D             ## 仙境里所有会出现 / 消失的东西都挂在这下面
 var _rng := RandomNumberGenerator.new()
 var _body: StaticBody3D
@@ -54,6 +55,9 @@ func _ready() -> void:
 	_body.collision_layer = PhysicsLayers.WORLD
 	_body.collision_mask = 0
 	_magic.add_child(_body)
+	_chimes = SoundEmitter.create("fairy", false)
+	_chimes.position = Vector3(0.0, 3.0, 0.0)
+	add_child(_chimes)
 	_build_tree()
 	_build_mushrooms()
 	_build_crystals()
@@ -85,6 +89,8 @@ func _process(delta: float) -> void:
 ## 出现：从地里长出来（整体从 0.05 倍放大，带一点回弹）并亮起；消失：缩回去后隐藏，碰撞和传送门关掉。
 func _apply(on: bool, instant: bool) -> void:
 	active = on
+	if _chimes != null:
+		_chimes.set_on(on, instant)
 	if _tween != null:
 		_tween.kill()
 	_body.collision_layer = PhysicsLayers.WORLD if on else 0

@@ -87,6 +87,7 @@ func rebuild() -> void:
 	life.setup(lights, model)
 	var body := StaticBody3D.new()
 	body.name = "Structure"
+	body.set_meta("surface", "wood")
 	body.collision_layer = PhysicsLayers.WORLD
 	body.collision_mask = 0
 	g.add_child(body)

@@ -54,6 +54,7 @@ func open_chart(player: FirstPersonController) -> void:
 
 
 func _open(what: String, player: FirstPersonController) -> void:
+	Sound.play("paper")
 	showing = what
 	_player = player
 	if _player != null:

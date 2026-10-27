@@ -301,6 +301,7 @@ func _promote(kind: int) -> void:
 
 func _do_move(m: int) -> void:
 	game.play(m)
+	Sound.play("chess")
 	last_move = m
 	selected = -1
 	_save()

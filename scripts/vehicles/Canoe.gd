@@ -119,7 +119,10 @@ func _physics_process(delta: float) -> void:
 		sprint = false
 	var paddling := absf(throttle) > 0.05 or absf(steer) > 0.05
 	if paddling:
+		var before := int(stroke_phase / PI)
 		stroke_phase += delta * TAU / (0.85 if sprint else STROKE_TIME)
+		if int(stroke_phase / PI) != before:
+			Sound.play("paddle", global_position)   # 每一桨入水
 	# 一桨一桨的推力：桨入水时推得最狠，出水时几乎不推
 	var push := 0.55 + 0.45 * sin(stroke_phase * 2.0)
 	var accel := throttle * THRUST * (1.35 if sprint else 1.0) * push

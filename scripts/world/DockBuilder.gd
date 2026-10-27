@@ -87,6 +87,7 @@ func rebuild() -> void:
 		return
 	var body := StaticBody3D.new()
 	body.name = "DockCollision"
+	body.set_meta("surface", "wood")
 	body.collision_layer = PhysicsLayers.WORLD
 	body.collision_mask = 0
 	root.add_child(body)

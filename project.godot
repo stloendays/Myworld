@@ -36,6 +36,7 @@ QuestLog="*res://scripts/core/QuestLog.gd"
 WorldTravel="*res://scripts/core/WorldTravel.gd"
 SaveManager="*res://scripts/systems/SaveManager.gd"
 Play="*res://scripts/play/Play.gd"
+Sound="*res://scripts/systems/AudioDirector.gd"
 
 [display]
 
