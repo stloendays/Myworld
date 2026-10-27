@@ -100,6 +100,8 @@ Main (Main.gd)
 | `SaveManager`（Autoload） | v0.5 已实现，两个槽（2026-10-27） | 剧情、休闲各一个存档槽 `user://saves/story.json`、`casual.json`（v5，临时文件 + 原子替换；路径都由 `dir` 推出，自动检查改到别处）：新建（这个槽的旧档先备份成 `*.bak.json`）/ 继续某个槽 / 每 60 s、换世界、退出时自动存；v0.5 的单一存档 `world.json` 第一次启动时按有无任务复制进剧情或休闲槽，v0.4 的 `journal.json` 接进剧情槽；读档后按 uid 恢复门灯、船位，回到存档时的世界与位置；联机做客和自动检查里不写盘 |
 | `UiStyle` | 界面升级（2026-10-27） | 全游戏界面的配色与样式（暮色深蓝紫面板、琥珀强调、奶白文字）：`build_theme()` 建唯一的主题（`GameSettings.ui_theme()` 挂到所有界面），面板、卡片、药丸条、按键帽、主按钮、手画的勾选框与开关图标；`COVER_GROUP`：盖住画面的面板（大厅、暂停、日志、世界地图、信、厨房、棋盘）开着时，`CHROME_GROUP` 里的罗盘、小地图、任务追踪栏收起来 |
 | `StaticBatch` / `PerformanceDirector` | 性能（2026-10-27） | 建好湖畔一帧后（`Main._merge_static`）把建筑、码头、小溪、卷轴木架这些不会动的小网格按材质、空间格子（24 m）合成少数几个网格：只并没有脚本、没被脚本变量引用、不透明标准材质的部件；合成的网格挂在最近的“单位”（有脚本或被引用的节点）下面，跟着它一起动、一起显隐；玩家、小动物、树林、地被不碰。阴影：地被只有镜头 48 m 内的块投影，卷轴 45 m 外不投影，文字不投影，水族馆那一层不投影 |
+| `MapArt` / `Minimap` / `WorldMap` | v0.6.0 | 地图的画法共用 `MapArt`：底图像素函数（山体明暗、等高线、纸纹、树冠点，只用整数哈希，可在线程里并行调用）和矢量层（路、小溪、建筑图标、图钉、光门、玩家、边框、指北针、比例尺、地名）。湖畔底图 512 像素分 16 条在线程池里烘焙，缓存到 `user://` |
+| `Updater` / `OldVersions` | v0.6.0 | 自动更新原地替换 exe；启动后在后台按 `data/releases.json`（历次发布 exe 的大小和 SHA-256）认出下载文件夹、桌面、exe 旁边、以前运行过的位置（`user://installs.json`）里的旧版本，主线程里移到回收站 |
 | `Interactable` 状态延续 | v0.5 | 读过档或从别的世界回来时，可交互物按 `WorldState.interactables` 里存下的状态摆（不再被新建的初始状态覆盖） |
 
 已使用的事件：`time_changed`、`season_changed`、`weather_transition_started`、`weather_changed`、`zone_entered`、`zone_exited`、`interactable_state_changed`、`interaction_prompt_changed`。

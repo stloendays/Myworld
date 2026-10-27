@@ -73,6 +73,7 @@ const DEFAULTS := {
 	"fly_speed": 10.0,
 	"emote_third_person": true,       ## 挥手 / 跳舞 / 鼓掌时自动切到第三人称看自己，做完切回
 	"auto_update_check": true,        ## 启动时到 GitHub 检查新版本（只在导出的游戏里）
+	"remove_old_versions": true,      ## 启动后把电脑上认出来的旧版本 exe 移到回收站（只认官方发布过的文件，见 OldVersions）
 	"language": "auto",               ## 界面语言：auto（默认，跟随系统）/ en / zh
 	"renderer": "auto",               ## 渲染方式：auto（Vulkan，起不来引擎自动换）/ d3d12 / compatibility（OpenGL）/ angle；下次启动生效（StartupGuard）
 	"volume_master": 1.0,             ## 总音量（0–1）
@@ -105,6 +106,7 @@ var dynamic_resolution := true
 var fly_speed := 10.0
 var emote_third_person := true
 var auto_update_check := true
+var remove_old_versions := true
 var language := "auto"
 var renderer := "auto"
 var volume_master := 1.0

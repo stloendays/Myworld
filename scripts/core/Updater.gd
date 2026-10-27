@@ -6,8 +6,11 @@ extends Node
 ##   · 发布约定：Release 标签 vX.Y.Z，附件 DuskLake.exe 和 DuskLake.exe.sha256（文件里第一个词是十六进制 SHA-256）。
 ##   · 命令行（测试用）：-- --pretend-version 0.0.1 假装当前版本；-- --update-now 查到新版直接下载替换；
 ##     -- --no-relaunch 替换后不重启。
+##   · 旧版本清理（OldVersions）：启动后在后台认出电脑上的旧版本 exe，移到回收站；设置 → 关于 可以关。
+##     -- --cleanup-dirs 目录1;目录2 只查这几个目录、不读也不写运行记录（测试用）；-- --no-cleanup 不清理。
 
 signal status_changed(state: int, text: String)
+signal old_versions_removed(list: Array)
 
 enum State { IDLE, CHECKING, UP_TO_DATE, AVAILABLE, DOWNLOADING, READY, FAILED, DISABLED }
 
@@ -30,12 +33,18 @@ var _http: HTTPRequest
 var _download_path := ""
 var _args := PackedStringArray()
 var _last_code := 0
+var removed_old: Array = []   ## 这次启动移到回收站的旧版本 [{path, version}]
+var _old_task := -1
+var _old_found: Array = []
+var _old_mutex := Mutex.new()
 
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_args = OS.get_cmdline_user_args()
 	_cleanup_leftovers()
+	if can_self_update() and not _args.has("--no-cleanup"):
+		_start_old_cleanup.call_deferred()
 	if can_self_update() and (GameSettings.auto_update_check or _args.has("--update-now")):
 		check.call_deferred()
 
@@ -216,6 +225,75 @@ func _cleanup_leftovers() -> void:
 			DirAccess.remove_absolute(leftover)
 
 
+## 旧版本清理：记下这次运行的 exe，然后在后台线程里按 data/releases.json 认出旧版本（OldVersions.scan，
+## 要算几个一百多 MB 文件的哈希），做完在 _process 里移到回收站。
+func _start_old_cleanup() -> void:
+	var exe := OS.get_executable_path()
+	var version := str(ProjectSettings.get_setting("application/config/version", "0.0.0"))
+	var test_dirs := _arg_value("--cleanup-dirs")
+	var dirs := PackedStringArray()
+	var extra := PackedStringArray()
+	if test_dirs != "":
+		dirs = test_dirs.split(";", false)
+	else:
+		dirs = PackedStringArray([exe.get_base_dir(), OS.get_system_dir(OS.SYSTEM_DIR_DOWNLOADS), OS.get_system_dir(OS.SYSTEM_DIR_DESKTOP)])
+		for r: Dictionary in OldVersions.recorded():
+			extra.append(str(r.get("path", "")))
+		OldVersions.record(exe, version)
+	if not GameSettings.remove_old_versions:
+		return
+	var known := OldVersions.releases()
+	_old_task = WorkerThreadPool.add_task(func() -> void:
+		var found := OldVersions.scan(dirs, extra, exe, version, known)
+		_old_mutex.lock()
+		_old_found = found
+		_old_mutex.unlock(), false, "old versions")
+
+
+func _remove_old_versions() -> void:
+	_old_mutex.lock()
+	var found := _old_found.duplicate()
+	_old_mutex.unlock()
+	var gone := PackedStringArray()
+	for f: Dictionary in found:
+		var p := str(f["path"])
+		if OS.move_to_trash(p) != OK:
+			continue   # 正开着或者没权限：下次启动再试
+		gone.append(p)
+		removed_old.append(f)
+		if FileAccess.file_exists(p + ".sha256"):
+			OS.move_to_trash(p + ".sha256")
+		print("Updater: moved old version v%s to the recycle bin: %s" % [f["version"], p])
+	if gone.is_empty():
+		return
+	if _arg_value("--cleanup-dirs") == "":
+		OldVersions.record(OS.get_executable_path(), str(ProjectSettings.get_setting("application/config/version", "0.0.0")), gone)
+	old_versions_removed.emit(removed_old)
+
+
+## 大厅、设置里显示的一句：“已把旧版本 v0.5.1 移到回收站”；这次没清理过返回空字符串。
+func old_versions_note() -> String:
+	if removed_old.is_empty():
+		return ""
+	var vs := PackedStringArray()
+	for f: Dictionary in removed_old:
+		var v := "v" + str(f["version"])
+		if not vs.has(v):
+			vs.append(v)
+	return tr("已把旧版本 %s 移到回收站") % "、".join(vs)
+
+
+func _arg_value(name: String) -> String:
+	var i := _args.find(name)
+	return _args[i + 1] if i >= 0 and i + 1 < _args.size() else ""
+
+
+func _exit_tree() -> void:
+	if _old_task >= 0:
+		WorkerThreadPool.wait_for_task_completion(_old_task)
+		_old_task = -1
+
+
 func _set_state(s: int, text: String) -> void:
 	state = s
 	status_text = text
@@ -233,6 +311,10 @@ func _new_http() -> HTTPRequest:
 
 
 func _process(_delta: float) -> void:
+	if _old_task >= 0 and WorkerThreadPool.is_task_completed(_old_task):
+		WorkerThreadPool.wait_for_task_completion(_old_task)
+		_old_task = -1
+		_remove_old_versions()
 	if _http != null and state == State.DOWNLOADING and _asset_size > 0:
 		download_progress = clampf(float(_http.get_downloaded_bytes()) / _asset_size, 0.0, 1.0)
 

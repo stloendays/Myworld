@@ -776,3 +776,5 @@ E  拆开信	E  Open the letter
 联机中	Online
 游戏模式	Game mode
 Direct3D 12（内存占用更少）	Direct3D 12 (uses less memory)
+已把旧版本 %s 移到回收站	Moved old version %s to the Recycle Bin
+自动把电脑上的旧版本移到回收站	Move old versions of the game on this PC to the Recycle Bin

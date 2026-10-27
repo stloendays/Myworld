@@ -136,7 +136,7 @@ func map_rect() -> Rect2:
 	return Rect2(float(r[0]), float(r[1]), float(r[2]), float(r[3]))
 
 
-## 小地图底图：按高度和 map_color 上色，再按西北光做一点山体明暗。
+## 小地图底图：按高度和 map_color 上色，再加西北光的山体明暗、等高线和纸纹（画法见 MapArt）。
 func bake_map() -> Image:
 	var rect := map_rect()
 	var n := MAP_RES
@@ -154,13 +154,20 @@ func bake_map() -> Image:
 			var h := hs[j * n + i]
 			var col := map_color(x, z, h)
 			if h > -1e6:
-				var hx := hs[j * n + mini(i + 1, n - 1)] - hs[j * n + maxi(i - 1, 0)]
-				var hz := hs[mini(j + 1, n - 1) * n + i] - hs[maxi(j - 1, 0) * n + i]
-				if not (is_finite(hx) and is_finite(hz)):
+				var h_right := hs[j * n + mini(i + 1, n - 1)]
+				var h_down := hs[mini(j + 1, n - 1) * n + i]
+				var hx := h_right - hs[j * n + maxi(i - 1, 0)]
+				var hz := h_down - hs[maxi(j - 1, 0) * n + i]
+				if not (is_finite(hx) and is_finite(hz)) or h_right < -1e6 or h_down < -1e6:
 					hx = 0.0
 					hz = 0.0
-				var normal := Vector3(-hx, 2.0 * cell.x, -hz).normalized()
-				col *= clampf(0.6 + normal.dot(Vector3(-0.6, 1.2, -0.6).normalized()) * 0.5, 0.5, 1.15)
+					h_right = h
+					h_down = h
+				col *= MapArt.hillshade(hx, hz, cell.x, 0.8)
+				var line := MapArt.contour(h, h_right, h_down, 3.0, 4)
+				if line > 0:
+					col *= 0.82 if line == 2 else 0.91
+			col *= MapArt.grain(i, j)
 			img.set_pixel(i, j, Color(col.r, col.g, col.b))
 	return img
 

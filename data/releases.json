@@ -1,0 +1,13 @@
+{
+  "comment": "历次官方发布的 DuskLake.exe（大小、SHA-256，来自各版本附件 DuskLake.exe.sha256）。新版本启动后按这张表认出电脑上的旧版本 exe，移到回收站（OldVersions）。每次发版前把上一个版本加进来。",
+  "releases": [
+    {"version": "0.5.1", "size": 169788304, "sha256": "52c35bbf99d887eb95913d4d03f93305ed0cab978981de3742156961e4309374"},
+    {"version": "0.5.0", "size": 169726744, "sha256": "b15a8ae27301dbcc0dd3a87f02c077d613cfedcf365dd1ee3e0fd37b3b2b805f"},
+    {"version": "0.4.0", "size": 169300224, "sha256": "7c61e5c4cca1cb26b25465977eca2035d1ab640ae315d77b1ea19c8756770170"},
+    {"version": "0.3.4-rc.1", "size": 169189496, "sha256": "51c1b6acda06a9dace5b47d820816dd948afb1e5d1a905fd444a84f27a8a34e3"},
+    {"version": "0.3.3", "size": 169186200, "sha256": "9f6fb83dc62462f65bf501bb641b308ad0be9755e411401e845cebabd67428e0"},
+    {"version": "0.3.2", "size": 181812024, "sha256": "235452e16c609e0d2fe504babdaa929ee635bc748db646dc99046f508192e8c9"},
+    {"version": "0.3.1", "size": 181808792, "sha256": "de775d95c7f129cc04534fdf87ed1e1e7ca47bd0b135698a51e90b263d73f705"},
+    {"version": "0.3.0", "size": 181798456, "sha256": "50398ed16345d2afaf73a45358cd852970a72526409da32464ec9b372973a98d"}
+  ]
+}
