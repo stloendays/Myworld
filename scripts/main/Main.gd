@@ -69,6 +69,10 @@ func _ready() -> void:
 	var director := StoryDirector.new()
 	director.name = "StoryDirector"
 	add_child(director)
+	var air := Node3D.new()
+	air.name = "Aircraft"
+	add_child(air)
+	Aircraft.spawn_all(air)
 	_merge_static.call_deferred()
 
 
@@ -77,7 +81,7 @@ func _ready() -> void:
 func _merge_static() -> void:
 	await get_tree().process_frame
 	var skip := []
-	for path in ["Player", "World/Fauna", "World/Forest", "World/GroundCover", "World/Backdrop", "RemotePlayers"]:
+	for path in ["Player", "World/Fauna", "World/Forest", "World/GroundCover", "World/Backdrop", "RemotePlayers", "Aircraft"]:
 		skip.append(get_node_or_null(path))
 	skip.append_array(get_tree().get_nodes_in_group("local_player"))
 	var t := Time.get_ticks_usec()

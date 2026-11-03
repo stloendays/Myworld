@@ -82,6 +82,11 @@
   },
 
   "canoe": {"pos": [-28.0, 24.0], "heading": 90.0},
+  "aircraft": [
+    {"id": "balloon", "kind": "balloon", "pos": [-55.0, 16.0], "heading": 90.0},
+    {"id": "heli", "kind": "heli", "pos": [-40.0, 34.0], "heading": 90.0},
+    {"id": "glider", "kind": "glider", "pos": [104.0, -103.0], "heading": 212.0}
+  ],
 
   "atlantis_ring": {
     "_doc": "泳池馆地下海洋大缸底部的古老石环（泳池馆局部坐标：local = [x, z]，石环中心离缸底沙面 lift 米；石环面朝 ±X，人沿 X 方向游过去）。穿过它去 world 指的世界。",
@@ -257,6 +262,8 @@
       {"id": "cave_clearing", "center": [-8, -88], "radius": 9},
       {"id": "cottage_clearing", "center": [-72, 96], "radius": 11},
       {"id": "lakeside_lawn", "center": [-47, 24], "radius": 11},
+      {"id": "helipad", "center": [-40, 34], "radius": 6},
+      {"id": "balloon_lawn", "center": [-55, 16], "radius": 7},
       {"id": "viewpoint_top", "center": [-93, -101], "radius": 13},
       {"id": "poolhouse_clearing", "center": [4, 84], "radius": 21},
       {"id": "fairy_glade_clearing", "center": [76, 88], "radius": 17},

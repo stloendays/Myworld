@@ -111,6 +111,11 @@ func place_at(xz: Vector2, heading_deg: float) -> void:
 	_place(_time)
 
 
+## 别人在划（联机）：位置和朝向用对方的（高度由水面决定）。
+func place_remote(pos: Vector3, h: float) -> void:
+	place_at(Vector2(pos.x, pos.z), -rad_to_deg(h))
+
+
 func _physics_process(delta: float) -> void:
 	_time += delta
 	if rider == null:

@@ -237,6 +237,10 @@ func _draw_map() -> void:
 			var fwd := Vector2(-sin(canoe.heading), -cos(canoe.heading))
 			var side := Vector2(-fwd.y, fwd.x)
 			_map.draw_colored_polygon(PackedVector2Array([cp + fwd * 9.0, cp + side * 3.2, cp - fwd * 9.0, cp - side * 3.2]), Color(0.86, 0.3, 0.2))
+	for a in get_tree().get_nodes_in_group("aircraft"):
+		var air := a as Aircraft
+		if air.rider == null:
+			Aircraft.draw_icon(_map, t * air.world_position_2d(), air.kind, t.basis_xform(air.forward()).normalized(), 8.0)
 	_draw_friends(t, font)
 	_draw_player(t)
 	_draw_north_and_scale(t, rect, font)

@@ -176,6 +176,7 @@ func _layer_array(map: String) -> Texture2DArray:
 func _make_collision(h: PackedFloat32Array, n: int) -> StaticBody3D:
 	var body := StaticBody3D.new()
 	body.name = "TerrainBody"
+	body.add_to_group("terrain_body")
 	body.collision_layer = PhysicsLayers.WORLD | PhysicsLayers.TERRAIN
 	body.collision_mask = 0
 	var shape := HeightMapShape3D.new()

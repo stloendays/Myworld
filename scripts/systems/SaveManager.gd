@@ -252,6 +252,9 @@ func _apply_scene_state() -> void:
 		var saved_v: Dictionary = WorldState.vehicles.get(String(canoe.uid), {})
 		if not saved_v.is_empty() and canoe.rider == null:
 			canoe.place_at(Vector2(float(saved_v["pos"][0]), float(saved_v["pos"][1])), float(saved_v.get("yaw_deg", 0.0)))
+	for a in get_tree().get_nodes_in_group("aircraft"):
+		if (a as Aircraft).rider == null:
+			(a as Aircraft).restore()
 	var climate := get_tree().get_first_node_in_group("climate_system") as ClimateSystem
 	if climate != null:
 		climate.clock.set_time(WorldState.world_day, WorldState.time_minutes)
@@ -266,6 +269,9 @@ func _reset_scene_state() -> void:
 		if it is InteractableDoor and it.get_state() == "open":
 			it.apply_state("closed")
 		WorldState.register_interactable(it.uid, it.get_state())
+	for a in get_tree().get_nodes_in_group("aircraft"):
+		if (a as Aircraft).rider == null:
+			(a as Aircraft).return_home()
 	get_tree().call_group("collectibles", "refresh")
 
 

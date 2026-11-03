@@ -514,6 +514,8 @@ static func body_state(p: FirstPersonController) -> String:
 		return "sit"
 	if p.boat != null:
 		return "paddle"
+	if p.craft != null:
+		return "sit" if p.craft.rider_pose() == "sit" else ""
 	return ""
 
 
@@ -522,6 +524,9 @@ func _vehicle_of(p: FirstPersonController) -> Array:
 	var boat: Variant = p.get("boat")
 	if boat is Canoe:
 		return [String((boat as Canoe).uid), (boat as Canoe).global_position, (boat as Canoe).heading]
+	var craft: Variant = p.get("craft")
+	if craft is Aircraft:
+		return [String((craft as Aircraft).uid), (craft as Aircraft).world_position(), (craft as Aircraft).heading]
 	return []
 
 
@@ -627,7 +632,7 @@ func _on_local_interactable(uid: StringName, s: String) -> void:
 		return
 	# 船不走“可交互物”同步：谁在划船，船的位置就跟着谁的姿态包走（见 _vehicle_of）
 	var target := _find_interactable(uid)
-	if target != null and target.is_in_group("vehicles"):
+	if target != null and (target.is_in_group("vehicles") or target.is_in_group("aircraft")):
 		return
 	if is_host():
 		_interactable.rpc(uid, s)

@@ -395,6 +395,14 @@ func _draw_markers(center: Vector2, r: float) -> void:
 		var side := Vector2(-screen_fwd.y, screen_fwd.x)
 		var hull := PackedVector2Array([p + screen_fwd * 7.0, p + side * 2.6, p - screen_fwd * 7.0, p - side * 2.6])
 		_overlay.draw_colored_polygon(hull, Color(0.85, 0.25, 0.18))
+	for a in get_tree().get_nodes_in_group("aircraft"):
+		var air := a as Aircraft
+		if air.rider != null:
+			continue
+		var p := t * air.world_position_2d()
+		if p.distance_to(center) > r - 8.0:
+			continue
+		Aircraft.draw_icon(_overlay, p, air.kind, t.basis_xform(air.forward()).normalized(), 6.0)
 
 
 ## 朋友：彩色圆点（和头顶名字同色）；在圈外的贴着圆边画成小一点的点，指出 TA 在哪个方向。

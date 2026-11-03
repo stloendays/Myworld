@@ -69,6 +69,7 @@ const DEFAULTS := {
 	"fullscreen": false,
 	"max_fps": 60,                    ## 0 = 不限；默认 60，笔记本不用满负荷跑
 	"background_fps": 15,             ## 窗口不在前台时的帧率上限（0 = 不降）；最小化时只跑 5 帧。省 CPU、不发热，联机照常同步
+	"night_brightness": 1.0,          ## 夜里有多亮：0 = 原来那么暗，1 = 默认（月光下看得清路），2 = 很亮
 	"graphics_quality": "high",       ## low / medium / high / ultra（PerformanceDirector）
 	"dynamic_resolution": true,       ## 按 GPU 帧时自动调 3D 渲染比例
 	"fly_speed": 10.0,
@@ -103,6 +104,7 @@ var vsync := true
 var fullscreen := false
 var max_fps := 60
 var background_fps := 15
+var night_brightness := 1.0
 var in_background := false   ## 窗口失去焦点（切到别的程序）
 var minimized := false
 var graphics_quality := "high"
@@ -216,6 +218,8 @@ func set_value(key: String, value: Variant, save := true) -> void:
 			value = clampf(float(value), 0.4, 1.0)
 		"background_fps":
 			value = clampi(int(value), 0, 60)
+		"night_brightness":
+			value = clampf(float(value), 0.0, 2.0)
 		"language":
 			value = value if str(value) in LANGUAGES else "auto"
 		"renderer":
