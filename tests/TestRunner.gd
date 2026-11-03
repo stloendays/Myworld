@@ -113,6 +113,7 @@ func _run() -> void:
 	await _test_new_game_menu()
 	await _test_play_modes()
 	await _test_draw_call_diet()
+	await _test_smooth_coop()
 	await _test_play_lake()
 	await _test_world_travel()
 	_test_old_versions()
@@ -4050,6 +4051,76 @@ func _test_draw_call_diet() -> void:
 		merged_ok and dangling.is_empty() and far_off and near_on and cover_ok and kept and rebuilt and behind and front,
 		"合批 %s · 悬空 %s · 卷轴 远 %s 近 %s · 地被 近 %d 远 %d · 日志 关着保留 %s 打开重建 %s · 小动物 背后 %s 前面 %s" % [merged_ok,
 			", ".join(dangling) if not dangling.is_empty() else "无", far_off, near_on, near_cast, far_cast, kept, rebuilt, behind, front])
+
+
+## 流畅与省 CPU、联机插值（2026-11）：
+##   · 工作线程池限 4 个线程；切到后台 / 最小化降帧；
+##   · 合批按大小分档的可见距离，遮挡体只给四座建筑（会动的独木舟没有）；听不见的声源暂停；远处小动物不投影；
+##   · 别人的方块人按时间戳插值，包断了按速度往前推；姿态没变就不急着发；协议 4 的姿态格式校验。
+func _test_smooth_coop() -> void:
+	var threads := int(ProjectSettings.get_setting("threading/worker_pool/max_threads", -1)) == 4
+	var caps := GameSettings.fps_cap(60, 15, false, false) == 60 and GameSettings.fps_cap(60, 15, true, false) == 15 \
+		and GameSettings.fps_cap(0, 15, true, false) == 15 and GameSettings.fps_cap(10, 15, true, false) == 10 \
+		and GameSettings.fps_cap(60, 0, true, false) == 60 and GameSettings.fps_cap(60, 15, true, true) == GameSettings.MINIMIZED_FPS
+	# 合批分档与遮挡体
+	var stats: Dictionary = _main.get("batch_stats")
+	var occ_parents := get_tree().root.find_children(StaticBatch.OCCLUDER_NAME, "OccluderInstance3D", true, false).map(func(o: Node) -> String: return String(o.get_parent().name))
+	occ_parents.sort()
+	var occ_ok := occ_parents == ["Cabin", "Cave", "PoolHouse", "StoneCottage"] and int(stats.get("occluder_tris", 0)) > 2000
+	var fine := get_tree().root.find_children(StaticBatch.BATCH_PREFIX + "*", "MeshInstance3D", true, false).filter(func(m: MeshInstance3D) -> bool:
+		return m.visibility_range_end == StaticBatch.DETAIL_FINE).size()
+	var detail_ok := int(stats.get("detail", 0)) > 200 and fine > 0 and StaticBatch.detail_range(0.3) == StaticBatch.DETAIL_FINE \
+		and StaticBatch.detail_range(1.5) == StaticBatch.DETAIL_SMALL and StaticBatch.detail_range(5.0) == 0.0
+	# 听不见的声源暂停，走近接着放
+	var emitter := get_tree().get_nodes_in_group("sound_emitters")[0] as SoundEmitter
+	var home := emitter.global_position
+	var cam := get_viewport().get_camera_3d()
+	emitter.global_position = cam.global_position + Vector3(emitter.max_distance + 30.0, 0.0, 0.0)
+	emitter._range_timer = 0.0
+	await _frames(2)
+	var paused := emitter.stream_paused
+	emitter.global_position = cam.global_position + Vector3(1.0, 0.0, 0.0)
+	emitter._range_timer = 0.0
+	await _frames(2)
+	var resumed := not emitter.stream_paused
+	emitter.global_position = home
+	# 小动物：近处投影、远处不投影
+	var animal := get_tree().get_nodes_in_group("fauna")[0] as Animal
+	var keep := animal.global_position
+	var shadow_of := func(at: Vector3) -> bool:
+		animal.global_position = at
+		animal._interval = 1
+		animal._lod_frame = 1
+		animal._physics_process(1.0 / 60.0)
+		return animal._geoms[0].cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	var near_shadow: bool = shadow_of.call(cam.global_position - cam.global_basis.z * 6.0)
+	var far_shadow: bool = shadow_of.call(cam.global_position - cam.global_basis.z * 60.0)
+	animal.global_position = keep
+	# 别人的方块人：按时间戳插值、包断了往前推一小段
+	var rp := get_tree().get_first_node_in_group("remote_players") as RemotePlayers
+	rp.add(999, {"name": "Test"})
+	var p := rp.get_player(999)
+	var now_ms := Time.get_ticks_msec()
+	for k in 7:
+		p.set_pose([Vector3(0.0, 1.0, k * 0.2), 0.0, 0.0, 4.0, true, [], "", WorldTravel.current_world, now_ms - 300 + k * 50, Vector3(0.0, 0.0, 4.0)])
+	var mid: Vector3 = p.sample(now_ms / 1000.0)["pos"]
+	var ahead: Vector3 = p.sample(now_ms / 1000.0 + 0.2)["pos"]
+	var stale: Vector3 = p.sample(now_ms / 1000.0 + 2.0)["pos"]
+	p.set_pose([Vector3(0.0, 1.0, 0.0), 0.0, 0.0, 0.0, true, [], "", "world_04", now_ms + 400, Vector3.ZERO])
+	var hidden_elsewhere := not p.visible
+	var interp_ok := absf(mid.z - 0.8) < 0.05 and absf(ahead.z - 1.6) < 0.05 and absf(stale.z - (1.2 + 4.0 * RemotePlayer.MAX_EXTRAPOLATE)) < 0.05
+	rp.remove(999)
+	var a := [Vector3(1, 2, 3), 0.5, 0.1, 0.0, true, [], "", "dusk_lake", 1000, Vector3.ZERO]
+	var b := a.duplicate()
+	b[8] = 1500
+	var c := a.duplicate()
+	c[0] = Vector3(1, 2, 3.5)
+	var proto_ok := Net.valid_pose(a) and not Net.valid_pose(a.slice(0, 7)) and not Net.valid_pose([Vector3(INF, 0, 0)] + a.slice(1)) \
+		and Net.same_pose(a, b) and not Net.same_pose(a, c)
+	_check("流畅与省 CPU：线程池 4、后台降帧、合批分档（%d 组）、遮挡体只给四座建筑（%d 个三角形）、远处声源暂停、小动物近处才投影、联机按时间戳插值" % [int(stats.get("detail", 0)), int(stats.get("occluder_tris", 0))],
+		threads and caps and occ_ok and detail_ok and paused and resumed and near_shadow and not far_shadow and interp_ok and hidden_elsewhere and proto_ok,
+		"线程 %s · 降帧 %s · 遮挡体 %s · 分档 %s（细 %d）· 声源 停 %s 恢复 %s · 投影 近 %s 远 %s · 插值 %.2f / %.2f / %.2f 别的世界藏起 %s · 协议 %s" % [threads, caps,
+			occ_parents, detail_ok, fine, paused, resumed, near_shadow, far_shadow, mid.z, ahead.z, stale.z, hidden_elsewhere, proto_ok])
 
 
 ## 旧版本清理：只认官方发布过的 exe（大小 + SHA-256 都对上、而且比现在旧），别的文件一概不碰；运行记录去掉移走的路径。

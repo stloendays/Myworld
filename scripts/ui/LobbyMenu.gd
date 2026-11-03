@@ -36,6 +36,8 @@ var _copy_button: Button
 var _codes_box: VBoxContainer
 var _upnp_label: Label
 var _players_label: Label
+var _players_box: VBoxContainer
+var _players_timer := 0.0
 var _room_offline: Control
 var _room_online: Control
 var _cards := {}             ## "story" / "casual" -> {info: Label, go: Button, fresh: Button}
@@ -63,10 +65,11 @@ func _ready() -> void:
 	Net.room_codes_changed.connect(_refresh_room)
 	Net.notice.connect(_on_notice)
 	var args := OS.get_cmdline_user_args()
-	var auto := get_tree().current_scene == get_parent() and not args.has("--skip-menu") and WorldTravel.arriving_from == ""
-	if args.has("--host"):
+	var first := WorldTravel.arriving_from == ""   # 旅行到别的世界时每个世界都会新建一份大厅：命令行参数只在启动时用一次
+	var auto := get_tree().current_scene == get_parent() and not args.has("--skip-menu") and first
+	if first and args.has("--host"):
 		_host_casual()
-	elif args.has("--join") and args.find("--join") + 1 < args.size():
+	elif first and args.has("--join") and args.find("--join") + 1 < args.size():
 		_code_edit.text = args[args.find("--join") + 1]
 		open(Page.JOIN)
 		_join()
@@ -575,6 +578,11 @@ func _on_update_button() -> void:
 func _process(_delta: float) -> void:
 	if _update_bar != null and _update_bar.visible:
 		_update_bar.value = Updater.download_progress
+	# 房间页开着时每秒刷新一次名单（延迟、谁在哪个世界）
+	_players_timer -= _delta
+	if _players_timer <= 0.0 and _open and _page == Page.ROOM and Net.is_online():
+		_players_timer = 1.0
+		_refresh_players()
 
 
 # ---------------------------------------------------------------- 加入 / 房间
@@ -636,6 +644,8 @@ func _build_room() -> Control:
 	_players_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_players_label.custom_minimum_size = Vector2(560, 0)
 	_room_online.add_child(_players_label)
+	_players_box = _vbox(4)
+	_room_online.add_child(_players_box)
 	_room_online.add_child(_button("离开房间", _leave))
 	box.add_child(_room_online)
 
@@ -674,17 +684,61 @@ func _refresh_room() -> void:
 			_codes_box.add_child(row)
 	_upnp_label.visible = Net.is_host()
 	_upnp_label.text = _upnp_text()
-	var names := PackedStringArray()
+	_players_label.text = tr("玩家 %d / %d：") % [Net.roster.size(), Net.MAX_PLAYERS]
+	_refresh_players()
+
+
+## 房间名单：每人一行（名字用 TA 在小地图上的颜色、在哪个世界、延迟），别人那一行有“到 TA 身边”。
+func _refresh_players() -> void:
+	if _players_box == null:
+		return
+	for c in _players_box.get_children():
+		_players_box.remove_child(c)
+		c.queue_free()
 	var ids := Net.roster.keys()
 	ids.sort()
+	var rp := get_tree().get_first_node_in_group("remote_players") as RemotePlayers
 	for id in ids:
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 12)
 		var n := str(Net.roster[id].get("name", "?"))
 		if id == 1:
 			n += tr("（房主）")
 		if id == Net.my_id():
 			n += tr("（你）")
-		names.append(n)
-	_players_label.text = tr("玩家 %d / %d：") % [ids.size(), Net.MAX_PLAYERS] + "  ·  ".join(names)
+		var name_l := Label.new()
+		name_l.text = n
+		name_l.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
+		name_l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		if id != Net.my_id():
+			name_l.add_theme_color_override("font_color", RemotePlayers.color_of(id))
+		row.add_child(name_l)
+		var where := Net.world_of(id)
+		var info := Label.new()
+		info.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
+		var parts := PackedStringArray()
+		if where != "":
+			parts.append(TranslationServer.translate(str(WorldRegistry.get_world(where).get("name", where))))
+		var ms := Net.ping_of(id)
+		if ms >= 0 and id != 1:
+			parts.append(tr("延迟 %d ms") % ms)
+		info.text = "  ·  ".join(parts)
+		info.add_theme_color_override("font_color", UiStyle.TEXT_SOFT)
+		row.add_child(info)
+		if id != Net.my_id():
+			var b := Button.new()
+			b.text = tr("到 TA 身边")
+			var p := rp.get_player(id) if rp != null else null
+			b.disabled = p == null or not p.visible
+			b.pressed.connect(_go_to_friend.bind(id))
+			row.add_child(b)
+		_players_box.add_child(row)
+
+
+func _go_to_friend(id: int) -> void:
+	var rp := get_tree().get_first_node_in_group("remote_players") as RemotePlayers
+	if rp != null and rp.go_to(id):
+		close()
 
 
 static func _kind_label(kind: String) -> String:

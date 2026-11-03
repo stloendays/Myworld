@@ -10,30 +10,69 @@ extends RefCounted
 ## 并到哪：从网格往上找最近一个“单位”——有脚本的节点、被脚本变量引用的节点、或者合批根。
 ## 合成的网格就挂在这个单位下面，所以脚本整体移动、隐藏、删掉这个单位时，合成的网格跟着一起。
 ## 同一单位里再按 CELL 米的空间格子分开，保留视锥剔除的粒度；投影、可见层、可见距离不同的分开。
+##
+## 看不见的不画（2026-11 联机与流畅度）：
+##   · 按大小分档：最长边不到 0.7 m 的小摆件（杯子、书、栏杆小柱）离镜头 DETAIL_FINE 米外不画，
+##     不到 2 m 的（椅子、桌子、木箱）DETAIL_SMALL 米外不画（都带淡出）；大件（墙、屋顶、地板）不受影响。
+##     屋里的家具、码头的小零件在远处只有几个像素，却要占主画面和阴影各一次绘制调用。
+##   · 遮挡体（只给 occluder_units 里的建筑本体，它们从不移动：会动的东西做遮挡体，引擎每帧都要重建遮挡结构，
+##     一条漂着的独木舟就让 CPU 占用翻了十倍）：并进来的不透明大块面（墙、地板、屋顶、楼板，最长边 ≥ 2 m 且第二长边 ≥ 1 m）的三角形
+##     同时做成这个单位的遮挡体（OccluderInstance3D）。站在屋外看不见屋里的家具，进了屋看不见墙外的树林、
+##     地被和别的房子，引擎的遮挡剔除就不提交它们。窗洞、门洞本来就没有三角形，透过去看得见的照常画。
 
 const CELL := 24.0
 const BATCH_PREFIX := "StaticBatch_"
+const OCCLUDER_NAME := "StaticOccluder"
 const SKIP := 2   ## referenced 里的这个值：整棵子树都不碰（玩家、小动物、树林这种）
+const DETAIL_FINE := 55.0
+const DETAIL_SMALL := 110.0
+const DETAIL_MARGIN := 6.0
+const OCCLUDER_MIN := Vector2(2.0, 1.0)   ## 最长边、第二长边（米）
 
 
-## 合并 roots 里每棵子树的静态网格；skip 里的节点整棵子树不碰。返回 {"meshes": 并掉的网格数, "batches": 合成的网格数}。
-static func merge_all(tree: SceneTree, roots: Array, skip: Array = []) -> Dictionary:
+## 合并 roots 里每棵子树的静态网格；skip 里的节点整棵子树不碰；occluder_units 里的单位（建筑本体）顺便生成遮挡体。返回 {"meshes": 并掉的网格数, "batches": 合成的网格数}。
+static func merge_all(tree: SceneTree, roots: Array, skip: Array = [], occluder_units: Array = []) -> Dictionary:
 	var referenced := _referenced_nodes(tree)
 	for n in skip:
 		if n is Node and is_instance_valid(n):
 			referenced[(n as Node).get_instance_id()] = SKIP
-	var stats := {"meshes": 0, "batches": 0}
+	var stats := {"meshes": 0, "batches": 0, "detail": 0, "occluders": 0, "occluder_tris": 0}
 	for root in roots:
 		if root is Node3D and is_instance_valid(root):
-			var s := merge(root as Node3D, referenced)
-			stats["meshes"] += s["meshes"]
-			stats["batches"] += s["batches"]
+			var s := merge(root as Node3D, referenced, occluder_units)
+			for k in stats:
+				stats[k] += int(s.get(k, 0))
 	return stats
 
 
-static func merge(root: Node3D, referenced: Dictionary) -> Dictionary:
+## 按大小分档的可见距离（0 = 不限）：只给没设过可见距离的部件。
+static func detail_range(longest: float) -> float:
+	if longest < 0.7:
+		return DETAIL_FINE
+	if longest < 2.0:
+		return DETAIL_SMALL
+	return 0.0
+
+
+## 这个部件能不能当遮挡体：完全不透明、正面剔除（双面的薄片多半是叶子、布）、够大块。
+static func occludes(m: MeshInstance3D, extents: Vector3) -> bool:
+	var e := [extents.x, extents.y, extents.z]
+	e.sort()
+	if float(e[2]) < OCCLUDER_MIN.x or float(e[1]) < OCCLUDER_MIN.y:
+		return false
+	if (m.layers & 1) == 0:
+		return false   # 不在主画面层（反射专用、第一人称手臂……）
+	for si in m.mesh.get_surface_count():
+		var b := _material(m, si) as BaseMaterial3D
+		if b != null and (b.transparency != BaseMaterial3D.TRANSPARENCY_DISABLED or b.cull_mode != BaseMaterial3D.CULL_BACK):
+			return false
+	return true
+
+
+static func merge(root: Node3D, referenced: Dictionary, occluder_units: Array = []) -> Dictionary:
 	var groups := {}
 	var members := {}
+	var occluders := {}   ## 单位 id -> {"unit": Node3D, "parts": [[arrays, global_transform], ...]}
 	for node in root.find_children("*", "MeshInstance3D", true, false):
 		var m := node as MeshInstance3D
 		if not _eligible(m, referenced):
@@ -44,19 +83,29 @@ static func merge(root: Node3D, referenced: Dictionary) -> Dictionary:
 		var xf := unit.global_transform.affine_inverse() * m.global_transform
 		var center := xf * m.get_aabb().get_center()
 		var cell := Vector3i(floori(center.x / CELL), floori(center.y / CELL), floori(center.z / CELL))
+		var extents := (m.global_transform * m.get_aabb()).size
+		var detail := detail_range(maxf(extents.x, maxf(extents.y, extents.z))) if m.visibility_range_end <= 0.0 else 0.0
+		var occ := occluder_units.has(unit) and occludes(m, extents)
+		if occ:
+			var uid := unit.get_instance_id()
+			if not occluders.has(uid):
+				occluders[uid] = {"unit": unit, "parts": []}
 		for si in m.mesh.get_surface_count():
 			var mat := _material(m, si)
 			var arrays := m.mesh.surface_get_arrays(si)
+			if occ:
+				occluders[unit.get_instance_id()]["parts"].append([arrays, m.global_transform])
 			var k := str([unit.get_instance_id(), cell, mat.get_instance_id() if mat != null else 0, m.cast_shadow, m.layers,
 				m.visibility_range_begin, m.visibility_range_end, m.visibility_range_begin_margin, m.visibility_range_end_margin,
-				m.visibility_range_fade_mode, m.ignore_occlusion_culling, m.extra_cull_margin, _signature(arrays)])
+				m.visibility_range_fade_mode, m.ignore_occlusion_culling, m.extra_cull_margin, _signature(arrays), detail])
 			if not groups.has(k):
-				groups[k] = {"holder": m.get_parent(), "material": mat, "template": m, "parts": []}
+				groups[k] = {"holder": m.get_parent(), "material": mat, "template": m, "parts": [], "detail": detail}
 			groups[k]["parts"].append([arrays, m.global_transform])
 			groups[k]["holder"] = _common_ancestor(groups[k]["holder"], m.get_parent())
 		members[m.get_instance_id()] = m
 	# 合格的网格整块并进去（多材质的网格每个面进各自的组），原件删掉，每个面都恰好画一次
 	var batches := 0
+	var detail_batches := 0
 	for k in groups:
 		var g: Dictionary = groups[k]
 		var t := g["template"] as MeshInstance3D
@@ -77,13 +126,45 @@ static func merge(root: Node3D, referenced: Dictionary) -> Dictionary:
 		mi.visibility_range_fade_mode = t.visibility_range_fade_mode
 		mi.ignore_occlusion_culling = t.ignore_occlusion_culling
 		mi.extra_cull_margin = t.extra_cull_margin
+		if float(g["detail"]) > 0.0:
+			mi.visibility_range_end = g["detail"]
+			mi.visibility_range_end_margin = DETAIL_MARGIN
+			mi.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
+			detail_batches += 1
 		holder.add_child(mi)
 		batches += 1
+	var occluder_tris := 0
+	for uid in occluders:
+		occluder_tris += _build_occluder(occluders[uid]["unit"], occluders[uid]["parts"])
 	for id in members:
 		var m := members[id] as MeshInstance3D
 		m.get_parent().remove_child(m)
 		m.queue_free()
-	return {"meshes": members.size(), "batches": batches}
+	return {"meshes": members.size(), "batches": batches, "detail": detail_batches, "occluders": occluders.size(), "occluder_tris": occluder_tris}
+
+
+## 把一个单位里能挡视线的大块面做成一个遮挡体，挂在单位下面（单位移动、隐藏、删掉时跟着一起）。返回三角形数。
+static func _build_occluder(unit: Node3D, parts: Array) -> int:
+	var to_unit := unit.global_transform.affine_inverse()
+	var verts := PackedVector3Array()
+	var indices := PackedInt32Array()
+	for part in parts:
+		var arrays: Array = part[0]
+		var v: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+		var base := verts.size()
+		verts.append_array((to_unit * (part[1] as Transform3D)) * v)
+		var idx: PackedInt32Array = arrays[Mesh.ARRAY_INDEX] if arrays[Mesh.ARRAY_INDEX] != null else PackedInt32Array(range(v.size()))
+		for i in idx:
+			indices.append(base + i)
+	if indices.is_empty():
+		return 0
+	var occ := ArrayOccluder3D.new()
+	occ.set_arrays(verts, indices)
+	var oi := OccluderInstance3D.new()
+	oi.name = OCCLUDER_NAME
+	oi.occluder = occ
+	unit.add_child(oi)
+	return indices.size() / 3
 
 
 static func _eligible(m: MeshInstance3D, referenced: Dictionary) -> bool:

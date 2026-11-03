@@ -258,6 +258,7 @@ func _draw_overlay() -> void:
 	var player := _player()
 	var rot := player.rotation.y if player != null and GameSettings.minimap_rotate else 0.0
 	_draw_markers(center, r)
+	_draw_friends(center, r)
 	# 北方标记：世界 -Z 方向在圆周上的位置
 	var north := center + Vector2(0.0, -(r - 13.0)).rotated(rot)
 	_overlay.draw_circle(north, 9.0, Color(0.12, 0.10, 0.09, 0.85))
@@ -394,6 +395,22 @@ func _draw_markers(center: Vector2, r: float) -> void:
 		var side := Vector2(-screen_fwd.y, screen_fwd.x)
 		var hull := PackedVector2Array([p + screen_fwd * 7.0, p + side * 2.6, p - screen_fwd * 7.0, p - side * 2.6])
 		_overlay.draw_colored_polygon(hull, Color(0.85, 0.25, 0.18))
+
+
+## 朋友：彩色圆点（和头顶名字同色）；在圈外的贴着圆边画成小一点的点，指出 TA 在哪个方向。
+func _draw_friends(center: Vector2, r: float) -> void:
+	var t := world_to_map()
+	for f: Dictionary in RemotePlayers.friends(get_tree()):
+		var p := t * (f["pos"] as Vector2)
+		var col: Color = f["color"]
+		var edge := r - 9.0
+		if p.distance_to(center) > edge:
+			p = center + (p - center).normalized() * edge
+			_overlay.draw_circle(p, 5.0, Color(0.08, 0.07, 0.06, 0.9))
+			_overlay.draw_circle(p, 3.6, col)
+		else:
+			_overlay.draw_circle(p, 6.0, Color(0.08, 0.07, 0.06, 0.9))
+			_overlay.draw_circle(p, 4.5, col)
 
 
 ## 别的世界：区域名 = 走进了哪个探索点的范围，否则是世界的名字。

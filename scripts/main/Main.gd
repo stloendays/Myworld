@@ -81,7 +81,12 @@ func _merge_static() -> void:
 		skip.append(get_node_or_null(path))
 	skip.append_array(get_tree().get_nodes_in_group("local_player"))
 	var t := Time.get_ticks_usec()
-	var s := StaticBatch.merge_all(get_tree(), [self], skip)
+	# 建筑本体（从不移动）的墙、地板、屋顶顺便做成遮挡体：屋外不画屋里的东西，屋里不画墙外的东西
+	var buildings := []
+	for path in ["Cabin", "PoolHouse", "StoneCottage", "Cave"]:
+		if has_node(path):
+			buildings.append(get_node(path))
+	var s := StaticBatch.merge_all(get_tree(), [self], skip, buildings)
 	ArtMaterials.warm_snow_overlay()
 	print_verbose("StaticBatch: %d 个网格并成 %d 个，%.0f ms" % [s["meshes"], s["batches"], (Time.get_ticks_usec() - t) / 1000.0])
 	batch_stats = s

@@ -15,6 +15,10 @@ var active := true
 var fleeing := false
 var _lod_accum := 0.0
 var _lod_frame := 0
+var _interval := 1
+var _geoms: Array[GeometryInstance3D] = []
+var _shadows := true
+static var _player: Node3D = null
 
 var _rng := RandomNumberGenerator.new()
 var _target := Vector3.ZERO
@@ -42,9 +46,10 @@ func setup(id: StringName, species: String, zone_center: Vector2, zone_radius: f
 	add_child(model)
 	_season = WorldState.season_id
 	model.setup(def, FaunaData.palette(def, _variant))
-	# 远处的小动物只有几个像素，不画也不进阴影图（天上的鸟看得远一些）
-	var far := 160.0 if str(def.get("locomotion", "walk")) == "fly" else 95.0
+	# 远处的小动物只有几个像素，不画也不进阴影图：天上的鸟看得远，地上的 80 m，蝴蝶这么小 45 m 外就不画了
+	var far := float({"fly": 160.0, "flutter": 45.0, "swim_surface": 95.0}.get(str(def.get("locomotion", "walk")), 80.0))
 	for g in model.find_children("*", "GeometryInstance3D", true, false):
+		_geoms.append(g as GeometryInstance3D)
 		(g as GeometryInstance3D).visibility_range_end = far
 		(g as GeometryInstance3D).visibility_range_end_margin = 10.0
 		(g as GeometryInstance3D).visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
@@ -53,6 +58,7 @@ func setup(id: StringName, species: String, zone_center: Vector2, zone_radius: f
 	_target = p
 	_orbit = _rng.randf() * TAU
 	add_to_group("fauna")
+	_lod_frame = _rng.randi() % 8   # 错开，降频的动物不挤在同一帧更新
 
 
 ## 更新降频（大作里的“AI LOD”）：离相机 30 m 外每 2 帧更新一次，70 m 外每 4 帧，150 m 外每 12 帧，视野外每 8 帧，
@@ -71,11 +77,24 @@ func _lod_interval() -> int:
 	return 4 if d > 70.0 * 70.0 else (2 if d > 30.0 * 30.0 else 1)
 
 
+## 只有离镜头 SHADOW_NEAR 米内的才投影：远处的小动物在阴影图里只有一两个像素，每个身体部件却要多画好几次。
+const SHADOW_NEAR := 28.0
+
+
 func _physics_process(delta: float) -> void:
 	_lod_accum += delta
 	_lod_frame += 1
-	if _lod_frame % _lod_interval() != 0:
+	if _lod_frame < _interval:
 		return
+	# 下次什么时候更新、要不要投影：只在这次更新时算一次（以前每个物理步每只都要取镜头、做视锥判断）
+	_lod_frame = 0
+	_interval = _lod_interval()
+	var cam := get_viewport().get_camera_3d()
+	var near := cam != null and cam.global_position.distance_squared_to(global_position) < SHADOW_NEAR * SHADOW_NEAR
+	if near != _shadows:
+		_shadows = near
+		for g in _geoms:
+			g.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if near else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	delta = minf(_lod_accum, 0.25)
 	_lod_accum = 0.0
 	_rule_timer -= delta
@@ -103,8 +122,9 @@ func _physics_process(delta: float) -> void:
 
 
 func _player_pos() -> Variant:
-	var p := get_tree().get_first_node_in_group("local_player") as Node3D
-	return p.global_position if p != null else null
+	if _player == null or not is_instance_valid(_player) or not _player.is_inside_tree():
+		_player = get_tree().get_first_node_in_group("local_player") as Node3D
+	return _player.global_position if _player != null else null
 
 
 func _ground(delta: float) -> void:

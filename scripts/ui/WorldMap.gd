@@ -237,6 +237,7 @@ func _draw_map() -> void:
 			var fwd := Vector2(-sin(canoe.heading), -cos(canoe.heading))
 			var side := Vector2(-fwd.y, fwd.x)
 			_map.draw_colored_polygon(PackedVector2Array([cp + fwd * 9.0, cp + side * 3.2, cp - fwd * 9.0, cp - side * 3.2]), Color(0.86, 0.3, 0.2))
+	_draw_friends(t, font)
 	_draw_player(t)
 	_draw_north_and_scale(t, rect, font)
 
@@ -246,6 +247,21 @@ func _draw_north_and_scale(t: Transform2D, rect: Rect2, font: Font) -> void:
 	MapArt.draw_compass(_map, t * rect.position + Vector2(42.0, 48.0), 22.0, font)
 	var px_per_m := t.basis_xform(Vector2(1.0, 0.0)).x
 	MapArt.draw_scale_bar(_map, t * rect.end - Vector2(50.0 * px_per_m + 52.0, 26.0), px_per_m, font)
+
+
+## 同一个世界里的朋友：带深色描边的彩色圆点和名字（颜色和头顶名字一致）；两人站得近时名字往上错开，不叠在一起。
+func _draw_friends(t: Transform2D, font: Font) -> void:
+	var used: Array[Vector2] = []
+	for f: Dictionary in RemotePlayers.friends(get_tree()):
+		var c := t * (f["pos"] as Vector2)
+		var col: Color = f["color"]
+		_map.draw_circle(c, 8.5, Color(0.08, 0.07, 0.06, 0.9))
+		_map.draw_circle(c, 6.5, col)
+		var at := c + Vector2(0.0, -18.0)
+		while used.any(func(u: Vector2) -> bool: return absf(u.y - at.y) < 17.0 and absf(u.x - at.x) < 48.0):
+			at.y -= 17.0
+		used.append(at)
+		MapArt.label(_map, font, at, str(f["name"]), 15, col.lightened(0.35))
 
 
 func _draw_player(t: Transform2D) -> void:
@@ -343,5 +359,6 @@ func _draw_mini_world(t: Transform2D, rect: Rect2, font: Font) -> void:
 	var got := WorldState.collected(w.world_id).size()
 	if GameRules.flag("collectibles") and w.items_total() > 0:
 		MapArt.label(_map, font, screen.position + Vector2(screen.size.x * 0.5, 26.0), tr("%s：%d / %d") % [tr(str(w.data.get("item_name", "收集品"))), got, w.items_total()], 17, Color(0.72, 0.93, 1.0))
+	_draw_friends(t, font)
 	_draw_player(t)
 	_draw_north_and_scale(t, rect, font)

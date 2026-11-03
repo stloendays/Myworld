@@ -778,3 +778,13 @@ E  拆开信	E  Open the letter
 Direct3D 12（内存占用更少）	Direct3D 12 (uses less memory)
 已把旧版本 %s 移到回收站	Moved old version %s to the Recycle Bin
 自动把电脑上的旧版本移到回收站	Move old versions of the game on this PC to the Recycle Bin
+切到后台时	When in the background
+不降帧	Keep full rate
+30 帧	30 FPS
+15 帧	15 FPS
+10 帧	10 FPS
+到 TA 身边	Go to them
+来到 %s 身边	Joined %s
+延迟 %d ms	Ping %d ms
+跟着 %s 前往「%s」。	Following %s to %s.
+联机时由房主带路：房主穿过光门，大家一起过去	In a co-op room the host leads: when the host goes through a gate, everyone goes along

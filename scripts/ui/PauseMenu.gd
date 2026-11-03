@@ -155,6 +155,7 @@ func _build_settings() -> Control:
 	_slider(display, "fov", "视野 FOV", GameSettings.FOV_MIN, GameSettings.FOV_MAX, 1.0, "%d°")
 	_slider(display, "render_scale", "渲染比例", 0.5, 1.0, 0.05, "%d%%", 100.0)
 	_option(display, "max_fps", "帧率上限", ["不限", "30", "60", "120", "144", "165", "240"], FPS_CHOICES)
+	_option(display, "background_fps", "切到后台时", ["不降帧", "30 帧", "15 帧", "10 帧"], [0, 30, 15, 10])
 	_check(display, "vsync", "垂直同步")
 	_check(display, "fullscreen", "全屏（F11 或 Alt + Enter 随时切换）")
 	_option(display, "renderer", "渲染方式", ["自动（推荐）", "Direct3D 12（内存占用更少）", "兼容（旧显卡、打不开时）", "兼容 ANGLE（兼容也不行时）"], StartupGuard.RENDERERS)
@@ -373,9 +374,7 @@ func _close() -> void:
 
 func _open_room() -> void:
 	_set_open(false)
-	var lobby := get_parent().get_node_or_null("LobbyMenu") as LobbyMenu
-	if lobby != null:
-		lobby.open_room()
+	_lobby().open_room()
 
 
 func _quit() -> void:
@@ -392,9 +391,7 @@ func _show_wardrobe() -> void:
 func _to_lobby() -> void:
 	SaveManager.save()
 	_set_open(false)
-	var lobby := get_parent().get_node_or_null("LobbyMenu") as LobbyMenu
-	if lobby != null:
-		lobby.open()
+	_lobby().open()
 
 
 func _show_menu() -> void:
@@ -405,3 +402,13 @@ func _show_menu() -> void:
 	_wardrobe.visible = false
 	_settings.visible = false
 	_menu.visible = true
+
+
+## 大厅：湖畔一开始就建好；别的世界里第一次用到（多人房间、回到主菜单）时才建，平时省下它的上千个界面节点。
+func _lobby() -> LobbyMenu:
+	var lobby := get_parent().get_node_or_null("LobbyMenu") as LobbyMenu
+	if lobby == null:
+		lobby = LobbyMenu.new()
+		lobby.name = "LobbyMenu"
+		get_parent().add_child(lobby)
+	return lobby

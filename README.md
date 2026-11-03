@@ -4,7 +4,7 @@
 
 - 引擎：**Godot 4.7.2 Standard**（GDScript，Forward+，Jolt Physics），Windows 单机优先
 - 需求规格：[docs/DEVELOPMENT_SPEC.md](docs/DEVELOPMENT_SPEC.md)（唯一需求来源）；阶段指令：[docs/AGENT_HANDOFF.md](docs/AGENT_HANDOFF.md)
-- 当前进度：**M0、M1、第一轮正式美术、M2 天气系统、方块人物、泳池馆与地下水族馆、小动物、雷暴/彩虹/风、聊天框、小地图、开发者模式、第一人称双手、木屋生活、独木舟与湖上探索、性能优化、可潜水的海洋大缸、木屋国际象棋、动作轮盘、世界地图与全屏、联机（最多 4 人）与中英界面、自动更新、新立牌、夜里的仙境林地、东北角雪山、内存与卡顿优化、图腾山洞与任务、星座与图鉴、石头小屋、跨世界旅行、画面闪动优化、小溪瀑布与裂谷、启动画面与开场过场、云海浮岛与琥珀沙丘、解说卷轴、新建游戏设定与存档、亚特兰蒂斯与六个新玩法、划船人的信与石头小屋、第一章收尾（新星座、暮烬之夜、终章与剧情过场）、M3 声音、界面升级与剧情 / 休闲两种模式、CPU 与内存减负、v0.6.0（地图重画、自动清理旧版本）已完成**，自动检查 139/139、启动流程 6/6、联机检查 12/12 通过。见 [docs/QA_M0_M1.md](docs/QA_M0_M1.md)、[docs/ART_PASS.md](docs/ART_PASS.md)、[docs/M2_WEATHER_CHARACTER.md](docs/M2_WEATHER_CHARACTER.md)、[docs/POOLHOUSE_FAUNA.md](docs/POOLHOUSE_FAUNA.md)、[docs/CHAT.md](docs/CHAT.md)、[docs/MINIMAP_DEVMODE.md](docs/MINIMAP_DEVMODE.md)、[docs/CABIN_LIFE_CANOE.md](docs/CABIN_LIFE_CANOE.md)、[docs/PERFORMANCE.md](docs/PERFORMANCE.md)、[docs/AQUARIUM_DIVE.md](docs/AQUARIUM_DIVE.md)、[docs/CHESS.md](docs/CHESS.md)、[docs/INTERACTIONS_WORLDMAP.md](docs/INTERACTIONS_WORLDMAP.md)、[docs/COOP.md](docs/COOP.md)、[docs/V0_3.md](docs/V0_3.md)、[docs/SNOW_PEAK.md](docs/SNOW_PEAK.md)、[docs/MEMORY_STUTTER.md](docs/MEMORY_STUTTER.md)、[docs/CAVE_QUESTS.md](docs/CAVE_QUESTS.md)、[docs/NATURE_FLICKER.md](docs/NATURE_FLICKER.md)、[docs/BOOT_INTRO_HANDS.md](docs/BOOT_INTRO_HANDS.md)、[docs/V0_5.md](docs/V0_5.md)、[docs/ATLANTIS.md](docs/ATLANTIS.md)、[docs/LETTERS_COTTAGE.md](docs/LETTERS_COTTAGE.md)、[docs/FLICKER_BRIDGE.md](docs/FLICKER_BRIDGE.md)、[docs/STORY_EMBERS.md](docs/STORY_EMBERS.md)、[docs/AUDIO_M3.md](docs/AUDIO_M3.md)、[docs/UI_MODES.md](docs/UI_MODES.md)、[docs/PERF_CPU_MEMORY.md](docs/PERF_CPU_MEMORY.md)、[docs/V0_6_0.md](docs/V0_6_0.md)
+- 当前进度：**M0、M1、第一轮正式美术、M2 天气系统、方块人物、泳池馆与地下水族馆、小动物、雷暴/彩虹/风、聊天框、小地图、开发者模式、第一人称双手、木屋生活、独木舟与湖上探索、性能优化、可潜水的海洋大缸、木屋国际象棋、动作轮盘、世界地图与全屏、联机（最多 4 人）与中英界面、自动更新、新立牌、夜里的仙境林地、东北角雪山、内存与卡顿优化、图腾山洞与任务、星座与图鉴、石头小屋、跨世界旅行、画面闪动优化、小溪瀑布与裂谷、启动画面与开场过场、云海浮岛与琥珀沙丘、解说卷轴、新建游戏设定与存档、亚特兰蒂斯与六个新玩法、划船人的信与石头小屋、第一章收尾（新星座、暮烬之夜、终章与剧情过场）、M3 声音、界面升级与剧情 / 休闲两种模式、CPU 与内存减负、v0.6.0（地图重画、自动清理旧版本）、联机完善与流畅省 CPU（一起穿光门、插值、朋友标记、后台降帧、看不见的不画）已完成**，自动检查 140/140、启动流程 6/6、联机检查 20/20 通过。见 [docs/QA_M0_M1.md](docs/QA_M0_M1.md)、[docs/ART_PASS.md](docs/ART_PASS.md)、[docs/M2_WEATHER_CHARACTER.md](docs/M2_WEATHER_CHARACTER.md)、[docs/POOLHOUSE_FAUNA.md](docs/POOLHOUSE_FAUNA.md)、[docs/CHAT.md](docs/CHAT.md)、[docs/MINIMAP_DEVMODE.md](docs/MINIMAP_DEVMODE.md)、[docs/CABIN_LIFE_CANOE.md](docs/CABIN_LIFE_CANOE.md)、[docs/PERFORMANCE.md](docs/PERFORMANCE.md)、[docs/AQUARIUM_DIVE.md](docs/AQUARIUM_DIVE.md)、[docs/CHESS.md](docs/CHESS.md)、[docs/INTERACTIONS_WORLDMAP.md](docs/INTERACTIONS_WORLDMAP.md)、[docs/COOP.md](docs/COOP.md)、[docs/V0_3.md](docs/V0_3.md)、[docs/SNOW_PEAK.md](docs/SNOW_PEAK.md)、[docs/MEMORY_STUTTER.md](docs/MEMORY_STUTTER.md)、[docs/CAVE_QUESTS.md](docs/CAVE_QUESTS.md)、[docs/NATURE_FLICKER.md](docs/NATURE_FLICKER.md)、[docs/BOOT_INTRO_HANDS.md](docs/BOOT_INTRO_HANDS.md)、[docs/V0_5.md](docs/V0_5.md)、[docs/ATLANTIS.md](docs/ATLANTIS.md)、[docs/LETTERS_COTTAGE.md](docs/LETTERS_COTTAGE.md)、[docs/FLICKER_BRIDGE.md](docs/FLICKER_BRIDGE.md)、[docs/STORY_EMBERS.md](docs/STORY_EMBERS.md)、[docs/AUDIO_M3.md](docs/AUDIO_M3.md)、[docs/UI_MODES.md](docs/UI_MODES.md)、[docs/PERF_CPU_MEMORY.md](docs/PERF_CPU_MEMORY.md)、[docs/V0_6_0.md](docs/V0_6_0.md)、[docs/MP_SMOOTH.md](docs/MP_SMOOTH.md)
 
 ![湖岸出生点](docs/screenshots/m1_01_spawn_dusk.png)
 
@@ -90,7 +90,7 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | 烹饪 | 木屋铸铁炉顶上的铁锅、沙丘营地篝火上的铁锅：看着按 E，1 / 2 / 3 做烤鱼、鱼汤、海鲜拼盘（吃了有效果） |
 | 计时挑战 | 走（游）进金色起点环开始计时：林道奔跑、绳桥穿越、云海跳台、沙丘冲刺、潜水环 |
 | 亚特兰蒂斯 | 穹顶外屏幕下方是氧气条，气泡泉补满；看着捧镜雕像按 E 转 45°；走进漩涡泉坐洋流水渠；看着大蝠鲼按 E 骑上去（E 松手） |
-| 联机 | 只开休闲模式：大厅“多人游戏 · 休闲模式”里“创建房间 / 加入房间”（输入房间号）；游戏中 Esc →“多人房间”；正在玩剧情时创建房间会先存好剧情、换到你的休闲世界；访客照房主的本局设定走 |
+| 联机 | 只开休闲模式：大厅“多人游戏 · 休闲模式”里“创建房间 / 加入房间”（输入房间号）；游戏中 Esc →“多人房间”；正在玩剧情时创建房间会先存好剧情、换到你的休闲世界；访客照房主的本局设定走；房主穿光门大家一起去；房间页看每人在哪、延迟，点“到 TA 身边”；朋友在小地图、罗盘、地图上各有一种颜色 |
 | 界面语言 | 默认跟随系统（中文系统显示中文）；大厅或 设置 → 操作 里可改 English / 中文；卷轴立牌、过场字幕、图腾和信都跟着换 |
 | 第一 / 第三人称 | V（第一人称能看到自己的双手，大小在 设置 → 视角 → 手的大小 里调） |
 | 小地图 | M（右上角圆形小地图，随朝向旋转，下方显示区域名） |
@@ -144,6 +144,8 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | `scripts/world/StaticBatch.gd` | 静态合批：建好世界后把建筑、码头、小溪、卷轴木架里不会动的小网格按材质合成少数几个网格（自动跳过脚本会动、会换材质的部件），绘制调用约减半 |
 | `devtools/Profile.tscn` | 性能剖析：逐项关特性，看帧时、CPU / GPU、绘制调用、三角形 |
 | `devtools/MemProbe.tscn` | 内存与卡顿探针：加载计时、内存 / 显存 / 进程占用、走遍全图的帧时分布和卡顿帧 |
+| `devtools/CpuSpots.tscn` + `devtools/cpu_usage.ps1` | 真实玩法下的 CPU 占用：玩家依次站 6 个机位（60 帧上限），外面读游戏进程的 CPU 时间；`DUSK_CPU_OFF` 关掉一类、`DUSK_CPU_SET` 临时改设置再测 |
+| `devtools/CpuProbe.tscn` | 无窗口的主线程探针：逐类停掉 / 恢复，比脚本与物理时间（系统忙时噪声大，以 cpu_usage.ps1 为准） |
 | `scripts/world/Exploration.gd` | 湖上探索点（`world_layout.json → lake_pois`）：发现记录、营火帐篷芦苇睡莲摆件 |
 | `scripts/core/WorldLayout.gd`、`WorldTerrain.gd`、`PhysicsLayers.gd` | 布局数据读取、解析式地形高度函数、物理层常量 |
 | `scripts/systems/WorldClock.gd`、`SeasonController.gd`、`WeatherController.gd`、`ClimateSystem.gd` | 世界时间、季节、天气规则与过渡、预设入口（Main/Systems） |
@@ -199,7 +201,7 @@ pwsh -File devtools/fetch_polyhaven.ps1
 | `scripts/world/FairyGlade.gd`、`scripts/interactions/FairyPortal.gd`、`shaders/fairy_portal.gdshader` | 仙境林地：只在晴朗夜里出现的特殊事件（仙树、蘑菇圈、水晶、漂浮小岛、月光石门） |
 | `scripts/world/SnowPeak.gd` | 雪山顶：石堆、旗杆、面朝湖的长椅、常年小雪（山体是地形 hills 里的 snow_peak，雪线、林线在布局文件里；远处主峰在 `DistantBackdrop`） |
 | `export_presets.cfg` | Windows 导出设置（单文件 exe，资源打包在里面），输出到 `dist/` |
-| `tests/NetTest.tscn` | 联机检查（两个进程本机回环，11 项：房主规则同步、加入、同步人物与动作、门、聊天、独木舟、天气时间、房主离开、版本不一致） |
+| `tests/NetTest.tscn` | 联机检查（两个进程本机回环，20 项：房主规则同步、加入、同步人物与动作、门、聊天、独木舟、天气时间、走路插值匀速、站着少发包、延迟、一起穿光门、中途加入直接去房主的世界、房主离开、版本不一致） |
 | `scripts/net/`（NetworkManager、RemotePlayer、RemotePlayers、RoomCode）、`scripts/ui/LobbyMenu.gd` | 联机：房主自建房间（ENet）、房间号、远端玩家显示与同步；启动大厅：剧情 / 休闲两张模式卡、多人只开休闲、右下角版本与自动更新状态 |
 | `scripts/ui/UiStyle.gd` | 全部界面的统一样式：配色、主题（按钮、页签、输入框、下拉、勾选框、滑块、滚动条）、面板 / 卡片 / 提示条 / 按键帽；盖住画面的面板开着时收起罗盘、小地图和任务追踪栏 |
 | `locale/en.tsv`、`locale/en.po`、`devtools/make_po.sh` | 英文翻译表（界面原文是中文） |
@@ -248,11 +250,12 @@ pwsh -File devtools/fetch_polyhaven.ps1
 - **亚特兰蒂斯与更多玩法**：世界四「亚特兰蒂斯」（泳池馆地下海洋大缸底部的石环潜进去；气泡穹顶下的同心环古城：三圈水环、两圈陆环、山铜神殿与尖塔、柱廊、白石房子、洋流水渠；穹顶外的海底有珊瑚、海带林、沉船、气泡泉、鱼群、蝠鲼、水母和鲸鱼；氧气条、五尊捧镜雕像的光束谜题、珍珠贝壳和六块传说石板、洋流水渠、骑蝠鲼，光照随时刻变）；更多玩法：钓鱼（13 种鱼）、打水漂、按种子寻宝、炉火烹饪（吃了有效果）、五条计时挑战、24 个成就和木屋收藏柜；存档 v5（见 `docs/ATLANTIS.md`）
 - **v0.6.0：地图重画、自动清理旧版本**：世界地图、小地图和三个别的世界的地图换成手绘风（512 像素底图并行烘焙，山体明暗、等高线、树冠点、湖水深浅和岸线，描边的路、小溪、建筑图标、图钉、光门、视野扇形、边框、指北针、比例尺）；新版本启动后把电脑上的旧版本 exe（按历次发布的大小和哈希认）移到回收站，设置里可关（见 `docs/V0_6_0.md`）
 - **CPU 与内存减负**：建筑、码头、小溪、卷轴木架的小网格建好后自动合批，树林改 128 m 分块，远处的地被、卷轴、文字和地下水族馆不再投影，湖面反射探针不拍地被、分辨率减半，旅行日志关着时不重建，第一次下雪的渲染管线在加载时编好，小动物和小地图降频；每帧绘制调用约减半，常见机位帧率约 +45%，下雪和认出新动物时的卡顿没有了；设置里多了“Direct3D 12（内存占用更少）”，进程内存约少一半（见 `docs/PERF_CPU_MEMORY.md`）
+- **联机完善与流畅省 CPU**：房主穿光门，大家一起去云海浮岛、沙丘、亚特兰蒂斯（中途加入的人直接去房主所在的世界）；别人的人物按时间戳缓冲插值，走得匀不顿；站着不动少发包、流量压缩；朋友在小地图、罗盘、世界地图上有各自颜色的标记，房间页显示每人在哪个世界、延迟，一键“到 TA 身边”。引擎工作线程池限 4 线程（60 帧时 CPU 从约 1.7 核降到约 0.65 核），切到后台降到 15 帧、最小化 5 帧；看不见的不画：小摆件远了不画、建筑的墙地板屋顶自动做成遮挡体、听不见的声源暂停、远处小动物不投影（见 `docs/MP_SMOOTH.md`）
 - **界面升级与两种模式**：启动大厅重做（剧情 / 休闲两张模式卡，各显示存档进度；多人只开休闲；右下角显示版本和自动更新检查结果，有新版本时一键“更新并重启”）；单人分剧情模式（老图腾的任务、信、过场和结局）和休闲模式（没有任务，随便玩），两种模式各存一个档；全部界面换成统一的暮色样式（面板、按钮、页签、交互提示的按键帽、勾选框），打开日志、地图、暂停时罗盘小地图和任务栏自动收起；英文界面和字幕补齐；卷轴立牌只写一种语言，跟着界面语言走（见 `docs/UI_MODES.md`）
 - **M3 声音**：游戏有声音了——松风、湖水拍岸、小溪瀑布、雨（进屋后变成屋顶上的雨声，户外的声音 2 秒内变闷）、夏夜虫鸣、林子里的鸟、雷（按闪电距离延迟）、炉火篝火；脚步按草地 / 木板 / 石头 / 雪 / 沙 / 浅水换声音；开门、开灯、生火、坐下、风灯、雕像、祭坛、钓鱼、打水漂、挖宝、划船都有声音；按世界和时段现场生成的轻背景音乐，过场有配乐；设置 → 声音五个音量滑块。全部声音由 `devtools/audio/synth.mjs` 合成（见 `docs/AUDIO_M3.md`）
 - **第一章收尾**：三个世界的光送回去时各放一段过场，湖畔夜空随之多出天鲸座、石拱座、蝠鲼座（第一次一颗颗亮起来），石头小屋的星图补完；三盏灯都亮后的傍晚湖上飘起暮烬（原版红点原样启用），回山洞听老图腾讲最后一个故事，放终章过场，书桌上多了划船人的第四封信；开场多了两行序幕；四个新任务、两个新成就；设置里可关剧情过场（见 `docs/STORY_EMBERS.md`）
 - **启动与过场、双手**：启动图 → 加载画面（进度、阶段、小提示）→ 三段镜头的开场过场（可跳过、可在设置里关）→ 主菜单；进出房间、传送时黑幕转场；第一人称双手缩小一半、分在左右下角并露出拳头；右键用手或挥手（见 `docs/BOOT_INTRO_HANDS.md`）
-- 自动检查（113 项）、启动流程检查（6 项）与联机检查（12 项）、截图与性能测试工具；`devtools/GlitchProbe.tscn` 逐块检查立牌、独木舟、桥的摆放
+- 自动检查（140 项）、启动流程检查（6 项）与联机检查（20 项）、截图与性能测试工具；`devtools/GlitchProbe.tscn` 逐块检查立牌、独木舟、桥的摆放
 
 ## 未实现（按里程碑）
 

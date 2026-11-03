@@ -13,6 +13,8 @@ const PORT := 24611
 const RESULT_PATH := "user://net_test_client.json"
 const PORCH := Vector3(-62.4, 2.4, 37.0)
 const LAKE_POINT := Vector2(10.0, 0.0)
+const WALK_FROM := Vector2(-50.0, 18.0)
+const WALK_TO := Vector2(-50.0, 30.0)
 
 var _results: Array[Dictionary] = []
 var _main: Node3D
@@ -103,11 +105,76 @@ func _host() -> void:
 	_check("房主的本局规则同步到访客（一天 96 分钟、小动物少；协议 %d）" % Net.PROTOCOL, r.contains("rules=96/few"), r)
 	_check("小玩法：访客钓鱼、挖宝被禁用并提示，房主照常能玩", r.contains("guest_play=true") and Play.blocked("fishing") == "" and Play.blocked("treasure") == "", r)
 
+	# 访客下船沿直线走 12 m（4 m/s）：房主这边按时间戳插值，每 0.1 秒的速度都接近 4 m/s（不快一阵慢一阵、不倒退）
+	_say("CMD walk")
+	var walk_start := await _until(func() -> bool: return p.visible and Vector2(p.global_position.x, p.global_position.z).distance_to(WALK_FROM) < 0.6, 30.0)
+	var track: Array = []   ## [时刻 s, z]
+	var t_end := Time.get_ticks_msec() + 4500
+	while Time.get_ticks_msec() < t_end:
+		await get_tree().process_frame
+		track.append([Time.get_ticks_usec() / 1000000.0, p.global_position.z])
+	var speeds := _window_speeds(track, 0.1)
+	var backwards := track.size() > 1 and _went_back(track)
+	var arrived := Vector2(p.global_position.x, p.global_position.z).distance_to(WALK_TO) < 0.6
+	_check("访客走路：房主看到的人物匀速（每 0.1 秒 %.1f–%.1f m/s，目标 4），不倒退" % [speeds.min() if not speeds.is_empty() else 0.0, speeds.max() if not speeds.is_empty() else 0.0],
+		walk_start and arrived and not backwards and speeds.size() >= 10 and speeds.min() > 3.0 and speeds.max() < 5.0,
+		"开始 %s，到达 %s，%d 个窗口" % [walk_start, arrived, speeds.size()])
+	var idle := await _until(func() -> bool: return _report_with("IDLE ") != "", 20.0)
+	var idle_r := _report_with("IDLE ")
+	var sent := idle_r.get_slice("sent=", 1).to_int() if idle else -1
+	_check("站着不动 3 秒：访客只发了 %d 个姿态包（动着时每秒 20 个）" % sent, idle and sent >= 3 and sent <= 9, idle_r)
+	await _until(func() -> bool: return Net.pings.has(guest_id), 5.0)
+	_check("房主量到访客的延迟并广播（%d ms）" % int(Net.pings.get(guest_id, -1)), int(Net.pings.get(guest_id, -1)) >= 0 and idle_r.contains("ping_ok=true"), idle_r)
+
+	# 一起旅行：房主穿光门去云海浮岛 → 访客跟着去，房主在新世界看到访客；访客自己不能走
+	WorldTravel.travel("world_02")
+	await WorldTravel.travel_finished
+	var rp2 := get_tree().get_first_node_in_group("remote_players") as RemotePlayers
+	var seen := await _until(func() -> bool:
+		var q := rp2.get_player(guest_id) if rp2 != null else null
+		return q != null and q.visible and q.world == "world_02", 90.0)
+	var follow_r := ""
+	if await _until(func() -> bool: return _report_with("TRAVEL ") != "", 30.0):
+		follow_r = _report_with("TRAVEL ")
+	_check("房主去云海浮岛，访客跟着到了，房主在那边看到 TA；访客自己穿门被拦下、天气以房主为准",
+		seen and follow_r.contains("world=world_02") and follow_r.contains("blocked=true") and follow_r.contains("weather_paused=true"), follow_r)
+	var mm := get_tree().get_first_node_in_group("minimap") as Minimap
+	_check("小地图、罗盘、地图能拿到朋友的位置（同一个世界）", RemotePlayers.friends(get_tree()).size() == 1 and mm != null)
+	WorldTravel.travel("dusk_lake")
+	await WorldTravel.travel_finished
+	var back := await _until(func() -> bool:
+		var r3 := get_tree().get_first_node_in_group("remote_players") as RemotePlayers
+		var q := r3.get_player(guest_id) if r3 != null else null
+		return q != null and q.visible and q.world == "dusk_lake", 90.0)
+	_check("房主回湖畔，访客也跟回来", back)
+	p = (get_tree().get_first_node_in_group("remote_players") as RemotePlayers).get_player(guest_id)
+
 	# 房主关房 → 访客回到单人
 	Net.leave_room()
 	var left_ok := await _until(func() -> bool: return _client_result().has("host_left"), 30.0)
 	var res := _client_result()
 	_check("房主关房：访客收到通知并回到自己的湖畔", left_ok and res.get("host_left", false) and res.get("offline", false), str(res))
+
+	# 中途加入：房主在云海浮岛开房，新访客加入后直接被带到云海浮岛；房主关房后访客回到自己的湖畔
+	_remove_result()
+	WorldTravel.travel("world_02")
+	await WorldTravel.travel_finished
+	Net.host_room(PORT)
+	_spawn_client(["--net-midjoin"])
+	var mid_seen := await _until(func() -> bool:
+		var r4 := get_tree().get_first_node_in_group("remote_players") as RemotePlayers
+		if r4 != null:
+			for id in Net.roster:
+				var q := r4.get_player(id)
+				if q != null and q.visible and q.world == "world_02":
+					return true
+		return false, 150.0)
+	_check("房主在云海浮岛时有人加入：访客直接来到云海浮岛", mid_seen)
+	await _seconds(3.0)   # 等访客的加载画面淡出（旅行没走完时关房，访客会到了以后直接再回湖畔）
+	Net.leave_room()
+	var mid_done := await _until(func() -> bool: return _client_result().has("world_after_leave"), 120.0)
+	_check("房主关房后，在别的世界做客的访客回到自己的湖畔", mid_done and str(_client_result().get("world_after_join")) == "world_02" \
+		and str(_client_result().get("world_after_leave")) == "dusk_lake", str(_client_result()))
 
 	# 版本不一致的访客
 	_remove_result()
@@ -147,10 +214,48 @@ func _heard(kind: String, author: String, text: String) -> bool:
 
 
 func _report() -> String:
+	return _report_with("REPORT ")
+
+
+func _report_with(prefix: String) -> String:
 	for c in _chat:
-		if str(c[2]).begins_with("REPORT "):
+		if str(c[2]).begins_with(prefix):
 			return str(c[2])
 	return ""
+
+
+## 按时间窗口算速度（m/s）：只算人物已经起步、还没到终点的那一段。track = [[时刻 s, z], ...]，z 一路增大。
+func _window_speeds(track: Array, w: float) -> Array:
+	var out := []
+	if track.size() < 2:
+		return out
+	var z0: float = track[0][1]
+	var z1: float = track[-1][1]
+	var i := 0
+	var j := 0
+	while i < track.size():
+		var t0: float = track[i][0]
+		while j < track.size() and float(track[j][0]) < t0 + w:
+			j += 1
+		if j >= track.size():
+			break
+		var a: float = track[i][1]
+		var b: float = track[j][1]
+		if a > z0 + 0.4 and b < z1 - 0.4:
+			out.append((b - a) / (float(track[j][0]) - t0))
+		i = j
+	return out
+
+
+func _went_back(track: Array) -> bool:
+	for k in range(1, track.size()):
+		if float(track[k][1]) < float(track[k - 1][1]) - 0.005:
+			return true
+	return false
+
+
+func _ground(xz: Vector2) -> Vector3:
+	return Vector3(xz.x, WorldTerrain.height_at(xz.x, xz.y) + 0.05, xz.y)
 
 
 func _time_ok(r: String) -> bool:
@@ -171,6 +276,9 @@ func _client() -> void:
 		Net.version_override = args[i + 1]
 	var addr: String = args[args.find("--net-client") + 1]
 	var result := {}
+	if args.has("--net-midjoin"):
+		await _client_midjoin(addr)
+		return
 	Net.join_room(addr)
 	var joined := await _until(func() -> bool: return Net.is_client() or (Net.state == Net.State.OFFLINE), 60.0)
 	if not joined or not Net.is_client():
@@ -208,9 +316,47 @@ func _client() -> void:
 		Net.send_chat("player", "REPORT weather=%s time=%.1f blocked=%s pool=%s cabin=%s rules=%d/%s guest_play=%s" % [WorldState.weather_id,
 			WorldState.time_minutes, blocked, pool_door.get_state() if pool_door != null else "?",
 			cabin_door.get_state() if cabin_door != null else "?", int(GameRules.get_rule("day_length")), str(GameRules.get_rule("animals")), guest_blocked])
+	# 下船走一段直线（4 m/s），然后站着不动 3 秒，报告这段时间发了几个姿态包
+	if await _until(func() -> bool: return _heard("player", "Host", "CMD walk"), 60.0):
+		player.teleport_to(_ground(WALK_FROM))
+		player.set_physics_process(false)
+		await _seconds(1.0)
+		# 和真的走路一样，每个物理步走一小段（4 m/s × 1/60 s）
+		var steps := 3 * Engine.physics_ticks_per_second
+		for s in steps:
+			await get_tree().physics_frame
+			var k := float(s + 1) / steps
+			player.global_position = _ground(WALK_FROM.lerp(WALK_TO, k))
+			player.velocity = Vector3(0.0, 0.0, 4.0) if k < 1.0 else Vector3.ZERO
+		await _seconds(0.5)
+		var before := Net.poses_sent
+		await _seconds(3.0)
+		player.set_physics_process(true)
+		Net.send_chat("player", "IDLE sent=%d ping_ok=%s" % [Net.poses_sent - before, Net.ping_of(Net.my_id()) >= 0 and not Net.pings.is_empty()])
+	# 房主带路去云海浮岛：跟过去，报告；再跟回湖畔
+	if await _until(func() -> bool: return WorldTravel.current_world == "world_02" and not WorldTravel.busy, 120.0):
+		await _seconds(1.0)
+		var climate := get_tree().get_first_node_in_group("climate_system") as ClimateSystem
+		Net.send_chat("player", "TRAVEL world=%s blocked=%s weather_paused=%s" % [WorldTravel.current_world, WorldTravel.blocked_reason("world_03") != "",
+			climate == null or climate.weather.process_mode == Node.PROCESS_MODE_DISABLED])
+		await _until(func() -> bool: return WorldTravel.current_world == "dusk_lake" and not WorldTravel.busy, 120.0)
 	var left := await _until(func() -> bool: return Net.state == Net.State.OFFLINE, 60.0)
 	result["host_left"] = left
 	result["offline"] = Net.state == Net.State.OFFLINE and _weather_running()
+	_finish_client(result)
+
+
+## 中途加入的访客：房主在云海浮岛，加入后应该被带过去；房主关房后回到自己的湖畔。
+func _client_midjoin(addr: String) -> void:
+	var result := {}
+	Net.join_room(addr)
+	await _until(func() -> bool: return Net.is_client(), 60.0)
+	await _until(func() -> bool: return WorldTravel.current_world == "world_02" and not WorldTravel.busy, 120.0)
+	result["world_after_join"] = WorldTravel.current_world
+	await _until(func() -> bool: return Net.state == Net.State.OFFLINE, 120.0)
+	await _until(func() -> bool: return WorldTravel.current_world == "dusk_lake" and not WorldTravel.busy, 120.0)
+	await _seconds(0.5)
+	result["world_after_leave"] = WorldTravel.current_world
 	_finish_client(result)
 
 

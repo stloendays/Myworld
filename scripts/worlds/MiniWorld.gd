@@ -666,7 +666,7 @@ func _build_ui() -> void:
 	add_child((load("res://scenes/ui/PauseMenu.tscn") as PackedScene).instantiate())
 	for item: Array in [["Minimap", Minimap], ["WorldMap", WorldMap], ["CompassBar", CompassBar], ["JournalPanel", JournalPanel],
 			["ChatBox", ChatBox], ["ActionBar", ActionBar], ["Performance", PerformanceDirector], ["UnderwaterOverlay", preload("res://scripts/ui/UnderwaterOverlay.gd")],
-			["PlayActivities", PlayActivities], ["CookingPanel", CookingPanel]]:
+			["PlayActivities", PlayActivities], ["CookingPanel", CookingPanel], ["RemotePlayers", RemotePlayers]]:
 		var n: Node = (item[1] as GDScript).new()
 		n.name = item[0]
 		add_child(n)
