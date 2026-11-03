@@ -176,8 +176,16 @@ const SHOTS := [
 	{"name": "ltr_07_interior", "climate": DUSK, "letters": {"read": ["cabin", "dock", "islet"], "unlocked": true, "lamp": true}, "player": [-71.7, 95.0], "y": 2.4, "heading": 126.0, "pitch": -12.0},
 	{"name": "ltr_08_chart_open", "climate": DUSK, "letters": {"read": ["cabin", "dock", "islet"], "unlocked": true, "lamp": true, "open": "chart"}, "player": [-71.7, 95.0], "y": 2.4, "heading": 126.0, "pitch": -12.0},
 	{"name": "ltr_09_journal_letters", "climate": DUSK, "letters": {"read": ["cabin", "dock"]}, "player": [-49.0, 27.0], "heading": 75.0, "journal": 4},
+	# 联机（2026-11）：朋友在湖畔的样子（头顶名字、小地图彩点、圈外贴边、罗盘名字和距离）、世界地图、房间页的延迟与“到 TA 身边”
+	{"name": "mp_01_friends_lake", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "pitch": -3.0, "friends": MP_FRIENDS},
+	{"name": "mp_02_friends_world_map", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "world_map": true, "friends": MP_FRIENDS},
+	{"name": "mp_03_room_page", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "lobby": true, "lobby_page": "room", "friends": MP_FRIENDS},
+	{"name": "mp_04_room_page_en", "lang": "en", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "lobby": true, "lobby_page": "room", "friends": MP_FRIENDS},
 	{"name": "ltr_10_letter_en", "climate": DUSK, "lang": "en", "letters": {"open": "islet"}, "player": [40.4, -2.6], "heading": 60.0, "pitch": -28.0},
 ]
+
+## 截图用的三位朋友：[peer_id, 名字, x, z, 朝向°, 延迟 ms, OUTFITS 下标]（第三位在小地图圈外，贴边显示方向）
+const MP_FRIENDS := [[5, "小林", -41.5, 25.0, 250.0, 34, 1], [9, "Mia", -39.0, 30.5, 220.0, 78, 2], [13, "阿树", 60.0, -70.0, 0.0, 121, 3]]
 
 const OUTFITS := [
 	{"styles": {"hair": "long", "hat": "none", "top": "tee", "bottom": "shorts", "shoes": "sneakers", "back": "none", "face": "smile"},
@@ -203,6 +211,7 @@ func _ready() -> void:
 func _run() -> void:
 	# 截图不受本机设置影响：窗口模式、语言跟随每个机位的 "lang"（默认跟随系统）
 	GameSettings.set_value("fullscreen", false, false)
+	GameSettings.set_value("minimap_enabled", true, false)   # 本机按 M 关掉了小地图也照样拍（不存盘）
 	_main = (load(MAIN_SCENE) as PackedScene).instantiate()
 	add_child(_main)
 	for layer_name in ["HUD", "DebugOverlay"]:
@@ -518,6 +527,43 @@ func _frame_character(mode: String) -> void:
 			_camera.look_at(spot + Vector3(0.0, 0.95, 0.0), Vector3.UP)
 
 
+## 联机示意："friends": [[peer_id, 名字, x, z, 朝向°, 延迟 ms, OUTFITS 下标], ...]。假装在当房主（不开端口），
+## 把朋友的方块人放到湖畔，小地图、罗盘、世界地图、房间页都照真实联机的样子画；空数组 = 收起来回到单人。
+func _stage_friends(list: Array) -> void:
+	var rp := _main.get_node("RemotePlayers") as RemotePlayers
+	rp.clear()
+	Net.set_process(list.is_empty())   # 假房间不发包（没有真的连接）
+	Net.pings.clear()
+	Net._pose_world.clear()
+	if list.is_empty():
+		if Net.state == Net.State.HOSTING and Net.multiplayer.multiplayer_peer is OfflineMultiplayerPeer:
+			Net.roster.clear()
+			Net.room_codes.clear()
+			Net.state = Net.State.OFFLINE
+		return
+	Net.state = Net.State.HOSTING
+	Net.roster = {1: {"name": PlayerProfile.player_name(), "appearance": PlayerProfile.appearance.to_dict()}}
+	Net.room_codes = [{"kind": "lan", "code": "K7Q-3MXA", "address": "192.168.1.8"}]
+	var now := Time.get_ticks_msec()
+	for f: Array in list:
+		var id := int(f[0])
+		var a := PlayerProfile.default_appearance()
+		var o: Dictionary = OUTFITS[int(f[6]) % OUTFITS.size()]
+		for k in o["styles"]:
+			a.styles[k] = o["styles"][k]
+		for k in o["colors"]:
+			a.colors[k] = Color.html(o["colors"][k])
+		var info := {"name": str(f[1]), "appearance": a.to_dict()}
+		Net.roster[id] = info
+		Net.pings[id] = int(f[5])
+		Net._pose_world[id] = WorldTravel.current_world
+		rp.add(id, info)
+		var pos := Vector3(float(f[2]), WorldTerrain.height_at(float(f[2]), float(f[3])), float(f[3]))
+		for k in 2:
+			rp.get_player(id).set_pose([pos, deg_to_rad(-float(f[4])), 0.0, 0.0, true, [], "", WorldTravel.current_world, now - 200 + k * 100, Vector3.ZERO])
+	Net.roster_changed.emit()
+
+
 ## 背对太阳取景（彩虹在对日点周围 42°）：pitch 为抬头角度。
 func _look_antisolar(pitch_deg: float) -> void:
 	var env := _main.get_node("World/Environment") as EnvironmentDirector
@@ -598,6 +644,7 @@ func _setup_player_view(shot: Dictionary) -> void:
 		Updater._set_state(Updater.State.AVAILABLE, tr("发现新版本 v%s") % Updater.latest_version)
 	elif Updater.state == Updater.State.AVAILABLE:
 		Updater._set_state(Updater.State.IDLE, "")
+	_stage_friends(shot.get("friends", []))
 	var lobby := _main.get_node_or_null("LobbyMenu") as LobbyMenu
 	if lobby != null and lobby.is_open() != shot.get("lobby", false):
 		if shot.get("lobby", false):

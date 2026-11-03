@@ -151,6 +151,22 @@ func _draw_bar() -> void:
 					_bar.draw_circle(Vector2(x, y), 4.5, Color(1.0, 0.82, 0.35, a))
 				else:
 					_bar.draw_string(font, Vector2(x - 4.0, y + 6.0), "?", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color(0.92, 0.92, 0.92, a))
+	# 朋友：不管多远都标出来（彩色圆点 + 名字首字 + 距离）
+	for f: Dictionary in RemotePlayers.friends(get_tree()):
+		var fp: Vector2 = f["pos"]
+		var fd := me.distance_to(fp)
+		if fd < 2.0:
+			continue
+		var fx := _x_for(bearing(me, fp), heading)
+		if fx < 0.0:
+			continue
+		var col: Color = f["color"]
+		_bar.draw_circle(Vector2(fx, HEIGHT + 8.0), 6.0, Color(0.08, 0.07, 0.06, 0.9))
+		_bar.draw_circle(Vector2(fx, HEIGHT + 8.0), 4.5, col)
+		var tag := "%s %d m" % [str(f["name"]).left(6), roundi(fd)]
+		var tw := font.get_string_size(tag, HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x
+		_bar.draw_string_outline(font, Vector2(fx - tw * 0.5, HEIGHT + 30.0), tag, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, 4, Color(0.05, 0.04, 0.03, 0.85))
+		_bar.draw_string(font, Vector2(fx - tw * 0.5, HEIGHT + 30.0), tag, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, col.lightened(0.3))
 	_bar.draw_line(Vector2(WIDTH * 0.5, 0.0), Vector2(WIDTH * 0.5, HEIGHT), Color(1.0, 0.86, 0.55), 2.0)
 
 

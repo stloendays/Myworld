@@ -3,7 +3,9 @@ extends Node
 ##   房主：host_room() → 监听端口，按 UPnP 尝试在路由器上开端口，生成房间号（公网 / 局域网 / 虚拟局域网）。
 ##   访客：join_room(房间号或地址) → 握手核对版本与人数 → 收到房间名单与世界快照 → 进入同一个湖畔。
 ## 同步内容：
-##   · 玩家：每人自己模拟自己的人物，20 Hz 把位置、朝向、速度发给房主，房主转发给其他人（RemotePlayers 显示）；
+##   · 玩家：每人自己模拟自己的人物，动着时 20 Hz、站着不动时 2 Hz 把带时间戳的位置、朝向、速度发给房主，房主转发给其他人；
+##     RemotePlayer 把收到的姿态按时间戳排队、晚 0.1 秒插值着播（网络抖一下也看不出来）；
+##   · 旅行：房主穿过光门，访客一起去那个世界；访客中途加入时直接去房主所在的世界；
 ##   · 世界：时间、季节、天气、地面积雪湿润以房主为准，4 Hz 广播；访客本地不再自行变天；
 ##   · 可交互物（门等）：访客改了先本地生效，再请房主核对距离后广播；不通过就按房主的状态改回来；
 ##   · 聊天与 /me：经房主转发；进出房间、房主离开等写成系统通知。
@@ -20,9 +22,14 @@ enum State { OFFLINE, HOSTING, CONNECTING, CLIENT }
 
 const DEFAULT_PORT := RoomCode.DEFAULT_PORT
 const MAX_PLAYERS := 4
-const PROTOCOL := 3   ## 2：姿态里加了身体状态（坐、躺、划船、手势）；3：欢迎包带房主的本局规则（GameRules），房主改规则再广播
+## 2：姿态里加了身体状态（坐、躺、划船、手势）；3：欢迎包带房主的本局规则（GameRules），房主改规则再广播；
+## 4：姿态带世界、物理时刻和速度向量，站着不动少发；房主带大家一起穿光门；房主广播每人的延迟
+const PROTOCOL := 4
 const BODY_STATES := ["", "sit", "paddle", "ground_sit", "lie", "wave", "dance", "clap"]
+const POSE_SIZE := 10   ## [位置, 朝向, 俯仰, 水平速度, 着地, 船, 身体状态, 世界, 物理时刻 ms（sim_ms）, 速度向量]
 const POSE_HZ := 20.0
+const IDLE_POSE_SECONDS := 0.5   ## 站着不动时多久发一次（只为告诉别人“还在”）
+const PING_SECONDS := 2.0
 const WORLD_HZ := 4.0
 const JOIN_TIMEOUT := 10.0
 const INTERACT_RANGE := 5.0
@@ -48,6 +55,12 @@ var _applying_remote := false
 var _announced_weather: StringName = &""
 var _weather_paused_node: Node = null
 var _own_rules: Dictionary = {}   ## 做客前自己的规则（离开房间时换回来）
+var pings := {}             ## peer_id -> 和房主之间的往返延迟（毫秒，房主量了广播给大家）
+var poses_sent := 0         ## 发出的姿态包个数（自动检查看“站着不动少发”）
+var _pose_world := {}       ## peer_id -> 对方所在的世界（房主核对交互用）
+var _last_pose: Array = []  ## 上一次发出的姿态（没变就不急着发）
+var _idle_timer := 0.0
+var _ping_timer := 0.0
 
 
 func _ready() -> void:
@@ -61,6 +74,8 @@ func _ready() -> void:
 	PlayerProfile.name_changed.connect(_send_profile)
 	PlayerProfile.appearance.changed.connect(_send_profile)
 	GameRules.changed.connect(_on_rules_changed)
+	WorldTravel.travel_started.connect(_on_travel_started)
+	WorldTravel.travel_finished.connect(_on_travel_finished)
 
 
 func _notification(what: int) -> void:
@@ -106,6 +121,7 @@ func host_room(listen_port := DEFAULT_PORT) -> String:
 		_peer = null
 		last_error = tr("无法在端口 %d 上建房（可能已被占用）") % listen_port
 		return last_error
+	_peer.host.compress(ENetConnection.COMPRESS_RANGE_CODER)
 	multiplayer.multiplayer_peer = _peer
 	port = listen_port
 	roster = {1: _my_info()}
@@ -130,6 +146,8 @@ func join_room(code: String) -> String:
 		_peer = null
 		last_error = tr("无法连接到 %s") % addr["host"]
 		return last_error
+	# 姿态包里大半是重复的数字，区间编码压缩后流量约少一半（两边必须一致，协议版本已包含这一点）
+	_peer.host.compress(ENetConnection.COMPRESS_RANGE_CODER)
 	multiplayer.multiplayer_peer = _peer
 	port = int(addr["port"])
 	_join_timer = JOIN_TIMEOUT
@@ -149,6 +167,9 @@ func leave_room(quiet := false) -> void:
 	_peer = null
 	roster.clear()
 	_poses.clear()
+	_pose_world.clear()
+	pings.clear()
+	_last_pose = []
 	room_codes.clear()
 	upnp_status = ""
 	_resume_local_weather()
@@ -162,6 +183,9 @@ func leave_room(quiet := false) -> void:
 	room_codes_changed.emit()
 	if not quiet and was != State.OFFLINE:
 		notice.emit(tr("已离开房间，回到你自己的湖畔。"))
+	# 做客时跟着房主去了别的世界：回到自己的湖畔（访客不写存档，不能把别人的世界存进自己的存档里）
+	if was == State.CLIENT and WorldTravel.current_world != "dusk_lake":
+		WorldTravel.follow("dusk_lake")
 
 
 func _set_state(s: int) -> void:
@@ -268,6 +292,7 @@ func _process(delta: float) -> void:
 	if not is_online():
 		return
 	_pose_timer -= delta
+	_idle_timer -= delta
 	if _pose_timer <= 0.0:
 		_pose_timer = 1.0 / POSE_HZ
 		_send_pose()
@@ -277,6 +302,10 @@ func _process(delta: float) -> void:
 			_world_timer = 1.0 / WORLD_HZ
 			if roster.size() > 1:
 				_world.rpc(world_snapshot())
+		_ping_timer -= delta
+		if _ping_timer <= 0.0:
+			_ping_timer = PING_SECONDS
+			_measure_pings()
 
 
 func _on_peer_connected(_id: int) -> void:
@@ -343,7 +372,7 @@ func _hello(protocol: int, version: String, info: Dictionary) -> void:
 			_roster_add.rpc_id(other, id, info)
 	_roster_add(id, info)
 	# 欢迎包里的名单已经包括这位访客自己
-	_welcome.rpc_id(id, roster, world_snapshot(), WorldState.interactables, GameRules.to_dict())
+	_welcome.rpc_id(id, roster, world_snapshot(), WorldState.interactables, GameRules.to_dict(), WorldTravel.current_world)
 	notice.emit(tr("%s 来到了湖畔。") % info["name"])
 
 
@@ -361,7 +390,7 @@ func _rejected(reason: String, host_version: String) -> void:
 
 
 @rpc("authority", "call_remote", "reliable")
-func _welcome(host_roster: Dictionary, world: Dictionary, interactables: Dictionary, rules: Dictionary) -> void:
+func _welcome(host_roster: Dictionary, world: Dictionary, interactables: Dictionary, rules: Dictionary, host_world: String) -> void:
 	roster = host_roster
 	_own_rules = GameRules.to_dict()
 	_set_state(State.CLIENT)
@@ -379,6 +408,9 @@ func _welcome(host_roster: Dictionary, world: Dictionary, interactables: Diction
 			_remote_players_call("add", [id, roster[id]])
 	roster_changed.emit()
 	notice.emit(tr("已加入 %s 的房间。") % roster.get(1, {}).get("name", "?"))
+	# 房主不在湖畔（在云海浮岛、沙丘、亚特兰蒂斯）：直接去那边找他
+	if WorldRegistry.is_open(host_world) and host_world != WorldTravel.current_world:
+		WorldTravel.follow(host_world)
 
 
 @rpc("authority", "call_remote", "reliable")
@@ -444,12 +476,33 @@ func _send_pose() -> void:
 	if p == null or roster.size() < 2:
 		return
 	var horizontal := Vector2(p.velocity.x, p.velocity.z).length()
-	var pose := [p.global_position, p.rotation.y + p.body.rotation.y, p.head.rotation.x, horizontal, p.is_on_floor() or p.swimming, _vehicle_of(p), body_state(p)]
+	var pose := [p.global_position, p.rotation.y + p.body.rotation.y, p.head.rotation.x, horizontal, p.is_on_floor() or p.swimming,
+		_vehicle_of(p), body_state(p), WorldTravel.current_world, sim_ms(), p.velocity]
+	# 站着不动（位置、朝向、俯仰、姿势、船都没变）时每 0.5 秒才发一次：4 个人挂机时房主不用每秒转发 240 个包
+	if _idle_timer > 0.0 and same_pose(pose, _last_pose):
+		return
+	_idle_timer = IDLE_POSE_SECONDS
+	_last_pose = pose
+	poses_sent += 1
 	if is_host():
 		_poses[1] = p.global_position
 		_pose_from.rpc(1, pose)
 	else:
 		_pose.rpc_id(1, pose)
+
+
+## 姿态的时间戳：物理步的模拟时刻（毫秒）。人物的位置就是在物理步里算的，用它做时间戳，位置和时刻一一对应；
+## 用“发出那一刻”的真实时间会把帧率起伏带进去（两包之间走的距离一样、时间差却忽长忽短，对面看着忽快忽慢）。
+static func sim_ms() -> int:
+	return roundi(Engine.get_physics_frames() * 1000.0 / Engine.physics_ticks_per_second)
+
+
+## 两个姿态在别人眼里看起来一样（只比位置、朝向、俯仰、着地、船、身体状态、世界）。
+static func same_pose(a: Array, b: Array) -> bool:
+	if a.size() != POSE_SIZE or b.size() != POSE_SIZE:
+		return false
+	return (a[0] as Vector3).distance_squared_to(b[0]) < 0.0004 and absf(angle_difference(float(a[1]), float(b[1]))) < 0.005 \
+			and absf(float(a[2]) - float(b[2])) < 0.01 and a[4] == b[4] and a[5] == b[5] and a[6] == b[6] and a[7] == b[7]
 
 
 ## 身体状态：动作（ground_sit / lie / wave / dance / clap）优先，其次坐在椅子上 sit、划船 paddle，平常为空。
@@ -475,13 +528,21 @@ func _vehicle_of(p: FirstPersonController) -> Array:
 @rpc("any_peer", "call_remote", "unreliable_ordered")
 func _pose(pose: Array) -> void:
 	var id := multiplayer.get_remote_sender_id()
-	if not is_host() or not roster.has(id) or pose.size() != 7 or not pose[0] is Vector3 or not pose[5] is Array or not pose[6] is String or not str(pose[6]) in BODY_STATES:
+	if not is_host() or not roster.has(id) or not valid_pose(pose):
 		return
 	_poses[id] = pose[0]
+	_pose_world[id] = str(pose[7])
 	_remote_players_call("set_pose", [id, pose])
 	for other in roster:
 		if other != 1 and other != id:
 			_pose_from.rpc_id(other, id, pose)
+
+
+## 房主收到的姿态包是不是合法的协议 4 格式（访客发来的东西不可信）。
+static func valid_pose(pose: Array) -> bool:
+	return pose.size() == POSE_SIZE and pose[0] is Vector3 and (pose[1] is float or pose[1] is int) and pose[5] is Array \
+			and pose[6] is String and str(pose[6]) in BODY_STATES and pose[7] is String and pose[8] is int and pose[9] is Vector3 \
+			and (pose[0] as Vector3).is_finite() and (pose[9] as Vector3).is_finite()
 
 
 @rpc("authority", "call_remote", "unreliable_ordered")
@@ -583,7 +644,8 @@ func _interact_request(uid: StringName, s: String) -> void:
 	if target == null:
 		return
 	var at: Variant = _poses.get(id)
-	var ok: bool = at is Vector3 and (at as Vector3).distance_to(target.global_position) <= INTERACT_RANGE
+	var ok: bool = at is Vector3 and (at as Vector3).distance_to(target.global_position) <= INTERACT_RANGE \
+			and str(_pose_world.get(id, "")) == WorldTravel.current_world
 	if ok:
 		_apply_remote_interactable(uid, s)
 		_interactable.rpc(uid, s)
@@ -603,6 +665,88 @@ func _apply_remote_interactable(uid: StringName, s: String) -> void:
 	_applying_remote = true
 	target.apply_remote_state(s)
 	_applying_remote = false
+
+
+# ---------------------------------------------------------------- 一起旅行（房主带路）
+
+## 房主穿过光门：大家一起去。访客那边走 WorldTravel.follow（不存档、不看自己的开放状态）。
+func _on_travel_started(id: String) -> void:
+	if is_host() and roster.size() > 1:
+		_follow.rpc(id)
+
+
+@rpc("authority", "call_remote", "reliable")
+func _follow(id: String) -> void:
+	if not is_client() or not WorldRegistry.is_open(id):
+		return
+	notice.emit(tr("跟着 %s 前往「%s」。") % [roster.get(1, {}).get("name", "?"), TranslationServer.translate(str(WorldRegistry.get_world(id).get("name", id)))])
+	WorldTravel.follow(id)
+
+
+## 到了新世界：访客的新天气系统也得停下（以房主为准），再向房主要一次世界状态和门的状态。
+func _on_travel_finished(_id: String) -> void:
+	_last_pose = []
+	if is_client():
+		_pause_local_weather()
+		_resync.rpc_id(1)
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _resync() -> void:
+	var id := multiplayer.get_remote_sender_id()
+	if is_host() and roster.has(id):
+		_sync.rpc_id(id, world_snapshot(), WorldState.interactables)
+
+
+@rpc("authority", "call_remote", "reliable")
+func _sync(world: Dictionary, interactables: Dictionary) -> void:
+	if not is_client():
+		return
+	_apply_world(world)
+	for uid in interactables:
+		_apply_remote_interactable(StringName(uid), str(interactables[uid]))
+
+
+## 某位玩家现在在哪个世界（房主知道每个人的；访客只知道自己和收到过姿态的人）。
+func world_of(id: int) -> String:
+	if id == my_id():
+		return WorldTravel.current_world
+	if _pose_world.has(id):
+		return str(_pose_world[id])
+	var rp := get_tree().get_first_node_in_group("remote_players") as RemotePlayers
+	var p := rp.get_player(id) if rp != null else null
+	return p.world if p != null else ""
+
+
+# ---------------------------------------------------------------- 延迟
+
+## 房主量每位访客的往返延迟（ENet 自己统计的平滑值），广播给大家，房间页上显示。
+func _measure_pings() -> void:
+	pings.clear()
+	for id in roster:
+		if id != 1 and _peer != null:
+			var pp := _peer.get_peer(id)
+			if pp != null:
+				pings[id] = int(pp.get_statistic(ENetPacketPeer.PEER_ROUND_TRIP_TIME))
+	if roster.size() > 1:
+		_pings.rpc(pings)
+
+
+@rpc("authority", "call_remote", "unreliable_ordered")
+func _pings(p: Dictionary) -> void:
+	if is_client():
+		pings = p
+
+
+## 这位玩家的延迟（毫秒）；房主自己是 0；不知道时 -1。访客看自己时用本机到房主的实测值。
+func ping_of(id: int) -> int:
+	if id == 1:
+		return 0
+	if is_client() and id == my_id() and _peer != null:
+		var pp := _peer.get_peer(1)
+		if pp != null:
+			return int(pp.get_statistic(ENetPacketPeer.PEER_ROUND_TRIP_TIME))
+	return int(pings.get(id, -1))
 
 
 # ---------------------------------------------------------------- 聊天

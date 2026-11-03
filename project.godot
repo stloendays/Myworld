@@ -108,3 +108,7 @@ lights_and_shadows/directional_shadow/size=4096
 occlusion_culling/use_occlusion_culling=true
 reflections/reflection_atlas/reflection_size=512
 reflections/reflection_atlas/reflection_count=2
+
+[threading]
+
+worker_pool/max_threads=4

@@ -2343,3 +2343,33 @@ msgstr "Moved old version %s to the Recycle Bin"
 msgid "自动把电脑上的旧版本移到回收站"
 msgstr "Move old versions of the game on this PC to the Recycle Bin"
 
+msgid "切到后台时"
+msgstr "When in the background"
+
+msgid "不降帧"
+msgstr "Keep full rate"
+
+msgid "30 帧"
+msgstr "30 FPS"
+
+msgid "15 帧"
+msgstr "15 FPS"
+
+msgid "10 帧"
+msgstr "10 FPS"
+
+msgid "到 TA 身边"
+msgstr "Go to them"
+
+msgid "来到 %s 身边"
+msgstr "Joined %s"
+
+msgid "延迟 %d ms"
+msgstr "Ping %d ms"
+
+msgid "跟着 %s 前往「%s」。"
+msgstr "Following %s to %s."
+
+msgid "联机时由房主带路：房主穿过光门，大家一起过去"
+msgstr "In a co-op room the host leads: when the host goes through a gate, everyone goes along"
+

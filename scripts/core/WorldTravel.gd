@@ -4,7 +4,7 @@ extends Node
 ## 世界在 data/worlds/worlds.json 里登记（scene、status、arrivals）；“当前世界”记在这里，WorldRegistry 读它。
 ## 不调用引擎的切场景函数：当前世界根节点（group "world_root"）在原父节点下被换掉，
 ## 所以在自动检查里（世界挂在 TestRunner 下）和游戏里（世界是主场景）走的是同一条路。
-## 联机时不能离开（房间里的人都在同一个世界）。
+## 联机时由房主带路：房主穿过光门，访客跟着去（follow）；访客自己不能走（房间里的人都在同一个世界）。
 
 signal travel_started(to_id: String)
 signal travel_finished(world_id: String)
@@ -19,6 +19,7 @@ var last_report: Dictionary = {}  ## 最近一次旅行的内存与时间记录�
 var pending_spawn: Dictionary = {}  ## 到了新世界以后要站的地方（新建游戏的出生点、读档的位置）；SaveManager 在到达后放人
 
 var _screen: LoadingScreen
+var _pending_follow := ""   ## 正在旅行时房主又换了世界：到了以后接着去
 
 
 func _ready() -> void:
@@ -34,8 +35,8 @@ func blocked_reason(id: String) -> String:
 		return tr("你就在这里")
 	if not WorldRegistry.is_open(id):
 		return tr("那个世界还在建设中")
-	if Net.is_online():
-		return tr("联机时暂时不能去别的世界")
+	if Net.is_client():
+		return tr("联机时由房主带路：房主穿过光门，大家一起过去")
 	return ""
 
 
@@ -47,6 +48,16 @@ func travel(id: String) -> bool:
 	SaveManager.save()
 	_do_travel(id)
 	return true
+
+
+## 联机访客跟着房主去另一个世界（也用于离开房间后回自己的湖畔）：不存档（访客不写存档），不看本地的开放状态。
+## 正在路上就记下来，到了以后接着去。
+func follow(id: String) -> void:
+	if busy:
+		_pending_follow = id
+		return
+	if id != current_world:
+		_do_travel(id)
 
 
 func _do_travel(id: String) -> void:
@@ -106,6 +117,11 @@ func _do_travel(id: String) -> void:
 	await _screen.vanish(FADE_SECONDS)
 	busy = false
 	travel_finished.emit(id)
+	if _pending_follow != "":
+		var next := _pending_follow
+		_pending_follow = ""
+		if next != current_world:
+			_do_travel(next)
 
 
 ## 新世界里玩家该站的地方：worlds.json → 本世界 arrivals[来时的世界]（{pos: [x, y, z], heading}）；没有就返回空。

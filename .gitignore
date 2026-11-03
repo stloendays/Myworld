@@ -12,3 +12,6 @@ assets/raw/
 
 # 发布包构建输出
 dist/
+
+# 本机 CPU 占用测量记录（devtools/cpu_usage.ps1 追加写入）
+devtools/cpu_usage.log

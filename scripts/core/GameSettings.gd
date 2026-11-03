@@ -68,6 +68,7 @@ const DEFAULTS := {
 	"vsync": true,
 	"fullscreen": false,
 	"max_fps": 60,                    ## 0 = 不限；默认 60，笔记本不用满负荷跑
+	"background_fps": 15,             ## 窗口不在前台时的帧率上限（0 = 不降）；最小化时只跑 5 帧。省 CPU、不发热，联机照常同步
 	"graphics_quality": "high",       ## low / medium / high / ultra（PerformanceDirector）
 	"dynamic_resolution": true,       ## 按 GPU 帧时自动调 3D 渲染比例
 	"fly_speed": 10.0,
@@ -101,6 +102,9 @@ var render_scale := 1.0
 var vsync := true
 var fullscreen := false
 var max_fps := 60
+var background_fps := 15
+var in_background := false   ## 窗口失去焦点（切到别的程序）
+var minimized := false
 var graphics_quality := "high"
 var dynamic_resolution := true
 var fly_speed := 10.0
@@ -132,6 +136,12 @@ func _enter_tree() -> void:
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS   # 暂停菜单打开时 F11 也能切全屏
 	apply_display()
+	if DisplayServer.get_name() != "headless":
+		var t := Timer.new()
+		t.wait_time = 1.0
+		t.autostart = true
+		t.timeout.connect(_check_minimized)
+		add_child(t)
 
 
 ## 开发工具截图、测帧率时不打扰正在用电脑的人：窗口挪到所有屏幕之外、不拿键盘焦点，
@@ -204,6 +214,8 @@ func set_value(key: String, value: Variant, save := true) -> void:
 			value = value if str(value) in ["both", "right", "none"] else "both"
 		"hand_size":
 			value = clampf(float(value), 0.4, 1.0)
+		"background_fps":
+			value = clampi(int(value), 0, 60)
 		"language":
 			value = value if str(value) in LANGUAGES else "auto"
 		"renderer":
@@ -213,7 +225,7 @@ func set_value(key: String, value: Variant, save := true) -> void:
 	set(key, value)
 	if key in ["vsync", "fullscreen"]:
 		_window_user_set = true
-	if key in ["render_scale", "vsync", "fullscreen", "max_fps"]:
+	if key in ["render_scale", "vsync", "fullscreen", "max_fps", "background_fps"]:
 		apply_display()
 	if key == "language":
 		apply_language()
@@ -286,12 +298,57 @@ func load_from(path: String) -> bool:
 	return true
 
 
+## 现在该用的帧率上限：无窗口的自动检查不限；停在屏幕外的开发工具（测帧率、截图）照设置跑，不按后台降；
+## 窗口最小化 5 帧，切到别的程序时降到 background_fps（比设置的上限低才降）；否则按设置。
+const MINIMIZED_FPS := 5
+
+
+func effective_max_fps() -> int:
+	if DisplayServer.get_name() == "headless":
+		return 0
+	if dev_window_parked:
+		return max_fps
+	return fps_cap(max_fps, background_fps, in_background, minimized)
+
+
+## 前台 / 后台 / 最小化时的帧率上限（0 = 不限）。
+static func fps_cap(foreground: int, background: int, is_background: bool, is_minimized: bool) -> int:
+	if is_minimized:
+		return MINIMIZED_FPS
+	if is_background and background > 0 and (foreground == 0 or background < foreground):
+		return background
+	return foreground
+
+
+func _notification(what: int) -> void:
+	match what:
+		NOTIFICATION_APPLICATION_FOCUS_OUT:
+			_set_background(true)
+		NOTIFICATION_APPLICATION_FOCUS_IN:
+			_set_background(false)
+
+
+## 前后台切换：只改帧率上限（不暂停游戏，联机时房主在后台也照常同步）。
+func _set_background(on: bool) -> void:
+	in_background = on
+	minimized = DisplayServer.get_name() != "headless" and DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_MINIMIZED
+	if is_inside_tree():
+		Engine.max_fps = effective_max_fps()
+
+
+## 最小化不一定有焦点通知（任务栏点一下就缩下去）：每秒看一次窗口状态。
+func _check_minimized() -> void:
+	var m := DisplayServer.get_name() != "headless" and DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_MINIMIZED
+	if m != minimized:
+		_set_background(in_background or m)
+
+
 ## 画面设置：渲染比例、垂直同步、全屏、帧率上限（无窗口的自动检查里跳过窗口相关项）。
 func apply_display() -> void:
 	if not is_inside_tree():
 		return
 	# 自动检查（无窗口）不限帧率，否则 --fixed-fps 的模拟会被拖成实时
-	Engine.max_fps = 0 if DisplayServer.get_name() == "headless" else max_fps
+	Engine.max_fps = effective_max_fps()
 	if DisplayServer.get_name() == "headless" or not _window_user_set:
 		return
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if vsync else DisplayServer.VSYNC_DISABLED)
