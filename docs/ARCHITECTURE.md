@@ -79,6 +79,7 @@ Main (Main.gd)
 | `ChatBox` / `ChatCommands` | M2 扩展已实现 | 聊天框：订阅 `weather_changed`、`season_changed` 写系统消息；命令只调用 `ClimateSystem`、`WorldTerrain` 等已有入口，不存世界状态；聊天名字存 `user://chat.json` |
 | `CabinLife` / `InteractableToggle` / `Seat` / `Bed` | 已实现 | 木屋生活交互，状态按 uid 记在 WorldState |
 | `Canoe` / `Exploration` | 已实现 | 独木舟（自算运动，位置记在 `WorldState.vehicles`）；湖上探索点（`WorldState.discoveries`，存档 v2） |
+| `Aircraft` | 已实现 | 飞行器（热气球、滑翔翼、小直升机；`world_layout.json → aircraft`）：自算运动，地面高度用 `WorldTerrain.height_at`、湖面算地面，建筑和树干用一次 `cast_motion` 挡住（不算地形）；位置记在 `WorldState.vehicles`；联机时姿态包的“船”字段带它的 uid、位置、朝向，`RemotePlayer` 调 `place_remote` |
 | `ActionBar`（动作轮盘）/ 控制器 `do_emote()` / `CharacterModel` 姿势与手势 | 已实现 | 动作：`ground_sit`、`lie` 是姿势（身体放低或放倒，眼睛跟着移动），`wave`、`dance`、`clap` 是叠加在站姿上的手势；状态在 `FirstPersonController.emote` |
 | `WorldRegistry` / `WorldMap` | 已实现 | `data/worlds/worlds.json` 列出所有世界（status、根场景、布局数据、到达位置）；地图画当前世界（湖畔读布局，别的世界问 `MiniWorld`）；`WorldRegistry.enter()` 把能去的世界交给 WorldTravel |
 | `MiniWorld` / `World02`（云海浮岛）/ `World03`（琥珀沙丘） | v0.5 | 湖畔以外的世界的共用底座：按数据文件建天空雾光、地形（解析高度函数 → 网格 + 碰撞）、卷轴、收集品、探索点、光门、玩家与全套界面；掉出世界回到最后站稳的地方；`height_at()`、`map_markers()`、`draw_map()` 供小地图、世界地图、罗盘、自动检查使用。天气季节系统只在湖畔，这两个世界的光照固定（太阳不动，阴影不会爬） |

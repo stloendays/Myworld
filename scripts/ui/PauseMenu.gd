@@ -156,6 +156,7 @@ func _build_settings() -> Control:
 	_slider(display, "render_scale", "渲染比例", 0.5, 1.0, 0.05, "%d%%", 100.0)
 	_option(display, "max_fps", "帧率上限", ["不限", "30", "60", "120", "144", "165", "240"], FPS_CHOICES)
 	_option(display, "background_fps", "切到后台时", ["不降帧", "30 帧", "15 帧", "10 帧"], [0, 30, 15, 10])
+	_slider(display, "night_brightness", "夜晚亮度", 0.0, 2.0, 0.1, "%d%%", 100.0)
 	_check(display, "vsync", "垂直同步")
 	_check(display, "fullscreen", "全屏（F11 或 Alt + Enter 随时切换）")
 	_option(display, "renderer", "渲染方式", ["自动（推荐）", "Direct3D 12（内存占用更少）", "兼容（旧显卡、打不开时）", "兼容 ANGLE（兼容也不行时）"], StartupGuard.RENDERERS)

@@ -114,6 +114,8 @@ func _run() -> void:
 	await _test_play_modes()
 	await _test_draw_call_diet()
 	await _test_smooth_coop()
+	await _test_aircraft()
+	await _test_night_brightness()
 	await _test_play_lake()
 	await _test_world_travel()
 	_test_old_versions()
@@ -4214,3 +4216,184 @@ func _test_startup_guard() -> void:
 	var off_in_tests := not StartupGuard.active
 	_check("启动保护：崩溃后降一级渲染、兼容渲染和 Direct3D 12 带参数重启、自动检查里不动", step_ok and relaunch_ok and args_ok and setting_ok and off_in_tests,
 		"降级 %s · 重启 %s · 参数 %s · 设置 %s · 检查中关闭 %s" % [step_ok, relaunch_ok, args_ok, setting_ok, off_in_tests])
+
+
+# ---------------------------------------------------------------- 飞行器、夜晚亮度
+
+func _aircraft(id: String) -> Aircraft:
+	for a in get_tree().get_nodes_in_group("aircraft"):
+		if (a as Aircraft).uid == StringName("air_" + id):
+			return a as Aircraft
+	return null
+
+
+## 坐着飞行器按自动驾驶飞，直到 done.call() 为真或超时；返回是否等到了。
+func _fly_until(dir: Vector3, done: Callable, timeout_s: float) -> bool:
+	_player.autopilot_enabled = true
+	_player.autopilot_direction = dir
+	for i in int(timeout_s * 60.0):
+		await get_tree().physics_frame
+		if done.call():
+			return true
+	return false
+
+
+## 站到飞行器旁边、看着它按 E。
+func _board(a: Aircraft) -> bool:
+	var p := a.world_position()
+	var side := Vector2(-a.forward().y, a.forward().x) * 2.3
+	_player.autopilot_enabled = false
+	_player.teleport_to(Vector3(p.x + side.x, WorldTerrain.height_at(p.x + side.x, p.z + side.y) + 0.1, p.z + side.y))
+	await _frames(3)
+	_player.look_at_point(p + Vector3(0.0, 0.8, 0.0))
+	await _frames(2)
+	return _player.try_interact() and _player.craft == a and a.rider == _player
+
+
+func _test_aircraft() -> void:
+	var heli := _aircraft("heli")
+	var balloon := _aircraft("balloon")
+	var glider := _aircraft("glider")
+	var placed := heli != null and balloon != null and glider != null
+	for e in WorldLayout.data().get("aircraft", []):
+		var a := _aircraft(str(e["id"]))
+		placed = placed and a != null and a.landed and a.world_position_2d().distance_to(WorldLayout.v2(e["pos"])) < 0.01
+	_check("飞行器：热气球、滑翔翼、小直升机按布局停在地上", placed)
+	if not placed:
+		return
+	var climate := _main.get_node("Systems") as ClimateSystem
+	climate.set_hour(11.0)
+	# ---- 小直升机：上去、旋翼转起来才升空、飞到湖上、空中和水上都下不来、撞墙被挡、回来落地下来
+	var boarded := await _board(heli)
+	var spool_wait := heli.engine < 0.8
+	await _fly_until(Vector3(0.0, 1.0, 0.0), func() -> bool: return heli.world_position().y > heli.home.y + 8.0, 8.0)
+	var up := heli.world_position().y - heli.home.y
+	var follows := _player.global_position.distance_to(heli.rider_origin()) < 0.05
+	var lake_net: Array = Net._vehicle_of(_player)
+	var net_ok: bool = lake_net.size() == 3 and lake_net[0] == "air_heli" and Net.body_state(_player) == "sit"
+	var start := heli.world_position_2d()
+	await _fly_until(Vector3(1.0, 0.0, 0.0), func() -> bool: return heli.world_position_2d().x > start.x + 30.0, 10.0)
+	var flew := heli.world_position_2d().distance_to(start)
+	var air_refused := not _player.try_interact() and _player.craft == heli
+	var landed_water := await _fly_until(Vector3(0.0, -1.0, 0.0), func() -> bool: return heli.landed, 15.0)
+	var water_refused := heli.over_water and not _player.try_interact() and _player.craft == heli
+	var part1 := "上去 %s，先等旋翼 %s，升高 %.1f m，人跟着 %s，联机包 %s，飞了 %.0f m，空中下不来 %s，落在湖上 %s 下不来 %s" % [boarded, spool_wait, up, follows, net_ok, flew, air_refused, landed_water, water_refused]
+	# 低空往木屋撞：被墙挡住，不穿进屋
+	await _fly_until(Vector3(0.0, 1.0, 0.0), func() -> bool: return heli.world_position().y > WorldLayout.water_level() + 4.0, 5.0)
+	var cabin := WorldLayout.v2(WorldLayout.section("cabin")["center"])
+	var bumps0 := heli.bumps
+	var to_cabin := cabin - heli.world_position_2d()
+	await _fly_until(Vector3(to_cabin.x, 0.0, to_cabin.y), func() -> bool: return heli.bumps > bumps0 + 30, 25.0)
+	var blocked := heli.bumps > bumps0 and heli.world_position_2d().distance_to(cabin) > 5.0
+	var home2 := Vector2(heli.home.x, heli.home.z)
+	for i in 60 * 25:
+		var to := home2 - heli.world_position_2d()
+		if to.length() < 2.0:
+			break
+		_player.autopilot_direction = Vector3(to.x, 0.0, to.y)
+		await get_tree().physics_frame
+	await _fly_until(Vector3(0.0, -1.0, 0.0), func() -> bool: return heli.landed, 15.0)
+	_player.autopilot_direction = Vector3.ZERO
+	var off := _player.try_interact() and _player.craft == null and heli.rider == null
+	await _seconds(1.0)
+	var standing := off and _player.is_on_floor() and _player.collision_mask != 0 and _player.body.pose == "stand"
+	var saved := WorldState.vehicles.has("air_heli")
+	var part2 := "撞木屋被挡 %s（%d 次），飞回来落地下来 %s，站稳 %s，存档里有 %s" % [blocked, heli.bumps - bumps0, off, standing, saved]
+	_check("小直升机：旋翼转起来才升空，空中、湖面上下不来，撞墙被挡，落地后下来站稳", boarded and spool_wait and up > 7.0 and follows and net_ok and flew > 25.0 \
+		and air_refused and landed_water and water_refused and blocked and off and standing and saved, part1 + "；" + part2)
+	# ---- 热气球：点火升空、松开保持高度、放气落地
+	var b_on := await _board(balloon)
+	var b_pose := _player.body.pose == "stand"
+	await _fly_until(Vector3(0.0, 1.0, 0.0), func() -> bool: return balloon.world_position().y > balloon.home.y + 10.0, 15.0)
+	var risen := balloon.world_position().y - balloon.home.y
+	await _frames(5)
+	var burning := balloon.engine > 0.5
+	_player.autopilot_direction = Vector3.ZERO
+	await _seconds(5.0)
+	var hold_vy := absf(balloon.vel.y)
+	var hold_y := balloon.world_position().y
+	await _seconds(2.0)
+	var held := absf(balloon.world_position().y - hold_y) < 1.2 and hold_vy < 0.8
+	var b_down := await _fly_until(Vector3(0.0, -1.0, 0.0), func() -> bool: return balloon.landed, 40.0)
+	_player.autopilot_direction = Vector3.ZERO
+	var b_off := (_player.try_interact() and _player.craft == null) or balloon.over_water
+	if _player.craft != null:
+		_player.teleport_to(balloon.home + Vector3(3.0, 0.3, 0.0))
+	_check("热气球：站在吊篮里，点火上升、松手保持高度、放气落地后下来", b_on and b_pose and risen > 9.0 and burning and held and b_down and b_off,
+		"上去 %s 站着 %s，升高 %.1f m 有火 %s，保持高度 %s（竖直速度 %.2f），落地 %s，下来 %s" % [b_on, b_pose, risen, burning, held, hold_vy, b_down, b_off])
+	balloon.return_home()
+	# ---- 滑翔翼：雪山顶助跑起飞、按滑翔比往下滑、落地（落水则回出发点）
+	var g_on := await _board(glider)
+	var g_start := glider.world_position()
+	var fwd := glider.forward()
+	var took_off := await _fly_until(Vector3(fwd.x, 0.0, fwd.y), func() -> bool: return not glider.landed and glider.world_position().y < g_start.y - 1.0, 12.0)
+	_player.autopilot_direction = Vector3.ZERO
+	await _seconds(2.0)
+	var p0 := glider.world_position()
+	await _seconds(8.0)
+	var p1 := glider.world_position()
+	var dist := Vector2(p1.x - p0.x, p1.z - p0.z).length()
+	var drop := p0.y - p1.y
+	var ratio := dist / maxf(drop, 0.01)
+	var g_down := await _fly_until(Vector3.ZERO, func() -> bool: return glider.landed, 90.0)
+	var where := "水上" if glider.over_water else ("树上 / 坡上" if glider.find_exit() == null else "地上")
+	var g_off := _player.try_interact() and _player.craft == null
+	var reset_ok := where == "地上" or glider.world_position_2d().distance_to(Vector2(glider.home.x, glider.home.z)) < 0.1
+	_check("滑翔翼：雪山顶助跑起飞，一路往下滑（滑翔比 6–12），落地后下来（掉进湖里回到山顶）", g_on and took_off and ratio > 6.0 and ratio < 12.0 and g_down and g_off and reset_ok,
+		"上去 %s，起飞 %s，8 s 滑了 %.0f m、降了 %.1f m（%.1f : 1），落在%s %s，下来 %s，回出发点 %s" % [g_on, took_off, dist, drop, ratio, where, g_down, g_off, reset_ok])
+	glider.return_home()
+	# ---- 联机：别人开着直升机，本机那架跟着走；对方离开后自己慢慢落地
+	var rp := get_tree().get_first_node_in_group("remote_players") as RemotePlayers
+	rp.add(998, {"name": "Pilot"})
+	var rpl := rp.get_player(998)
+	var now_ms := Time.get_ticks_msec()
+	var sky := heli.home + Vector3(6.0, 12.0, 0.0)
+	for k in 5:
+		rpl.set_pose([sky + Vector3(0.0, 0.2, 0.0), 0.0, 0.0, 0.0, false, ["air_heli", sky, 0.5], "sit", WorldTravel.current_world, now_ms - 600 + k * 50, Vector3.ZERO])
+	await _frames(3)
+	var taken := heli.rider == rpl and not heli.is_physics_processing() and heli.world_position().distance_to(sky) < 0.05 and not heli.can_interact(_player)
+	rp.remove(998)
+	await _frames(2)
+	var released := heli.rider == null and heli.is_physics_processing()
+	_player.autopilot_enabled = false
+	var settled := false
+	for i in 60 * 15:
+		await get_tree().physics_frame
+		if heli.landed:
+			settled = true
+			break
+	_check("飞行器联机：别人开时本机那架跟着摆、自己上不去；对方离开后慢慢落地", taken and released and settled, "跟着 %s，放开 %s，落地 %s" % [taken, released, settled])
+	heli.return_home()
+	# ---- 读档：存的位置在深水上回到停放点
+	WorldState.set_vehicle(&"air_heli", Vector2(20.0, 0.0), 0.0)
+	heli.restore()
+	var restore_ok := heli.world_position_2d().distance_to(Vector2(heli.home.x, heli.home.z)) < 0.01 and heli.landed
+	WorldState.set_vehicle(&"air_heli", Vector2(-44.0, 38.0), 45.0)
+	heli.restore()
+	restore_ok = restore_ok and heli.world_position_2d().distance_to(Vector2(-44.0, 38.0)) < 0.01
+	heli.return_home()
+	WorldState.vehicles.erase("air_heli")
+	_check("飞行器读档：按存下的位置停好，存在深水上的回到停放点", restore_ok)
+
+
+func _test_night_brightness() -> void:
+	var climate := _main.get_node("Systems") as ClimateSystem
+	var env := get_tree().get_first_node_in_group("environment_director") as EnvironmentDirector
+	var keep := GameSettings.night_brightness
+	climate.set_hour(1.0)
+	var vals := []
+	for nb in [0.0, 1.0, 2.0]:
+		GameSettings.set_value("night_brightness", nb, false)
+		await _frames(3)
+		vals.append([env.environment.ambient_light_energy, env.moon.light_energy, env.environment.tonemap_exposure, env.night])
+	GameSettings.set_value("night_brightness", keep, false)
+	climate.set_hour(11.0)
+	await _frames(3)
+	var day_same := env.night < 0.01
+	var dark: Array = vals[0]
+	var normal: Array = vals[1]
+	var bright: Array = vals[2]
+	var ok := float(dark[3]) > 0.99 and float(normal[0]) > float(dark[0]) + 0.15 and float(normal[1]) > float(dark[1]) + 0.1 \
+		and float(normal[2]) > float(dark[2]) + 0.1 and float(bright[0]) > float(normal[0]) + 0.15 and float(GameSettings.DEFAULTS["night_brightness"]) == 1.0
+	_check("夜晚亮度：默认比原来亮（环境光、月光、曝光都提一点），设置里可调 0–200 %", ok and day_same,
+		"环境光 %.2f → %.2f → %.2f，月光 %.2f → %.2f，曝光 %.2f → %.2f" % [dark[0], normal[0], bright[0], dark[1], normal[1], dark[2], normal[2]])

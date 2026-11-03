@@ -361,6 +361,31 @@ fs.mkdirSync(OUT, { recursive: true });
   add(x, reverb(ch, 0.5, 0.85, 0.3, 0).slice(0, x.length), 0, 1.0);
   write('amb_cloud_wind', loopify(x, F), { loop: true, rms: -23 });
 }
+// 小直升机：旋翼一下一下地拍空气（每秒 11 下）+ 发动机的嗡嗡声。4 s 循环、1 s 交叉淡化，都是拍子周期的整数倍，接缝处不会多出半拍
+{
+  const r = rng(91), L = 4, F = 1, n = N(L + F);
+  const x = mix([lp(brown(n, r), 260), 0.5]);
+  for (let k = 0; k < (L + F) * 11; k++) add(x, burst(r, 0.06, 'lp', 420, 0.8, 0.004, 0.025, 'pink'), k / 11, 0.9);
+  add(x, mul(sweep(L + F, () => 180, () => 1, 0.5, 0.25), () => 0.12));
+  add(x, mul(sweep(L + F, () => 540, () => 1), () => 0.03));
+  write('loop_rotor', loopify(x, F), { loop: true, rms: -20 });
+}
+// 热气球的燃烧器：呼呼的火焰声，低沉、带点抖
+{
+  const r = rng(92), L = 6, F = 1.5, n = N(L + F);
+  const g = drift(r, [2.3, 5.1, 0.7]);
+  const x = mix([lp(brown(n, r), 380), 1], [bp(pink(n, r), 900, 0.6), 0.35], [hp(white(n, r), 2500), 0.04]);
+  mul(x, (t) => 0.75 + 0.25 * g(t));
+  write('loop_burner', loopify(x, F), { loop: true, rms: -19 });
+}
+// 滑翔翼：迎面的风声，随速度变调
+{
+  const r = rng(93), L = 8, F = 2, n = N(L + F);
+  const g = drift(r, [0.3, 0.7, 0.13]);
+  const x = mix([bp(pink(n, r), (i) => 700 + 500 * g(i / SR), 0.6), 1], [hp(white(n, r), 3500), 0.05], [lp(brown(n, r), 200), 0.4]);
+  mul(x, (t) => 0.7 + 0.3 * g(t));
+  write('loop_air_rush', loopify(x, F), { loop: true, rms: -22 });
+}
 // 沙丘：干燥的风，沙子贴着地面刷过去
 {
   const r = rng(82), L = 24, F = 3, n = N(L + F);

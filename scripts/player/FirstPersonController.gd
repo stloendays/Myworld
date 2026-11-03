@@ -41,6 +41,7 @@ var noclip := false
 var arms: FirstPersonArms = null
 var seat: Seat = null       ## 坐着时所在的座位（沙发、长椅、躺椅）
 var boat: Canoe = null      ## 在独木舟上时所乘的船
+var craft: Aircraft = null  ## 坐在热气球、滑翔翼、小直升机上时
 var rail: RailRide = null    ## 被水流冲着走、骑着蝠鲼时（亚特兰蒂斯）：位置由路线决定
 var input_locked := false   ## 打开棋盘等全屏界面时为 true：不读移动、视角和交互键
 ## 动作（动作栏 / 数字键）："ground_sit" 席地坐、"lie" 躺下、"wave" 挥手、"dance" 跳舞、"clap" 鼓掌；"" = 没有。
@@ -173,7 +174,8 @@ func _physics_process(delta: float) -> void:
 		if arms != null:
 			arms.visible = not third_person
 			arms.animate(delta, 0.0, true, boat != null and (absf(boat.throttle) > 0.05 or absf(boat.steer) > 0.05), run_speed)
-		var ride_boom := third_person_distance if third_person else 0.0
+		# 飞行器比人大得多：镜头拉远到看得见整架（直升机尾梁 4 m、热气球球囊 8 m 宽）
+		var ride_boom := (maxf(third_person_distance, craft.camera_distance()) if craft != null else third_person_distance) if third_person else 0.0
 		camera_boom.spring_length = lerpf(camera_boom.spring_length, ride_boom, 1.0 - exp(-12.0 * delta))
 		_update_bob(delta, 0.0)
 		return
@@ -334,6 +336,13 @@ func _nearby_vehicle() -> Interactable:
 		var to := canoe.global_position + Vector3(0.0, 0.2, 0.0) - eye
 		if to.length() < 3.2 and look.angle_to(to) < deg_to_rad(40.0):
 			return canoe
+	for a in get_tree().get_nodes_in_group("aircraft"):
+		var air := a as Aircraft
+		if air.rider != null:
+			continue
+		var to := air.world_position() + Vector3(0.0, 0.8, 0.0) - eye
+		if to.length() < 3.2 and look.angle_to(to) < deg_to_rad(40.0):
+			return air
 	return null
 
 
@@ -347,6 +356,8 @@ func _update_focus() -> void:
 		var text := "E  下船（靠近码头或岸边）  ·  W/S 划  A/D 转向  Shift 用力划"
 		if rail != null:
 			text = rail.prompt()
+		elif craft != null:
+			text = craft.prompt()
 		elif seat != null:
 			text = tr(seated_target.get_prompt(self)) + tr("    ·    E 对着别处：站起来") if seated_target != null else "E  站起来（或按移动键）"
 		elif emote in EMOTE_POSES:
@@ -386,6 +397,8 @@ func try_interact() -> bool:
 		return true
 	if boat != null:
 		return disembark()
+	if craft != null:
+		return leave_aircraft()
 	if rail != null:
 		return rail.try_release(self)
 	interact_ray.force_raycast_update()
@@ -432,7 +445,7 @@ func heading_degrees() -> float:
 # ---------------------------------------------------------------- 坐下与划船
 
 func is_riding() -> bool:
-	return seat != null or boat != null or rail != null
+	return seat != null or boat != null or rail != null or craft != null
 
 
 ## 坐到座位上：关掉碰撞，定在坐垫上，腿向前伸；身体朝座位方向，头仍可自由环顾。
@@ -483,6 +496,37 @@ func disembark() -> bool:
 	return true
 
 
+## 坐上飞行器（热气球、滑翔翼、小直升机）：身体跟着飞行器走，按键交给它（见 Aircraft）。
+func board_aircraft(a: Aircraft) -> void:
+	if is_riding() or a.rider != null:
+		return
+	set_flying(false)
+	craft = a
+	a.rider = self
+	_enter_ride(a.rider_pose())
+	camera_boom.add_excluded_object(a.body_rid())
+	rotation.y = a.heading
+	global_position = a.rider_origin()
+
+
+## 从飞行器上下来：要先落地，落在深水、屋顶上下不来；滑翔翼掉进深水里直接回到出发点。
+func leave_aircraft() -> bool:
+	if craft == null:
+		return false
+	if craft.can_reset():
+		var a := craft
+		Fade.flash(tr("%s 被送回了出发点") % tr(a.display_name))
+		a.return_home()
+	var exit: Variant = craft.find_exit()
+	if exit == null:
+		if is_local_controlled:
+			EventBus.toast_requested.emit(craft.exit_hint())
+		return false
+	_leave_ride()
+	global_position = exit
+	return true
+
+
 func _enter_ride(pose: String) -> void:
 	end_emote()
 	velocity = Vector3.ZERO
@@ -507,7 +551,15 @@ func _leave_ride() -> void:
 		boat.steer = 0.0
 		boat._publish_state()
 		boat = null
-	if body.pose != "stand":
+	var was_flying_craft := craft != null
+	if craft != null:
+		craft.rider = null
+		craft.throttle = 0.0
+		craft.steer = 0.0
+		craft.lift = 0.0
+		camera_boom.remove_excluded_object(craft.body_rid())
+		craft = null
+	if body.pose != "stand" or was_flying_craft:
 		body.pose = "stand"
 		body.rotation.y = 0.0
 		collision_mask = 0 if noclip else _collision_mask
@@ -545,6 +597,11 @@ func _ride(_delta: float) -> void:
 		if moving or (autopilot_enabled and autopilot_direction.length_squared() > 0.01):
 			stand_up()
 		return
+	if craft != null:
+		_steer_aircraft()
+		global_position = craft.rider_origin()
+		body.rotation.y = craft.heading - rotation.y
+		return
 	var throttle := 0.0
 	var steer := 0.0
 	var sprint := false
@@ -566,6 +623,31 @@ func _ride(_delta: float) -> void:
 	global_position = boat.seat_position() - Vector3(0.0, 12.0 * Wardrobe.px(), 0.0)
 	body.rotation.y = boat.heading - rotation.y
 	body.paddle_phase = boat.stroke_phase
+
+
+## 飞行器的按键：W/S 前后、A/D 转向、空格上升、C / Ctrl 下降、Shift 快。自动驾驶时水平方向像划船一样转过去，竖直方向看 y。
+func _steer_aircraft() -> void:
+	var throttle := 0.0
+	var steer := 0.0
+	var lift := 0.0
+	var sprint := false
+	if autopilot_enabled:
+		var d := Vector2(autopilot_direction.x, autopilot_direction.z)
+		if d.length() > 0.01:
+			var diff := wrapf(atan2(-d.x, -d.y) - craft.heading, -PI, PI)
+			steer = clampf(-diff * 2.0, -1.0, 1.0)
+			throttle = 1.0 if absf(diff) < 0.8 else 0.2
+		lift = signf(autopilot_direction.y) if absf(autopilot_direction.y) > 0.1 else 0.0
+		sprint = autopilot_run
+	elif is_local_controlled and not input_locked:
+		throttle = Input.get_axis("move_back", "move_forward")
+		steer = Input.get_axis("move_left", "move_right")
+		lift = (1.0 if Input.is_action_pressed("jump") else 0.0) - (1.0 if Input.is_action_pressed("swim_down") else 0.0)
+		sprint = Input.is_action_pressed("sprint")
+	craft.throttle = throttle
+	craft.steer = steer
+	craft.lift = lift
+	craft.sprint = sprint
 
 
 # ---------------------------------------------------------------- 动作（动作栏 / 数字键 1–5）

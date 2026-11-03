@@ -182,6 +182,17 @@ const SHOTS := [
 	{"name": "mp_03_room_page", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "lobby": true, "lobby_page": "room", "friends": MP_FRIENDS},
 	{"name": "mp_04_room_page_en", "lang": "en", "climate": DUSK, "player": [-49.0, 27.0], "heading": 75.0, "lobby": true, "lobby_page": "room", "friends": MP_FRIENDS},
 	{"name": "ltr_10_letter_en", "climate": DUSK, "lang": "en", "letters": {"open": "islet"}, "player": [40.4, -2.6], "heading": 60.0, "pitch": -28.0},
+	# 飞行器（2026-11）：出生点旁的直升机和热气球、湖上飞、清晨的热气球、雪山顶的滑翔翼、直升机里往外看；夜晚亮度前后对比
+	{"name": "fly_01_parked", "climate": {"season": "SUMMER", "hour": 15.0, "weather": "CLEAR"}, "eye": [-27.0, 3.5, 25.0], "look": [-50.0, 5.0, 26.0]},
+	{"name": "fly_02_heli_over_lake", "climate": {"season": "SUMMER", "hour": 16.0, "weather": "CLEAR"}, "player": [-10.0, 22.0], "aircraft": ["heli", -10.0, 22.0, 22.0, 80.0], "heading": 55.0, "pitch": -16.0, "third_person": true},
+	{"name": "fly_03_heli_cockpit", "climate": {"season": "SUMMER", "hour": 16.0, "weather": "CLEAR"}, "player": [-20.0, 30.0], "aircraft": ["heli", -20.0, 28.0, 30.0, 60.0], "heading": 60.0, "pitch": -14.0},
+	{"name": "fly_04_balloon_morning", "climate": {"season": "SUMMER", "hour": 7.2, "weather": "CLEAR"}, "player": [-45.0, 5.0], "aircraft": ["balloon", -45.0, 30.0, 5.0, 70.0], "heading": 70.0, "pitch": -10.0, "third_person": true, "fly": [0.0, 1.0, 0.0]},
+	{"name": "fly_05_glider_summit", "climate": {"season": "SUMMER", "hour": 14.0, "weather": "CLEAR"}, "player": [104.0, -103.0], "aircraft": ["glider", 104.0, 0.0, -103.0, 212.0], "heading": 250.0, "pitch": -18.0, "third_person": true},
+	{"name": "fly_06_glider_air", "climate": {"season": "SUMMER", "hour": 17.5, "weather": "CLEAR"}, "player": [70.0, -55.0], "aircraft": ["glider", 70.0, 26.0, -55.0, 212.0], "heading": 212.0, "pitch": -8.0, "third_person": true},
+	{"name": "night_01_before", "night": 0.0, "climate": {"season": "SUMMER", "hour": 23.0, "weather": "CLEAR"}, "player": [-49.0, 27.0], "heading": 75.0, "pitch": -2.0},
+	{"name": "night_02_after", "climate": {"season": "SUMMER", "hour": 23.0, "weather": "CLEAR"}, "player": [-49.0, 27.0], "heading": 75.0, "pitch": -2.0},
+	{"name": "night_03_before_cabin", "night": 0.0, "climate": {"season": "AUTUMN", "hour": 22.0, "weather": "CLEAR"}, "eye": [-50, 1.7, 46], "ground": true, "look": [-66, 3, 37]},
+	{"name": "night_04_after_cabin", "climate": {"season": "AUTUMN", "hour": 22.0, "weather": "CLEAR"}, "eye": [-50, 1.7, 46], "ground": true, "look": [-66, 3, 37]},
 ]
 
 ## 截图用的三位朋友：[peer_id, 名字, x, z, 朝向°, 延迟 ms, OUTFITS 下标]（第三位在小地图圈外，贴边显示方向）
@@ -249,6 +260,11 @@ func _run() -> void:
 			# 雪花寿命约 11 秒：从下雪切走后等残留雪花落完再拍
 			if was_snowing and WorldState.weather_id != &"SNOW":
 				await get_tree().create_timer(12.0).timeout
+		# "night": 0..2 拍这一张时的夜晚亮度（不存盘；默认按设置的默认值）
+		var nb := float(shot.get("night", GameSettings.DEFAULTS["night_brightness"]))
+		if GameSettings.night_brightness != nb:
+			GameSettings.set_value("night_brightness", nb, false)
+			await _wait(10)
 		var precip := get_tree().get_first_node_in_group("precipitation") as Precipitation
 		if precip.profile_override != str(shot.get("fx", "")):
 			precip.profile_override = str(shot.get("fx", ""))
@@ -693,6 +709,18 @@ func _setup_player_view(shot: Dictionary) -> void:
 		if shot.get("walk", false):
 			var fwd := canoe.forward()
 			_player.autopilot_direction = Vector3(fwd.x, 0.0, fwd.y)
+	# "aircraft": [id, x, 离地高度, z, 机头朝向] 坐上一架飞行器，放在空中（高度 0 = 停在地上）；"fly": [x, y, z] 按自动驾驶的方向飞（y > 0 = 空格）
+	if shot.has("aircraft"):
+		var c: Array = shot["aircraft"]
+		for n in get_tree().get_nodes_in_group("aircraft"):
+			var air := n as Aircraft
+			if air.uid == StringName("air_" + str(c[0])):
+				air.place_at(Vector2(float(c[1]), float(c[3])), float(c[4]), float(c[2]))
+				_player.board_aircraft(air)
+				_player.rotation.y = deg_to_rad(-float(shot.get("heading", c[4])))
+		if shot.has("fly"):
+			_player.autopilot_enabled = true
+			_player.autopilot_direction = _vec(shot["fly"])
 	if shot.has("seat"):
 		var seat := _main.find_child(str(shot["seat"]), true, false) as Seat
 		if seat != null:

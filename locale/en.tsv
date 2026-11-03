@@ -788,3 +788,28 @@ Direct3D 12（内存占用更少）	Direct3D 12 (uses less memory)
 延迟 %d ms	Ping %d ms
 跟着 %s 前往「%s」。	Following %s to %s.
 联机时由房主带路：房主穿过光门，大家一起过去	In a co-op room the host leads: when the host goes through a gate, everyone goes along
+E  坐进热气球	E  Get in the balloon
+坐进热气球	Get in the balloon
+E  背上滑翔翼	E  Strap on the hang glider
+背上滑翔翼	Strap on the hang glider
+E  坐进小直升机	E  Get in the helicopter
+坐进小直升机	Get in the helicopter
+空格 点火升空  ·  E 下来	Space  fire the burner to lift off  ·  E  get out
+空格 点火  C 放气  W/S 飘  A/D 转向  ·  落地后 E 下来	Space burner  C vent  W/S drift  A/D turn  ·  E get out after landing
+E  落水了：回到出发点	E  In the water: back to the start
+落水了：回到出发点	In the water: back to the start
+E  下来（下不去就回到出发点）	E  Get out (or go back to the start)
+下来（下不去就回到出发点）	Get out (or go back to the start)
+W 助跑起飞  A/D 转向  ·  E 下来	W run to take off  A/D turn  ·  E get out
+W 俯冲  S 拉起  A/D 转弯  ·  落地后 E 下来	W dive  S flare  A/D turn  ·  E get out after landing
+空格 起飞  ·  E 下来	Space take off  ·  E get out
+旋翼转起来了……  ·  E 下来	Rotor spinning up…  ·  E get out
+空格 升  C 降  W/S 前后  A/D 转向  Shift 快  ·  落地后 E 下来	Space up  C down  W/S fly  A/D turn  Shift fast  ·  E get out after landing
+先降落到地面上再下来	Land on the ground first
+下面是深水：飞到岸边再下来	Deep water below: fly to the shore first
+这里下不去：落到空地上再下来	You can't get down here: land in an open spot
+热气球	hot-air balloon
+滑翔翼	hang glider
+小直升机	helicopter
+%s 被送回了出发点	The %s is back at its starting point
+夜晚亮度	Night brightness

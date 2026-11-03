@@ -182,8 +182,12 @@ func _apply(season: StringName, minutes: float, w: Dictionary) -> void:
 	var darkness := float(w["cloud_darkness"])
 	var tint := ClimateData.color(profile.get("sky_tint"))
 
+	# 夜晚亮度（设置 → 画面，默认 1）：夜空、月光、环境光和曝光一起提一点，月光下看得清路和树；0 = 原来那么暗
+	var nb := 0.0 if Engine.is_editor_hint() else GameSettings.night_brightness
 	var top := _key(TOP, sun_elevation) * tint
 	var horizon := _key(HORIZON, sun_elevation) * tint
+	top *= 1.0 + 0.5 * nb * night
+	horizon *= 1.0 + 0.45 * nb * night
 	var grey_top := Color(top.get_luminance(), top.get_luminance(), top.get_luminance()) * (1.0 - 0.45 * darkness) * 1.1
 	var grey_hor := Color(horizon.get_luminance(), horizon.get_luminance(), horizon.get_luminance()) * (1.0 - 0.4 * darkness)
 	top = top.lerp(grey_top, overcast)
@@ -220,13 +224,13 @@ func _apply(season: StringName, minutes: float, w: Dictionary) -> void:
 	if _moon_dir == Vector3.ZERO or sun_step_deg <= 0.0 or rad_to_deg(_moon_dir.angle_to(to_moon)) >= sun_step_deg:
 		_moon_dir = to_moon
 		moon.basis = Basis.looking_at(-to_moon, Vector3.UP)
-	moon.light_energy = 0.22 * night * (1.0 - overcast * 0.7)
+	moon.light_energy = (0.22 + 0.24 * nb) * night * (1.0 - overcast * 0.7)
 	moon.shadow_enabled = night > 0.6
 
 	# 本局规则“夜晚更亮”：夜里环境光和曝光再提一些（月光下也看得清路）
 	var bright := 0.0 if Engine.is_editor_hint() else (1.0 if GameRules.flag("bright_nights") else 0.0)
-	environment.ambient_light_energy = _keyf(AMBIENT, sun_elevation) * lerpf(1.0, 0.85, overcast) + flash * 0.8 + bright * night * 0.5
-	environment.tonemap_exposure = lerpf(1.05, 1.35 + bright * 0.45, night)
+	environment.ambient_light_energy = _keyf(AMBIENT, sun_elevation) * lerpf(1.0, 0.85, overcast) + flash * 0.8 + (bright * 0.5 + nb * 0.36) * night
+	environment.tonemap_exposure = lerpf(1.05, 1.35 + nb * 0.28 + bright * 0.45, night)
 	environment.fog_light_color = horizon.lerp(top, 0.35) * 0.8
 	environment.fog_density = 0.0024 + float(w["fog"])
 	environment.fog_sun_scatter = 0.25 * (1.0 - overcast)

@@ -4,8 +4,8 @@ extends Node3D
 ## 收到的姿态带对方算出这个位置时的物理时刻（Net.sim_ms）：按时刻排进缓冲，画面比对方晚 INTERP_DELAY 播放，在前后两个姿态之间插值
 ## （网络抖动、包到得忽快忽慢都看不出来，站着不动时对方 2 Hz 发包也不会一顿一顿）；缓冲播完了就按速度往前推一小段。
 ## 两个相邻姿态隔得太远（> SNAP_DISTANCE，对方传送了）直接跳过去。
-## 对方在划独木舟时，本机的同一条船跟着摆过去并记为“有人在用”（本机玩家上不去，船自己的物理暂停），
-## 对方下船后船停在最后的位置，恢复正常。
+## 对方在划独木舟、开飞行器（热气球、滑翔翼、小直升机）时，本机的同一条船 / 同一架飞行器跟着摆过去并记为“有人在用”
+## （本机玩家上不去，它自己的物理暂停），对方下来后停在最后的位置，恢复正常（飞行器在空中被放下会自己慢慢落地）。
 ## 不在镜头里、离得远时动画降频（和小动物一样，跳过的时间攒起来一起算）。
 
 const SNAP_DISTANCE := 6.0
@@ -26,8 +26,8 @@ var _pitch := 0.0
 var _speed := 0.0
 var _on_floor := true
 var _has_pose := false
-var _vehicle: Canoe = null
-var _vehicle_xz := Vector2.ZERO
+var _vehicle: Interactable = null   ## Canoe 或 Aircraft
+var _vehicle_pos := Vector3.ZERO
 var _vehicle_heading := 0.0
 var _anim_accum := 0.0
 var _anim_frame := 0
@@ -138,7 +138,7 @@ func _process(delta: float) -> void:
 	_set_vehicle(s["vehicle"])
 	_set_body_state(str(s["state"]))
 	if _vehicle != null and is_instance_valid(_vehicle):
-		_vehicle.place_at(_vehicle_xz, -rad_to_deg(_vehicle_heading))
+		_vehicle.call("place_remote", _vehicle_pos, _vehicle_heading)
 	# 动画降频：镜头背后、离得远的人每几帧才摆一次胳膊腿（位置照常每帧更新，不会一顿一顿地挪）
 	_anim_accum += delta
 	_anim_frame += 1
@@ -178,18 +178,18 @@ func _exit_tree() -> void:
 func _set_vehicle(v: Array) -> void:
 	if v.size() == 3 and v[1] is Vector3:
 		var keep := _vehicle != null and is_instance_valid(_vehicle) and String(_vehicle.uid) == str(v[0])
-		var canoe := _vehicle if keep else _find_vehicle(StringName(str(v[0])))
-		if canoe == null or (canoe.rider != null and canoe.rider != self):
+		var ride := _vehicle if keep else _find_vehicle(StringName(str(v[0])))
+		if ride == null:
 			return
-		if canoe != _vehicle:
+		var other: Variant = ride.get("rider")
+		if other != null and other != self:
+			return
+		if ride != _vehicle:
 			_release_vehicle()
-			canoe.rider = self
-			canoe.set_physics_process(false)
-			_vehicle = canoe
-			_vehicle_xz = canoe.world_position_2d()
-			_vehicle_heading = canoe.heading
-		var p: Vector3 = v[1]
-		_vehicle_xz = Vector2(p.x, p.z)
+			ride.set("rider", self)
+			ride.set_physics_process(false)
+			_vehicle = ride
+		_vehicle_pos = v[1]
 		_vehicle_heading = float(v[2])
 	elif _vehicle != null:
 		_release_vehicle()
@@ -197,20 +197,21 @@ func _set_vehicle(v: Array) -> void:
 
 func _release_vehicle() -> void:
 	if _vehicle != null and is_instance_valid(_vehicle):
-		_vehicle.place_at(_vehicle_xz, -rad_to_deg(_vehicle_heading))
-		_vehicle.rider = null
+		_vehicle.call("place_remote", _vehicle_pos, _vehicle_heading)
+		_vehicle.set("rider", null)
 		_vehicle.set_physics_process(true)
 	_vehicle = null
 
 
-func riding() -> Canoe:
+func riding() -> Interactable:
 	return _vehicle
 
 
-func _find_vehicle(uid: StringName) -> Canoe:
-	for n in get_tree().get_nodes_in_group("vehicles"):
-		if n is Canoe and (n as Canoe).uid == uid:
-			return n as Canoe
+func _find_vehicle(uid: StringName) -> Interactable:
+	for group in ["vehicles", "aircraft"]:
+		for n in get_tree().get_nodes_in_group(group):
+			if (n as Interactable).uid == uid:
+				return n as Interactable
 	return null
 
 

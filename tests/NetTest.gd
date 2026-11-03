@@ -4,7 +4,7 @@ extends Node
 ## 本进程当房主（不开 UPnP），再启动无窗口的访客进程（同一场景，参数 -- --net-client 地址）：
 ##   1. 访客加入：名单 2 人、房主看到访客的方块人，位置跟着访客走；
 ##   2. 访客在木屋门口开门 → 房主那边门也开；访客隔着 90 m 开泳池馆的门 → 房主拒绝并改回；
-##   3. 访客聊天 → 房主收到；访客划独木舟 → 房主那边的船跟着走；房主改天气和时间 → 访客收到；访客 /weather 被拦下；
+##   3. 访客聊天 → 房主收到；访客划独木舟 → 房主那边的船跟着走；访客开小直升机 → 房主那边的直升机跟着飞，访客下来后自己落地；房主改天气和时间 → 访客收到；访客 /weather 被拦下；
 ##   4. 房主关房 → 访客收到“房主已离开”并回到单人；
 ##   5. 版本不一致的访客 → 被拒绝，提示两边的版本号。
 ## 两个进程之间的“台词”走聊天消息（CMD … / REPORT …），访客的最终结果写 user://net_test_client.json。
@@ -123,6 +123,19 @@ func _host() -> void:
 	var idle_r := _report_with("IDLE ")
 	var sent := idle_r.get_slice("sent=", 1).to_int() if idle else -1
 	_check("站着不动 3 秒：访客只发了 %d 个姿态包（动着时每秒 20 个）" % sent, idle and sent >= 3 and sent <= 9, idle_r)
+
+	# 访客开小直升机飞到 12 m 高：房主这边的同一架跟着飞、自己上不去；访客中途下来（传送走），直升机在两边都自己慢慢落地
+	_say("CMD heli")
+	var heli: Aircraft = null
+	for a in get_tree().get_nodes_in_group("aircraft"):
+		if (a as Aircraft).uid == &"air_heli":
+			heli = a as Aircraft
+	var flying := await _until(func() -> bool: return heli != null and heli.rider is RemotePlayer and heli.world_position().y > heli.home.y + 8.0, 30.0)
+	var seated := p.body_state == "sit"
+	var refused := heli != null and not heli.can_interact(get_tree().get_first_node_in_group("local_player"))
+	var settled := await _until(func() -> bool: return heli != null and heli.rider == null and heli.landed, 40.0)
+	_check("访客开小直升机：房主看到直升机飞起来、自己上不去；访客下来后直升机自己落地", flying and seated and refused and settled,
+		"飞起来 %s，坐着 %s，上不去 %s，落地 %s" % [flying, seated, refused, settled])
 	await _until(func() -> bool: return Net.pings.has(guest_id), 5.0)
 	_check("房主量到访客的延迟并广播（%d ms）" % int(Net.pings.get(guest_id, -1)), int(Net.pings.get(guest_id, -1)) >= 0 and idle_r.contains("ping_ok=true"), idle_r)
 
@@ -333,6 +346,15 @@ func _client() -> void:
 		await _seconds(3.0)
 		player.set_physics_process(true)
 		Net.send_chat("player", "IDLE sent=%d ping_ok=%s" % [Net.poses_sent - before, Net.ping_of(Net.my_id()) >= 0 and not Net.pings.is_empty()])
+	# 开小直升机升到 12 m，4 秒后直接传送走（在空中离开）
+	if await _until(func() -> bool: return _heard("player", "Host", "CMD heli"), 60.0):
+		for a in get_tree().get_nodes_in_group("aircraft"):
+			var air := a as Aircraft
+			if air.uid == &"air_heli":
+				player.board_aircraft(air)
+				air.place_at(Vector2(air.home.x, air.home.z), -rad_to_deg(air.home_heading), 12.0)
+		await _seconds(4.0)
+		player.teleport_to(_ground(WALK_FROM))
 	# 房主带路去云海浮岛：跟过去，报告；再跟回湖畔
 	if await _until(func() -> bool: return WorldTravel.current_world == "world_02" and not WorldTravel.busy, 120.0):
 		await _seconds(1.0)
